@@ -4,7 +4,7 @@ RUN apt-get update
 RUN apt-get install -y --no-install-recommends python3 python3-pip
 RUN pip3 install virtualenv
 RUN virtualenv -p python3 env
-RUN source env/bin/activate
+RUN . env/bin/activate
 RUN pip3 install -r requirements
 
 CMD ["python", "src/main.py"]
