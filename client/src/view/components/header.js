@@ -19,26 +19,7 @@ class Header extends Component {
             <div className="header-wrapper">
 
                 <div className="header">
-
-                    <div className="header-left">
-                        <ul>
-                            <li>
-                                <Link to="/" className="button-border">
-                                  Video Conversion
-                                </Link>
-                            </li>
-                        </ul>
-                    </div>
-
-                    <div className="header-center">
-                        <Link to="/">
-                            Video Conversion Client
-                        </Link>
-                    </div>
-
-                    <div className="header-right">
-                    </div>
-
+                    <h1>Video Converter</h1>
                 </div>
 
             </div>

@@ -8,7 +8,7 @@ class Home extends Component {
         return (
             <Wrapper>
                 <div className="content-inner">
-                    Welcome
+                    <input type="file" name="file" id="file" onChange=""/>
                 </div>
             </Wrapper>
         )

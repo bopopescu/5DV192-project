@@ -323,117 +323,23 @@ button:focus {
     background: #fff;
 }
 
-.root-wrapper-black {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    height: 100%;
-    background: #000;
-}
-
     .header-wrapper {
         display: flex;
-        justify-content: center;
-        align-items: center;
-        background: #000;
-        height: 77px;
     }
 
         .header {
-            width: 90%;
-            margin: 20px 0;
+            flex: 1;
+            margin-top: 200px;
             display: flex;
-            flex-direction: row;
             align-items: center;
+            justify-content: center;
         }
 
-        .header ul {
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            text-decoration: none;
+        .header h1 {
+            font-size: 50px;
+            font-weight: 300;
+            color: #444;
         }
-
-        .header ul li {
-            display: inline-block;
-        }
-
-        .header a {
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            text-decoration: none;
-        }
-
-            .header a, .header span {
-                font-size: 16px;
-                font-weight: 400;
-                color: #fff;
-            }
-
-            .header span {
-                display: flex;
-                align-items: center;
-                cursor: pointer;
-            }
-
-            .header-left, .header-right {
-                flex: 1;
-            }
-
-            .header-center {
-                flex: auto;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-
-            .header-left a:hover {
-                color: #aaa;
-            }
-
-            .header-right ul {
-                justify-content: flex-end;
-            }
-
-            .header-left li {
-                margin-right: 20px;
-            }
-            .header-right li {
-                margin-left: 20px;
-            }
-
-            .header-right img {
-                margin-right: 10px;
-            }
-
-            .header .button-border {
-                font-size: 12px;
-                text-transform: uppercase;
-                padding: 10px 25px;
-                border-radius: 50px;
-                border: 2px solid #fff;
-                min-width: 50px;
-                display: flex;
-                justify-content: center;
-            }
-
-            .header .button-border:hover {
-                background: #000;
-                color: #555;
-                border: 2px solid #555;
-            }
-
-            .header-center a {
-                font-size: 18px;
-                font-weight: 400;
-            }
-
-            .header-center img {
-                width: 32px;
-                height: 32px;
-            }
-
 
     .content-wrapper {
         flex: 2;
