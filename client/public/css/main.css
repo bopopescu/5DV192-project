@@ -1,0 +1,547 @@
+/* global */
+
+html, body {
+    font-family: "Source Sans Pro", sans-serif;
+    /*font-family:
+            -apple-system,
+            BlinkMacSystemFont,
+            "Segoe UI",
+            Roboto,
+            Helvetica,
+            Arial,
+            sans-serif,
+            "Apple Color Emoji",
+            "Segoe UI Emoji",
+            "Segoe UI Symbol";*/
+    width: 100%;
+    height: 100%;
+}
+
+a, a:visited {
+    color: #0572ff;
+    text-decoration: underline;
+}
+
+a:hover {
+    color: #b2c5ff;
+}
+
+a, a:hover, a:focus, a:active {
+    -webkit-transition: border .3s ease-in-out, color .1s ease-in-out, background .3s ease-in-out;
+}
+
+
+h1 {
+    font-size: 40px;
+}
+
+input[type="text"], input[type="password"] {
+    display: block;
+    width: 300px;
+    padding: 10px;
+    margin-top: 10px;
+    text-indent: 0;
+    color: #000;
+    font-size: 14px;
+    font-weight: 400;
+    border: 1px solid #aaa;
+    border-radius: 3px;
+    outline: none;
+}
+
+button:focus {
+    outline: none;
+}
+
+
+/* General */
+
+.button {
+    padding: 7px 25px;
+    border-radius: 50px;
+    font-weight: 400;
+    text-align: center;
+    font-size: 12px;
+}
+
+.button-s {
+   font-size: 12px;
+}
+
+.button-m {
+    font-size: 14px;
+}
+
+.button-l {
+    font-size: 18px;
+}
+
+.button:enabled {
+    cursor: pointer;
+}
+
+.button, .button:hover, .button:focus, .button:active {
+    -webkit-transition: border .3s ease-in-out, color .1s ease-in-out, background .3s ease-in-out;
+}
+
+
+.button-center {
+    display: block;
+    margin: 0 auto;
+}
+
+
+.button-nav {
+    color: #000;
+    border: 1px solid #000;
+}
+
+.button-nav:hover:enabled {
+    color: #fff;
+    background: #000;
+    border: 1px solid #000;
+}
+
+
+.button-black {
+    color: #ccc;
+    border: 1px solid #ccc;
+}
+
+.button-black:enabled {
+    color: #777;
+    border: 1px solid #777;
+}
+
+.button-black:hover:enabled {
+    color: #fff;
+    background: #000;
+    border: 1px solid #000;
+}
+
+
+.button-blue {
+    color: #0af;
+    border: 1px solid #0af;
+}
+
+.button-blue:hover:enabled {
+    color: #fff;
+    background: #0af;
+}
+
+
+
+.button-green {
+    color: #b9e2ae;
+    border: 1px solid #b9e2ae;
+}
+
+.button-green:enabled {
+    color: #4aad4a;
+    border: 1px solid #4aad4a;
+}
+
+.button-green:hover:enabled {
+    color: #fff;
+    background: #4aad4a;
+    border: 1px solid #fff;
+}
+
+/* globals*/
+
+.icon-10 {
+    width: 10px;
+    height: 10px;
+}
+
+.icon-16 {
+    width: 16px;
+    height: 16px;
+}
+
+.icon-24 {
+    width: 24px;
+    height: 24px;
+}
+
+.icon-32 {
+    width: 32px;
+    height: 32px;
+}
+
+.mt-15 {
+    margin-top: 15px !important;
+}
+
+.icon-mr-5 {
+    margin-right: 5px;
+}
+
+.icon-mr-10 {
+    margin-right: 10px;
+}
+
+.icon-mr-20 {
+    margin-right: 20px;
+}
+
+.icon-ml-5 {
+    margin-left: 5px;
+}
+
+.icon-ml-10 {
+    margin-left: 10px;
+}
+
+.icon-ml-20 {
+    margin-left: 20px;
+}
+
+.clickable {
+    cursor: pointer;
+}
+
+/* alerts */
+
+.alert {
+    display: flex;
+    align-items: center;
+    margin-top: 20px;
+    padding: 15px 25px;
+    color: #710;
+    font-size: 14px;
+    background: #fdd;
+    border: 1px solid #710;
+    border-radius: 100px;
+}
+
+.alert .alert-hide {
+    cursor: pointer;
+    transition: 0.3s;
+    color: #710;
+    font-size: 30px;
+    font-weight: 400;
+}
+
+.alert-hide:hover {
+    color: black;
+}
+
+
+/* forms */
+
+.form-default {
+
+}
+
+.form-default h1 {
+    color: #444;
+    text-align: center;
+    font-weight: 200;
+}
+
+.form-default .input-container {
+    margin: 20px auto;
+    width: 300px;
+}
+
+.form-default .input-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    flex-direction: column;
+}
+
+.form-default .input-label {
+    width: 100%;
+    display: block;
+    position: absolute;
+    top: 0;
+    user-select: none;
+    pointer-events: none;
+    transition: all 200ms ease-out;
+    padding-top: 23px;
+    padding-left: 11px;
+    padding-right: 10px;
+    font-size: 14px;
+    color: #777;
+}
+
+
+.form-default .input-error {
+    display: block;
+    width: 300px;
+    padding: 10px 10px;
+    margin-top: 3px;
+    margin-bottom: 5px;
+    background: #fff;
+    border-radius: 3px;
+    border: 1px solid #f77;
+}
+
+.form-default .input-error p {
+    font-size: 12px;
+    color: #f77;
+}
+
+.form-default .input-adjusted {
+    font-size: 14px;
+    padding-top: 30px;
+}
+
+.form-default .input-wrapper-tos  {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.form-default .input-wrapper-tos input[type="checkbox"]  {
+    margin-right: 10px;
+}
+
+.form-default .input-wrapper-tos label  {
+    color: #555;
+    font-size: 14px;
+}
+
+/* main */
+
+#root {
+    width: 100%;
+    height: 100%;
+}
+
+.root-wrapper {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    background: #fff;
+}
+
+.root-wrapper-black {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    background: #000;
+}
+
+    .header-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: #000;
+        height: 77px;
+    }
+
+        .header {
+            width: 90%;
+            margin: 20px 0;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+        }
+
+        .header ul {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        .header ul li {
+            display: inline-block;
+        }
+
+        .header a {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            text-decoration: none;
+        }
+
+            .header a, .header span {
+                font-size: 16px;
+                font-weight: 400;
+                color: #fff;
+            }
+
+            .header span {
+                display: flex;
+                align-items: center;
+                cursor: pointer;
+            }
+
+            .header-left, .header-right {
+                flex: 1;
+            }
+
+            .header-center {
+                flex: auto;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .header-left a:hover {
+                color: #aaa;
+            }
+
+            .header-right ul {
+                justify-content: flex-end;
+            }
+
+            .header-left li {
+                margin-right: 20px;
+            }
+            .header-right li {
+                margin-left: 20px;
+            }
+
+            .header-right img {
+                margin-right: 10px;
+            }
+
+            .header .button-border {
+                font-size: 12px;
+                text-transform: uppercase;
+                padding: 10px 25px;
+                border-radius: 50px;
+                border: 2px solid #fff;
+                min-width: 50px;
+                display: flex;
+                justify-content: center;
+            }
+
+            .header .button-border:hover {
+                background: #000;
+                color: #555;
+                border: 2px solid #555;
+            }
+
+            .header-center a {
+                font-size: 18px;
+                font-weight: 400;
+            }
+
+            .header-center img {
+                width: 32px;
+                height: 32px;
+            }
+
+
+    .content-wrapper {
+        flex: 2;
+        display: flex;
+        flex-direction: row;
+    }
+
+        .content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+            .content-inner {
+                flex: 1;
+                display: flex;
+                justify-content: center;
+                margin-top: 100px;
+            }
+
+            .content-main {
+                display: flex;
+                flex-direction: column;
+                margin: 0 100px;
+            }
+
+            .content-main h1 {
+                display: flex;
+                font-size: 32px;
+                margin-bottom: 20px;
+                color: #444;
+                font-weight: 200;
+            }
+
+            .content-main p {
+                color: #444;
+                font-size: 16px;
+                font-weight: 200;
+            }
+
+            .footer-wrapper {
+                display: flex;
+                flex-direction: column;
+                font-size: 10px;
+                font-weight: 400;
+            }
+
+                .footer-nav {
+                    display: flex;
+                    flex-direction: row;
+                    justify-content: space-between;
+                    padding: 0 20%;
+                }
+
+                .footer-nav div {
+                    align-items: center;
+                    margin: 30px 15%;
+                }
+
+                .footer-nav a {
+                    font-size: 14px;
+                    color: #ddd;
+                    text-decoration: none;
+                    margin-bottom: 5px;
+                }
+
+                .footer-nav a:hover {
+                    color: #333;
+                }
+
+
+                .footer-copyright {
+                    justify-content: center;
+                    padding: 16px;
+                    font-weight: 400;
+                    color: #777;
+                    text-align: center;
+                    text-transform: uppercase;
+                }
+
+
+
+/* error wrapper */
+
+.wrapper-error {
+    display: flex;
+    flex: auto;
+    justify-content: center;
+    align-items: center;
+}
+
+.wrapper-error > div {
+    padding: 10px 0;
+}
+
+.wrapper-error .error-code {
+    font-size: 32px;
+    font-weight: 600;
+    padding-right: 20px;
+    margin-right: 20px;
+    border-right: 1px solid #aaa;
+}
+
+.wrapper-error .error-message {
+    font-size: 16px;
+    font-weight: 400;
+}
+
+
+/* main */
+
