@@ -1,7 +1,7 @@
 import apisauce from "apisauce";
 import Cookie from "universal-cookie";
 
-const API_URL= "http://" + window.location.hostname + ":8080";
+const API_URL= "http://" + window.location.hostname + ":8000";
 
 let create = () => {
 
@@ -23,18 +23,10 @@ let create = () => {
         return { headers: {} }
     };
 
-    const userRegister = data => api.post("/auth/register/", data, headers());
-    const userLogin = data => api.post("/auth/login/", data, headers());
-    const userLogout = data => api.post("/auth/logout/", data, headers());
-    const userGet = key => api.get("/auth/get/" + key, null, headers());
+    const transcodeSend = data => api.post("/transcode/", data, headers());
 
     return {
-
-        userRegister,
-        userLogin,
-        userLogout,
-        userGet,
-
+        transcodeSend,
     };
 
 };

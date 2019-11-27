@@ -6,8 +6,6 @@ import Router from './controller/router/router'
 
 import store, { persistor } from './controller/redux/store'
 
-import './controller/utils/reactotron'
-
 
 render(
     <Provider store={store}>

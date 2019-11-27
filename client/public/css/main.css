@@ -92,7 +92,7 @@ select {
 }
 
 .button, .button:hover, .button:focus, .button:active {
-    -webkit-transition: border .3s ease-in-out, color .1s ease-in-out, background .3s ease-in-out;
+    -webkit-transition: border .1s ease-in-out, color .1s ease-in-out, background .1s ease-in-out;
 }
 
 
@@ -137,9 +137,9 @@ select {
     border: 1px solid #0af;
 }
 
-.button-blue:hover:enabled {
-    color: #fff;
-    background: #0af;
+.button-blue:hover {
+    color: #0af;
+    background: #fff;
 }
 
 
@@ -430,7 +430,6 @@ select {
                     font-weight: 400;
                     color: #777;
                     text-align: center;
-                    text-transform: uppercase;
                 }
 
 
@@ -477,12 +476,13 @@ select {
 }
 
 .transcoder h2 {
-    margin-bottom: 10px;
+    margin-top: 20px;
+    margin-bottom: 5px;
     font-size: 18px;
 }
 
 .file-input-container {
-    margin-top: 10px;
+
 }
 
 .file-input {
@@ -523,7 +523,6 @@ select {
 }
 
 .file-setting-container {
-    margin-top: 10px;
 }
 
 .file-setting {

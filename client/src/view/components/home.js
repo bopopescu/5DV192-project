@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { Wrapper } from "../../containers/wrapper";
+import { Wrapper } from "../containers/wrapper";
 import $ from 'jquery';
 
 
@@ -19,27 +19,35 @@ class Home extends Component {
 
         super(props);
 
-        this.handleClick = this.handleClick.bind(this);
+        this.handleFileChange = this.handleFileChange.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
 
         this.state = {
-            resolution: "Unchanged",
-            compression: "Unchanged",
-            format: "MP4",
-            filename: "output",
+            input: {
+                filename: "",
+            },
+            output: {
+                filename: "output",
+                resolution: "Unchanged",
+                compression: "Unchanged",
+                format: "MP4",
+            }
         }
 
 
     }
 
-    handleClick() {
+    handleFileChange(e, key) {
         let filename = $('input[type=file]').val().split('\\').pop();
         $('#file-name').html(filename);
+        let newState = JSON.parse(JSON.stringify(this.state));
+        newState.input[key] = filename;
+        this.setState(newState);
     }
 
-    handleChange(e, key) {
+    handleChangeOutput(e, key) {
         let newState = JSON.parse(JSON.stringify(this.state));
-        newState[key] = e.target.value;
+        newState.output[key] = e.target.value;
         this.setState(newState);
     }
 
@@ -52,18 +60,15 @@ class Home extends Component {
 
         let html = [];
 
-        html.resolutions = resolutions.map((item, key) =>
+        html.resolutions = resolutions.map((item) =>
             <option value={item} key={item}>{item}</option>
         );
-
-        html.compressions = compressions.map((item, key) =>
+        html.compressions = compressions.map((item) =>
             <option value={item} key={item}>{item}</option>
         );
-
-        html.formats = formats.map((item, key) =>
+        html.formats = formats.map((item) =>
             <option value={item} key={item}>{item}</option>
         );
-
 
 
         return (
@@ -74,16 +79,16 @@ class Home extends Component {
                         <div className="file-input-container">
                             <h2>File</h2>
                             <div className="file-input">
-                                <input type="file" id="file-upload" onChange={() => this.handleClick()} />
+                                <input type="file" id="file-upload" onChange={(e) => this.handleFileChange(e, "filename")} />
                                 <span className="label" id="file-name">No file selected</span>
-                                <button className="button button-blue">Choose</button>
+                                <button type="button" className="button button-blue">Choose</button>
                             </div>
                         </div>
                         <h1>Output</h1>
                         <div className="file-setting-container">
                             <h2>Resolution</h2>
                             <div className="file-setting">
-                                <select name="resolution" id="resolution" value={this.state.resolution} onChange={(e) => this.handleChange(e, "resolution")}>
+                                <select name="resolution" id="resolution" value={this.state.output.resolution} onChange={(e) => this.handleChangeOutput(e, "resolution")}>
                                     {html.resolutions}
                                 </select>
                             </div>
@@ -91,7 +96,7 @@ class Home extends Component {
                         <div className="file-setting-container">
                             <h2>Quality</h2>
                             <div className="file-setting">
-                                <select name="compression" id="compression" value={this.state.compression} onChange={(e) => this.handleChange(e, "compression")}>
+                                <select name="compression" id="compression" value={this.state.output.compression} onChange={(e) => this.handleChangeOutput(e, "compression")}>
                                     {html.compressions}
                                 </select>
                             </div>
@@ -99,7 +104,7 @@ class Home extends Component {
                         <div className="file-setting-container">
                             <h2>Format</h2>
                             <div className="file-setting">
-                                <select name="format" id="format" value={this.state.format} onChange={(e) => this.handleChange(e, "format")}>
+                                <select name="format" id="format" value={this.state.output.format} onChange={(e) => this.handleChangeOutput(e, "format")}>
                                     {html.formats}
                                 </select>
                             </div>
@@ -107,7 +112,7 @@ class Home extends Component {
                         <div className="file-setting-container">
                             <h2>Filename</h2>
                             <div className="file-setting">
-                                <input type="text" name="filename" id="filename" value={this.state.filename} onChange={(e) => this.handleChange(e, "filename")} />
+                                <input type="text" name="filename" id="filename" value={this.state.output.filename} onChange={(e) => this.handleChangeOutput(e, "filename")} />
                             </div>
                         </div>
                         <div className="file-save">

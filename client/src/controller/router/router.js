@@ -5,8 +5,8 @@ import PublicRoute from "./public-route";
 import history from "../utils/history";
 
 
-import Home from "../../view/containers/main/home";
-import ErrorNotFound from "../../view/containers/main/error-not-found";
+import Home from "../../view/containers/home";
+import ErrorNotFound from "../../view/containers/error-not-found";
 
 
 class CustomRouter extends React.PureComponent {

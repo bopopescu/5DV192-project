@@ -1,6 +1,6 @@
 import { combineReducers } from 'redux'
-import reducerUser from './user'
+import reducerTranscoder from './transcoder'
 
 export default combineReducers({
-    reducerUser,
+    reducerTranscoder,
 })

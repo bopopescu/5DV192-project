@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { Wrapper } from '../wrapper'
+import { Wrapper } from './wrapper'
 
 class ErrorNotFound extends Component {
 

@@ -1,19 +1,11 @@
 import React, { Component } from 'react'
-import { Link } from "react-router-dom";
 import 'jqueryui'
-import Cookies from "universal-cookie";
 
 class Header extends Component {
 
-    componentDidMount() {
-    }
-
-    numberWithCommas(x) {
-        return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-    }
+    componentDidMount() {}
 
     render() {
-
 
         return (
             <div className="header-wrapper">
