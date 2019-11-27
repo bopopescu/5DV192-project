@@ -14,13 +14,13 @@ class Home extends Component {
 
         this.state = {
             resolutions: [
-                "240p", "480p", "720p", "1080p", "2K", "4K"
+                "Unchanged", "240p", "480p", "720p", "1080p", "2K", "4K"
             ],
             compressions: [
-                "None", "Low", "Medium", "High"
+                "Unchanged", "Low", "Medium", "High"
             ],
             formats: [
-                "AVI", "MP4", "MKV"
+                "MP4", "AVI", "MKV"
             ]
         }
 
@@ -60,7 +60,7 @@ class Home extends Component {
                             <div className="file-input">
                                 <input type="file" id="file-upload" onChange={() => this.handleClick()} />
                                 <span className="label" id="file-name">No file selected</span>
-                                <span className="button">Choose</span>
+                                <button className="button button-blue">Choose</button>
                             </div>
                         </div>
                         <h1>Output</h1>
@@ -83,10 +83,19 @@ class Home extends Component {
                         <div className="file-setting-container">
                             <h2>Format</h2>
                             <div className="file-setting">
-                                <select name="formats" id="formats">
+                                <select name="format" id="format">
                                     {html.formats}
                                 </select>
                             </div>
+                        </div>
+                        <div className="file-setting-container">
+                            <h2>Filename</h2>
+                            <div className="file-setting">
+                                <input type="text" name="filename" id="filename" />
+                            </div>
+                        </div>
+                        <div className="file-save">
+                            <button className="button button-blue">Transcode</button>
                         </div>
                     </div>
                 </div>
