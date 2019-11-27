@@ -53,6 +53,14 @@ button:focus {
     outline: none;
 }
 
+*:focus {
+    outline: none;
+}
+
+select {
+    border: 0;
+    outline: 0;
+}
 
 /* General */
 
@@ -308,6 +316,7 @@ button:focus {
     font-size: 14px;
 }
 
+
 /* main */
 
 #root {
@@ -356,8 +365,9 @@ button:focus {
             .content-inner {
                 flex: 1;
                 display: flex;
-                justify-content: center;
+                flex-direction: column;
                 margin-top: 100px;
+                align-items: center;
             }
 
             .content-main {
@@ -451,6 +461,31 @@ button:focus {
 
 /* main */
 
+.transcoder {
+    width: 500px;
+    display: flex;
+    flex-direction: column;
+}
+
+.transcoder h1 {
+    margin-top: 50px;
+    font-size: 28px;
+    font-weight: 400;
+}
+
+.transcoder h1:first-of-type {
+    margin-top: 0;
+}
+
+.transcoder h2 {
+    margin-bottom: 10px;
+    font-size: 18px;
+}
+
+.file-input-container {
+    margin-top: 10px;
+}
+
 .file-input {
     display: flex;
     flex-direction: row;
@@ -468,7 +503,6 @@ button:focus {
     opacity: 0;
     z-index: 10;
     cursor: pointer;
-    background: #666;
 }
 
 .file-input > .button {
@@ -483,18 +517,58 @@ button:focus {
 }
 
 .file-input .button {
+    width: 100px;
     background: #1e90ff;
     color: #fff;
+    border: 1px solid #1e90ff;
 }
 
 .file-input .label {
     display: flex;
-    justify-content: center;
     align-items: center;
     color: #444;
     white-space: nowrap;
-    background: #eee;
-    height: 50px;
-    padding: 0 20px;
+    background: #fff;
+    height: 48px;
+    padding: 0 10px;
     margin-right: 10px;
+    width: 320px;
+    max-width: 320px;
+    overflow: hidden;
+    border:solid 1px #ddd;
+    font-size: 16px;
+    border-radius: 2px;
+}
+
+.file-setting-container {
+    margin-top: 10px;
+}
+
+.file-setting {
+    display: flex;
+    flex-direction: column;
+}
+
+.file-setting select {
+    background:#fff url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFoAAABaBAMAAADKhlwxAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAABJQTFRFAAAAISIhISIhISIhISIhISIhlDTCWAAAAAV0Uk5TAEBgj5/NA5/9AAAAmUlEQVRYw+3UsQ2DQAyFYcfKAIxgKfICTEDDAihv/1XSAHYR3dk176+wZH3X3CHCGGPsaa15+EyW37AYFNt4e8cRg+M7oRG4AmN8BwJ3YIi/gMAVALAM1h2B5+//aeCaz5niczqJFTrICn2bNfpCa/SFF+kTL9IJt9IV9wZ941Z8P96gT9zKj9MbtIh2aBE/Ov8JNWGMMfbgfiyyOOq6J2LcAAAAAElFTkSuQmCC") no-repeat right center;
+    background-size:25px 25px;
+    border:solid 1px #ddd;
+    font-family:inherit;
+    font-size: 16px;
+    font-weight:inherit;
+    outline:none;
+    padding:8px 10px;
+    text-overflow: '';
+    vertical-align: middle;
+    width: 500px;
+    -webkit-border-radius: 2px;
+    -moz-border-radius: 2px;
+    border-radius: 2px;
+    -webkit-appearance: button;
+    -moz-appearance: button;
+    appearance: button;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+
 }
