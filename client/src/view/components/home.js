@@ -54,6 +54,9 @@ class Home extends Component {
     handleSubmit(e) {
         e.preventDefault();
         console.log(this.state)
+        /*
+            this.props.transcoderSend(this.state.data);
+        */
     }
 
     render() {
