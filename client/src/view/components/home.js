@@ -53,10 +53,28 @@ class Home extends Component {
 
     handleSubmit(e) {
         e.preventDefault();
-        console.log(this.state)
+        console.log(this.state);
+
+        if (document.getElementById('file-upload').files[0]) {
+
+            let file = document.getElementById('file-upload').files[0];
+            console.log(file);
+
+            let reader = new FileReader();
+
+            reader.onload = this.handleFileLoad;
+            reader.readAsText(file);
+
+
+        }
         /*
             this.props.transcoderSend(this.state.data);
         */
+    }
+
+    handleFileLoad(event) {
+        console.log(event);
+        console.log(event.target.result);
     }
 
     render() {
