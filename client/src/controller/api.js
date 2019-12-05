@@ -1,7 +1,7 @@
 import apisauce from "apisauce";
 import Cookie from "universal-cookie";
 
-const API_URL= "http://" + window.location.hostname + ":8000";
+const API_URL= "http://" + window.location.hostname + ":5000";
 
 let create = () => {
 
@@ -23,7 +23,7 @@ let create = () => {
         return { headers: {} }
     };
 
-    const transcodeSend = data => api.post("/transcode/", data, headers());
+    const transcodeSend = data => api.post("/transcode/request", data, headers());
 
     return {
         transcodeSend,

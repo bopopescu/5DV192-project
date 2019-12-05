@@ -52,8 +52,10 @@ class Home extends Component {
     }
 
     handleSubmit(e) {
+
         e.preventDefault();
-        console.log(this.state);
+
+        let data = JSON.parse(JSON.stringify(this.state));
 
         if (document.getElementById('file-upload').files[0]) {
 
@@ -65,11 +67,17 @@ class Home extends Component {
             reader.onload = this.handleFileLoad;
             reader.readAsText(file);
 
+            data = document.getElementById('file-upload').files[0];
+
+            console.log(data);
+            this.props.actionTranscoderSend(data);
+
+            console.log(this.props.transcoder);
 
         }
-        /*
-            this.props.transcoderSend(this.state.data);
-        */
+
+
+
     }
 
     handleFileLoad(event) {
