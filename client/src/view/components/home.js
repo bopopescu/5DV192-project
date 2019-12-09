@@ -117,21 +117,34 @@ class Home extends Component {
         if(this.props.transcoder && this.props.transcoder.isFetched) {
             if(this.props.transcoder.success) {
                 response.push(
-                    <div className="alert alert-green mt-15">
+                    <div className="alert alert-green">
                         <p>Success!</p>
                     </div>
                 )
             } else {
                 response.push(
-                    <div className="alert alert-red mt-15">
+                    <div className="alert alert-red">
                         <p>Failure</p>
                     </div>
                 )
             }
         } else {
             response.push(
-                <div className="alert alert-yellow mt-15">
-                    <p>Loading...</p>
+                <div className="lds-spinner-container">
+                    <div className="lds-spinner">
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                    </div>
                 </div>
             )
         }
