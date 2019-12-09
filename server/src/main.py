@@ -30,7 +30,6 @@ def form_example():
 
         formData = request.form.to_dict(flat=True)
         print(formData)
-        print(formData.get("output-filename"))
 
         target = os.path.join(app.root_path, UPLOAD_FOLDER)
         if not os.path.isdir(target):
