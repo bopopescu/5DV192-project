@@ -35,3 +35,15 @@ export function actionTranscoderSend(data) {
     };
 
 }
+
+export function actionTranscoderReset() {
+
+    return dispatch => {
+
+        dispatch({
+            type: constants.TRANSCODE_RESET
+        });
+
+    };
+
+}

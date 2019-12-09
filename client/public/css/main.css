@@ -221,23 +221,23 @@ select {
     align-items: center;
     margin-top: 20px;
     padding: 15px 25px;
-    color: #710;
     font-size: 14px;
-    background: #fdd;
-    border: 1px solid #710;
     border-radius: 100px;
 }
 
-.alert .alert-hide {
-    cursor: pointer;
-    transition: 0.3s;
-    color: #710;
-    font-size: 30px;
-    font-weight: 400;
+.alert-yellow {
+    color: #ff0;
+    border: 1px solid #ff0;
 }
 
-.alert-hide:hover {
-    color: black;
+.alert-red {
+    color: #800;
+    border: 1px solid #800;
+}
+
+.alert-green {
+    color: #0a0;
+    border: 1px solid #0a0;
 }
 
 

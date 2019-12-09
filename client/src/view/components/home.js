@@ -22,7 +22,10 @@ class Home extends Component {
         this.handleFileChange = this.handleFileChange.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
 
+        this.props.actionTranscoderReset();
+
         this.state = {
+            isSubmitted: false,
             input: {
                 filename: "",
             },
@@ -55,7 +58,12 @@ class Home extends Component {
 
         e.preventDefault();
 
+
         if (document.getElementById('file-upload').files[0]) {
+
+            let newState = JSON.parse(JSON.stringify(this.state));
+            newState.isSubmitted = true;
+            this.setState(newState);
 
             let file = document.getElementById('file-upload').files[0];
 
@@ -103,6 +111,30 @@ class Home extends Component {
         html.formats = formats.map((item) =>
             <option value={item} key={item}>{item}</option>
         );
+
+        let response = [];
+
+        if(this.props.transcoder && this.props.transcoder.isFetched) {
+            if(this.props.transcoder.success) {
+                response.push(
+                    <div className="alert alert-green mt-15">
+                        <p>Success!</p>
+                    </div>
+                )
+            } else {
+                response.push(
+                    <div className="alert alert-red mt-15">
+                        <p>Failure</p>
+                    </div>
+                )
+            }
+        } else {
+            response.push(
+                <div className="alert alert-yellow mt-15">
+                    <p>Loading...</p>
+                </div>
+            )
+        }
 
 
         return (
@@ -152,6 +184,9 @@ class Home extends Component {
                         <div className="file-save">
                             <button type="submit" className="button button-blue">Transcode</button>
                         </div>
+                        {this.state.isSubmitted && (
+                            response
+                        )}
                     </form>
                 </div>
             </Wrapper>

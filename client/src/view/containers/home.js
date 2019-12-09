@@ -8,6 +8,7 @@ const mapStateToProps = state => ({
 
 const mapDispatchToProps = {
     actionTranscoderSend: transcoderActions.actionTranscoderSend,
+    actionTranscoderReset: transcoderActions.actionTranscoderReset,
 };
 
 export default connect(

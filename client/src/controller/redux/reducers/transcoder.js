@@ -32,6 +32,9 @@ export default function(state = initialState, action) {
                 success: false,
             };
 
+        case constants.TRANSCODE_RESET:
+            return initialState;
+
 
         default:
             return state;
