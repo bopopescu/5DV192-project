@@ -9,7 +9,7 @@ let create = () => {
 
     new Cookie();
 
-    const api = apisauce.create({
+    const apiJSON = apisauce.create({
         baseURL: API_URL,
         headers: {
             "Content-type": "application/json",
@@ -18,6 +18,16 @@ let create = () => {
             "Access-Control-Allow-Origin": "*",
         }
     });
+
+    const api = apisauce.create({
+        baseURL: API_URL,
+        headers: {
+            Accept: "application/json",
+            "Accept-Language": "sv",
+            "Access-Control-Allow-Origin": "*",
+        }
+    });
+
 
     const headers = () => {
         return { headers: {} }

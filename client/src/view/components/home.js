@@ -55,21 +55,27 @@ class Home extends Component {
 
         e.preventDefault();
 
-        let data = JSON.parse(JSON.stringify(this.state));
-
         if (document.getElementById('file-upload').files[0]) {
 
             let file = document.getElementById('file-upload').files[0];
-            console.log(file);
 
             let reader = new FileReader();
-
             reader.onload = this.handleFileLoad;
             reader.readAsText(file);
 
-            data = document.getElementById('file-upload').files[0];
+            const data = new FormData();
+            data.append('file', file);
 
-            console.log(data);
+            let keys = Object.keys(this.state.input);
+            for(let k of keys){
+                data.append("input-" + k, this.state.input[k]);
+            }
+
+            keys = Object.keys(this.state.output);
+            for(let k of keys){
+                data.append("output-" + k, this.state.output[k]);
+            }
+
             this.props.actionTranscoderSend(data);
 
             console.log(this.props.transcoder);
@@ -81,7 +87,6 @@ class Home extends Component {
     }
 
     handleFileLoad(event) {
-        console.log(event);
         console.log(event.target.result);
     }
 
