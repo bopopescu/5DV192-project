@@ -33,7 +33,7 @@ let create = () => {
         return { headers: {} }
     };
 
-    const transcodeSend = data => api.post("/transcode/request", data, headers());
+    const transcodeSend = data => api.post("/google-bucket/upload", data, headers());
 
     return {
         transcodeSend,
