@@ -3,15 +3,13 @@
 # December 2019
 #
 
-from flask import Flask, request, json
+from flask import Flask, request, json, g
 from flask_cors import CORS
 from app_google.urls import app_google
 from app_main.urls import app_main
 
 import logging
 from logging import config
-
-from flask import Flask, request, g
 from flask_google_cloud_logger import FlaskGoogleCloudLogger
 
 app = Flask(__name__)

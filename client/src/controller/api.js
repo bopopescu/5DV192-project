@@ -2,14 +2,15 @@ import apisauce from "apisauce";
 import Cookie from "universal-cookie";
 
 const API_URL= "http://" + window.location.hostname + ":5000";
+const API_EXTERNAL_URL= "http://" + "34.74.240.103" + ":5000";
 
 let create = () => {
 
-    console.log(API_URL);
+    console.log(API_EXTERNAL_URL);
 
     new Cookie();
 
-    const apiJSON = apisauce.create({
+    /*const apiJSON = apisauce.create({
         baseURL: API_URL,
         headers: {
             "Content-type": "application/json",
@@ -17,10 +18,10 @@ let create = () => {
             "Accept-Language": "sv",
             "Access-Control-Allow-Origin": "*",
         }
-    });
+    });*/
 
     const api = apisauce.create({
-        baseURL: API_URL,
+        baseURL: API_EXTERNAL_URL,
         headers: {
             Accept: "application/json",
             "Accept-Language": "sv",

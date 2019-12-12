@@ -7,3 +7,4 @@ pyasn1==0.4.8
 google-cloud-storage==1.23.0
 pytest==5.3.1
 google-cloud-logger==0.2.1
+flask-google-cloud-logger==0.2.1
