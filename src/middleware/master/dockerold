@@ -1,0 +1,17 @@
+FROM ubuntu:18.04
+
+RUN apt-get update
+RUN apt-get install -y --no-install-recommends python3 python3-pip
+RUN pip3 install virtualenv
+RUN virtualenv -p python3 env
+RUN . env/bin/activate
+
+COPY ./requirements /app/requirements
+
+WORKDIR /app
+
+RUN pip3 install -r requirements
+
+COPY . /app
+
+CMD ["python", "src/main.py"]
