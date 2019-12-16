@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
 import os
+from google.oauth2 import service_account
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -113,10 +114,9 @@ USE_L10N = True
 USE_TZ = True
 
 
-# CorsMiddleware
-
+# CORS Middleware
 CORS_ORIGIN_ALLOW_ALL = True
 
 # Google Storage
-DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
 GS_BUCKET_NAME = 'umu-5dv192-project-eka'
+GS_CREDENTIALS_PATH = os.path.join(BASE_DIR, 'server/credentials.json')
