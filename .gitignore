@@ -18,4 +18,5 @@ credentials.*
 */credentials.json
 credentials.json
 credentials-docker.json
-*.json
+*/*.json
+*/credentials-docker.json
