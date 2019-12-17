@@ -3,6 +3,7 @@ django-showurls~=1.0.1
 django-cors-headers~=3.0.1
 djangorestframework~=3.9.4
 django-storages==1.8
+python-etcd==0.4.5
 
 GoogleAppEngineCloudStorageClient==1.9.22.1
 google-api-core==1.14.3

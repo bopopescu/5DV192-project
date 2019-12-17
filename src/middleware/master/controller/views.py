@@ -9,17 +9,29 @@ class ControllerGetBuckets(APIView):
 
     def get(self, request, *args, **kwargs):
 
-        bucket = GoogleBucket(GS_BUCKET_NAME)
-        print(bucket.list_buckets_names())
+        controller_get_bucket_files = ControllerGetBucketFiles()
 
-        blobs = bucket.list_blobs()
-
-        for blob in blobs:
+        for blob in controller_get_bucket_files.get_files('uploaded'):
             print(blob.name)
 
-        response = {
-            "payload": "none",
-        }
+        for blob in controller_get_bucket_files.get_files('split'):
+            print(blob.name)
 
-        return JsonResponse(response, safe=False, status=200)
+        for blob in controller_get_bucket_files.get_files('transcoded'):
+            print(blob.name)
+
+        for blob in controller_get_bucket_files.get_files('merged'):
+            print(blob.name)
+
+        status = 200
+        response = {"status": status}
+        return JsonResponse(response, safe=False, status=status)
+
+
+class ControllerGetBucketFiles:
+
+    def get_files(self, prefix):
+        bucket = GoogleBucket(GS_BUCKET_NAME)
+        return bucket.storage_client.list_blobs(GS_BUCKET_NAME, prefix=prefix, delimiter=prefix+"/")
+
 
