@@ -13,10 +13,9 @@ node_modules
 node_modules/*
 env
 env/*
+
 credentials.json
-credentials.*
 */credentials.json
-credentials.json
-credentials-docker.json
-*/*.json
-*/credentials-docker.json
+*.mp4
+*.mkv
+
