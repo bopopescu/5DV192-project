@@ -1,38 +1,66 @@
-// Configure the Google Cloud provider
 provider "google" {
-  credentials = "${file("credentials.json")}"
-  project = "testproject-261510"
-  region = "europe-north1"
+  region      = "${var.region}"
+  project     = "${var.project_name}"
+  credentials = "${file("${var.credentials_file_path}")}"
 }
 
-// Terraform plugin for creating random ids
-resource "random_id" "instance_id" {
-  byte_length = 8
-}
 
-// A single Google Cloud Engine instance
-resource "google_compute_instance" "default" {
-  name = "master-${random_id.instance_id.hex}"
+resource "google_compute_instance" "docker" {
+  count = 1
+
+  name         = "tf-docker-${count.index}"
   machine_type = "n1-standard-1"
-  zone = "europe-north1-a"
+  zone         = "${var.region_zone}"
+  tags         = ["docker-node"]
 
   boot_disk {
     initialize_params {
-      image = "debian-cloud/debian-9"
+      image = "ubuntu-os-cloud/ubuntu-1404-trusty-v20160602"
     }
   }
-
-  // Make sure flask is installed on all new instances for later steps
-  metadata_startup_script = "sudo apt-get update; sudo apt-get install -yq build-essential python-pip rsync; pip install flask"
 
   network_interface {
     network = "default"
 
     access_config {
-      // Include this section to give the VM an external ip address
+      # Ephemeral
     }
-
   }
 
+  metadata {
+    ssh-keys = "root:${file("${var.public_key_path}")}"
+  }
+
+
+  provisioner "remote-exec" {
+    connection {
+      type        = "ssh"
+      user        = "root"
+      private_key = "${file("${var.private_key_path}")}"
+      agent       = false
+    }
+
+    inline = [
+      "sudo curl -sSL https://get.docker.com/ | sh",
+      "sudo usermod -aG docker `echo $USER`",
+      "sudo docker run -d -p 80:80 nginx"
+    ]
+  }
+
+  service_account {
+    scopes = ["https://www.googleapis.com/auth/compute.readonly"]
+  }
 }
 
+resource "google_compute_firewall" "default" {
+  name    = "tf-www-firewall"
+  network = "default"
+
+  allow {
+    protocol = "tcp"
+    ports    = ["80"]
+  }
+
+  source_ranges = ["0.0.0.0/0"]
+  target_tags   = ["docker-node"]
+}
