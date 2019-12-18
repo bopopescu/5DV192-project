@@ -23,16 +23,16 @@ class AuditConfig(_messages.Message):
   multiple AuditConfigs:      {       "audit_configs": [         {
   "service": "allServices"           "audit_log_configs": [             {
   "log_type": "DATA_READ",               "exempted_members": [
-  "user:foo@gmail.com"               ]             },             {
+  "user:jose@example.com"               ]             },             {
   "log_type": "DATA_WRITE",             },             {
   "log_type": "ADMIN_READ",             }           ]         },         {
-  "service": "fooservice.googleapis.com"           "audit_log_configs": [
+  "service": "sampleservice.googleapis.com"           "audit_log_configs": [
   {               "log_type": "DATA_READ",             },             {
   "log_type": "DATA_WRITE",               "exempted_members": [
-  "user:bar@gmail.com"               ]             }           ]         }
-  ]     }  For fooservice, this policy enables DATA_READ, DATA_WRITE and
-  ADMIN_READ logging. It also exempts foo@gmail.com from DATA_READ logging,
-  and bar@gmail.com from DATA_WRITE logging.
+  "user:aliya@example.com"               ]             }           ]         }
+  ]     }  For sampleservice, this policy enables DATA_READ, DATA_WRITE and
+  ADMIN_READ logging. It also exempts jose@example.com from DATA_READ logging,
+  and aliya@example.com from DATA_WRITE logging.
 
   Fields:
     auditLogConfigs: The configuration for logging of each type of permission.
@@ -48,10 +48,10 @@ class AuditConfig(_messages.Message):
 class AuditLogConfig(_messages.Message):
   r"""Provides the configuration for logging a type of permissions. Example:
   {       "audit_log_configs": [         {           "log_type": "DATA_READ",
-  "exempted_members": [             "user:foo@gmail.com"           ]
+  "exempted_members": [             "user:jose@example.com"           ]
   },         {           "log_type": "DATA_WRITE",         }       ]     }
   This enables 'DATA_READ' and 'DATA_WRITE' logging, while exempting
-  foo@gmail.com from DATA_READ logging.
+  jose@example.com from DATA_READ logging.
 
   Enums:
     LogTypeValueValuesEnum: The log type that this config enables.
@@ -84,23 +84,40 @@ class Binding(_messages.Message):
   r"""Associates `members` with a `role`.
 
   Fields:
-    condition: Unimplemented. The condition that is associated with this
-      binding. NOTE: an unsatisfied condition will not allow user access via
-      current binding. Different bindings, including their conditions, are
-      examined independently.
+    condition: The condition that is associated with this binding. NOTE: An
+      unsatisfied condition will not allow user access via current binding.
+      Different bindings, including their conditions, are examined
+      independently.
     members: Specifies the identities requesting access for a Cloud Platform
       resource. `members` can have the following values:  * `allUsers`: A
       special identifier that represents anyone who is    on the internet;
       with or without a Google account.  * `allAuthenticatedUsers`: A special
       identifier that represents anyone    who is authenticated with a Google
       account or a service account.  * `user:{emailid}`: An email address that
-      represents a specific Google    account. For example, `alice@gmail.com`
-      .   * `serviceAccount:{emailid}`: An email address that represents a
-      service    account. For example, `my-other-
+      represents a specific Google    account. For example,
+      `alice@example.com` .   * `serviceAccount:{emailid}`: An email address
+      that represents a service    account. For example, `my-other-
       app@appspot.gserviceaccount.com`.  * `group:{emailid}`: An email address
-      that represents a Google group.    For example, `admins@example.com`.
-      * `domain:{domain}`: The G Suite domain (primary) that represents all
-      the    users of that domain. For example, `google.com` or `example.com`.
+      that represents a Google group.    For example, `admins@example.com`.  *
+      `deleted:user:{emailid}?uid={uniqueid}`: An email address (plus unique
+      identifier) representing a user that has been recently deleted. For
+      example, `alice@example.com?uid=123456789012345678901`. If the user is
+      recovered, this value reverts to `user:{emailid}` and the recovered user
+      retains the role in the binding.  *
+      `deleted:serviceAccount:{emailid}?uid={uniqueid}`: An email address
+      (plus    unique identifier) representing a service account that has been
+      recently    deleted. For example,    `my-other-
+      app@appspot.gserviceaccount.com?uid=123456789012345678901`.    If the
+      service account is undeleted, this value reverts to
+      `serviceAccount:{emailid}` and the undeleted service account retains the
+      role in the binding.  * `deleted:group:{emailid}?uid={uniqueid}`: An
+      email address (plus unique    identifier) representing a Google group
+      that has been recently    deleted. For example,
+      `admins@example.com?uid=123456789012345678901`. If    the group is
+      recovered, this value reverts to `group:{emailid}` and the    recovered
+      group retains the role in the binding.   * `domain:{domain}`: The G
+      Suite domain (primary) that represents all the    users of that domain.
+      For example, `google.com` or `example.com`.
     role: Role that is assigned to `members`. For example, `roles/viewer`,
       `roles/editor`, or `roles/owner`.
   """
@@ -114,7 +131,7 @@ class CallFunctionRequest(_messages.Message):
   r"""Request for the `CallFunction` method.
 
   Fields:
-    data: Input to be passed to the function.
+    data: Required. Input to be passed to the function.
   """
 
   data = _messages.StringField(1)
@@ -140,10 +157,13 @@ class CallFunctionResponse(_messages.Message):
 class CloudFunction(_messages.Message):
   r"""Describes a Cloud Function that contains user computation executed in
   response to an event. It encapsulate function and triggers configurations.
-  LINT.IfChange
 
   Enums:
+    IngressSettingsValueValuesEnum: The ingress settings for the function,
+      controlling what traffic can reach it.
     StatusValueValuesEnum: Output only. Status of the function deployment.
+    VpcConnectorEgressSettingsValueValuesEnum: The egress settings for the
+      connector, controlling what traffic is diverted through it.
 
   Messages:
     EnvironmentVariablesValue: Environment variables that shall be available
@@ -166,10 +186,11 @@ class CloudFunction(_messages.Message):
       another service.
     httpsTrigger: An HTTPS endpoint type of source that can be triggered via
       URL.
+    ingressSettings: The ingress settings for the function, controlling what
+      traffic can reach it.
     labels: Labels associated with this Cloud Function.
     maxInstances: The limit on the maximum number of function instances that
-      may coexist at a given time. This feature is currently in alpha,
-      available only for whitelisted users.
+      may coexist at a given time.
     name: A user-defined name of the function. Function names must be unique
       globally and match pattern `projects/*/locations/*/functions/*`
     network: The VPC Network that this cloud function can connect to. It can
@@ -182,12 +203,13 @@ class CloudFunction(_messages.Message):
       the short name of the network.  This field is mutually exclusive with
       `vpc_connector` and will be replaced by it.  See [the VPC
       documentation](https://cloud.google.com/compute/docs/vpc) for more
-      information on connecting Cloud projects.  This feature is currently in
-      alpha, available only for whitelisted users.
-    runtime: The runtime in which the function is going to run. If empty,
-      defaults to Node.js 6.
+      information on connecting Cloud projects.
+    runtime: The runtime in which to run the function. Required when deploying
+      a new function, optional when updating an existing function. For a
+      complete list of possible choices, see the [`gcloud` command
+      reference](/sdk/gcloud/reference/functions/deploy#--runtime).
     serviceAccountEmail: The email of the function's service account. If
-      empty, defaults to {project_id}@appspot.gserviceaccount.com.
+      empty, defaults to `{project_id}@appspot.gserviceaccount.com`.
     sourceArchiveUrl: The Google Cloud Storage URL, starting with gs://,
       pointing to the zip archive which contains the function.
     sourceRepository: **Beta Feature**  The source repository where a function
@@ -207,16 +229,33 @@ class CloudFunction(_messages.Message):
       `projects/*/locations/*/connectors/*`  This field is mutually exclusive
       with `network` field and will eventually replace it.  See [the VPC
       documentation](https://cloud.google.com/compute/docs/vpc) for more
-      information on connecting Cloud projects.  This feature is currently in
-      alpha, available only for whitelisted users.
+      information on connecting Cloud projects.
+    vpcConnectorEgressSettings: The egress settings for the connector,
+      controlling what traffic is diverted through it.
   """
+
+  class IngressSettingsValueValuesEnum(_messages.Enum):
+    r"""The ingress settings for the function, controlling what traffic can
+    reach it.
+
+    Values:
+      INGRESS_SETTINGS_UNSPECIFIED: Unspecified.
+      ALLOW_ALL: Allow HTTP traffic from public and private sources.
+      ALLOW_INTERNAL_ONLY: Allow HTTP traffic from only private VPC sources.
+      ALLOW_INTERNAL_AND_GCLB: Allow HTTP traffic from private VPC sources and
+        through GCLB.
+    """
+    INGRESS_SETTINGS_UNSPECIFIED = 0
+    ALLOW_ALL = 1
+    ALLOW_INTERNAL_ONLY = 2
+    ALLOW_INTERNAL_AND_GCLB = 3
 
   class StatusValueValuesEnum(_messages.Enum):
     r"""Output only. Status of the function deployment.
 
     Values:
       CLOUD_FUNCTION_STATUS_UNSPECIFIED: Not specified. Invalid state.
-      ACTIVE: Function has been succesfully deployed and is serving.
+      ACTIVE: Function has been successfully deployed and is serving.
       OFFLINE: Function deployment failed and the function isn't serving.
       DEPLOY_IN_PROGRESS: Function is being created or updated.
       DELETE_IN_PROGRESS: Function is being deleted.
@@ -230,6 +269,21 @@ class CloudFunction(_messages.Message):
     DEPLOY_IN_PROGRESS = 3
     DELETE_IN_PROGRESS = 4
     UNKNOWN = 5
+
+  class VpcConnectorEgressSettingsValueValuesEnum(_messages.Enum):
+    r"""The egress settings for the connector, controlling what traffic is
+    diverted through it.
+
+    Values:
+      VPC_CONNECTOR_EGRESS_SETTINGS_UNSPECIFIED: Unspecified.
+      PRIVATE_RANGES_ONLY: Use the VPC Access Connector only for private IP
+        space from RFC1918.
+      ALL_TRAFFIC: Force the use of VPC Access Connector for all egress
+        traffic from the function.
+    """
+    VPC_CONNECTOR_EGRESS_SETTINGS_UNSPECIFIED = 0
+    PRIVATE_RANGES_ONLY = 1
+    ALL_TRAFFIC = 2
 
   @encoding.MapUnrecognizedFields('additionalProperties')
   class EnvironmentVariablesValue(_messages.Message):
@@ -288,20 +342,22 @@ class CloudFunction(_messages.Message):
   environmentVariables = _messages.MessageField('EnvironmentVariablesValue', 4)
   eventTrigger = _messages.MessageField('EventTrigger', 5)
   httpsTrigger = _messages.MessageField('HttpsTrigger', 6)
-  labels = _messages.MessageField('LabelsValue', 7)
-  maxInstances = _messages.IntegerField(8, variant=_messages.Variant.INT32)
-  name = _messages.StringField(9)
-  network = _messages.StringField(10)
-  runtime = _messages.StringField(11)
-  serviceAccountEmail = _messages.StringField(12)
-  sourceArchiveUrl = _messages.StringField(13)
-  sourceRepository = _messages.MessageField('SourceRepository', 14)
-  sourceUploadUrl = _messages.StringField(15)
-  status = _messages.EnumField('StatusValueValuesEnum', 16)
-  timeout = _messages.StringField(17)
-  updateTime = _messages.StringField(18)
-  versionId = _messages.IntegerField(19)
-  vpcConnector = _messages.StringField(20)
+  ingressSettings = _messages.EnumField('IngressSettingsValueValuesEnum', 7)
+  labels = _messages.MessageField('LabelsValue', 8)
+  maxInstances = _messages.IntegerField(9, variant=_messages.Variant.INT32)
+  name = _messages.StringField(10)
+  network = _messages.StringField(11)
+  runtime = _messages.StringField(12)
+  serviceAccountEmail = _messages.StringField(13)
+  sourceArchiveUrl = _messages.StringField(14)
+  sourceRepository = _messages.MessageField('SourceRepository', 15)
+  sourceUploadUrl = _messages.StringField(16)
+  status = _messages.EnumField('StatusValueValuesEnum', 17)
+  timeout = _messages.StringField(18)
+  updateTime = _messages.StringField(19)
+  versionId = _messages.IntegerField(20)
+  vpcConnector = _messages.StringField(21)
+  vpcConnectorEgressSettings = _messages.EnumField('VpcConnectorEgressSettingsValueValuesEnum', 22)
 
 
 class CloudfunctionsOperationsGetRequest(_messages.Message):
@@ -319,13 +375,18 @@ class CloudfunctionsOperationsListRequest(_messages.Message):
 
   Fields:
     filter: Required. A filter for matching the requested operations.<br><br>
-      The supported formats of <b>filter</b> are:<br> To query for specific
+      The supported formats of <b>filter</b> are:<br> To query for a specific
       function: <code>project:*,location:*,function:*</code><br> To query for
       all of the latest operations for a project:
       <code>project:*,latest:true</code>
     name: Must not be set.
-    pageSize: The standard list page size.
-    pageToken: The standard list page token.
+    pageSize: The maximum number of records that should be returned.<br>
+      Requested page size cannot exceed 100. If not set, the default page size
+      is 100.<br><br> Pagination is only supported when querying for a
+      specific function.
+    pageToken: Token identifying which result to start with, which is returned
+      by a previous list call.<br><br> Pagination is only supported when
+      querying for a specific function.
   """
 
   filter = _messages.StringField(1)
@@ -340,7 +401,7 @@ class CloudfunctionsProjectsLocationsFunctionsCallRequest(_messages.Message):
   Fields:
     callFunctionRequest: A CallFunctionRequest resource to be passed as the
       request body.
-    name: The name of the function to be called.
+    name: Required. The name of the function to be called.
   """
 
   callFunctionRequest = _messages.MessageField('CallFunctionRequest', 1)
@@ -352,8 +413,8 @@ class CloudfunctionsProjectsLocationsFunctionsCreateRequest(_messages.Message):
 
   Fields:
     cloudFunction: A CloudFunction resource to be passed as the request body.
-    location: The project and location in which the function should be
-      created, specified in the format `projects/*/locations/*`
+    location: Required. The project and location in which the function should
+      be created, specified in the format `projects/*/locations/*`
   """
 
   cloudFunction = _messages.MessageField('CloudFunction', 1)
@@ -364,7 +425,7 @@ class CloudfunctionsProjectsLocationsFunctionsDeleteRequest(_messages.Message):
   r"""A CloudfunctionsProjectsLocationsFunctionsDeleteRequest object.
 
   Fields:
-    name: The name of the function which should be deleted.
+    name: Required. The name of the function which should be deleted.
   """
 
   name = _messages.StringField(1, required=True)
@@ -405,19 +466,25 @@ class CloudfunctionsProjectsLocationsFunctionsGetIamPolicyRequest(_messages.Mess
   r"""A CloudfunctionsProjectsLocationsFunctionsGetIamPolicyRequest object.
 
   Fields:
+    options_requestedPolicyVersion: Optional. The policy format version to be
+      returned.  Valid values are 0, 1, and 3. Requests specifying an invalid
+      value will be rejected.  Requests for policies with any conditional
+      bindings must specify version 3. Policies without any conditional
+      bindings may specify any valid value or leave the field unset.
     resource: REQUIRED: The resource for which the policy is being requested.
       See the operation documentation for the appropriate value for this
       field.
   """
 
-  resource = _messages.StringField(1, required=True)
+  options_requestedPolicyVersion = _messages.IntegerField(1, variant=_messages.Variant.INT32)
+  resource = _messages.StringField(2, required=True)
 
 
 class CloudfunctionsProjectsLocationsFunctionsGetRequest(_messages.Message):
   r"""A CloudfunctionsProjectsLocationsFunctionsGetRequest object.
 
   Fields:
-    name: The name of the function which details should be obtained.
+    name: Required. The name of the function which details should be obtained.
   """
 
   name = _messages.StringField(1, required=True)
@@ -433,7 +500,10 @@ class CloudfunctionsProjectsLocationsFunctionsListRequest(_messages.Message):
       and that the system should return the next page of data.
     parent: The project and location from which the function should be listed,
       specified in the format `projects/*/locations/*` If you want to list
-      functions in all locations, use "-" in place of a location.
+      functions in all locations, use "-" in place of a location. When listing
+      functions in all locations, if one or more location(s) are unreachable,
+      the response will contain functions from all reachable locations along
+      with the names of any unreachable locations.
   """
 
   pageSize = _messages.IntegerField(1, variant=_messages.Variant.INT32)
@@ -635,10 +705,13 @@ class ListFunctionsResponse(_messages.Message):
     nextPageToken: If not empty, indicates that there may be more functions
       that match the request; this value should be passed in a new
       google.cloud.functions.v1.ListFunctionsRequest to get more functions.
+    unreachable: Locations that could not be reached. The response does not
+      include any functions from these locations.
   """
 
   functions = _messages.MessageField('CloudFunction', 1, repeated=True)
   nextPageToken = _messages.StringField(2)
+  unreachable = _messages.StringField(3, repeated=True)
 
 
 class ListLocationsResponse(_messages.Message):
@@ -778,7 +851,8 @@ class Operation(_messages.Message):
       if any.
     name: The server-assigned name, which is only unique within the same
       service that originally returns it. If you use the default HTTP mapping,
-      the `name` should have the format of `operations/some/unique/name`.
+      the `name` should be a resource name ending with
+      `operations/{unique_id}`.
     response: The normal response of the operation in case of success.  If the
       original method returns no data on success, such as `Delete`, the
       response is `google.protobuf.Empty`.  If the original method is standard
@@ -985,29 +1059,42 @@ class OperationMetadataV1Beta2(_messages.Message):
 
 
 class Policy(_messages.Message):
-  r"""Defines an Identity and Access Management (IAM) policy. It is used to
-  specify access control policies for Cloud Platform resources.   A `Policy`
-  consists of a list of `bindings`. A `binding` binds a list of `members` to a
-  `role`, where the members can be user accounts, Google groups, Google
-  domains, and service accounts. A `role` is a named list of permissions
-  defined by IAM.  **JSON Example**      {       "bindings": [         {
-  "role": "roles/owner",           "members": [
+  r"""An Identity and Access Management (IAM) policy, which specifies access
+  controls for Google Cloud resources.   A `Policy` is a collection of
+  `bindings`. A `binding` binds one or more `members` to a single `role`.
+  Members can be user accounts, service accounts, Google groups, and domains
+  (such as G Suite). A `role` is a named list of permissions; each `role` can
+  be an IAM predefined role or a user-created custom role.  Optionally, a
+  `binding` can specify a `condition`, which is a logical expression that
+  allows access to a resource only if the expression evaluates to `true`. A
+  condition can add constraints based on attributes of the request, the
+  resource, or both.  **JSON example:**      {       "bindings": [         {
+  "role": "roles/resourcemanager.organizationAdmin",           "members": [
   "user:mike@example.com",             "group:admins@example.com",
-  "domain:google.com",             "serviceAccount:my-other-
-  app@appspot.gserviceaccount.com"           ]         },         {
-  "role": "roles/viewer",           "members": ["user:sean@example.com"]
-  }       ]     }  **YAML Example**      bindings:     - members:       -
-  user:mike@example.com       - group:admins@example.com       -
-  domain:google.com       - serviceAccount:my-other-
-  app@appspot.gserviceaccount.com       role: roles/owner     - members:
-  - user:sean@example.com       role: roles/viewer   For a description of IAM
-  and its features, see the [IAM developer's
-  guide](https://cloud.google.com/iam/docs).
+  "domain:google.com",             "serviceAccount:my-project-
+  id@appspot.gserviceaccount.com"           ]         },         {
+  "role": "roles/resourcemanager.organizationViewer",           "members":
+  ["user:eve@example.com"],           "condition": {             "title":
+  "expirable access",             "description": "Does not grant access after
+  Sep 2020",             "expression": "request.time <
+  timestamp('2020-10-01T00:00:00.000Z')",           }         }       ],
+  "etag": "BwWWja0YfJA=",       "version": 3     }  **YAML example:**
+  bindings:     - members:       - user:mike@example.com       -
+  group:admins@example.com       - domain:google.com       - serviceAccount
+  :my-project-id@appspot.gserviceaccount.com       role:
+  roles/resourcemanager.organizationAdmin     - members:       -
+  user:eve@example.com       role: roles/resourcemanager.organizationViewer
+  condition:         title: expirable access         description: Does not
+  grant access after Sep 2020         expression: request.time <
+  timestamp('2020-10-01T00:00:00.000Z')     - etag: BwWWja0YfJA=     -
+  version: 3  For a description of IAM and its features, see the [IAM
+  documentation](https://cloud.google.com/iam/docs/).
 
   Fields:
     auditConfigs: Specifies cloud audit logging configuration for this policy.
-    bindings: Associates a list of `members` to a `role`. `bindings` with no
-      members will result in an error.
+    bindings: Associates a list of `members` to a `role`. Optionally, may
+      specify a `condition` that determines how and when the `bindings` are
+      applied. Each of the `bindings` must contain at least one member.
     etag: `etag` is used for optimistic concurrency control as a way to help
       prevent simultaneous updates of a policy from overwriting each other. It
       is strongly suggested that systems make use of the `etag` in the read-
@@ -1015,9 +1102,24 @@ class Policy(_messages.Message):
       conditions: An `etag` is returned in the response to `getIamPolicy`, and
       systems are expected to put that etag in the request to `setIamPolicy`
       to ensure that their change will be applied to the same version of the
-      policy.  If no `etag` is provided in the call to `setIamPolicy`, then
-      the existing policy is overwritten blindly.
-    version: Deprecated.
+      policy.  **Important:** If you use IAM Conditions, you must include the
+      `etag` field whenever you call `setIamPolicy`. If you omit this field,
+      then IAM allows you to overwrite a version `3` policy with a version `1`
+      policy, and all of the conditions in the version `3` policy are lost.
+    version: Specifies the format of the policy.  Valid values are `0`, `1`,
+      and `3`. Requests that specify an invalid value are rejected.  Any
+      operation that affects conditional role bindings must specify version
+      `3`. This requirement applies to the following operations:  * Getting a
+      policy that includes a conditional role binding * Adding a conditional
+      role binding to a policy * Changing a conditional role binding in a
+      policy * Removing any role binding, with or without a condition, from a
+      policy   that includes conditions  **Important:** If you use IAM
+      Conditions, you must include the `etag` field whenever you call
+      `setIamPolicy`. If you omit this field, then IAM allows you to overwrite
+      a version `3` policy with a version `1` policy, and all of the
+      conditions in the version `3` policy are lost.  If a policy does not
+      include any conditions, operations on that policy may specify any valid
+      version or leave the field unset.
   """
 
   auditConfigs = _messages.MessageField('AuditConfig', 1, repeated=True)
@@ -1144,37 +1246,10 @@ class StandardQueryParameters(_messages.Message):
 class Status(_messages.Message):
   r"""The `Status` type defines a logical error model that is suitable for
   different programming environments, including REST APIs and RPC APIs. It is
-  used by [gRPC](https://github.com/grpc). The error model is designed to be:
-  - Simple to use and understand for most users - Flexible enough to meet
-  unexpected needs  # Overview  The `Status` message contains three pieces of
-  data: error code, error message, and error details. The error code should be
-  an enum value of google.rpc.Code, but it may accept additional error codes
-  if needed.  The error message should be a developer-facing English message
-  that helps developers *understand* and *resolve* the error. If a localized
-  user-facing error message is needed, put the localized message in the error
-  details or localize it in the client. The optional error details may contain
-  arbitrary information about the error. There is a predefined set of error
-  detail types in the package `google.rpc` that can be used for common error
-  conditions.  # Language mapping  The `Status` message is the logical
-  representation of the error model, but it is not necessarily the actual wire
-  format. When the `Status` message is exposed in different client libraries
-  and different wire protocols, it can be mapped differently. For example, it
-  will likely be mapped to some exceptions in Java, but more likely mapped to
-  some error codes in C.  # Other uses  The error model and the `Status`
-  message can be used in a variety of environments, either with or without
-  APIs, to provide a consistent developer experience across different
-  environments.  Example uses of this error model include:  - Partial errors.
-  If a service needs to return partial errors to the client,     it may embed
-  the `Status` in the normal response to indicate the partial     errors.  -
-  Workflow errors. A typical workflow has multiple steps. Each step may
-  have a `Status` message for error reporting.  - Batch operations. If a
-  client uses batch request and batch response, the     `Status` message
-  should be used directly inside batch response, one for     each error sub-
-  response.  - Asynchronous operations. If an API call embeds asynchronous
-  operation     results in its response, the status of those operations should
-  be     represented directly using the `Status` message.  - Logging. If some
-  API errors are stored in logs, the message `Status` could     be used
-  directly after any stripping needed for security/privacy reasons.
+  used by [gRPC](https://github.com/grpc). Each `Status` message contains
+  three pieces of data: error code, error message, and error details.  You can
+  find out more about this error model and how to work with it in the [API
+  Design Guide](https://cloud.google.com/apis/design/errors).
 
   Messages:
     DetailsValueListEntry: A DetailsValueListEntry object.

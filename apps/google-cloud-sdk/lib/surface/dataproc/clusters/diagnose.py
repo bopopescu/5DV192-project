@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,17 +34,24 @@ from googlecloudsdk.core.util import retry
 class Diagnose(base.Command):
   """Run a detailed diagnostic on a cluster."""
 
-  @staticmethod
-  def Args(parser):
+  detailed_help = {
+      'EXAMPLES': """
+    To diagnose a cluster, run:
+
+      $ {command} my_cluster --region=us-central1
+"""
+  }
+
+  @classmethod
+  def Args(cls, parser):
     flags.AddTimeoutFlag(parser)
-    parser.add_argument(
-        'name',
-        help='The name of the cluster to diagnose.')
+    dataproc = dp.Dataproc(cls.ReleaseTrack())
+    flags.AddClusterResourceArg(parser, 'diagnose', dataproc.api_version)
 
   def Run(self, args):
     dataproc = dp.Dataproc(self.ReleaseTrack())
 
-    cluster_ref = util.ParseCluster(args.name, dataproc)
+    cluster_ref = args.CONCEPTS.cluster.Parse()
 
     request = dataproc.messages.DataprocProjectsRegionsClustersDiagnoseRequest(
         clusterName=cluster_ref.clusterName,

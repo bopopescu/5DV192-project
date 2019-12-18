@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -33,15 +33,27 @@ class DescribeProfile(base.Command):
   def Run(self, args):
     """See ssh_utils.BaseSSHCLICommand.Run."""
     oslogin_client = client.OsloginClient(self.ReleaseTrack())
-    user_email = properties.VALUES.core.account.Get()
+    user_email = (properties.VALUES.auth.impersonate_service_account.Get()
+                  or properties.VALUES.core.account.Get())
     return oslogin_client.GetLoginProfile(user_email)
 
 
 DescribeProfile.detailed_help = {
     'brief': 'Describe the OS Login profile for the current user.',
-    'DESCRIPTION': """\
+    'DESCRIPTION': """
       *{command}* displays the OS Login profile for the currently
       authenticated user, including Posix accounts and SSH keys
       associated with the user.
+      """,
+    'EXAMPLES': """
+      To show all of the information about your OS Login profile, including
+      POSIX account information and stored SSH public keys, run:
+
+        $ {command}
+
+      To show all of the information in a different format, such as JSON, use
+      the `--format` flag:
+
+        $ {command} --format=json
       """
 }

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ from googlecloudsdk.calliope import base
 
 
 class Connectors(base.Group):
-  """Manage connectors resource for VPC Access Service.
+  """Manage Serverless VPC Access Service connectors.
 
-  Commands for mangaging connectors resource for VPC Access Service.
+  Commands for managing connectors resource for VPC Access Service.
   """

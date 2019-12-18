@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -38,6 +38,13 @@ class GetSerialPortOutput(base.Command):
   from the virtual machine will be printed to standard output. This
   information can be useful for diagnostic purposes.
   """
+
+  detailed_help = {
+      'EXAMPLES': """
+  To get the output from instance's serial port, run:
+
+    $ {command} example-instance --zone=us-central1-b
+  """}
 
   @staticmethod
   def Args(parser):

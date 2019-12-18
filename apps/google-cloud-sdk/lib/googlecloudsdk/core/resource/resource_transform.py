@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -997,7 +997,7 @@ def TransformScope(r, *args):
   if not r:
     return ''
   # pylint: disable=too-many-function-args
-  r = urllib.parse.unquote(six.text_type(r))  # pytype: disable=module-attr
+  r = urllib.parse.unquote(six.text_type(r))
   # pylint: enable=too-many-function-args
   if '/' not in r:
     return r
@@ -1025,7 +1025,7 @@ def TransformSegment(r, index=-1, undefined=''):
   if not r:
     return undefined
   # pylint: disable=too-many-function-args
-  r = urllib.parse.unquote(six.text_type(r))  # pytype: disable=module-attr
+  r = urllib.parse.unquote(six.text_type(r))
   # pylint: enable=too-many-function-args
   segments = r.split('/')
   try:
@@ -1366,6 +1366,32 @@ def TransformYesNo(r, yes=None, no='No'):
   return (r if yes is None else yes) if r else no
 
 
+def TransformRegex(r, expression, does_match=None, nomatch=''):
+  """Returns does_match or r itself if r matches expression, nomatch otherwise.
+
+  Args:
+    r: A String.
+    expression: expression to apply to r.
+    does_match: If the string matches expression then return _does_match_
+      otherwise return the string itself if _does_match_ is not defined.
+    nomatch: Returns this value if the string does not match expression.
+
+  Returns:
+    does_match or r if r matches expression, nomatch otherwise.
+  """
+  if not r:
+    return nomatch
+
+  try:
+    if expression:
+      match_re = re.compile(expression)
+      if match_re.match(r):
+        return does_match or r
+  except (AttributeError, TypeError, ValueError):
+    pass  # Just return default
+
+  return nomatch
+
 # The builtin transforms.
 _BUILTIN_TRANSFORMS = {
     'always': TransformAlways,
@@ -1394,6 +1420,7 @@ _BUILTIN_TRANSFORMS = {
     'list': TransformList,
     'map': TransformMap,
     'notnull': TransformNotNull,
+    'regex': TransformRegex,
     'resolution': TransformResolution,
     'scope': TransformScope,
     'segment': TransformSegment,

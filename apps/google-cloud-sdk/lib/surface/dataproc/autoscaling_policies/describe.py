@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2019 Google Inc. All Rights Reserved.
+# Copyright 2019 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,11 +24,21 @@ from googlecloudsdk.command_lib.dataproc import flags
 
 
 class Describe(base.DescribeCommand):
-  """Describe an autoscaling policy."""
+  """Describe an autoscaling policy.
 
-  @staticmethod
-  def Args(parser):
-    flags.AddAutoscalingPolicyResourceArg(parser, 'describe', 'v1beta2')
+  ## EXAMPLES
+
+  The following command prints out the autoscaling policy
+  `example-autoscaling-policy`:
+
+    $ {command} example-autoscaling-policy
+  """
+
+  @classmethod
+  def Args(cls, parser):
+    dataproc = dp.Dataproc(cls.ReleaseTrack())
+    flags.AddAutoscalingPolicyResourceArg(parser, 'describe',
+                                          dataproc.api_version)
 
   def Run(self, args):
     dataproc = dp.Dataproc(self.ReleaseTrack())

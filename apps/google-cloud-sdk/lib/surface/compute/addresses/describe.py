@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ from googlecloudsdk.command_lib.compute.addresses import flags
 
 
 class Describe(base.DescribeCommand):
-  """Display detailed information about an address.
+  r"""Display detailed information about an address.
 
   *{command}* displays all data associated with an address in a project.
 
@@ -36,7 +36,8 @@ class Describe(base.DescribeCommand):
 
   To get details about a regional address, run:
 
-    $ {command} ADDRESS --region us-central1
+    $ {command} ADDRESS --region=us-central1
+
   """
 
   ADDRESS_ARG = None

@@ -27,13 +27,13 @@ class AndroidDevice(_messages.Message):
 
   Fields:
     androidModelId: Required. The id of the Android device to be used. Use the
-      EnvironmentDiscoveryService to get supported options.
+      TestEnvironmentDiscoveryService to get supported options.
     androidVersionId: Required. The id of the Android OS version to be used.
-      Use the EnvironmentDiscoveryService to get supported options.
+      Use the TestEnvironmentDiscoveryService to get supported options.
     locale: Required. The locale the test device used for testing. Use the
-      EnvironmentDiscoveryService to get supported options.
+      TestEnvironmentDiscoveryService to get supported options.
     orientation: Required. How the device is oriented during the test. Use the
-      EnvironmentDiscoveryService to get supported options.
+      TestEnvironmentDiscoveryService to get supported options.
   """
 
   androidModelId = _messages.StringField(1)
@@ -102,6 +102,7 @@ class AndroidInstrumentationTest(_messages.Message):
       android-test-orchestrator> for more information about Android Test
       Orchestrator.  If not set, the test will be run without the
       orchestrator.
+    shardingOption: The option to run tests in multiple shards in parallel.
     testApk: Required. The APK containing the test code to be executed.
     testPackageId: The java package for the test to be executed. The default
       value is determined by examining the application's manifest.
@@ -141,10 +142,11 @@ class AndroidInstrumentationTest(_messages.Message):
   appBundle = _messages.MessageField('AppBundle', 2)
   appPackageId = _messages.StringField(3)
   orchestratorOption = _messages.EnumField('OrchestratorOptionValueValuesEnum', 4)
-  testApk = _messages.MessageField('FileReference', 5)
-  testPackageId = _messages.StringField(6)
-  testRunnerClass = _messages.StringField(7)
-  testTargets = _messages.StringField(8, repeated=True)
+  shardingOption = _messages.MessageField('ShardingOption', 5)
+  testApk = _messages.MessageField('FileReference', 6)
+  testPackageId = _messages.StringField(7)
+  testRunnerClass = _messages.StringField(8)
+  testTargets = _messages.StringField(9, repeated=True)
 
 
 class AndroidMatrix(_messages.Message):
@@ -156,13 +158,15 @@ class AndroidMatrix(_messages.Message):
 
   Fields:
     androidModelIds: Required. The ids of the set of Android device to be
-      used. Use the EnvironmentDiscoveryService to get supported options.
+      used. Use the TestEnvironmentDiscoveryService to get supported options.
     androidVersionIds: Required. The ids of the set of Android OS version to
-      be used. Use the EnvironmentDiscoveryService to get supported options.
+      be used. Use the TestEnvironmentDiscoveryService to get supported
+      options.
     locales: Required. The set of locales the test device will enable for
-      testing. Use the EnvironmentDiscoveryService to get supported options.
+      testing. Use the TestEnvironmentDiscoveryService to get supported
+      options.
     orientations: Required. The set of orientations to test with. Use the
-      EnvironmentDiscoveryService to get supported options.
+      TestEnvironmentDiscoveryService to get supported options.
   """
 
   androidModelIds = _messages.StringField(1, repeated=True)
@@ -390,6 +394,8 @@ class ApkManifest(_messages.Message):
     minSdkVersion: Minimum API level required for the application to run.
     packageName: Full Java-style package name for this application, e.g.
       "com.example.foo".
+    targetSdkVersion: Specifies the API Level on which the application is
+      designed to run.
   """
 
   applicationLabel = _messages.StringField(1)
@@ -397,6 +403,7 @@ class ApkManifest(_messages.Message):
   maxSdkVersion = _messages.IntegerField(3, variant=_messages.Variant.INT32)
   minSdkVersion = _messages.IntegerField(4, variant=_messages.Variant.INT32)
   packageName = _messages.StringField(5)
+  targetSdkVersion = _messages.IntegerField(6, variant=_messages.Variant.INT32)
 
 
 class AppBundle(_messages.Message):
@@ -527,8 +534,8 @@ class DeviceFile(_messages.Message):
   r"""A single device file description.
 
   Fields:
-    obbFile: A reference to an opaque binary blob file
-    regularFile: A reference to a regular file
+    obbFile: A reference to an opaque binary blob file.
+    regularFile: A reference to a regular file.
   """
 
   obbFile = _messages.MessageField('ObbFile', 1)
@@ -611,8 +618,8 @@ class GetApkDetailsResponse(_messages.Message):
 
 
 class GoogleAuto(_messages.Message):
-  r"""Enables automatic Google account login. If set, the service will
-  automatically generate a Google test account and add it to the device,
+  r"""Enables automatic Google account login. If set, the service
+  automatically generates a Google test account and adds it to the device,
   before executing the test. Note that test accounts might be reused. Many
   applications show their full set of functionalities when an account is
   present on the device. Logging into the device with these generated accounts
@@ -654,13 +661,13 @@ class IosDevice(_messages.Message):
 
   Fields:
     iosModelId: Required. The id of the iOS device to be used. Use the
-      EnvironmentDiscoveryService to get supported options.
+      TestEnvironmentDiscoveryService to get supported options.
     iosVersionId: Required. The id of the iOS major software version to be
-      used. Use the EnvironmentDiscoveryService to get supported options.
+      used. Use the TestEnvironmentDiscoveryService to get supported options.
     locale: Required. The locale the test device used for testing. Use the
-      EnvironmentDiscoveryService to get supported options.
+      TestEnvironmentDiscoveryService to get supported options.
     orientation: Required. How the device is oriented during the test. Use the
-      EnvironmentDiscoveryService to get supported options.
+      TestEnvironmentDiscoveryService to get supported options.
   """
 
   iosModelId = _messages.StringField(1)
@@ -696,7 +703,7 @@ class IosDeviceList(_messages.Message):
 
 
 class IosModel(_messages.Message):
-  r"""A description of an iOS device tests may be run on.
+  r"""A description of an iOS device tests may be run on. Next tag: 11
 
   Enums:
     FormFactorValueValuesEnum: Whether this device is a phone, tablet,
@@ -711,6 +718,9 @@ class IosModel(_messages.Message):
       TestExecutionService.
     name: The human-readable name for this device model. Examples: "iPhone
       4s", "iPad Mini 2".
+    screenDensity: Screen density in DPI.
+    screenX: Screen size in the horizontal (X) dimension measured in pixels.
+    screenY: Screen size in the vertical (Y) dimension measured in pixels.
     supportedVersionIds: The set of iOS major software versions this device
       supports.
     tags: Tags for this dimension. Examples: "default", "preview",
@@ -735,8 +745,11 @@ class IosModel(_messages.Message):
   formFactor = _messages.EnumField('FormFactorValueValuesEnum', 2)
   id = _messages.StringField(3)
   name = _messages.StringField(4)
-  supportedVersionIds = _messages.StringField(5, repeated=True)
-  tags = _messages.StringField(6, repeated=True)
+  screenDensity = _messages.IntegerField(5, variant=_messages.Variant.INT32)
+  screenX = _messages.IntegerField(6, variant=_messages.Variant.INT32)
+  screenY = _messages.IntegerField(7, variant=_messages.Variant.INT32)
+  supportedVersionIds = _messages.StringField(8, repeated=True)
+  tags = _messages.StringField(9, repeated=True)
 
 
 class IosRuntimeConfiguration(_messages.Message):
@@ -751,8 +764,25 @@ class IosRuntimeConfiguration(_messages.Message):
   orientations = _messages.MessageField('Orientation', 2, repeated=True)
 
 
+class IosTestLoop(_messages.Message):
+  r"""A test of an iOS application that implements one or more game loop
+  scenarios. This test type accepts an archived application (.ipa file) and a
+  list of integer scenarios that will be executed on the app sequentially.
+
+  Fields:
+    appBundleId: Output only. The bundle id for the application under test.
+    appIpa: Required. The .ipa of the application to test.
+    scenarios: The list of scenarios that should be run during the test.
+      Defaults to the single scenario 0 if unspecified.
+  """
+
+  appBundleId = _messages.StringField(1)
+  appIpa = _messages.MessageField('FileReference', 2)
+  scenarios = _messages.IntegerField(3, repeated=True, variant=_messages.Variant.INT32)
+
+
 class IosTestSetup(_messages.Message):
-  r"""A description of how to set up an iOS device prior to a test.
+  r"""A description of how to set up an iOS device prior to running the test.
 
   Fields:
     networkProfile: The network traffic profile used for running the test.
@@ -800,8 +830,8 @@ class IosXcTest(_messages.Message):
       contents of the DerivedData/Build/Products directory. The .xctestrun
       file in this zip is ignored if the xctestrun field is specified.
     xcodeVersion: The Xcode version that should be used for the test. Use the
-      EnvironmentDiscoveryService to get supported options. Defaults to the
-      latest Xcode version Firebase Test Lab supports.
+      TestEnvironmentDiscoveryService to get supported options. Defaults to
+      the latest Xcode version Firebase Test Lab supports.
     xctestrun: An .xctestrun file that will override the .xctestrun file in
       the tests zip. Because the .xctestrun file contains environment
       variables along with test methods to run and/or ignore, this can be
@@ -833,6 +863,20 @@ class Locale(_messages.Message):
   name = _messages.StringField(2)
   region = _messages.StringField(3)
   tags = _messages.StringField(4, repeated=True)
+
+
+class ManualSharding(_messages.Message):
+  r"""Shards test cases into the specified groups of packages, classes, and/or
+  methods.  With manual sharding enabled, specifying test targets via
+  environment_variables or in InstrumentationTest is invalid.
+
+  Fields:
+    testTargetsForShard: Required. Group of packages, classes, and/or test
+      methods to be run for each shard. The number of shard_test_targets must
+      be >= 1 and <= 50.
+  """
+
+  testTargetsForShard = _messages.MessageField('TestTargetsForShard', 1, repeated=True)
 
 
 class NetworkConfiguration(_messages.Message):
@@ -931,6 +975,7 @@ class ResultStorage(_messages.Message):
 
   Fields:
     googleCloudStorage: Required.
+    resultsUrl: Output only. URL to the results in the Firebase Web Console.
     toolResultsExecution: Output only. The tool results execution that results
       are written to.
     toolResultsHistory: The tool results history that contains the tool
@@ -939,8 +984,9 @@ class ResultStorage(_messages.Message):
   """
 
   googleCloudStorage = _messages.MessageField('GoogleCloudStorage', 1)
-  toolResultsExecution = _messages.MessageField('ToolResultsExecution', 2)
-  toolResultsHistory = _messages.MessageField('ToolResultsHistory', 3)
+  resultsUrl = _messages.StringField(2)
+  toolResultsExecution = _messages.MessageField('ToolResultsExecution', 3)
+  toolResultsHistory = _messages.MessageField('ToolResultsHistory', 4)
 
 
 class RoboDirective(_messages.Message):
@@ -990,14 +1036,42 @@ class RoboStartingIntent(_messages.Message):
   r"""Message for specifying the start activities to crawl.
 
   Fields:
-    launcherActivity: A LauncherActivityIntent attribute.
-    startActivity: A StartActivityIntent attribute.
+    launcherActivity: An intent that starts the main launcher activity.
+    startActivity: An intent that starts an activity with specific details.
     timeout: Timeout in seconds for each intent.
   """
 
   launcherActivity = _messages.MessageField('LauncherActivityIntent', 1)
   startActivity = _messages.MessageField('StartActivityIntent', 2)
   timeout = _messages.StringField(3)
+
+
+class Shard(_messages.Message):
+  r"""Output only. Details about the shard.
+
+  Fields:
+    numShards: Output only. The total number of shards.
+    shardIndex: Output only. The index of the shard among all the shards.
+    testTargetsForShard: Output only. Test targets for each shard.
+  """
+
+  numShards = _messages.IntegerField(1, variant=_messages.Variant.INT32)
+  shardIndex = _messages.IntegerField(2, variant=_messages.Variant.INT32)
+  testTargetsForShard = _messages.MessageField('TestTargetsForShard', 3)
+
+
+class ShardingOption(_messages.Message):
+  r"""Options for enabling sharding.
+
+  Fields:
+    manualSharding: Shards test cases into the specified groups of packages,
+      classes, and/or methods.
+    uniformSharding: Uniformly shards test cases given a total number of
+      shards.
+  """
+
+  manualSharding = _messages.MessageField('ManualSharding', 1)
+  uniformSharding = _messages.MessageField('UniformSharding', 2)
 
 
 class StandardQueryParameters(_messages.Message):
@@ -1111,7 +1185,7 @@ class TestEnvironmentCatalog(_messages.Message):
 
 
 class TestExecution(_messages.Message):
-  r"""Specifies a single test to be executed in a single environment.
+  r"""A single test executed in a single environment.
 
   Enums:
     StateValueValuesEnum: Output only. Indicates the current progress of the
@@ -1119,9 +1193,10 @@ class TestExecution(_messages.Message):
 
   Fields:
     environment: Output only. How the host machine(s) are configured.
-    id: Output only. Unique id set by the backend.
+    id: Output only. Unique id set by the service.
     matrixId: Output only. Id of the containing TestMatrix.
     projectId: Output only. The cloud project that owns the test execution.
+    shard: Output only. Details about the shard.
     state: Output only. Indicates the current progress of the test execution
       (e.g., FINISHED).
     testDetails: Output only. Additional details about the running test.
@@ -1181,36 +1256,41 @@ class TestExecution(_messages.Message):
   id = _messages.StringField(2)
   matrixId = _messages.StringField(3)
   projectId = _messages.StringField(4)
-  state = _messages.EnumField('StateValueValuesEnum', 5)
-  testDetails = _messages.MessageField('TestDetails', 6)
-  testSpecification = _messages.MessageField('TestSpecification', 7)
-  timestamp = _messages.StringField(8)
-  toolResultsStep = _messages.MessageField('ToolResultsStep', 9)
+  shard = _messages.MessageField('Shard', 5)
+  state = _messages.EnumField('StateValueValuesEnum', 6)
+  testDetails = _messages.MessageField('TestDetails', 7)
+  testSpecification = _messages.MessageField('TestSpecification', 8)
+  timestamp = _messages.StringField(9)
+  toolResultsStep = _messages.MessageField('ToolResultsStep', 10)
 
 
 class TestMatrix(_messages.Message):
-  r"""A group of one or more TestExecutions, built by taking a product of
-  values over a pre-defined set of axes.
+  r"""TestMatrix captures all details about a test. It contains the
+  environment configuration, test specification, test executions and overall
+  state and outcome.
 
   Enums:
     InvalidMatrixDetailsValueValuesEnum: Output only. Describes why the matrix
       is considered invalid. Only useful for matrices in the INVALID state.
+    OutcomeSummaryValueValuesEnum: Output Only. The overall outcome of the
+      test. Only set when the test matrix state is FINISHED.
     StateValueValuesEnum: Output only. Indicates the current progress of the
-      test matrix (e.g., FINISHED).
+      test matrix.
 
   Fields:
     clientInfo: Information about the client which invoked the test.
-    environmentMatrix: Required. How the host machine(s) are configured.
+    environmentMatrix: Required. The devices the tests are being executed on.
     flakyTestAttempts: The number of times a TestExecution should be re-
       attempted if one or more of its test cases fail for any reason. The
       maximum number of reruns allowed is 10.  Default is 0, which implies no
       reruns.
     invalidMatrixDetails: Output only. Describes why the matrix is considered
       invalid. Only useful for matrices in the INVALID state.
+    outcomeSummary: Output Only. The overall outcome of the test. Only set
+      when the test matrix state is FINISHED.
     projectId: The cloud project that owns the test matrix.
     resultStorage: Required. Where the results for the matrix are written.
-    state: Output only. Indicates the current progress of the test matrix
-      (e.g., FINISHED).
+    state: Output only. Indicates the current progress of the test matrix.
     testExecutions: Output only. The list of test executions that the service
       creates for this matrix.
     testMatrixId: Output only. Unique id set by the service.
@@ -1252,8 +1332,13 @@ class TestMatrix(_messages.Message):
         not allowed.
       INVALID_ROBO_DIRECTIVES: There is a conflict in the provided
         robo_directives.
-      TEST_LOOP_INTENT_FILTER_NOT_FOUND: There there is no test loop intent
-        filter, or the one that is given is not formatted correctly.
+      INVALID_RESOURCE_NAME: There is at least one invalid resource name in
+        the provided robo directives
+      INVALID_DIRECTIVE_ACTION: Invalid definition of action in the robo
+        directives (e.g. a click or ignore action includes an input text
+        field)
+      TEST_LOOP_INTENT_FILTER_NOT_FOUND: There is no test loop intent filter,
+        or the one that is given is not formatted correctly.
       SCENARIO_LABEL_NOT_DECLARED: The request contains a scenario label that
         was not declared in the manifest.
       SCENARIO_LABEL_MALFORMED: There was an error when parsing a label's
@@ -1278,8 +1363,11 @@ class TestMatrix(_messages.Message):
         be parsed.
       TEST_ONLY_APK: The APK is marked as "testOnly". Deprecated and not
         currently used.
-      MALFORMED_IPA: The input IPA could not be parsed. Deprecated and not
-        currently used.
+      MALFORMED_IPA: The input IPA could not be parsed.
+      MISSING_URL_SCHEME: The application doesn't register the game loop URL
+        scheme.
+      MALFORMED_APP_BUNDLE: The iOS application bundle (.app) couldn't be
+        processed.
       NO_CODE_APK: APK contains no code. See also
         https://developer.android.com/guide/topics/manifest/application-
         element.html#code
@@ -1304,26 +1392,52 @@ class TestMatrix(_messages.Message):
     NO_LAUNCHER_ACTIVITY = 12
     FORBIDDEN_PERMISSIONS = 13
     INVALID_ROBO_DIRECTIVES = 14
-    TEST_LOOP_INTENT_FILTER_NOT_FOUND = 15
-    SCENARIO_LABEL_NOT_DECLARED = 16
-    SCENARIO_LABEL_MALFORMED = 17
-    SCENARIO_NOT_DECLARED = 18
-    DEVICE_ADMIN_RECEIVER = 19
-    MALFORMED_XC_TEST_ZIP = 20
-    BUILT_FOR_IOS_SIMULATOR = 21
-    NO_TESTS_IN_XC_TEST_ZIP = 22
-    USE_DESTINATION_ARTIFACTS = 23
-    TEST_NOT_APP_HOSTED = 24
-    PLIST_CANNOT_BE_PARSED = 25
-    TEST_ONLY_APK = 26
-    MALFORMED_IPA = 27
-    NO_CODE_APK = 28
-    INVALID_INPUT_APK = 29
-    INVALID_APK_PREVIEW_SDK = 30
+    INVALID_RESOURCE_NAME = 15
+    INVALID_DIRECTIVE_ACTION = 16
+    TEST_LOOP_INTENT_FILTER_NOT_FOUND = 17
+    SCENARIO_LABEL_NOT_DECLARED = 18
+    SCENARIO_LABEL_MALFORMED = 19
+    SCENARIO_NOT_DECLARED = 20
+    DEVICE_ADMIN_RECEIVER = 21
+    MALFORMED_XC_TEST_ZIP = 22
+    BUILT_FOR_IOS_SIMULATOR = 23
+    NO_TESTS_IN_XC_TEST_ZIP = 24
+    USE_DESTINATION_ARTIFACTS = 25
+    TEST_NOT_APP_HOSTED = 26
+    PLIST_CANNOT_BE_PARSED = 27
+    TEST_ONLY_APK = 28
+    MALFORMED_IPA = 29
+    MISSING_URL_SCHEME = 30
+    MALFORMED_APP_BUNDLE = 31
+    NO_CODE_APK = 32
+    INVALID_INPUT_APK = 33
+    INVALID_APK_PREVIEW_SDK = 34
+
+  class OutcomeSummaryValueValuesEnum(_messages.Enum):
+    r"""Output Only. The overall outcome of the test. Only set when the test
+    matrix state is FINISHED.
+
+    Values:
+      OUTCOME_SUMMARY_UNSPECIFIED: Do not use. For proto versioning only.
+      SUCCESS: The test matrix run was successful, for instance: - All the
+        test cases passed. - Robo did not detect a crash of the application
+        under test.
+      FAILURE: A run failed, for instance: - One or more test case failed. - A
+        test timed out. - The application under test crashed.
+      INCONCLUSIVE: Something unexpected happened. The run should still be
+        considered unsuccessful but this is likely a transient problem and re-
+        running the test might be successful.
+      SKIPPED: All tests were skipped, for instance: - All device
+        configurations were incompatible.
+    """
+    OUTCOME_SUMMARY_UNSPECIFIED = 0
+    SUCCESS = 1
+    FAILURE = 2
+    INCONCLUSIVE = 3
+    SKIPPED = 4
 
   class StateValueValuesEnum(_messages.Enum):
-    r"""Output only. Indicates the current progress of the test matrix (e.g.,
-    FINISHED).
+    r"""Output only. Indicates the current progress of the test matrix.
 
     Values:
       TEST_STATE_UNSPECIFIED: Do not use.  For proto versioning only.
@@ -1370,13 +1484,14 @@ class TestMatrix(_messages.Message):
   environmentMatrix = _messages.MessageField('EnvironmentMatrix', 2)
   flakyTestAttempts = _messages.IntegerField(3, variant=_messages.Variant.INT32)
   invalidMatrixDetails = _messages.EnumField('InvalidMatrixDetailsValueValuesEnum', 4)
-  projectId = _messages.StringField(5)
-  resultStorage = _messages.MessageField('ResultStorage', 6)
-  state = _messages.EnumField('StateValueValuesEnum', 7)
-  testExecutions = _messages.MessageField('TestExecution', 8, repeated=True)
-  testMatrixId = _messages.StringField(9)
-  testSpecification = _messages.MessageField('TestSpecification', 10)
-  timestamp = _messages.StringField(11)
+  outcomeSummary = _messages.EnumField('OutcomeSummaryValueValuesEnum', 5)
+  projectId = _messages.StringField(6)
+  resultStorage = _messages.MessageField('ResultStorage', 7)
+  state = _messages.EnumField('StateValueValuesEnum', 8)
+  testExecutions = _messages.MessageField('TestExecution', 9, repeated=True)
+  testMatrixId = _messages.StringField(10)
+  testSpecification = _messages.MessageField('TestSpecification', 11)
+  timestamp = _messages.StringField(12)
 
 
 class TestSetup(_messages.Message):
@@ -1419,16 +1534,10 @@ class TestSpecification(_messages.Message):
     androidInstrumentationTest: An Android instrumentation test.
     androidRoboTest: An Android robo test.
     androidTestLoop: An Android Application with a Test Loop.
-    autoGoogleLogin: Enables automatic Google account login. If set, the
-      service will automatically generate a Google test account and add it to
-      the device, before executing the test. Note that test accounts might be
-      reused. Many applications show their full set of functionalities when an
-      account is present on the device. Logging into the device with these
-      generated accounts allows testing more functionalities. Default is
-      false.
-    disablePerformanceMetrics: Disables performance metrics recording; may
+    disablePerformanceMetrics: Disables performance metrics recording. May
       reduce test latency.
-    disableVideoRecording: Disables video recording; may reduce test latency.
+    disableVideoRecording: Disables video recording. May reduce test latency.
+    iosTestLoop: An iOS application with a test loop.
     iosTestSetup: Test setup requirements for iOS.
     iosXcTest: An iOS XCTest, via an .xctestrun file.
     testSetup: Test setup requirements for Android e.g. files to install,
@@ -1440,13 +1549,27 @@ class TestSpecification(_messages.Message):
   androidInstrumentationTest = _messages.MessageField('AndroidInstrumentationTest', 1)
   androidRoboTest = _messages.MessageField('AndroidRoboTest', 2)
   androidTestLoop = _messages.MessageField('AndroidTestLoop', 3)
-  autoGoogleLogin = _messages.BooleanField(4)
-  disablePerformanceMetrics = _messages.BooleanField(5)
-  disableVideoRecording = _messages.BooleanField(6)
+  disablePerformanceMetrics = _messages.BooleanField(4)
+  disableVideoRecording = _messages.BooleanField(5)
+  iosTestLoop = _messages.MessageField('IosTestLoop', 6)
   iosTestSetup = _messages.MessageField('IosTestSetup', 7)
   iosXcTest = _messages.MessageField('IosXcTest', 8)
   testSetup = _messages.MessageField('TestSetup', 9)
   testTimeout = _messages.StringField(10)
+
+
+class TestTargetsForShard(_messages.Message):
+  r"""Test targets for a shard.
+
+  Fields:
+    testTargets: Group of packages, classes, and/or test methods to be run for
+      each shard. The targets need to be specified in AndroidJUnitRunner
+      argument format. For example, "package com.my.packages" "class
+      com.my.package.MyClass".  The number of shard_test_targets must be
+      greater than 0.
+  """
+
+  testTargets = _messages.StringField(1, repeated=True)
 
 
 class TestingProjectsTestMatricesCancelRequest(_messages.Message):
@@ -1584,6 +1707,20 @@ class TrafficRule(_messages.Message):
   delay = _messages.StringField(3)
   packetDuplicationRatio = _messages.FloatField(4, variant=_messages.Variant.FLOAT)
   packetLossRatio = _messages.FloatField(5, variant=_messages.Variant.FLOAT)
+
+
+class UniformSharding(_messages.Message):
+  r"""Uniformly shards test cases given a total number of shards.  For
+  Instrumentation test, it will be translated to "-e numShard" "-e shardIndex"
+  AndroidJUnitRunner arguments. With uniform sharding enabled, specifying
+  these sharding arguments via environment_variables is invalid.
+
+  Fields:
+    numShards: Required. Total number of shards. The number must be >= 1 and
+      <= 50.
+  """
+
+  numShards = _messages.IntegerField(1, variant=_messages.Variant.INT32)
 
 
 class XcodeVersion(_messages.Message):

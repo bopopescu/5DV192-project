@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2016 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
+import textwrap
+
 from googlecloudsdk.api_lib.bigtable import util as bigtable_util
 from googlecloudsdk.calliope import base
 from googlecloudsdk.command_lib.bigtable import arguments
@@ -27,6 +29,25 @@ from googlecloudsdk.core import resources
 
 class CreateInstance(base.CreateCommand):
   """Create a new Bigtable instance."""
+
+  detailed_help = {
+      'EXAMPLES':
+          textwrap.dedent("""\
+          To create an instance with id `my-instance-id` with a cluster located
+          in `us-east1-c`, run:
+
+            $ {command} my-instance-id --display-name="My Instance" --cluster=my-cluster-id --cluster-zone=us-east1-c
+
+          To create a `DEVELOPMENT` instance, run:
+
+            $ {command} my-dev-instance --display-name="Dev Instance" --instance-type=DEVELOPMENT --cluster=my-cluster-id --cluster-zone=us-east1-c
+
+          To create an instance with `HDD` storage and `10` nodes, run:
+
+            $ {command} my-hdd-instance --display-name="HDD Instance" --cluster-storage-type=HDD --cluster=my-cluster-id --cluster-zone=us-east1-c
+
+          """),
+  }
 
   @staticmethod
   def Args(parser):
@@ -80,7 +101,7 @@ class CreateInstance(base.CreateCommand):
     result = cli.projects_instances.Create(msg)
     operation_ref = bigtable_util.GetOperationRef(result)
 
-    if args.async:
+    if args.async_:
       log.CreatedResource(
           operation_ref,
           kind='bigtable instance {0}'.format(ref.Name()),

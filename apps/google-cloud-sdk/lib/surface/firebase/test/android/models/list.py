@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,6 +22,23 @@ from __future__ import unicode_literals
 from googlecloudsdk.api_lib.firebase.test import util
 from googlecloudsdk.calliope import base
 from googlecloudsdk.core import log
+
+
+DETAILED_HELP = {
+    'EXAMPLES': """
+    To list all models which are available for testing, run:
+
+      $ {command}
+
+    To list all models made by Samsung, run:
+
+      $ {command} --filter=Samsung
+
+    To list all virtual device models, run:
+
+      $ {command} --filter=virtual
+    """,
+}
 
 
 class List(base.ListCommand):
@@ -72,3 +89,6 @@ class List(base.ListCommand):
 
     if self._epilog:
       log.warning(self._epilog)
+
+
+List.detailed_help = DETAILED_HELP

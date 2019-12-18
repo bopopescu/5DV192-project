@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 import enum
 
 
-BASE_URL = 'https://www.googleapis.com/compute/beta/'
+BASE_URL = 'https://compute.googleapis.com/compute/beta/'
 DOCS_URL = 'https://developers.google.com/compute/docs/reference/latest/'
 
 
@@ -36,13 +36,6 @@ class Collections(enum.Enum):
       'projects/{project}/regions/{region}/addresses/{address}',
       {},
       [u'project', u'region', u'address'],
-      True
-  )
-  ALLOCATIONS = (
-      'allocations',
-      'projects/{project}/zones/{zone}/allocations/{allocation}',
-      {},
-      [u'project', u'zone', u'allocation'],
       True
   )
   AUTOSCALERS = (
@@ -215,6 +208,13 @@ class Collections(enum.Enum):
       [u'project', u'license'],
       True
   )
+  MACHINEIMAGES = (
+      'machineImages',
+      'projects/{project}/global/machineImages/{machineImage}',
+      {},
+      [u'project', u'machineImage'],
+      True
+  )
   MACHINETYPES = (
       'machineTypes',
       'projects/{project}/zones/{zone}/machineTypes/{machineType}',
@@ -265,6 +265,13 @@ class Collections(enum.Enum):
       [u'project', u'zone', u'nodeType'],
       True
   )
+  PACKETMIRRORINGS = (
+      'packetMirrorings',
+      'projects/{project}/regions/{region}/packetMirrorings/{packetMirroring}',
+      {},
+      [u'project', u'region', u'packetMirroring'],
+      True
+  )
   PROJECTS = (
       'projects',
       'projects/{project}',
@@ -307,6 +314,13 @@ class Collections(enum.Enum):
       [u'project', u'region', u'disk'],
       True
   )
+  REGIONHEALTHCHECKS = (
+      'regionHealthChecks',
+      'projects/{project}/regions/{region}/healthChecks/{healthCheck}',
+      {},
+      [u'project', u'region', u'healthCheck'],
+      True
+  )
   REGIONINSTANCEGROUPMANAGERS = (
       'regionInstanceGroupManagers',
       'projects/{project}/regions/{region}/instanceGroupManagers/'
@@ -329,11 +343,48 @@ class Collections(enum.Enum):
       [u'project', u'region', u'operation'],
       True
   )
+  REGIONSSLCERTIFICATES = (
+      'regionSslCertificates',
+      'projects/{project}/regions/{region}/sslCertificates/{sslCertificate}',
+      {},
+      [u'project', u'region', u'sslCertificate'],
+      True
+  )
+  REGIONTARGETHTTPPROXIES = (
+      'regionTargetHttpProxies',
+      'projects/{project}/regions/{region}/targetHttpProxies/'
+      '{targetHttpProxy}',
+      {},
+      [u'project', u'region', u'targetHttpProxy'],
+      True
+  )
+  REGIONTARGETHTTPSPROXIES = (
+      'regionTargetHttpsProxies',
+      'projects/{project}/regions/{region}/targetHttpsProxies/'
+      '{targetHttpsProxy}',
+      {},
+      [u'project', u'region', u'targetHttpsProxy'],
+      True
+  )
+  REGIONURLMAPS = (
+      'regionUrlMaps',
+      'projects/{project}/regions/{region}/urlMaps/{urlMap}',
+      {},
+      [u'project', u'region', u'urlMap'],
+      True
+  )
   REGIONS = (
       'regions',
       'projects/{project}/regions/{region}',
       {},
       [u'project', u'region'],
+      True
+  )
+  RESERVATIONS = (
+      'reservations',
+      'projects/{project}/zones/{zone}/reservations/{reservation}',
+      {},
+      [u'project', u'zone', u'reservation'],
       True
   )
   RESOURCEPOLICIES = (

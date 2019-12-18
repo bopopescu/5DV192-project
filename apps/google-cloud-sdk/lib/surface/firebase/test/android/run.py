@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ from googlecloudsdk.api_lib.firebase.test.android import arg_manager
 from googlecloudsdk.api_lib.firebase.test.android import matrix_creator
 from googlecloudsdk.calliope import base
 from googlecloudsdk.core import log
+import six
 
 
 @base.UnicodeIsSupported
@@ -39,7 +40,7 @@ class _BaseRun(object):
 
   detailed_help = {
       'DESCRIPTION':
-          """\
+          """
           *{command}* invokes and monitors tests in Firebase Test Lab for
           Android.
 
@@ -70,35 +71,31 @@ class _BaseRun(object):
           more information about argument files.
           """,
 
-      'EXAMPLES': """\
+      'EXAMPLES': """
           To invoke a robo test lasting 100 seconds against the default device
           environment, run:
 
-            $ {command} --app APP_APK --timeout 100s
+            $ {command} --app=APP_APK --timeout=100s
 
           When specifying devices to test against, the preferred method is to
           use the --device flag. For example, to invoke a robo test against a
           virtual, generic MDPI Nexus device in landscape orientation, run:
 
-            $ {command} --app APP_APK \
---device model=NexusLowRes,orientation=landscape
+            $ {command} --app=APP_APK --device=model=NexusLowRes,orientation=landscape
 
           To invoke an instrumentation test against a physical Nexus 6 device
           (MODEL_ID: shamu) which is running Android API level 21 in French, run:
 
-            $ {command} --app APP_APK --test TEST_APK \
---device model=shamu,version=21,locale=fr
+            $ {command} --app=APP_APK --test=TEST_APK --device=model=shamu,version=21,locale=fr
 
           To test against multiple devices, specify --device more than once:
 
-            $ {command} --app APP_APK --test TEST_APK \
---device model=Nexus4,version=19 --device model=Nexus4,version=21 \
---device model=NexusLowRes,version=25
+            $ {command} --app=APP_APK --test=TEST_APK --device=model=Nexus4,version=19 --device=model=Nexus4,version=21 --device=model=NexusLowRes,version=25
 
           To invoke a robo test on an Android App Bundle, pass the .aab file
           using the --app flag.
 
-            $ {command} --app bundle.aab
+            $ {command} --app=bundle.aab
 
           You may also use the legacy dimension flags (deprecated) to specify
           which devices to use. Firebase Test Lab will run tests against every
@@ -111,10 +108,7 @@ class _BaseRun(object):
           comprehensive matrix of virtual and physical devices, OS versions,
           locales and orientations, run:
 
-            $ {command} --app APP_APK --timeout 5m \
---device-ids=shamu,NexusLowRes,Nexus5,g3,zeroflte \
---os-version-ids=19,21,22,23,24,25 \
---locales=en_GB,es,fr,ru,zh --orientations=portrait,landscape
+            $ {command} --app=APP_APK --timeout=5m --device-ids=shamu,NexusLowRes,Nexus5,g3,zeroflte --os-version-ids=19,21,22,23,24,25 --locales=en_GB,es,fr,ru,zh --orientations=portrait,landscape
 
           The above command will generate a test matrix with a total of 300 test
           executions, but only the subset of executions with valid dimension
@@ -143,15 +137,13 @@ class _BaseRun(object):
           For example, to run a robo test using a specific Google Cloud Storage
           location to hold the raw test results, run:
 
-            $ {command} --app APP_APK --results-bucket=gs://my-bucket \
---results-dir=my/test/results/<unique-value>
+            $ {command} --app=APP_APK --results-bucket=gs://my-bucket --results-dir=my/test/results/<unique-value>
 
           To run an instrumentation test and specify a custom name under which
           the history of your tests will be collected and displayed in the
           Firebase console, run:
 
-            $ {command} --app APP_APK --test TEST_APK \
---results-history-name='Excelsior App Test History'
+            $ {command} --app=APP_APK --test=TEST_APK --results-history-name='Excelsior App Test History'
 
           Argument Files
 
@@ -183,7 +175,7 @@ class _BaseRun(object):
         - a list of TestOutcome tuples (if ToolResults are available).
         - a URL string pointing to the user's results in ToolResults or GCS.
     """
-    if args.async and not args.IsSpecified('format'):
+    if args.async_ and not args.IsSpecified('format'):
       args.format = """
           value(format(
             'Final test results will be available at [{0}].', [])
@@ -212,7 +204,9 @@ class _BaseRun(object):
     additional_apks = getattr(args, 'additional_apks', None) or []
     for additional_apk in additional_apks:
       bucket_ops.UploadFileToGcs(additional_apk)
-    for other_files in getattr(args, 'other-files', None) or {}:
+    # TODO(b/137674653): add a unit test that would have caught the typo fixed
+    #  by CL/249286171.
+    for other_files in getattr(args, 'other_files', None) or {}:
       bucket_ops.UploadFileToGcs(other_files)
     bucket_ops.LogGcsResultsUrl()
 
@@ -223,7 +217,7 @@ class _BaseRun(object):
 
     matrix = matrix_creator.CreateMatrix(args, self.context, history_id,
                                          bucket_ops.gcs_results_root,
-                                         str(self.ReleaseTrack()))
+                                         six.text_type(self.ReleaseTrack()))
     monitor = matrix_ops.MatrixMonitor(
         matrix.testMatrixId, args.type, self.context)
 
@@ -233,7 +227,7 @@ class _BaseRun(object):
 
       url = tool_results.CreateToolResultsUiUrl(project, tr_ids)
       log.status.Print('')
-      if args.async:
+      if args.async_:
         return url
       log.status.Print('Test results will be streamed to [{0}].'.format(url))
 
@@ -251,12 +245,7 @@ class _BaseRun(object):
     self.exit_code = exit_code.ExitCodeFromRollupOutcome(
         summary_fetcher.FetchMatrixRollupOutcome(),
         tr_messages.Outcome.SummaryValueValuesEnum)
-    if args.num_flaky_test_attempts > 0:
-      if not args.IsSpecified('format'):
-        args.format = util.FLAKY_ATTEMPTS_OUTCOMES_FORMAT
-      return summary_fetcher.CreateFlakyAttemptsMatrixOutcomeSummary()
-    else:
-      return summary_fetcher.CreateMatrixOutcomeSummary()
+    return summary_fetcher.CreateMatrixOutcomeSummaryUsingEnvironments()
 
 
 @base.ReleaseTracks(base.ReleaseTrack.GA)
@@ -283,7 +272,7 @@ class RunBeta(_BaseRun, base.ListCommand):
     arg_util.AddMatrixArgs(parser)
     arg_util.AddAndroidTestArgs(parser)
     arg_util.AddAndroidBetaArgs(parser)
-    arg_util.AddCommonBetaTestRunArgs(parser)
+    arg_util.AddBetaArgs(parser)
     base.URI_FLAG.RemoveFromParser(parser)
     parser.display_info.AddFormat(util.OUTCOMES_FORMAT)
 

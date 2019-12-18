@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2016 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import six
 
 _INIT_FILE_CONTENT = """\
 # -*- coding: utf-8 -*- #
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2016 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -125,9 +125,14 @@ def _MakeApiMap(root_package, api_config):
             .format(api_name))
       has_default = has_default or default
       version = api_config.get('version', api_version)
-      client_classpath = '.'.join([
-          '_'.join([api_name, version, 'client']),
-          _CamelCase(api_name) + _CamelCase(version)])
+      # TODO(b/142448542) Roll back the hacky
+      if api_name == 'admin' and version == 'v1':
+        client_classpath = 'admin_v1_client.AdminDirectoryV1'
+      else:
+        client_classpath = '.'.join([
+            '_'.join([api_name, version, 'client']),
+            _CamelCase(api_name) + _CamelCase(version)])
+
       messages_modulepath = '_'.join([api_name, version, 'messages'])
       api_versions_map[api_version] = api_def.APIDef(
           '.'.join([root_package, api_name, api_version]),

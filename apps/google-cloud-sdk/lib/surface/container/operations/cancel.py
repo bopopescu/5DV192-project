@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2016 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -95,4 +95,10 @@ An example of "point of no-return" in the context of Upgrade operations would
 be if all the nodes have been upgraded but the operation hasn't been marked as
 complete.
 """,
+    'EXAMPLES':
+        """\
+        To cancel an operation, run:
+
+          $ {command} sample-operation-id
+        """,
 }

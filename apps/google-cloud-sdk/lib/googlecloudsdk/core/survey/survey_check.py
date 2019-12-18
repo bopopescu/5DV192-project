@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -48,13 +48,16 @@ class PromptRecord(object):
         self.ReadPromptRecordFromFile())
     self._dirty = False
 
+  def CacheFileExists(self):
+    return os.path.isfile(self._cache_file_path)
+
   def ReadPromptRecordFromFile(self):
     """Loads the prompt record from the cache file.
 
     Returns:
        Two-value tuple (last_prompt_time, last_answer_survey_time)
     """
-    if not os.path.isfile(self._cache_file_path):
+    if not self.CacheFileExists():
       return None, None
 
     try:
@@ -120,7 +123,7 @@ class SurveyPrompter(object):
      _prompt_message: str, the prompting message.
   """
   _DEFAULT_SURVEY_PROMPT_MSG = ('To take a quick anonymous survey, run:\n'
-                                '  $ gcloud alpha survey')
+                                '  $ gcloud survey')
 
   def __init__(self, msg=_DEFAULT_SURVEY_PROMPT_MSG):
     self._prompt_record = PromptRecord()
@@ -145,6 +148,13 @@ class SurveyPrompter(object):
     return True
 
   def PromptForSurvey(self):
+    """Prompts user for survey if user should be prompted."""
+    # Don't prompt users right after users install gcloud. Wait for 14 days.
+    if not self._prompt_record.CacheFileExists():
+      with self._prompt_record as pr:
+        pr.last_prompt_time = time.time()
+      return
+
     if self.ShouldPrompt():
       self.PrintPromptMsg()
       with self._prompt_record as pr:

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2013 Google Inc. All Rights Reserved.
+# Copyright 2013 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -48,13 +48,18 @@ GOOGLE_GCE_METADATA_ACCOUNT_URI = (
 GOOGLE_GCE_METADATA_ZONE_URI = (
     GOOGLE_GCE_METADATA_URI + '/instance/zone')
 
+GOOGLE_GCE_METADATA_ID_TOKEN_URI = (
+    GOOGLE_GCE_METADATA_URI + '/instance/service-accounts/default/identity?'
+    'audience={audience}&format={format}&licenses={licenses}')
+
+
 GOOGLE_GCE_METADATA_HEADERS = {'Metadata-Flavor': 'Google'}
 
 
 def ReadNoProxy(uri):
   """Opens a URI with metadata headers, without a proxy, and reads all data.."""
   request = urllib.request.Request(
-      uri, headers=GOOGLE_GCE_METADATA_HEADERS)  # pytype: disable=wrong-arg-types
+      uri, headers=GOOGLE_GCE_METADATA_HEADERS)
   timeout_property = (
       properties.VALUES.compute.gce_metadata_read_timeout_sec.GetInt())
   result = urllib.request.build_opener(urllib.request.ProxyHandler({})).open(

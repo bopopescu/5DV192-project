@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -59,13 +59,13 @@ def GetSchedulingNodeAffinityListFromArgs(args, messages):
                 node_affinity.key, node_affinity.all_unrecognized_fields()))
 
       node_affinities.append(node_affinity)
-  if args.node_group:
+  if args.IsSpecified('node_group'):
     node_affinities.append(
         messages.SchedulingNodeAffinity(
             key='compute.googleapis.com/node-group-name',
             operator=operator_enum.IN,
             values=[args.node_group]))
-  if args.node:
+  if args.IsSpecified('node'):
     node_affinities.append(
         messages.SchedulingNodeAffinity(
             key='compute.googleapis.com/node-name',

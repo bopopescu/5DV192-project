@@ -59,11 +59,7 @@ operations, which allow
 you to manage message acknowledgments in bulk. That is, you can set the
 acknowledgment state of messages in an existing subscription to the state
 captured by a snapshot.
-<br><br>
-<b>BETA:</b> This feature is part of a beta release. This API might be
-changed in backward-incompatible ways and is not recommended for production
-use. It is not subject to any SLA or deprecation policy.<br><br>
-If the snapshot already exists, returns `ALREADY_EXISTS`.
+<br><br>If the snapshot already exists, returns `ALREADY_EXISTS`.
 If the requested subscription doesn't exist, returns `NOT_FOUND`.
 If the backlog in the subscription is too old -- and the resulting snapshot
 would expire in less than 1 hour -- then `FAILED_PRECONDITION` is returned.
@@ -71,9 +67,10 @@ See also the `Snapshot.expire_time` field. If the name is not provided in
 the request, the server will assign a random
 name for this snapshot on the same project as the subscription, conforming
 to the
-[resource name format](https://cloud.google.com/pubsub/docs/admin#resource_names).
-The generated name is populated in the returned Snapshot object. Note that
-for REST API requests, you must specify a name in the request.
+[resource name
+format](https://cloud.google.com/pubsub/docs/admin#resource_names). The
+generated name is populated in the returned Snapshot object. Note that for
+REST API requests, you must specify a name in the request.
 
       Args:
         request: (PubsubProjectsSnapshotsCreateRequest) input message
@@ -106,9 +103,6 @@ operations, which allow
 you to manage message acknowledgments in bulk. That is, you can set the
 acknowledgment state of messages in an existing subscription to the state
 captured by a snapshot.<br><br>
-<b>BETA:</b> This feature is part of a beta release. This API might be
-changed in backward-incompatible ways and is not recommended for production
-use. It is not subject to any SLA or deprecation policy.
 When the snapshot is deleted, all messages retained in the snapshot
 are immediately dropped. After a snapshot is deleted, a new one may be
 created with the same name, but the new one has no association with the old
@@ -143,10 +137,7 @@ snapshot or its subscription, unless the same subscription is specified.
 <a href="https://cloud.google.com/pubsub/docs/replay-overview">Seek</a>
 operations, which allow you to manage message acknowledgments in bulk. That
 is, you can set the acknowledgment state of messages in an existing
-subscription to the state captured by a snapshot.<br><br>
-<b>BETA:</b> This feature is part of a beta release. This API might be
-changed in backward-incompatible ways and is not recommended for production
-use. It is not subject to any SLA or deprecation policy.
+subscription to the state captured by a snapshot.
 
       Args:
         request: (PubsubProjectsSnapshotsGetRequest) input message
@@ -193,7 +184,7 @@ set.
         method_id=u'pubsub.projects.snapshots.getIamPolicy',
         ordered_params=[u'resource'],
         path_params=[u'resource'],
-        query_params=[],
+        query_params=[u'options_requestedPolicyVersion'],
         relative_path=u'v1/{+resource}:getIamPolicy',
         request_field='',
         request_type_name=u'PubsubProjectsSnapshotsGetIamPolicyRequest',
@@ -207,10 +198,7 @@ set.
 operations, which allow
 you to manage message acknowledgments in bulk. That is, you can set the
 acknowledgment state of messages in an existing subscription to the state
-captured by a snapshot.<br><br>
-<b>BETA:</b> This feature is part of a beta release. This API might be
-changed in backward-incompatible ways and is not recommended for production
-use. It is not subject to any SLA or deprecation policy.
+captured by a snapshot.
 
       Args:
         request: (PubsubProjectsSnapshotsListRequest) input message
@@ -242,11 +230,7 @@ use. It is not subject to any SLA or deprecation policy.
 operations, which allow
 you to manage message acknowledgments in bulk. That is, you can set the
 acknowledgment state of messages in an existing subscription to the state
-captured by a snapshot.<br><br>
-<b>BETA:</b> This feature is part of a beta release. This API might be
-changed in backward-incompatible ways and is not recommended for production
-use. It is not subject to any SLA or deprecation policy.
-Note that certain properties of a snapshot are not modifiable.
+captured by a snapshot.
 
       Args:
         request: (PubsubProjectsSnapshotsPatchRequest) input message
@@ -275,6 +259,8 @@ Note that certain properties of a snapshot are not modifiable.
     def SetIamPolicy(self, request, global_params=None):
       r"""Sets the access control policy on the specified resource. Replaces any.
 existing policy.
+
+Can return Public Errors: NOT_FOUND, INVALID_ARGUMENT and PERMISSION_DENIED
 
       Args:
         request: (PubsubProjectsSnapshotsSetIamPolicyRequest) input message
@@ -386,9 +372,10 @@ If the corresponding topic doesn't exist, returns `NOT_FOUND`.
 If the name is not provided in the request, the server will assign a random
 name for this subscription on the same project as the topic, conforming
 to the
-[resource name format](https://cloud.google.com/pubsub/docs/admin#resource_names).
-The generated name is populated in the returned Subscription object.
-Note that for REST API requests, you must specify a name in the request.
+[resource name
+format](https://cloud.google.com/pubsub/docs/admin#resource_names). The
+generated name is populated in the returned Subscription object. Note that
+for REST API requests, you must specify a name in the request.
 
       Args:
         request: (Subscription) input message
@@ -493,7 +480,7 @@ set.
         method_id=u'pubsub.projects.subscriptions.getIamPolicy',
         ordered_params=[u'resource'],
         path_params=[u'resource'],
-        query_params=[],
+        query_params=[u'options_requestedPolicyVersion'],
         relative_path=u'v1/{+resource}:getIamPolicy',
         request_field='',
         request_type_name=u'PubsubProjectsSubscriptionsGetIamPolicyRequest',
@@ -656,10 +643,7 @@ operations, which allow
 you to manage message acknowledgments in bulk. That is, you can set the
 acknowledgment state of messages in an existing subscription to the state
 captured by a snapshot. Note that both the subscription and the snapshot
-must be on the same topic.<br><br>
-<b>BETA:</b> This feature is part of a beta release. This API might be
-changed in backward-incompatible ways and is not recommended for production
-use. It is not subject to any SLA or deprecation policy.
+must be on the same topic.
 
       Args:
         request: (PubsubProjectsSubscriptionsSeekRequest) input message
@@ -688,6 +672,8 @@ use. It is not subject to any SLA or deprecation policy.
     def SetIamPolicy(self, request, global_params=None):
       r"""Sets the access control policy on the specified resource. Replaces any.
 existing policy.
+
+Can return Public Errors: NOT_FOUND, INVALID_ARGUMENT and PERMISSION_DENIED
 
       Args:
         request: (PubsubProjectsSubscriptionsSetIamPolicyRequest) input message
@@ -762,10 +748,7 @@ may "fail open" without warning.
 operations, which allow
 you to manage message acknowledgments in bulk. That is, you can set the
 acknowledgment state of messages in an existing subscription to the state
-captured by a snapshot.<br><br>
-<b>BETA:</b> This feature is part of a beta release. This API might be
-changed in backward-incompatible ways and is not recommended for production
-use. It is not subject to any SLA or deprecation policy.
+captured by a snapshot.
 
       Args:
         request: (PubsubProjectsTopicsSnapshotsListRequest) input message
@@ -946,7 +929,7 @@ set.
         method_id=u'pubsub.projects.topics.getIamPolicy',
         ordered_params=[u'resource'],
         path_params=[u'resource'],
-        query_params=[],
+        query_params=[u'options_requestedPolicyVersion'],
         relative_path=u'v1/{+resource}:getIamPolicy',
         request_field='',
         request_type_name=u'PubsubProjectsTopicsGetIamPolicyRequest',
@@ -1040,6 +1023,8 @@ does not exist.
     def SetIamPolicy(self, request, global_params=None):
       r"""Sets the access control policy on the specified resource. Replaces any.
 existing policy.
+
+Can return Public Errors: NOT_FOUND, INVALID_ARGUMENT and PERMISSION_DENIED
 
       Args:
         request: (PubsubProjectsTopicsSetIamPolicyRequest) input message

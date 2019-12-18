@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,11 +34,11 @@ _DETAILED_HELP = {
         To list connections of a network called `my-network` to a service called
         `your-service`, run:
 
-          $ {command} --network my-network --service your-service
+          $ {command} --network=my-network --service=your-service
 
         To list connections of a network against all services, run:
 
-          $ {command} --network my-network
+          $ {command} --network=my-network
 
         """,
 }

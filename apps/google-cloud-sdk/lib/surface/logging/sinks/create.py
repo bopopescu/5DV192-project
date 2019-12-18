@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,11 +20,13 @@ from __future__ import division
 from __future__ import unicode_literals
 
 from googlecloudsdk.api_lib.logging import util
+from googlecloudsdk.calliope import arg_parsers
 from googlecloudsdk.calliope import base
 from googlecloudsdk.core import log
 from googlecloudsdk.core.console import console_io
 
 
+@base.ReleaseTracks(base.ReleaseTrack.GA, base.ReleaseTrack.BETA)
 class Create(base.CreateCommand):
   # pylint: disable=line-too-long
   """Creates a sink.
@@ -73,7 +75,7 @@ class Create(base.CreateCommand):
         '--include-children', required=False, action='store_true',
         help=('Whether to export logs from all child projects and folders. '
               'Only applies to sinks for organizations and folders.'))
-    util.AddNonProjectArgs(parser, 'Create a sink')
+    util.AddParentArgs(parser, 'Create a sink')
     parser.display_info.AddCacheUpdater(None)
 
   def CreateSink(self, parent, sink_data):
@@ -84,16 +86,7 @@ class Create(base.CreateCommand):
             parent=parent, logSink=messages.LogSink(**sink_data),
             uniqueWriterIdentity=True))
 
-  def Run(self, args):
-    """This is what gets called when the user runs this command.
-
-    Args:
-      args: an argparse namespace. All the arguments that were provided to this
-        command invocation.
-
-    Returns:
-      The created sink with its destination.
-    """
+  def _Run(self, args, is_alpha=False):
     if not args.log_filter:
       # Attempt to create a sink with an empty filter.
       console_io.PromptContinue(
@@ -112,13 +105,121 @@ class Create(base.CreateCommand):
         'includeChildren': args.include_children
     }
 
+    dlp_options = {}
+    if is_alpha:
+      if args.IsSpecified('dlp_inspect_template'):
+        dlp_options['inspectTemplateName'] = args.dlp_inspect_template
+      if args.IsSpecified('dlp_deidentify_template'):
+        dlp_options['deidentifyTemplateName'] = args.dlp_deidentify_template
+      if dlp_options:
+        sink_data['dlpOptions'] = dlp_options
+
+      if args.IsSpecified('use_partitioned_tables'):
+        bigquery_options = {}
+        bigquery_options['usePartitionedTables'] = args.use_partitioned_tables
+        sink_data['bigqueryOptions'] = bigquery_options
+
+      if args.IsSpecified('exclusion'):
+        sink_data['exclusions'] = args.exclusion
+
+      if args.IsSpecified('description'):
+        sink_data['description'] = args.description
+
+      if args.IsSpecified('disabled'):
+        sink_data['disabled'] = args.disabled
+
     result = self.CreateSink(util.GetParentFromArgs(args), sink_data)
 
     log.CreatedResource(sink_ref)
     self._epilog_result_destination = result.destination
     self._epilog_writer_identity = result.writerIdentity
+    self._epilog_is_dlp_sink = bool(dlp_options)
     return result
+
+  def Run(self, args):
+    """This is what gets called when the user runs this command.
+
+    Args:
+      args: an argparse namespace. All the arguments that were provided to this
+        command invocation.
+
+    Returns:
+      The created sink with its destination.
+    """
+    return self._Run(args)
 
   def Epilog(self, unused_resources_were_displayed):
     util.PrintPermissionInstructions(self._epilog_result_destination,
-                                     self._epilog_writer_identity)
+                                     self._epilog_writer_identity,
+                                     self._epilog_is_dlp_sink)
+
+
+# pylint: disable=missing-docstring
+@base.ReleaseTracks(base.ReleaseTrack.ALPHA)
+class CreateAlpha(Create):
+  __doc__ = Create.__doc__
+
+  @staticmethod
+  def Args(parser):
+    Create.Args(parser)
+    dlp_group = parser.add_argument_group(
+        help='Settings for Cloud DLP enabled sinks.')
+    dlp_group.add_argument(
+        '--dlp-inspect-template',
+        required=True,
+        help=('Relative path to a Cloud DLP inspection template resource. For '
+              'example "projects/my-project/inspectTemplates/my-template" or '
+              '"organizations/my-org/inspectTemplates/my-template".'))
+    dlp_group.add_argument(
+        '--dlp-deidentify-template',
+        required=True,
+        help=('Relative path to a Cloud DLP de-identification template '
+              'resource. For example '
+              '"projects/my-project/deidentifyTemplates/my-template" or '
+              '"organizations/my-org/deidentifyTemplates/my-template".'))
+
+    bigquery_group = parser.add_argument_group(
+        help='Settings for sink exporting data to BigQuery.')
+    bigquery_group.add_argument(
+        '--use-partitioned-tables', required=False, action='store_true',
+        help=('If specified, use BigQuery\'s partitioned tables. By default, '
+              'Logging creates dated tables based on the log entries\' '
+              'timestamps, e.g. \'syslog_20170523\'. Partitioned tables remove '
+              'the suffix and special query syntax '
+              '(https://cloud.google.com/bigquery/docs/'
+              'querying-partitioned-tables) must be used.'))
+
+    parser.add_argument(
+        '--exclusion', action='append',
+        type=arg_parsers.ArgDict(
+            spec={
+                'name': str,
+                'description': str,
+                'filter': str,
+                'disabled': bool
+            },
+            required_keys=['name', 'filter']
+        ),
+        help=('Specify an exclusion filter for a log entry that is not to be '
+              'exported. This flag can be repeated.\n\n'
+              'The `name` and `filter` attributes are required. The following '
+              'keys are accepted:\n\n'
+              '*name*::: An identifier, such as "load-balancer-exclusion". '
+              'Identifiers are limited to 100 characters and can include only '
+              'letters, digits, underscores, hyphens, and periods.\n\n'
+              '*description*::: A description of this exclusion.\n\n'
+              '*filter*::: An advanced log filter that matches the log entries '
+              'to be excluded.\n\n'
+              '*disabled*::: If this exclusion should be disabled and not '
+              'exclude the log entries.'))
+
+    parser.add_argument(
+        '--description',
+        help='Description of the sink.')
+
+    parser.add_argument(
+        '--disabled', action='store_true',
+        help=('Sink will be disabled. Disabled sinks do not export logs.'))
+
+  def Run(self, args):
+    return self._Run(args, is_alpha=True)

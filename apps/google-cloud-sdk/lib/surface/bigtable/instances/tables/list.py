@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,23 +18,12 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
+from apitools.base.py import list_pager
+from googlecloudsdk.api_lib.bigtable import util
 from googlecloudsdk.calliope import base
 from googlecloudsdk.command_lib.bigtable import arguments
-from googlecloudsdk.core import exceptions as core_exceptions
 from googlecloudsdk.core import properties
 from googlecloudsdk.core import resources
-from google.bigtable.admin.v2 import bigtable_table_admin_pb2
-
-
-try:
-  # TODO(b/33587054): Make sure grpc is available on all platforms.
-  # pylint: disable=g-import-not-at-top
-  # pylint: disable=g-bad-import-order
-  from googlecloudsdk.core import grpc_util
-  from google.bigtable.admin.v2 import bigtable_table_admin_pb2_grpc
-  grpc_available = True
-except ImportError:
-  grpc_available = False
 
 
 def _GetUriFunction(resource):
@@ -44,8 +33,18 @@ def _GetUriFunction(resource):
   return table_ref.SelfLink()
 
 
+@base.ReleaseTracks(base.ReleaseTrack.BETA, base.ReleaseTrack.ALPHA)
 class ListInstances(base.ListCommand):
-  """List existing Bigtable instance tables."""
+  """List existing Bigtable instance tables.
+
+  ## EXAMPLES
+  To list all tables in an instance, run:
+
+    $ {command} --instances=INSTANCE_NAME
+
+  To list all tables in several instances, run:
+    $ {command} --instances=INSTANCE_NAME1,INSTANCE_NAME2
+  """
 
   @staticmethod
   def Args(parser):
@@ -57,25 +56,28 @@ class ListInstances(base.ListCommand):
         """)
     parser.display_info.AddUriFunc(_GetUriFunction)
     arguments.ArgAdder(parser).AddInstance(
-        positional=False, required=False, multiple=True)
+        positional=False, required=True, multiple=True)
 
   def Run(self, args):
-    if not grpc_available:
-      raise core_exceptions.InternalError('gRPC is not available')
+    cli = util.GetAdminClient()
+    msgs = util.GetAdminMessages()
 
-    channel = grpc_util.MakeSecureChannel('bigtableadmin.googleapis.com:443')
-    instances = args.instances or ['-']
+    instances = args.instances
+    results = []
     for instance in instances:
       instance_ref = resources.REGISTRY.Parse(
           instance,
           params={'projectsId': properties.VALUES.core.project.GetOrFail},
           collection='bigtableadmin.projects.instances')
 
-      stub = bigtable_table_admin_pb2_grpc.BigtableTableAdminStub(channel)
+      request = msgs.BigtableadminProjectsInstancesTablesListRequest(
+          parent=instance_ref.RelativeName(),)
 
-      request = bigtable_table_admin_pb2.ListTablesRequest(
-          parent=instance_ref.RelativeName(),
-      )
+      for table in list_pager.YieldFromList(
+          cli.projects_instances_tables,
+          request,
+          field='tables',
+          batch_size_attribute=None):
+        results.append(table)
 
-      return grpc_util.YieldFromList(
-          stub.ListTables, request, items_field='tables')
+    return results

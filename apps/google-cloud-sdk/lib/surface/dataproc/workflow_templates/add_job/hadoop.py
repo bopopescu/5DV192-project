@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,15 +24,29 @@ from googlecloudsdk.calliope import base
 from googlecloudsdk.command_lib.dataproc import workflow_templates
 from googlecloudsdk.command_lib.dataproc.jobs import hadoop
 
+DETAILED_HELP = {
+    'EXAMPLES':
+        """\
+      To add a Hadoop job executing 'my-jar' jar driver with 'my-class'
+      containing the main method to a the workflow template
+      'my-workflow-template' in region 'us-central1' with step-id 'my-step-id'
+      , run:
+
+        $ {command} --step-id=my-step_id --class=my-class --jar=my-jar.jar --workflow-template=my-workflow-template --region=us-central1
+      """,
+}
+
 
 class Hadoop(hadoop.HadoopBase, base.Command):
   """Add a hadoop job to the workflow template."""
-  # TODO(b/65846493): clear up multiple inheritance structure all jobs command
 
-  @staticmethod
-  def Args(parser):
+  detailed_help = DETAILED_HELP
+
+  @classmethod
+  def Args(cls, parser):
     hadoop.HadoopBase.Args(parser)
-    workflow_templates.AddWorkflowTemplatesArgs(parser)
+    dataproc = dp.Dataproc(cls.ReleaseTrack())
+    workflow_templates.AddWorkflowTemplatesArgs(parser, dataproc.api_version)
     driver_group = parser.add_mutually_exclusive_group(required=True)
     util.AddJvmDriverFlags(driver_group)
 

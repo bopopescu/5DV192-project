@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -39,14 +39,15 @@ class Delete(base.DeleteCommand):
     $ {command} job_id
   """
 
-  @staticmethod
-  def Args(parser):
-    flags.AddJobFlag(parser, 'delete')
+  @classmethod
+  def Args(cls, parser):
+    dataproc = dp.Dataproc(cls.ReleaseTrack())
+    flags.AddJobResourceArg(parser, 'delete', dataproc.api_version)
 
   def Run(self, args):
     dataproc = dp.Dataproc(self.ReleaseTrack())
 
-    job_ref = util.ParseJob(args.job, dataproc)
+    job_ref = args.CONCEPTS.job.Parse()
     request = dataproc.messages.DataprocProjectsRegionsJobsDeleteRequest(
         projectId=job_ref.projectId,
         region=job_ref.region,

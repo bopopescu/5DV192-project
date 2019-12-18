@@ -17,8 +17,8 @@ class AllocateIdsRequest(_messages.Message):
   r"""The request for Datastore.AllocateIds.
 
   Fields:
-    keys: A list of keys with incomplete key paths for which to allocate IDs.
-      No key may be reserved/read-only.
+    keys: Required. A list of keys with incomplete key paths for which to
+      allocate IDs. No key may be reserved/read-only.
   """
 
   keys = _messages.MessageField('Key', 1, repeated=True)
@@ -153,7 +153,8 @@ class DatastoreProjectsAllocateIdsRequest(_messages.Message):
   Fields:
     allocateIdsRequest: A AllocateIdsRequest resource to be passed as the
       request body.
-    projectId: The ID of the project against which to make the request.
+    projectId: Required. The ID of the project against which to make the
+      request.
   """
 
   allocateIdsRequest = _messages.MessageField('AllocateIdsRequest', 1)
@@ -166,7 +167,8 @@ class DatastoreProjectsBeginTransactionRequest(_messages.Message):
   Fields:
     beginTransactionRequest: A BeginTransactionRequest resource to be passed
       as the request body.
-    projectId: The ID of the project against which to make the request.
+    projectId: Required. The ID of the project against which to make the
+      request.
   """
 
   beginTransactionRequest = _messages.MessageField('BeginTransactionRequest', 1)
@@ -178,7 +180,8 @@ class DatastoreProjectsCommitRequest(_messages.Message):
 
   Fields:
     commitRequest: A CommitRequest resource to be passed as the request body.
-    projectId: The ID of the project against which to make the request.
+    projectId: Required. The ID of the project against which to make the
+      request.
   """
 
   commitRequest = _messages.MessageField('CommitRequest', 1)
@@ -192,7 +195,7 @@ class DatastoreProjectsExportRequest(_messages.Message):
     googleDatastoreAdminV1ExportEntitiesRequest: A
       GoogleDatastoreAdminV1ExportEntitiesRequest resource to be passed as the
       request body.
-    projectId: Project ID against which to make the request.
+    projectId: Required. Project ID against which to make the request.
   """
 
   googleDatastoreAdminV1ExportEntitiesRequest = _messages.MessageField('GoogleDatastoreAdminV1ExportEntitiesRequest', 1)
@@ -206,10 +209,22 @@ class DatastoreProjectsImportRequest(_messages.Message):
     googleDatastoreAdminV1ImportEntitiesRequest: A
       GoogleDatastoreAdminV1ImportEntitiesRequest resource to be passed as the
       request body.
-    projectId: Project ID against which to make the request.
+    projectId: Required. Project ID against which to make the request.
   """
 
   googleDatastoreAdminV1ImportEntitiesRequest = _messages.MessageField('GoogleDatastoreAdminV1ImportEntitiesRequest', 1)
+  projectId = _messages.StringField(2, required=True)
+
+
+class DatastoreProjectsIndexesDeleteRequest(_messages.Message):
+  r"""A DatastoreProjectsIndexesDeleteRequest object.
+
+  Fields:
+    indexId: The resource ID of the index to delete.
+    projectId: Project ID against which to make the request.
+  """
+
+  indexId = _messages.StringField(1, required=True)
   projectId = _messages.StringField(2, required=True)
 
 
@@ -248,7 +263,8 @@ class DatastoreProjectsLookupRequest(_messages.Message):
 
   Fields:
     lookupRequest: A LookupRequest resource to be passed as the request body.
-    projectId: The ID of the project against which to make the request.
+    projectId: Required. The ID of the project against which to make the
+      request.
   """
 
   lookupRequest = _messages.MessageField('LookupRequest', 1)
@@ -305,7 +321,8 @@ class DatastoreProjectsReserveIdsRequest(_messages.Message):
   r"""A DatastoreProjectsReserveIdsRequest object.
 
   Fields:
-    projectId: The ID of the project against which to make the request.
+    projectId: Required. The ID of the project against which to make the
+      request.
     reserveIdsRequest: A ReserveIdsRequest resource to be passed as the
       request body.
   """
@@ -318,7 +335,8 @@ class DatastoreProjectsRollbackRequest(_messages.Message):
   r"""A DatastoreProjectsRollbackRequest object.
 
   Fields:
-    projectId: The ID of the project against which to make the request.
+    projectId: Required. The ID of the project against which to make the
+      request.
     rollbackRequest: A RollbackRequest resource to be passed as the request
       body.
   """
@@ -331,7 +349,8 @@ class DatastoreProjectsRunQueryRequest(_messages.Message):
   r"""A DatastoreProjectsRunQueryRequest object.
 
   Fields:
-    projectId: The ID of the project against which to make the request.
+    projectId: Required. The ID of the project against which to make the
+      request.
     runQueryRequest: A RunQueryRequest resource to be passed as the request
       body.
   """
@@ -585,16 +604,17 @@ class GoogleDatastoreAdminV1ExportEntitiesRequest(_messages.Message):
     entityFilter: Description of what data from the project is included in the
       export.
     labels: Client-assigned labels.
-    outputUrlPrefix: Location for the export metadata and data files.  The
-      full resource URL of the external storage location. Currently, only
-      Google Cloud Storage is supported. So output_url_prefix should be of the
-      form: `gs://BUCKET_NAME[/NAMESPACE_PATH]`, where `BUCKET_NAME` is the
-      name of the Cloud Storage bucket and `NAMESPACE_PATH` is an optional
-      Cloud Storage namespace path (this is not a Cloud Datastore namespace).
-      For more information about Cloud Storage namespace paths, see [Object
-      name considerations](https://cloud.google.com/storage/docs/naming
-      #object-considerations).  The resulting files will be nested deeper than
-      the specified URL prefix. The final output URL will be provided in the
+    outputUrlPrefix: Required. Location for the export metadata and data
+      files.  The full resource URL of the external storage location.
+      Currently, only Google Cloud Storage is supported. So output_url_prefix
+      should be of the form: `gs://BUCKET_NAME[/NAMESPACE_PATH]`, where
+      `BUCKET_NAME` is the name of the Cloud Storage bucket and
+      `NAMESPACE_PATH` is an optional Cloud Storage namespace path (this is
+      not a Cloud Datastore namespace). For more information about Cloud
+      Storage namespace paths, see [Object name
+      considerations](https://cloud.google.com/storage/docs/naming#object-
+      considerations).  The resulting files will be nested deeper than the
+      specified URL prefix. The final output URL will be provided in the
       google.datastore.admin.v1.ExportEntitiesResponse.output_url field. That
       value should be used for subsequent ImportEntities operations.  By
       nesting the data files deeper, the same Cloud Storage bucket can be used
@@ -676,9 +696,9 @@ class GoogleDatastoreAdminV1ImportEntitiesRequest(_messages.Message):
       used in creating the export, otherwise a FAILED_PRECONDITION error will
       be returned. If no filter is specified then all entities from the export
       are imported.
-    inputUrl: The full resource URL of the external storage location.
-      Currently, only Google Cloud Storage is supported. So input_url should
-      be of the form:
+    inputUrl: Required. The full resource URL of the external storage
+      location. Currently, only Google Cloud Storage is supported. So
+      input_url should be of the form:
       `gs://BUCKET_NAME[/NAMESPACE_PATH]/OVERALL_EXPORT_METADATA_FILE`, where
       `BUCKET_NAME` is the name of the Cloud Storage bucket, `NAMESPACE_PATH`
       is an optional Cloud Storage namespace path (this is not a Cloud
@@ -724,24 +744,24 @@ class GoogleDatastoreAdminV1Index(_messages.Message):
   r"""A minimal index definition.
 
   Enums:
-    AncestorValueValuesEnum: The index's ancestor mode.  Must not be
-      ANCESTOR_MODE_UNSPECIFIED. Required.
-    StateValueValuesEnum: The state of the index. Output only.
+    AncestorValueValuesEnum: Required. The index's ancestor mode.  Must not be
+      ANCESTOR_MODE_UNSPECIFIED.
+    StateValueValuesEnum: Output only. The state of the index.
 
   Fields:
-    ancestor: The index's ancestor mode.  Must not be
-      ANCESTOR_MODE_UNSPECIFIED. Required.
-    indexId: The resource ID of the index. Output only.
-    kind: The entity kind to which this index applies. Required.
-    projectId: Project ID. Output only.
-    properties: An ordered sequence of property names and their index
-      attributes. Required.
-    state: The state of the index. Output only.
+    ancestor: Required. The index's ancestor mode.  Must not be
+      ANCESTOR_MODE_UNSPECIFIED.
+    indexId: Output only. The resource ID of the index.
+    kind: Required. The entity kind to which this index applies.
+    projectId: Output only. Project ID.
+    properties: Required. An ordered sequence of property names and their
+      index attributes.
+    state: Output only. The state of the index.
   """
 
   class AncestorValueValuesEnum(_messages.Enum):
-    r"""The index's ancestor mode.  Must not be ANCESTOR_MODE_UNSPECIFIED.
-    Required.
+    r"""Required. The index's ancestor mode.  Must not be
+    ANCESTOR_MODE_UNSPECIFIED.
 
     Values:
       ANCESTOR_MODE_UNSPECIFIED: The ancestor mode is unspecified.
@@ -753,7 +773,7 @@ class GoogleDatastoreAdminV1Index(_messages.Message):
     ALL_ANCESTORS = 2
 
   class StateValueValuesEnum(_messages.Enum):
-    r"""The state of the index. Output only.
+    r"""Output only. The state of the index.
 
     Values:
       STATE_UNSPECIFIED: The state is unspecified.
@@ -804,18 +824,18 @@ class GoogleDatastoreAdminV1IndexedProperty(_messages.Message):
   r"""A property of an index.
 
   Enums:
-    DirectionValueValuesEnum: The indexed property's direction.  Must not be
-      DIRECTION_UNSPECIFIED. Required.
+    DirectionValueValuesEnum: Required. The indexed property's direction.
+      Must not be DIRECTION_UNSPECIFIED.
 
   Fields:
-    direction: The indexed property's direction.  Must not be
-      DIRECTION_UNSPECIFIED. Required.
-    name: The property name to index. Required.
+    direction: Required. The indexed property's direction.  Must not be
+      DIRECTION_UNSPECIFIED.
+    name: Required. The property name to index.
   """
 
   class DirectionValueValuesEnum(_messages.Enum):
-    r"""The indexed property's direction.  Must not be DIRECTION_UNSPECIFIED.
-    Required.
+    r"""Required. The indexed property's direction.  Must not be
+    DIRECTION_UNSPECIFIED.
 
     Values:
       DIRECTION_UNSPECIFIED: The direction is unspecified.
@@ -1087,7 +1107,8 @@ class GoogleLongrunningOperation(_messages.Message):
       if any.
     name: The server-assigned name, which is only unique within the same
       service that originally returns it. If you use the default HTTP mapping,
-      the `name` should have the format of `operations/some/unique/name`.
+      the `name` should be a resource name ending with
+      `operations/{unique_id}`.
     response: The normal response of the operation in case of success.  If the
       original method returns no data on success, such as `Delete`, the
       response is `google.protobuf.Empty`.  If the original method is standard
@@ -1296,7 +1317,7 @@ class LookupRequest(_messages.Message):
   r"""The request for Datastore.Lookup.
 
   Fields:
-    keys: Keys of entities to look up.
+    keys: Required. Keys of entities to look up.
     readOptions: The options for this lookup request.
   """
 
@@ -1662,8 +1683,8 @@ class ReserveIdsRequest(_messages.Message):
   Fields:
     databaseId: If not empty, the ID of the database against which to make the
       request.
-    keys: A list of keys with complete key paths whose numeric IDs should not
-      be auto-allocated.
+    keys: Required. A list of keys with complete key paths whose numeric IDs
+      should not be auto-allocated.
   """
 
   databaseId = _messages.StringField(1)
@@ -1678,7 +1699,7 @@ class RollbackRequest(_messages.Message):
   r"""The request for Datastore.Rollback.
 
   Fields:
-    transaction: The transaction identifier, returned by a call to
+    transaction: Required. The transaction identifier, returned by a call to
       Datastore.BeginTransaction.
   """
 
@@ -1786,37 +1807,10 @@ class StandardQueryParameters(_messages.Message):
 class Status(_messages.Message):
   r"""The `Status` type defines a logical error model that is suitable for
   different programming environments, including REST APIs and RPC APIs. It is
-  used by [gRPC](https://github.com/grpc). The error model is designed to be:
-  - Simple to use and understand for most users - Flexible enough to meet
-  unexpected needs  # Overview  The `Status` message contains three pieces of
-  data: error code, error message, and error details. The error code should be
-  an enum value of google.rpc.Code, but it may accept additional error codes
-  if needed.  The error message should be a developer-facing English message
-  that helps developers *understand* and *resolve* the error. If a localized
-  user-facing error message is needed, put the localized message in the error
-  details or localize it in the client. The optional error details may contain
-  arbitrary information about the error. There is a predefined set of error
-  detail types in the package `google.rpc` that can be used for common error
-  conditions.  # Language mapping  The `Status` message is the logical
-  representation of the error model, but it is not necessarily the actual wire
-  format. When the `Status` message is exposed in different client libraries
-  and different wire protocols, it can be mapped differently. For example, it
-  will likely be mapped to some exceptions in Java, but more likely mapped to
-  some error codes in C.  # Other uses  The error model and the `Status`
-  message can be used in a variety of environments, either with or without
-  APIs, to provide a consistent developer experience across different
-  environments.  Example uses of this error model include:  - Partial errors.
-  If a service needs to return partial errors to the client,     it may embed
-  the `Status` in the normal response to indicate the partial     errors.  -
-  Workflow errors. A typical workflow has multiple steps. Each step may
-  have a `Status` message for error reporting.  - Batch operations. If a
-  client uses batch request and batch response, the     `Status` message
-  should be used directly inside batch response, one for     each error sub-
-  response.  - Asynchronous operations. If an API call embeds asynchronous
-  operation     results in its response, the status of those operations should
-  be     represented directly using the `Status` message.  - Logging. If some
-  API errors are stored in logs, the message `Status` could     be used
-  directly after any stripping needed for security/privacy reasons.
+  used by [gRPC](https://github.com/grpc). Each `Status` message contains
+  three pieces of data: error code, error message, and error details.  You can
+  find out more about this error model and how to work with it in the [API
+  Design Guide](https://cloud.google.com/apis/design/errors).
 
   Messages:
     DetailsValueListEntry: A DetailsValueListEntry object.

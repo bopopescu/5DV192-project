@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,17 +21,49 @@ from __future__ import unicode_literals
 from googlecloudsdk.api_lib.compute import base_classes
 from googlecloudsdk.api_lib.compute import health_checks_utils
 from googlecloudsdk.calliope import base
+from googlecloudsdk.command_lib.compute import scope as compute_scope
 from googlecloudsdk.command_lib.compute.health_checks import flags
 
 
-def _Run(args, holder, supports_port_specification=False, include_alpha=False):
+def _DetailedHelp():
+  return {
+      'brief':
+          'Create a TCP health check to monitor load balanced instances.',
+      'DESCRIPTION':
+          """\
+          *{command}* is used to create a TCP health check. TCP health checks
+          monitor instances in a load balancer controlled by a target pool. All
+          arguments to the command are optional except for the name of the
+          health check. For more information on load balancing, see
+          [](https://cloud.google.com/compute/docs/load-balancing-and-autoscaling/)
+          """,
+  }
+
+
+def _Args(parser, include_l7_internal_load_balancing, include_log_config):
+  """Set up arguments to create an HTTP2 HealthCheck."""
+  parser.display_info.AddFormat(flags.DEFAULT_LIST_FORMAT)
+  flags.HealthCheckArgument(
+      'TCP',
+      include_l7_internal_load_balancing=include_l7_internal_load_balancing
+  ).AddArgument(
+      parser, operation_type='create')
+  health_checks_utils.AddTcpRelatedCreationArgs(parser)
+  health_checks_utils.AddProtocolAgnosticCreationArgs(parser, 'TCP')
+  if include_log_config:
+    health_checks_utils.AddHealthCheckLoggingRelatedArgs(parser)
+
+
+def _Run(args, holder, include_l7_internal_load_balancing, include_log_config):
   """Issues the request necessary for adding the health check."""
   client = holder.client
   messages = client.messages
 
   health_check_ref = flags.HealthCheckArgument(
-      'TCP', include_alpha=include_alpha).ResolveAsResource(
-          args, holder.resources)
+      'TCP',
+      include_l7_internal_load_balancing=include_l7_internal_load_balancing
+  ).ResolveAsResource(
+      args, holder.resources, default_scope=compute_scope.ScopeEnum.GLOBAL)
   proxy_header = messages.TCPHealthCheck.ProxyHeaderValueValuesEnum(
       args.proxy_header)
   tcp_health_check = messages.TCPHealthCheck(
@@ -42,7 +74,7 @@ def _Run(args, holder, supports_port_specification=False, include_alpha=False):
       proxyHeader=proxy_header)
 
   health_checks_utils.ValidateAndAddPortSpecificationToHealthCheck(
-      args, tcp_health_check, supports_port_specification)
+      args, tcp_health_check)
 
   if health_checks_utils.IsRegionalHealthCheckRef(health_check_ref):
     request = messages.ComputeRegionHealthChecksInsertRequest(
@@ -71,82 +103,34 @@ def _Run(args, holder, supports_port_specification=False, include_alpha=False):
             unhealthyThreshold=args.unhealthy_threshold),
         project=health_check_ref.project)
     collection = client.apitools_client.healthChecks
+
+  if include_log_config:
+    request.healthCheck.logConfig = health_checks_utils.CreateLogConfig(
+        client, args)
+
   return client.MakeRequests([(collection, 'Insert', request)])
 
 
-@base.ReleaseTracks(base.ReleaseTrack.GA)
+@base.ReleaseTracks(base.ReleaseTrack.BETA, base.ReleaseTrack.GA)
 class Create(base.CreateCommand):
-  """Create a TCP health check to monitor load balanced instances.
+  """Create a TCP health."""
 
-    *{command}* is used to create a TCP health check. TCP health checks
-  monitor instances in a load balancer controlled by a target pool. All
-  arguments to the command are optional except for the name of the health
-  check. For more information on load balancing, see
-  [](https://cloud.google.com/compute/docs/load-balancing-and-autoscaling/)
-  """
+  _include_l7_internal_load_balancing = True
+  _include_log_config = False
+  detailed_help = _DetailedHelp()
 
   @classmethod
-  def Args(cls,
-           parser,
-           supports_use_serving_port=False,
-           regionalized=False):
-    parser.display_info.AddFormat(flags.DEFAULT_LIST_FORMAT)
-    flags.HealthCheckArgument(
-        'TCP', include_alpha=regionalized).AddArgument(
-            parser, operation_type='create')
-    health_checks_utils.AddTcpRelatedCreationArgs(
-        parser,
-        use_serving_port=supports_use_serving_port)
-    health_checks_utils.AddProtocolAgnosticCreationArgs(parser, 'TCP')
+  def Args(cls, parser):
+    _Args(parser, cls._include_l7_internal_load_balancing,
+          cls._include_log_config)
 
   def Run(self, args):
-    """Issues the request necessary for adding the health check."""
     holder = base_classes.ComputeApiHolder(self.ReleaseTrack())
-    return _Run(args, holder)
-
-
-@base.ReleaseTracks(base.ReleaseTrack.BETA)
-class CreateBeta(Create):
-  """Create a TCP health check to monitor load balanced instances."""
-
-  @staticmethod
-  def Args(parser,
-           supports_use_serving_port=True,
-           regionalized=False):
-    Create.Args(
-        parser,
-        supports_use_serving_port=supports_use_serving_port,
-        regionalized=regionalized)
-
-  def Run(self, args):
-    """Issues the request necessary for adding the health check."""
-    holder = base_classes.ComputeApiHolder(self.ReleaseTrack())
-    return _Run(
-        args, holder, supports_port_specification=True)
+    return _Run(args, holder, self._include_l7_internal_load_balancing,
+                self._include_log_config)
 
 
 @base.ReleaseTracks(base.ReleaseTrack.ALPHA)
-class CreateAlpha(CreateBeta):
-  """Create a TCP health check to monitor load balanced instances."""
+class CreateAlpha(Create):
 
-  @staticmethod
-  def Args(parser):
-    CreateBeta.Args(parser, regionalized=True)
-
-  def Run(self, args):
-    """Issues the request necessary for adding the health check."""
-    holder = base_classes.ComputeApiHolder(self.ReleaseTrack())
-    return _Run(
-        args, holder, supports_port_specification=True, include_alpha=True)
-
-
-Create.detailed_help = {
-    'brief': 'Create a TCP health check to monitor load balanced instances.',
-    'DESCRIPTION': """\
-        *{command}* is used to create a TCP health check. TCP health checks
-        monitor instances in a load balancer controlled by a target pool. All
-        arguments to the command are optional except for the name of the health
-        check. For more information on load balancing, see
-        [](https://cloud.google.com/compute/docs/load-balancing-and-autoscaling/)
-        """,
-}
+  _include_log_config = True

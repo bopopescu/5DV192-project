@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -53,31 +53,31 @@ class Create(base.CreateCommand, dm_base.DmCommand):
   """
 
   detailed_help = {
-      'EXAMPLES': """\
-          To create a new deployment from a top-level yaml file, run:
+      'EXAMPLES': """
+To create a new deployment from a top-level YAML file, run:
 
-            $ {command} my-deployment --config config.yaml --description "My deployment"
+  $ {command} my-deployment --config=config.yaml --description="My deployment"
 
-          To create a new deployment from a top-level template file, run:
+To create a new deployment from a top-level template file, run:
 
-            $ gcloud deployment-manager deployments create my-deployment \
-            --template template.{jinja|py} \
-            --properties "string-key:'string-value',integer-key:12345"
+  $ gcloud deployment-manager deployments create my-deployment \
+  --template=template.{jinja|py} \
+  --properties="string-key:'string-value',integer-key:12345"
 
-          To create a new deployment directly from a composite type, run:
+To create a new deployment directly from a composite type, run:
 
-            $ gcloud deployment-manager deployments create my-deployment \
-            --composite-type <project-id>/composite:<type-name> \
-            --properties "string-key:'string-value',integer-key:12345"
+  $ gcloud deployment-manager deployments create my-deployment \
+  --composite-type=<project-id>/composite:<type-name> \
+  --properties="string-key:'string-value',integer-key:12345"
 
-          To preview a deployment without actually creating resources, run:
+To preview a deployment without actually creating resources, run:
 
-            $ {command} my-new-deployment --config config.yaml --preview
+  $ {command} my-new-deployment --config=config.yaml --preview
 
-          To instantiate a deployment that has been previewed, issue an update command for that deployment without specifying a config file.
+To instantiate a deployment that has been previewed, issue an update command for that deployment without specifying a config file.
 
-          More information is available at https://cloud.google.com/deployment-manager/docs/configuration/.
-          """,
+More information is available at https://cloud.google.com/deployment-manager/docs/configuration/.
+""",
   }
 
   _create_policy_flag_map = arg_utils.ChoiceEnumMapper(
@@ -163,7 +163,7 @@ class Create(base.CreateCommand, dm_base.DmCommand):
         args.deployment_name,
         params={'project': properties.VALUES.core.project.GetOrFail},
         collection='deploymentmanager.deployments')
-    if (not args.IsSpecified('format')) and (args.async):
+    if (not args.IsSpecified('format')) and (args.async_):
       args.format = flags.OPERATION_FORMAT
 
     deployment = self.messages.Deployment(
@@ -193,7 +193,7 @@ class Create(base.CreateCommand, dm_base.DmCommand):
 
     except apitools_exceptions.HttpError as error:
       raise exceptions.HttpException(error, dm_api_util.HTTP_ERROR_FORMAT)
-    if args.async:
+    if args.async_:
       return operation
     else:
       op_name = operation.name
@@ -243,7 +243,7 @@ class Create(base.CreateCommand, dm_base.DmCommand):
       self, error, args, operation, project, deployment_ref):
     if args.automatic_rollback:
       delete_operation = self._PerformRollback(deployment_ref.deployment,
-                                               str(error))
+                                               six.text_type(error))
       create_operation = dm_api_util.GetOperation(self.client, self.messages,
                                                   operation, project)
 

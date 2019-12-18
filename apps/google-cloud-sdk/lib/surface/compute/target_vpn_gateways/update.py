@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,10 +30,10 @@ from googlecloudsdk.command_lib.util.args import labels_util
 
 @base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA)
 class Update(base.UpdateCommand):
-  r"""Update a Google Compute Engine target VPN gateway.
+  r"""Update a Google Compute Engine Cloud VPN Classic Target VPN Gateway.
 
-  *{command}* updates labels for a Google Compute Engine
-  target VPN gateway.  For example:
+  *{command}* updates labels for a Google Compute Engine Cloud VPN Classic
+  Target VPN gateway.  For example:
 
     $ {command} example-gateway --region us-central1 \
       --update-labels=k0=value1,k1=value2 --remove-labels=k3

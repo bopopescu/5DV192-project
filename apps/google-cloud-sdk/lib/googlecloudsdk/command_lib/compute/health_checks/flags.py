@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ def HealthCheckArgument(protocol_string,
                         name=None,
                         required=True,
                         plural=False,
-                        include_alpha=False):
+                        include_l7_internal_load_balancing=False):
   return compute_flags.ResourceArgument(
       name=name,
       resource_name='{} health check'.format(protocol_string),
@@ -42,6 +42,6 @@ def HealthCheckArgument(protocol_string,
       required=required,
       global_collection='compute.healthChecks',
       regional_collection='compute.regionHealthChecks'
-      if include_alpha else None,
+      if include_l7_internal_load_balancing else None,
       region_explanation=compute_flags.REGION_PROPERTY_EXPLANATION
-      if include_alpha else None)
+      if include_l7_internal_load_balancing else None)

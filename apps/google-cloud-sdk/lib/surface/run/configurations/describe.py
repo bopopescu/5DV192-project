@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ from googlecloudsdk.command_lib.util.concepts import concept_parsers
 from googlecloudsdk.command_lib.util.concepts import presentation_specs
 
 
+@base.ReleaseTracks(base.ReleaseTrack.BETA, base.ReleaseTrack.GA)
 class Describe(base.Command):
   """Obtain details about a given configuration."""
 
@@ -42,22 +43,26 @@ class Describe(base.Command):
   }
 
   @staticmethod
-  def Args(parser):
-    flags.AddRegionArg(parser)
+  def CommonArgs(parser):
     configuration_presentation = presentation_specs.ResourcePresentationSpec(
         'CONFIGURATION',
         resource_args.GetConfigurationResourceSpec(),
         'Configuration to describe.',
         required=True,
         prefixes=False)
-    concept_parsers.ConceptParser([
-        resource_args.CLUSTER_PRESENTATION,
-        configuration_presentation]).AddToParser(parser)
+    concept_parsers.ConceptParser([configuration_presentation
+                                  ]).AddToParser(parser)
+
     parser.display_info.AddFormat('yaml')
+
+  @staticmethod
+  def Args(parser):
+    Describe.CommonArgs(parser)
 
   def Run(self, args):
     """Obtain details about a given configuration."""
-    conn_context = connection_context.GetConnectionContext(args)
+    conn_context = connection_context.GetConnectionContext(
+        args, product=connection_context.Product.RUN)
     configuration_ref = args.CONCEPTS.configuration.Parse()
     with serverless_operations.Connect(conn_context) as client:
       conf = client.GetConfiguration(configuration_ref)
@@ -66,3 +71,14 @@ class Describe(base.Command):
           'Cannot find configuration [{}]'.format(
               configuration_ref.configurationsId))
     return conf
+
+
+@base.ReleaseTracks(base.ReleaseTrack.ALPHA)
+class AlphaDescribe(Describe):
+  """Obtain details about a given configuration."""
+
+  @staticmethod
+  def Args(parser):
+    Describe.CommonArgs(parser)
+
+AlphaDescribe.__doc__ = Describe.__doc__

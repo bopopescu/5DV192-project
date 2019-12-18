@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ from googlecloudsdk.command_lib.compute import scope as compute_scope
 from googlecloudsdk.command_lib.compute.networks.subnets import flags as subnet_flags
 from googlecloudsdk.command_lib.compute.routers.nats import flags as nat_flags
 from googlecloudsdk.core import exceptions as core_exceptions
+import six
 
 
 class NatNotFoundError(core_exceptions.Error):
@@ -43,7 +44,7 @@ def FindNatOrRaise(router, nat_name):
   raise NatNotFoundError(nat_name)
 
 
-def CreateNatMessage(args, compute_holder, with_logging=False):
+def CreateNatMessage(args, compute_holder):
   """Creates a NAT message from the specified arguments."""
   params = {'name': args.name}
 
@@ -59,20 +60,21 @@ def CreateNatMessage(args, compute_holder, with_logging=False):
   params['tcpEstablishedIdleTimeoutSec'] = args.tcp_established_idle_timeout
   params['tcpTransitoryIdleTimeoutSec'] = args.tcp_transitory_idle_timeout
   params['minPortsPerVm'] = args.min_ports_per_vm
-  if with_logging:
-    if args.enable_logging is not None or args.log_filter is not None:
-      log_config = compute_holder.client.messages.RouterNatLogConfig()
+  if args.enable_logging is not None or args.log_filter is not None:
+    log_config = compute_holder.client.messages.RouterNatLogConfig()
 
-      log_config.enable = args.enable_logging
-      if args.log_filter is not None:
-        log_config.filter = _TranslateLogFilter(args.log_filter, compute_holder)
+    log_config.enable = args.enable_logging
+    if args.log_filter is not None:
+      log_config.filter = _TranslateLogFilter(args.log_filter, compute_holder)
 
-      params['logConfig'] = log_config
+    params['logConfig'] = log_config
 
   return compute_holder.client.messages.RouterNat(**params)
 
 
-def UpdateNatMessage(nat, args, compute_holder, with_logging=False):
+def UpdateNatMessage(nat,
+                     args,
+                     compute_holder):
   """Updates a NAT message with the specified arguments."""
   if (args.subnet_option in [
       nat_flags.SubnetOption.ALL_RANGES, nat_flags.SubnetOption.PRIMARY_RANGES
@@ -80,6 +82,19 @@ def UpdateNatMessage(nat, args, compute_holder, with_logging=False):
     ranges_to_nat, subnetworks = _ParseSubnetFields(args, compute_holder)
     nat.sourceSubnetworkIpRangesToNat = ranges_to_nat
     nat.subnetworks = subnetworks
+
+  if args.nat_external_drain_ip_pool:
+    drain_nat_ips = nat_flags.DRAIN_NAT_IP_ADDRESSES_ARG.ResolveAsResource(
+        args, compute_holder.resources)
+    nat.drainNatIps = [six.text_type(ip) for ip in drain_nat_ips]
+
+    # Remove a IP from nat_ips if it is going to be drained.
+    if not args.nat_external_ip_pool:
+      nat.natIps = [ip for ip in nat.natIps
+                    if not _ContainIp(drain_nat_ips, ip)]
+
+  if args.clear_nat_external_drain_ip_pool:
+    nat.drainNatIps = []
 
   if (args.ip_allocation_option == nat_flags.IpAllocationOption.AUTO or
       args.nat_external_ip_pool):
@@ -112,15 +127,13 @@ def UpdateNatMessage(nat, args, compute_holder, with_logging=False):
   elif args.clear_min_ports_per_vm:
     nat.minPortsPerVm = None
 
-  if with_logging:
-    if args.enable_logging is not None or args.log_filter is not None:
-      nat.logConfig = (
-          nat.logConfig or compute_holder.client.messages.RouterNatLogConfig())
-    if args.enable_logging is not None:
-      nat.logConfig.enable = args.enable_logging
-    if args.log_filter is not None:
-      nat.logConfig.filter = _TranslateLogFilter(args.log_filter,
-                                                 compute_holder)
+  if args.enable_logging is not None or args.log_filter is not None:
+    nat.logConfig = (
+        nat.logConfig or compute_holder.client.messages.RouterNatLogConfig())
+  if args.enable_logging is not None:
+    nat.logConfig.enable = args.enable_logging
+  if args.log_filter is not None:
+    nat.logConfig.filter = _TranslateLogFilter(args.log_filter, compute_holder)
 
   return nat
 
@@ -196,7 +209,7 @@ def _ParseSubnetFields(args, compute_holder):
                        LIST_OF_SECONDARY_IP_RANGES)
 
       subnetworks.append({
-          'name': str(subnet_ref[0]),
+          'name': six.text_type(subnet_ref[0]),
           'sourceIpRangesToNat': options,
           'secondaryIpRangeNames': subnet_usage.secondary_ranges
       })
@@ -210,7 +223,8 @@ def _ParseNatIpFields(args, compute_holder):
     return (messages.RouterNat.NatIpAllocateOptionValueValuesEnum.AUTO_ONLY,
             list())
   return (messages.RouterNat.NatIpAllocateOptionValueValuesEnum.MANUAL_ONLY, [
-      str(address) for address in nat_flags.IP_ADDRESSES_ARG.ResolveAsResource(
+      six.text_type(address)
+      for address in nat_flags.IP_ADDRESSES_ARG.ResolveAsResource(
           args, compute_holder.resources)
   ])
 
@@ -230,3 +244,11 @@ def _TranslateLogFilter(filter_str, compute_holder):
   raise calliope_exceptions.InvalidArgumentException(
       '--log-filter', ('--log-filter must be ALL, TRANSLATIONS_ONLY '
                        'or ERRORS_ONLY'))
+
+
+def _ContainIp(ip_list, target_ip):
+  """Returns true if target ip is in the list."""
+  for ip in ip_list:
+    if ip.RelativeName() in target_ip:
+      return True
+  return False

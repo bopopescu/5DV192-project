@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2016 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -41,26 +41,26 @@ class Set(base.CreateCommand):
       'EXAMPLES': """\
           To create or update a variable named "my-var", run:
 
-            $ {command} --config-name my-config my-var "my value"
+            $ {command} --config-name=my-config my-var "my value"
 
           To create or update a variable with a hierarchical name, such as
           "results/task1", run:
 
-            $ {command} --config-name my-config results/task1 "my value"
+            $ {command} --config-name=my-config results/task1 "my value"
 
           To create a variable, but fail if it already exists, run:
 
-            $ {command} --config-name my-config my-var "my-value" --fail-if-present
+            $ {command} --config-name=my-config my-var "my-value" --fail-if-present
 
           To update a variable, but fail if it does not exist, run:
 
-            $ {command} --config-name my-config my-var "my-value" --fail-if-absent
+            $ {command} --config-name=my-config my-var "my-value" --fail-if-absent
 
           It is possible to provide --is-text flag if the value contains only
           text (UTF-8 encoded). This affects how the variable is transmitted on
           the wire and requires less quota on the backend.
 
-            $ {command} --config-name my-config --is-text my-var "my value"
+            $ {command} --config-name=my-config --is-text my-var "my value"
 
           If the variable's value parameter is not specified, the value will be
           read from standard input. This allows setting variables to large values

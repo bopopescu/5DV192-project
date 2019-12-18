@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2016 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,20 +24,30 @@ from googlecloudsdk.core import properties
 
 
 class Delete(base.DeleteCommand):
-  """Delete a Google Compute Engine network peering."""
+  r"""Delete a Google Compute Engine network peering.
+
+  *{command}* deletes a Google Compute Engine network peering.
+
+  ## EXAMPLES
+
+  To delete a network peering with the name 'peering-name' on the network
+  'local-network', run:
+
+    $ {command} peering-name \
+      --network=local-network
+
+  """
 
   @staticmethod
   def Args(parser):
 
-    parser.add_argument(
-        'name',
-        help='The name of the peering to delete.')
+    parser.add_argument('name', help='The name of the peering to delete.')
 
     parser.add_argument(
         '--network',
         required=True,
         help='The name of the network in the current project containing the '
-             'peering.')
+        'peering.')
 
   def Run(self, args):
     """Issues the request necessary for deleting the peering."""

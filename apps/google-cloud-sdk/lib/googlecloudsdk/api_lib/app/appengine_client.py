@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,9 +17,12 @@
 
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import print_function
 from __future__ import unicode_literals
 
 from __future__ import with_statement
+
+import json
 
 from googlecloudsdk.api_lib.app import util
 from googlecloudsdk.api_lib.app import yaml_parsing
@@ -34,6 +37,7 @@ from googlecloudsdk.third_party.appengine.datastore import datastore_index
 from googlecloudsdk.third_party.appengine.tools import appengine_rpc_httplib2
 from oauth2client import service_account
 from oauth2client.contrib import gce as oauth2client_gce
+import six
 import six.moves.urllib.error
 import six.moves.urllib.parse
 import six.moves.urllib.request
@@ -130,7 +134,7 @@ class AppengineClient(object):
     if notused_indexes.indexes:
       for index in notused_indexes.indexes:
         msg = ('This index is no longer defined in your index.yaml file.\n{0}'
-               .format(str(index.ToYAML())))
+               .format(six.text_type(index.ToYAML())))
         prompt = 'Do you want to delete this index'
         if console_io.PromptContinue(msg, prompt, default=True):
           deletions.indexes.append(index)
@@ -221,8 +225,9 @@ class AppengineClient(object):
     Args:
       index_yaml: The parsed yaml file with index data.
     """
+    payload = json.dumps(index_yaml.ToDict())
     self._GetRpcServer().Send('/api/datastore/index/add',
-                              app_id=self.project, payload=index_yaml.ToYAML())
+                              app_id=self.project, payload=payload)
 
   def UpdateQueues(self, queue_yaml):
     """Updates any new or changed task queue definitions.

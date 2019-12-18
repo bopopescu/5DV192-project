@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -33,6 +33,15 @@ from googlecloudsdk.core import resources
 
 class DefaultPolicyResolutionError(exceptions.Error):
   pass
+
+
+def ValidateAccessPolicyArg(ref, args, req=None):
+  """Add the particular service filter message based on specified args."""
+  del ref  # unused
+  if args.IsSpecified('policy'):
+    properties.AccessPolicyValidator(args.policy)
+
+  return req
 
 
 def GetAttributeConfig():
@@ -155,7 +164,7 @@ def _GetDomain(account):
 
 
 def GetDefaultPolicy():
-  """Gets the default policy for the current account."""
+  """Gets the ID of the default policy for the current account."""
   account = properties.VALUES.core.account.Get()
   if not account:
     log.info('Unable to automatically resolve policy since account property '
@@ -171,10 +180,10 @@ def GetDefaultPolicy():
     try:
       # pylint: disable=too-many-function-args
       organization_ref = _GetOrganization(cache, domain)
-      policy_ref = _GetPolicy(
-          cache, organization_ref.RelativeName(), (organization_ref,))
+      policy_ref = _GetPolicy(cache, organization_ref.RelativeName(),
+                              (organization_ref,))
     except DefaultPolicyResolutionError as err:
       log.info('Unable to automatically resolve policy: %s', err)
       return None
 
-  return policy_ref.RelativeName()
+  return policy_ref.Name()

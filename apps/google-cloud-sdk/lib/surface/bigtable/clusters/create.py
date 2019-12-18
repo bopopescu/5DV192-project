@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
+import textwrap
+
 from googlecloudsdk.api_lib.bigtable import clusters
 from googlecloudsdk.api_lib.bigtable import util
 from googlecloudsdk.calliope import base
@@ -25,9 +27,23 @@ from googlecloudsdk.command_lib.bigtable import arguments
 from googlecloudsdk.core import log
 
 
-@base.ReleaseTracks(base.ReleaseTrack.BETA, base.ReleaseTrack.ALPHA)
 class CreateCluster(base.CreateCommand):
   """Create a bigtable cluster."""
+
+  detailed_help = {
+      'EXAMPLES':
+          textwrap.dedent("""\
+          To add a cluster in zone `us-east1-c` to the instance with id
+          `my-instance-id`, run:
+
+            $ {command} my-cluster-id --instance=my-instance-id --zone=us-east1-c
+
+          To add a cluster with `10` nodes, run:
+
+            $ {command} my-cluster-id --instance=my-instance-id --zone=us-east1-c --num-nodes=10
+
+          """),
+  }
 
   @staticmethod
   def Args(parser):
@@ -50,7 +66,7 @@ class CreateCluster(base.CreateCommand):
     operation = clusters.Create(
         cluster_ref, args.zone, serve_nodes=args.num_nodes)
     operation_ref = util.GetOperationRef(operation)
-    if args.async:
+    if args.async_:
       log.CreatedResource(
           operation_ref,
           kind='bigtable cluster {0}'.format(cluster_ref.Name()),

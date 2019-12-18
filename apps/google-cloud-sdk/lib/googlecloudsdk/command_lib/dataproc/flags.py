@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,14 +18,72 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
+from googlecloudsdk.api_lib.dataproc import util
 from googlecloudsdk.calliope import actions
 from googlecloudsdk.calliope import arg_parsers
 from googlecloudsdk.calliope.concepts import concepts
 from googlecloudsdk.calliope.concepts import deps
 from googlecloudsdk.command_lib.export import util as export_util
-from googlecloudsdk.command_lib.util import completers
 from googlecloudsdk.command_lib.util.concepts import concept_parsers
 from googlecloudsdk.core import properties
+
+
+# TODO(b/137899555) remove ReturnDefaultRegionAndWarn fallthrough
+def _RegionAttributeConfig(api_version):
+  fallback_to_beta = api_version == 'v1'
+  fallthroughs = [deps.PropertyFallthrough(properties.VALUES.dataproc.region)]
+  if fallback_to_beta:
+    fallthroughs += [
+        deps.Fallthrough(util.ReturnDefaultRegionAndWarn, hint='N/A')
+    ]
+  return concepts.ResourceParameterAttributeConfig(
+      name='region',
+      help_text=(
+          'Cloud Dataproc region for the {resource}. Each Cloud Dataproc '
+          'region constitutes an independent resource namespace constrained to '
+          'deploying instances into Google Compute Engine zones inside the '
+          'region. The default value of `global` is a special multi-region '
+          'namespace which is capable of deploying instances into all Google '
+          'Compute Engine zones globally, and is disjoint from other Cloud '
+          'Dataproc regions. Overrides the default `dataproc/region` property '
+          'value for this command invocation.'),
+      fallthroughs=fallthroughs)
+
+
+def AddRegionFlag(parser):
+  region_prop = properties.VALUES.dataproc.region
+  parser.add_argument(
+      '--region',
+      help=region_prop.help_text,
+      # Don't set default, because it would override users' property setting.
+      action=actions.StoreProperty(region_prop))
+
+
+def ClusterConfig():
+  return concepts.ResourceParameterAttributeConfig(
+      name='cluster',
+      help_text='The Cluster name.',
+  )
+
+
+def _GetClusterResourceSpec(api_version):
+  return concepts.ResourceSpec(
+      'dataproc.projects.regions.clusters',
+      api_version=api_version,
+      resource_name='cluster',
+      disable_auto_completers=True,
+      projectId=concepts.DEFAULT_PROJECT_ATTRIBUTE_CONFIG,
+      region=_RegionAttributeConfig(api_version),
+      clusterName=ClusterConfig(),
+  )
+
+
+def AddClusterResourceArg(parser, verb, api_version):
+  concept_parsers.ConceptParser.ForResource(
+      'cluster',
+      _GetClusterResourceSpec(api_version),
+      'The name of the cluster to {}.'.format(verb),
+      required=True).AddToParser(parser)
 
 
 def AddZoneFlag(parser, short_flags=True):
@@ -54,14 +112,59 @@ def AddFileFlag(parser, input_type, action):
       required=True)
 
 
-def AddJobFlag(parser, action):
-  parser.add_argument(
-      'job', help='The ID of the job to {0}.'.format(action))
+def JobConfig():
+  return concepts.ResourceParameterAttributeConfig(
+      name='job',
+      help_text='The Job ID.',
+  )
 
 
-def AddOperationFlag(parser, action):
-  parser.add_argument(
-      'operation', help='The ID of the operation to {0}.'.format(action))
+def _GetJobResourceSpec(api_version):
+  return concepts.ResourceSpec(
+      'dataproc.projects.regions.jobs',
+      api_version=api_version,
+      resource_name='job',
+      disable_auto_completers=True,
+      projectId=concepts.DEFAULT_PROJECT_ATTRIBUTE_CONFIG,
+      region=_RegionAttributeConfig(api_version),
+      jobId=JobConfig(),
+  )
+
+
+def AddJobResourceArg(parser, verb, api_version):
+  concept_parsers.ConceptParser.ForResource(
+      'job',
+      _GetJobResourceSpec(api_version),
+      'The ID of the job to {0}.'.format(verb),
+      required=True).AddToParser(parser)
+
+
+def OperationConfig():
+  return concepts.ResourceParameterAttributeConfig(
+      name='operation',
+      help_text='The Operation ID.',
+  )
+
+
+def _GetOperationResourceSpec(api_version):
+  return concepts.ResourceSpec(
+      'dataproc.projects.regions.operations',
+      api_version=api_version,
+      resource_name='operation',
+      disable_auto_completers=True,
+      projectsId=concepts.DEFAULT_PROJECT_ATTRIBUTE_CONFIG,
+      regionsId=_RegionAttributeConfig(api_version),
+      operationsId=OperationConfig(),
+  )
+
+
+def AddOperationResourceArg(parser, verb, api_version):
+  name = 'operation'
+  concept_parsers.ConceptParser.ForResource(
+      name,
+      _GetOperationResourceSpec(api_version),
+      'The ID of the operation to {0}.'.format(verb),
+      required=True).AddToParser(parser)
 
 
 def AddTimeoutFlag(parser, default='10m'):
@@ -70,7 +173,7 @@ def AddTimeoutFlag(parser, default='10m'):
       '--timeout',
       type=arg_parsers.Duration(),
       default=default,
-      help=('Client side timeout on how long to wait for Datproc operations. '
+      help=('Client side timeout on how long to wait for Dataproc operations. '
             'See $ gcloud topic datetimes for information on duration '
             'formats.'),
       hidden=True)
@@ -90,14 +193,14 @@ def AddParametersFlag(parser):
       dest='parameters')
 
 
-def AddMinCpuPlatformArgs(parser, track):
+def AddMinCpuPlatformArgs(parser):
   """Add mininum CPU platform flags for both master and worker instances."""
   help_text = """\
       When specified, the VM will be scheduled on host with specified CPU
       architecture or a newer one. To list available CPU platforms in given
       zone, run:
 
-          $ gcloud {}compute zones describe ZONE
+          $ gcloud compute zones describe ZONE
 
       CPU platform selection is available only in selected zones; zones that
       allow CPU platform selection will have an `availableCpuPlatforms` field
@@ -105,7 +208,7 @@ def AddMinCpuPlatformArgs(parser, track):
 
       You can find more information online:
       https://cloud.google.com/compute/docs/instances/specify-min-cpu-platform
-      """.format(track.prefix + ' ' if track.prefix else '')
+      """
   parser.add_argument(
       '--master-min-cpu-platform',
       metavar='PLATFORM',
@@ -118,13 +221,13 @@ def AddMinCpuPlatformArgs(parser, track):
       help=help_text)
 
 
-def AddComponentFlag(parser, hidden=False):
+def AddComponentFlag(parser):
   """Add optional components flag."""
   help_text = """\
       List of optional components to be installed on cluster machines.
 
       The following page documents the optional components that can be
-      installed.
+      installed:
       https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/optional-components.
       """
   parser.add_argument(
@@ -132,17 +235,7 @@ def AddComponentFlag(parser, hidden=False):
       metavar='COMPONENT',
       type=arg_parsers.ArgList(element_type=lambda val: val.upper()),
       dest='components',
-      hidden=hidden,
       help=help_text)
-
-
-class RegionsCompleter(completers.ListCommandCompleter):
-
-  def __init__(self, **kwargs):
-    super(RegionsCompleter, self).__init__(
-        collection='dataproc.projects.regions',
-        list_command='alpha dataproc regions list --uri',
-        **kwargs)
 
 
 def TemplateAttributeConfig():
@@ -152,33 +245,14 @@ def TemplateAttributeConfig():
   )
 
 
-def RegionAttributeConfig():
-  return concepts.ResourceParameterAttributeConfig(
-      name='region',
-      help_text=(
-          'The Cloud DataProc region for the {resource}. Each Cloud Dataproc '
-          'region constitutes an independent resource namespace constrained to '
-          'deploying instances into Google Compute Engine zones inside the '
-          'region. The default value of `global` is a special multi-region '
-          'namespace which is capable of deploying instances into all Google '
-          'Compute Engine zones globally, and is disjoint from other Cloud '
-          'Dataproc regions. Overrides the default `dataproc/region` property '
-          'value for this command invocation.'),
-      completer=RegionsCompleter,
-      fallthroughs=[
-          deps.PropertyFallthrough(properties.VALUES.dataproc.region),
-      ],
-  )
-
-
-def GetTemplateResourceSpec(api_version):
+def _GetTemplateResourceSpec(api_version):
   return concepts.ResourceSpec(
       'dataproc.projects.regions.workflowTemplates',
       api_version=api_version,
       resource_name='template',
-      disable_auto_completers=False,
+      disable_auto_completers=True,
       projectsId=concepts.DEFAULT_PROJECT_ATTRIBUTE_CONFIG,
-      regionsId=RegionAttributeConfig(),
+      regionsId=_RegionAttributeConfig(api_version),
       workflowTemplatesId=TemplateAttributeConfig(),
   )
 
@@ -193,10 +267,10 @@ def AddTemplateResourceArg(parser, verb, api_version, positional=True):
     positional: bool, if True, means that the instance ID is a positional rather
       than a flag.
   """
-  name = 'TEMPLATE' if positional else '--template'
+  name = 'template' if positional else '--workflow-template'
   concept_parsers.ConceptParser.ForResource(
       name,
-      GetTemplateResourceSpec(api_version=api_version),
+      _GetTemplateResourceSpec(api_version),
       'The name of the workflow template to {}.'.format(verb),
       required=True).AddToParser(parser)
 
@@ -206,9 +280,9 @@ def _AutoscalingPolicyResourceSpec(api_version):
       'dataproc.projects.regions.autoscalingPolicies',
       api_version=api_version,
       resource_name='autoscaling policy',
-      disable_auto_completers=False,
+      disable_auto_completers=True,
       projectsId=concepts.DEFAULT_PROJECT_ATTRIBUTE_CONFIG,
-      regionsId=RegionAttributeConfig(),
+      regionsId=_RegionAttributeConfig(api_version),
       autoscalingPoliciesId=concepts.ResourceParameterAttributeConfig(
           name='autoscaling_policy',
           help_text='The autoscaling policy id.',
@@ -243,7 +317,7 @@ def AddAutoscalingPolicyResourceArgForCluster(parser, api_version):
       _AutoscalingPolicyResourceSpec(api_version),
       'The autoscaling policy to use.',
       command_level_fallthroughs={
-          'region': '--region'
+          'region': ['--region'],
       },
       flag_name_overrides={
           'region': ''
@@ -268,19 +342,18 @@ def AddExportArgs(parser, verb, api_version, resource_message_name):
 
 
 def AddListOperationsFormat(parser):
-  parser.display_info.AddTransforms(
-      {'operationState': _TransformOperationState,
-       'operationTimestamp': _TransformOperationTimestamp,
-       'operationType': _TransformOperationType,
-       'operationWarnings': _TransformOperationWarnings,
-      })
-  parser.display_info.AddFormat(
-      'table(name.segment():label=NAME, '
-      'metadata.operationTimestamp():label=TIMESTAMP,'
-      'metadata.operationType():label=TYPE, '
-      'metadata.operationState():label=STATE, '
-      'status.code.yesno(no=\'\'):label=ERROR, '
-      'metadata.operationWarnings():label=WARNINGS)')
+  parser.display_info.AddTransforms({
+      'operationState': _TransformOperationState,
+      'operationTimestamp': _TransformOperationTimestamp,
+      'operationType': _TransformOperationType,
+      'operationWarnings': _TransformOperationWarnings,
+  })
+  parser.display_info.AddFormat('table(name.segment():label=NAME, '
+                                'metadata.operationTimestamp():label=TIMESTAMP,'
+                                'metadata.operationType():label=TYPE, '
+                                'metadata.operationState():label=STATE, '
+                                'status.code.yesno(no=\'\'):label=ERROR, '
+                                'metadata.operationWarnings():label=WARNINGS)')
 
 
 def _TransformOperationType(metadata):

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,9 @@
 
 """Wrapper module for ensuring consistent usage of yaml parsing.
 
-This module forces everything to use version 1.1 of the YAML spec.
+This module forces parsing to use version 1.1 of the YAML spec if not
+otherwise specified by the loading method arguments.
+However, dumping uses version 1.2.
 It also prevents use of unsafe loading and dumping.
 """
 
@@ -28,9 +30,13 @@ import collections
 from googlecloudsdk.core import exceptions
 from googlecloudsdk.core import yaml_location_value
 from googlecloudsdk.core.util import files
-from googlecloudsdk.core.util import typing  # pylint: disable=unused-import
 
 from ruamel import yaml
+import six
+
+
+VERSION_1_1 = '1.1'
+VERSION_1_2 = '1.2'
 
 
 # YAML unfortunately uses a bunch of global class state for this kind of stuff.
@@ -68,7 +74,6 @@ class Error(exceptions.Error):
   """
 
   def __init__(self, e, verb, f=None):
-    # type: (Exception, typing.Text, typing.Optional[str]) -> None
     file_text = ' from [{}]'.format(f) if f else ''
     super(Error, self).__init__(
         'Failed to {} YAML{}: {}'.format(verb, file_text, e))
@@ -80,7 +85,6 @@ class YAMLParseError(Error):
   """An error that wraps all YAML parsing errors."""
 
   def __init__(self, e, f=None):
-    # type: (Exception, typing.Optional[str]) -> None
     super(YAMLParseError, self).__init__(e, verb='parse', f=f)
 
 
@@ -88,12 +92,14 @@ class FileLoadError(Error):
   """An error that wraps errors when loading/reading files."""
 
   def __init__(self, e, f):
-    # type: (Exception, str) -> None
     super(FileLoadError, self).__init__(e, verb='load', f=f)
 
 
-def load(stream, file_hint=None, round_trip=False, location_value=False):
-  # type: (typing.Union[str, typing.IO[typing.AnyStr]], typing.Optional[str], typing.Optional[bool], typing.Optional[bool]) -> typing.Any  # pylint: disable=line-too-long
+def load(stream,
+         file_hint=None,
+         round_trip=False,
+         location_value=False,
+         version=VERSION_1_1):
   """Loads YAML from the given steam.
 
   Args:
@@ -109,6 +115,7 @@ def load(stream, file_hint=None, round_trip=False, location_value=False):
       numbers for all values. Each YAML data item is an object with value and
       lc attributes, where lc.line and lc.col are the line and column location
       for the item in the YAML source file.
+    version: str, YAML version to use when parsing.
 
   Raises:
     YAMLParseError: If the data could not be parsed.
@@ -120,19 +127,19 @@ def load(stream, file_hint=None, round_trip=False, location_value=False):
     if location_value:
       return yaml_location_value.LocationValueLoad(stream)
     loader = yaml.RoundTripLoader if round_trip else yaml.SafeLoader
-    return yaml.load(stream, loader, version='1.1')
+    return yaml.load(stream, loader, version=version)
   except yaml.YAMLError as e:
     raise YAMLParseError(e, f=file_hint)
 
 
-def load_all(stream, file_hint=None):
-  # type: (typing.Union[str, typing.IO[typing.AnyStr]], typing.Optional[str]) -> typing.Generator[typing.Any, None, None]  # pylint: disable=line-too-long
+def load_all(stream, file_hint=None, version=VERSION_1_1):
   """Loads multiple YAML documents from the given steam.
 
   Args:
     stream: A file like object or string that can be read from.
     file_hint: str, The name of a file or url that the stream data is coming
       from. See load() for more information.
+    version: str, YAML version to use when parsing.
 
   Raises:
     YAMLParseError: If the data could not be parsed.
@@ -141,14 +148,16 @@ def load_all(stream, file_hint=None):
     The parsed YAML data.
   """
   try:
-    for x in yaml.load_all(stream, yaml.SafeLoader, version='1.1'):
+    for x in yaml.load_all(stream, yaml.SafeLoader, version=version):
       yield x
   except yaml.YAMLError as e:
     raise YAMLParseError(e, f=file_hint)
 
 
-def load_path(path, round_trip=False, location_value=False):
-  # type: (str, typing.Optional[bool], typing.Optional[bool]) -> typing.Any
+def load_path(path,
+              round_trip=False,
+              location_value=False,
+              version=VERSION_1_1):
   """Loads YAML from the given file path.
 
   Args:
@@ -159,6 +168,7 @@ def load_path(path, round_trip=False, location_value=False):
       numbers for all values. Each YAML data item is an object with value and
       lc attributes, where lc.line and lc.col are the line and column location
       for the item in the YAML source file.
+    version: str, YAML version to use when parsing.
 
   Raises:
     YAMLParseError: If the data could not be parsed.
@@ -169,18 +179,22 @@ def load_path(path, round_trip=False, location_value=False):
   """
   try:
     with files.FileReader(path) as fp:
-      return load(fp, file_hint=path, round_trip=round_trip,
-                  location_value=location_value)
+      return load(
+          fp,
+          file_hint=path,
+          round_trip=round_trip,
+          location_value=location_value,
+          version=version)
   except files.Error as e:
     raise FileLoadError(e, f=path)
 
 
-def load_all_path(path):
-  # type: (str) -> typing.Generator[typing.Any, None, None]
+def load_all_path(path, version=VERSION_1_1):
   """Loads multiple YAML documents from the given file path.
 
   Args:
     path: str, A file path to open and read from.
+    version: str, YAML version to use when parsing.
 
   Raises:
     YAMLParseError: If the data could not be parsed.
@@ -191,7 +205,7 @@ def load_all_path(path):
   """
   try:
     with files.FileReader(path) as fp:
-      for x in load_all(fp, file_hint=path):
+      for x in load_all(fp, file_hint=path, version=version):
         yield x
   except files.Error as e:
     # EnvironmentError is parent of IOError, OSError and WindowsError.
@@ -200,7 +214,6 @@ def load_all_path(path):
 
 
 def dump(data, stream=None, round_trip=False, **kwargs):
-  # type: (typing.Any, typing.Optional[typing.IO[typing.AnyStr]], typing.Any, typing.Optional[typing.Dict]) -> str  # pylint: disable=line-too-long
   """Dumps the given YAML data to the stream.
 
   Args:
@@ -219,7 +232,6 @@ def dump(data, stream=None, round_trip=False, **kwargs):
 
 
 def dump_all(documents, stream=None, **kwargs):
-  # type: (typing.Iterable[typing.Any], typing.Optional[typing.IO[typing.AnyStr]], typing.Any) -> str  # pylint: disable=line-too-long
   """Dumps multiple YAML documents to the stream.
 
   Args:
@@ -235,7 +247,6 @@ def dump_all(documents, stream=None, **kwargs):
 
 
 def convert_to_block_text(data):
-  # type: (typing.Union[dict, list]) -> None
   r"""This processes the given dict or list so it will render as block text.
 
   By default, the yaml dumper will write multiline strings out as a double
@@ -256,3 +267,11 @@ def list_like(item):
 def dict_like(item):
   """Return True if the item is like a dict: a MutableMapping."""
   return isinstance(item, collections.MutableMapping)
+
+
+def strip_locations(obj):
+  if list_like(obj):
+    return [strip_locations(item) for item in obj]
+  if dict_like(obj):
+    return {key: strip_locations(value) for key, value in six.iteritems(obj)}
+  return obj.value

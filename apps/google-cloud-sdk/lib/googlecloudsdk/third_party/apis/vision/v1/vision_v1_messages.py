@@ -18,11 +18,35 @@ class AddProductToProductSetRequest(_messages.Message):
   r"""Request message for the `AddProductToProductSet` method.
 
   Fields:
-    product: The resource name for the Product to be added to this ProductSet.
-      Format is: `projects/PROJECT_ID/locations/LOC_ID/products/PRODUCT_ID`
+    product: Required. The resource name for the Product to be added to this
+      ProductSet.  Format is:
+      `projects/PROJECT_ID/locations/LOC_ID/products/PRODUCT_ID`
   """
 
   product = _messages.StringField(1)
+
+
+class AnnotateFileRequest(_messages.Message):
+  r"""A request to annotate one single file, e.g. a PDF, TIFF or GIF file.
+
+  Fields:
+    features: Required. Requested features.
+    imageContext: Additional context that may accompany the image(s) in the
+      file.
+    inputConfig: Required. Information about the input file.
+    pages: Pages of the file to perform image annotation.  Pages starts from
+      1, we assume the first page of the file is page 1. At most 5 pages are
+      supported per request. Pages can be negative.  Page 1 means the first
+      page. Page 2 means the second page. Page -1 means the last page. Page -2
+      means the second to the last page.  If the file is GIF instead of PDF or
+      TIFF, page refers to GIF frames.  If this field is empty, by default the
+      service performs image annotation for the first 5 pages of the file.
+  """
+
+  features = _messages.MessageField('Feature', 1, repeated=True)
+  imageContext = _messages.MessageField('ImageContext', 2)
+  inputConfig = _messages.MessageField('InputConfig', 3)
+  pages = _messages.IntegerField(4, repeated=True, variant=_messages.Variant.INT32)
 
 
 class AnnotateFileResponse(_messages.Message):
@@ -30,13 +54,19 @@ class AnnotateFileResponse(_messages.Message):
   more images, which individually have their own responses.
 
   Fields:
+    error: If set, represents the error message for the failed request. The
+      `responses` field will not be set in this case.
     inputConfig: Information about the file for which this response is
       generated.
-    responses: Individual responses to images found within the file.
+    responses: Individual responses to images found within the file. This
+      field will be empty if the `error` field is set.
+    totalPages: This field gives the total number of pages in the file.
   """
 
-  inputConfig = _messages.MessageField('InputConfig', 1)
-  responses = _messages.MessageField('AnnotateImageResponse', 2, repeated=True)
+  error = _messages.MessageField('Status', 1)
+  inputConfig = _messages.MessageField('InputConfig', 2)
+  responses = _messages.MessageField('AnnotateImageResponse', 3, repeated=True)
+  totalPages = _messages.IntegerField(4, variant=_messages.Variant.INT32)
 
 
 class AnnotateImageRequest(_messages.Message):
@@ -136,10 +166,18 @@ class AsyncBatchAnnotateFilesRequest(_messages.Message):
   service call.
 
   Fields:
-    requests: Individual async file annotation requests for this batch.
+    parent: Optional. Target project and location to make a call.  Format:
+      `projects/{project-id}/locations/{location-id}`.  If no parent is
+      specified, a region will be chosen automatically.  Supported location-
+      ids:     `us`: USA country only,     `asia`: East asia areas, like
+      Japan, Taiwan,     `eu`: The European Union.  Example:
+      `projects/project-A/locations/eu`.
+    requests: Required. Individual async file annotation requests for this
+      batch.
   """
 
-  requests = _messages.MessageField('AsyncAnnotateFileRequest', 1, repeated=True)
+  parent = _messages.StringField(1)
+  requests = _messages.MessageField('AsyncAnnotateFileRequest', 2, repeated=True)
 
 
 class AsyncBatchAnnotateFilesResponse(_messages.Message):
@@ -153,15 +191,82 @@ class AsyncBatchAnnotateFilesResponse(_messages.Message):
   responses = _messages.MessageField('AsyncAnnotateFileResponse', 1, repeated=True)
 
 
+class AsyncBatchAnnotateImagesRequest(_messages.Message):
+  r"""Request for async image annotation for a list of images.
+
+  Fields:
+    outputConfig: Required. The desired output location and metadata (e.g.
+      format).
+    parent: Optional. Target project and location to make a call.  Format:
+      `projects/{project-id}/locations/{location-id}`.  If no parent is
+      specified, a region will be chosen automatically.  Supported location-
+      ids:     `us`: USA country only,     `asia`: East asia areas, like
+      Japan, Taiwan,     `eu`: The European Union.  Example:
+      `projects/project-A/locations/eu`.
+    requests: Required. Individual image annotation requests for this batch.
+  """
+
+  outputConfig = _messages.MessageField('OutputConfig', 1)
+  parent = _messages.StringField(2)
+  requests = _messages.MessageField('AnnotateImageRequest', 3, repeated=True)
+
+
+class AsyncBatchAnnotateImagesResponse(_messages.Message):
+  r"""Response to an async batch image annotation request.
+
+  Fields:
+    outputConfig: The output location and metadata from
+      AsyncBatchAnnotateImagesRequest.
+  """
+
+  outputConfig = _messages.MessageField('OutputConfig', 1)
+
+
+class BatchAnnotateFilesRequest(_messages.Message):
+  r"""A list of requests to annotate files using the BatchAnnotateFiles API.
+
+  Fields:
+    parent: Optional. Target project and location to make a call.  Format:
+      `projects/{project-id}/locations/{location-id}`.  If no parent is
+      specified, a region will be chosen automatically.  Supported location-
+      ids:     `us`: USA country only,     `asia`: East asia areas, like
+      Japan, Taiwan,     `eu`: The European Union.  Example:
+      `projects/project-A/locations/eu`.
+    requests: Required. The list of file annotation requests. Right now we
+      support only one AnnotateFileRequest in BatchAnnotateFilesRequest.
+  """
+
+  parent = _messages.StringField(1)
+  requests = _messages.MessageField('AnnotateFileRequest', 2, repeated=True)
+
+
+class BatchAnnotateFilesResponse(_messages.Message):
+  r"""A list of file annotation responses.
+
+  Fields:
+    responses: The list of file annotation responses, each response
+      corresponding to each AnnotateFileRequest in BatchAnnotateFilesRequest.
+  """
+
+  responses = _messages.MessageField('AnnotateFileResponse', 1, repeated=True)
+
+
 class BatchAnnotateImagesRequest(_messages.Message):
   r"""Multiple image annotation requests are batched into a single service
   call.
 
   Fields:
-    requests: Individual image annotation requests for this batch.
+    parent: Optional. Target project and location to make a call.  Format:
+      `projects/{project-id}/locations/{location-id}`.  If no parent is
+      specified, a region will be chosen automatically.  Supported location-
+      ids:     `us`: USA country only,     `asia`: East asia areas, like
+      Japan, Taiwan,     `eu`: The European Union.  Example:
+      `projects/project-A/locations/eu`.
+    requests: Required. Individual image annotation requests for this batch.
   """
 
-  requests = _messages.MessageField('AnnotateImageRequest', 1, repeated=True)
+  parent = _messages.StringField(1)
+  requests = _messages.MessageField('AnnotateImageRequest', 2, repeated=True)
 
 
 class BatchAnnotateImagesResponse(_messages.Message):
@@ -288,10 +393,13 @@ class Color(_messages.Message):
   "java.awt.Color" in Java; it can also be trivially provided to UIColor's
   "+colorWithRed:green:blue:alpha" method in iOS; and, with just a little
   work, it can be easily formatted into a CSS "rgba()" string in JavaScript,
-  as well. Here are some examples:  Example (Java):       import
-  com.google.type.Color;       // ...      public static java.awt.Color
-  fromProto(Color protocolor) {        float alpha = protocolor.hasAlpha()
-  ? protocolor.getAlpha().getValue()            : 1.0;         return new
+  as well.  Note: this proto does not carry information about the absolute
+  color space that should be used to interpret the RGB value (e.g. sRGB, Adobe
+  RGB, DCI-P3, BT.2020, etc.). By default, applications SHOULD assume the sRGB
+  color space.  Example (Java):       import com.google.type.Color;       //
+  ...      public static java.awt.Color fromProto(Color protocolor) {
+  float alpha = protocolor.hasAlpha()            ?
+  protocolor.getAlpha().getValue()            : 1.0;         return new
   java.awt.Color(            protocolor.getRed(),
   protocolor.getGreen(),            protocolor.getBlue(),            alpha);
   }       public static Color toProto(java.awt.Color color) {        float red
@@ -574,15 +682,11 @@ class FaceAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -596,15 +700,11 @@ class FaceAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -618,15 +718,11 @@ class FaceAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -640,15 +736,11 @@ class FaceAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -662,15 +754,11 @@ class FaceAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -684,15 +772,11 @@ class FaceAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -706,15 +790,11 @@ class FaceAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -803,16 +883,22 @@ class GcsDestination(_messages.Message):
   r"""The Google Cloud Storage location where the output will be written to.
 
   Fields:
-    uri: Google Cloud Storage URI where the results will be stored. Results
-      will be in JSON format and preceded by its corresponding input URI. This
-      field can either represent a single file, or a prefix for multiple
-      outputs. Prefixes must end in a `/`.  Examples:  *    File: gs://bucket-
-      name/filename.json *    Prefix: gs://bucket-name/prefix/here/ *    File:
-      gs://bucket-name/prefix/here  If multiple outputs, each response is
-      still AnnotateFileResponse, each of which contains some subset of the
-      full list of AnnotateImageResponse. Multiple outputs can happen if, for
-      example, the output JSON is too large and overflows into multiple
-      sharded files.
+    uri: Google Cloud Storage URI prefix where the results will be stored.
+      Results will be in JSON format and preceded by its corresponding input
+      URI prefix. This field can either represent a gcs file prefix or gcs
+      directory. In either case, the uri should be unique because in order to
+      get all of the output files, you will need to do a wildcard gcs search
+      on the uri prefix you provide.  Examples:  *    File Prefix: gs
+      ://bucket-name/here/filenameprefix   The output files will be created in
+      gs://bucket-name/here/ and the names of the output files will begin with
+      "filenameprefix".  *    Directory Prefix: gs://bucket-
+      name/some/location/   The output files will be created in gs://bucket-
+      name/some/location/ and the names of the output files could be anything
+      because there was no filename prefix specified.  If multiple outputs,
+      each response is still AnnotateFileResponse, each of which contains some
+      subset of the full list of AnnotateImageResponse. Multiple outputs can
+      happen if, for example, the output JSON is too large and overflows into
+      multiple sharded files.
   """
 
   uri = _messages.StringField(1)
@@ -834,13 +920,19 @@ class GoogleCloudVisionV1p1beta1AnnotateFileResponse(_messages.Message):
   more images, which individually have their own responses.
 
   Fields:
+    error: If set, represents the error message for the failed request. The
+      `responses` field will not be set in this case.
     inputConfig: Information about the file for which this response is
       generated.
-    responses: Individual responses to images found within the file.
+    responses: Individual responses to images found within the file. This
+      field will be empty if the `error` field is set.
+    totalPages: This field gives the total number of pages in the file.
   """
 
-  inputConfig = _messages.MessageField('GoogleCloudVisionV1p1beta1InputConfig', 1)
-  responses = _messages.MessageField('GoogleCloudVisionV1p1beta1AnnotateImageResponse', 2, repeated=True)
+  error = _messages.MessageField('Status', 1)
+  inputConfig = _messages.MessageField('GoogleCloudVisionV1p1beta1InputConfig', 2)
+  responses = _messages.MessageField('GoogleCloudVisionV1p1beta1AnnotateImageResponse', 3, repeated=True)
+  totalPages = _messages.IntegerField(4, variant=_messages.Variant.INT32)
 
 
 class GoogleCloudVisionV1p1beta1AnnotateImageResponse(_messages.Message):
@@ -1122,15 +1214,11 @@ class GoogleCloudVisionV1p1beta1FaceAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -1144,15 +1232,11 @@ class GoogleCloudVisionV1p1beta1FaceAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -1166,15 +1250,11 @@ class GoogleCloudVisionV1p1beta1FaceAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -1188,15 +1268,11 @@ class GoogleCloudVisionV1p1beta1FaceAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -1210,15 +1286,11 @@ class GoogleCloudVisionV1p1beta1FaceAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -1232,15 +1304,11 @@ class GoogleCloudVisionV1p1beta1FaceAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -1254,15 +1322,11 @@ class GoogleCloudVisionV1p1beta1FaceAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -1383,16 +1447,22 @@ class GoogleCloudVisionV1p1beta1GcsDestination(_messages.Message):
   r"""The Google Cloud Storage location where the output will be written to.
 
   Fields:
-    uri: Google Cloud Storage URI where the results will be stored. Results
-      will be in JSON format and preceded by its corresponding input URI. This
-      field can either represent a single file, or a prefix for multiple
-      outputs. Prefixes must end in a `/`.  Examples:  *    File: gs://bucket-
-      name/filename.json *    Prefix: gs://bucket-name/prefix/here/ *    File:
-      gs://bucket-name/prefix/here  If multiple outputs, each response is
-      still AnnotateFileResponse, each of which contains some subset of the
-      full list of AnnotateImageResponse. Multiple outputs can happen if, for
-      example, the output JSON is too large and overflows into multiple
-      sharded files.
+    uri: Google Cloud Storage URI prefix where the results will be stored.
+      Results will be in JSON format and preceded by its corresponding input
+      URI prefix. This field can either represent a gcs file prefix or gcs
+      directory. In either case, the uri should be unique because in order to
+      get all of the output files, you will need to do a wildcard gcs search
+      on the uri prefix you provide.  Examples:  *    File Prefix: gs
+      ://bucket-name/here/filenameprefix   The output files will be created in
+      gs://bucket-name/here/ and the names of the output files will begin with
+      "filenameprefix".  *    Directory Prefix: gs://bucket-
+      name/some/location/   The output files will be created in gs://bucket-
+      name/some/location/ and the names of the output files could be anything
+      because there was no filename prefix specified.  If multiple outputs,
+      each response is still AnnotateFileResponse, each of which contains some
+      subset of the full list of AnnotateImageResponse. Multiple outputs can
+      happen if, for example, the output JSON is too large and overflows into
+      multiple sharded files.
   """
 
   uri = _messages.StringField(1)
@@ -1437,13 +1507,19 @@ class GoogleCloudVisionV1p1beta1InputConfig(_messages.Message):
   r"""The desired input location and metadata.
 
   Fields:
+    content: File content, represented as a stream of bytes. Note: As with all
+      `bytes` fields, protobuffers use a pure binary representation, whereas
+      JSON representations use base64.  Currently, this field only works for
+      BatchAnnotateFiles requests. It does not work for
+      AsyncBatchAnnotateFiles requests.
     gcsSource: The Google Cloud Storage location to read the input from.
-    mimeType: The type of the file. Currently only "application/pdf" and
-      "image/tiff" are supported. Wildcards are not supported.
+    mimeType: The type of the file. Currently only "application/pdf",
+      "image/tiff" and "image/gif" are supported. Wildcards are not supported.
   """
 
-  gcsSource = _messages.MessageField('GoogleCloudVisionV1p1beta1GcsSource', 1)
-  mimeType = _messages.StringField(2)
+  content = _messages.BytesField(1)
+  gcsSource = _messages.MessageField('GoogleCloudVisionV1p1beta1GcsSource', 2)
+  mimeType = _messages.StringField(3)
 
 
 class GoogleCloudVisionV1p1beta1LocalizedObjectAnnotation(_messages.Message):
@@ -1577,7 +1653,7 @@ class GoogleCloudVisionV1p1beta1Paragraph(_messages.Message):
       1----0   and the vertex order will still be (0, 1, 2, 3).
     confidence: Confidence of the OCR results for the paragraph. Range [0, 1].
     property: Additional information detected for the paragraph.
-    words: List of words in this paragraph.
+    words: List of all words in this paragraph.
   """
 
   boundingBox = _messages.MessageField('GoogleCloudVisionV1p1beta1BoundingPoly', 1)
@@ -1613,15 +1689,19 @@ class GoogleCloudVisionV1p1beta1Product(_messages.Message):
     name: The resource name of the product.  Format is:
       `projects/PROJECT_ID/locations/LOC_ID/products/PRODUCT_ID`.  This field
       is ignored when creating a product.
-    productCategory: The category for the product identified by the reference
-      image. This should be either "homegoods", "apparel", or "toys".  This
-      field is immutable.
+    productCategory: Immutable. The category for the product identified by the
+      reference image. This should be either "homegoods-v2", "apparel-v2", or
+      "toys-v2". The legacy categories "homegoods", "apparel", and "toys" are
+      still supported, but these should not be used for new products.
     productLabels: Key-value pairs that can be attached to a product. At query
       time, constraints can be specified based on the product_labels.  Note
       that integer values can be provided as strings, e.g. "1199". Only
       strings with integer values can match a range-based restriction which is
       to be supported soon.  Multiple values can be assigned to the same key.
-      One product may have up to 100 product_labels.
+      One product may have up to 500 product_labels.  Notice that the total
+      number of distinct product_labels over all products in one ProductSet
+      cannot exceed 1M, otherwise the product search pipeline will refuse to
+      work for that ProductSet.
   """
 
   description = _messages.StringField(1)
@@ -1649,8 +1729,9 @@ class GoogleCloudVisionV1p1beta1ProductSearchResults(_messages.Message):
   r"""Results for a product search request.
 
   Fields:
-    indexTime: Timestamp of the index which provided these results. Changes
-      made after this time are not reflected in the current results.
+    indexTime: Timestamp of the index which provided these results. Products
+      added to the product set and products removed from the product set after
+      this time are not reflected in the current results.
     productGroupedResults: List of results grouped by products detected in the
       query image. Each entry corresponds to one bounding polygon in the query
       image, and contains the matching products specific to that region. There
@@ -1671,11 +1752,32 @@ class GoogleCloudVisionV1p1beta1ProductSearchResultsGroupedResult(_messages.Mess
   Fields:
     boundingPoly: The bounding polygon around the product detected in the
       query image.
+    objectAnnotations: List of generic predictions for the object in the
+      bounding box.
     results: List of results, one for each product match.
   """
 
   boundingPoly = _messages.MessageField('GoogleCloudVisionV1p1beta1BoundingPoly', 1)
-  results = _messages.MessageField('GoogleCloudVisionV1p1beta1ProductSearchResultsResult', 2, repeated=True)
+  objectAnnotations = _messages.MessageField('GoogleCloudVisionV1p1beta1ProductSearchResultsObjectAnnotation', 2, repeated=True)
+  results = _messages.MessageField('GoogleCloudVisionV1p1beta1ProductSearchResultsResult', 3, repeated=True)
+
+
+class GoogleCloudVisionV1p1beta1ProductSearchResultsObjectAnnotation(_messages.Message):
+  r"""Prediction for what the object in the bounding box is.
+
+  Fields:
+    languageCode: The BCP-47 language code, such as "en-US" or "sr-Latn". For
+      more information, see
+      http://www.unicode.org/reports/tr35/#Unicode_locale_identifier.
+    mid: Object ID that should align with EntityAnnotation mid.
+    name: Object name, expressed in its `language_code` language.
+    score: Score of the result. Range [0, 1].
+  """
+
+  languageCode = _messages.StringField(1)
+  mid = _messages.StringField(2)
+  name = _messages.StringField(3)
+  score = _messages.FloatField(4, variant=_messages.Variant.FLOAT)
 
 
 class GoogleCloudVisionV1p1beta1ProductSearchResultsResult(_messages.Message):
@@ -1749,15 +1851,11 @@ class GoogleCloudVisionV1p1beta1SafeSearchAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -1771,15 +1869,11 @@ class GoogleCloudVisionV1p1beta1SafeSearchAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -1796,15 +1890,11 @@ class GoogleCloudVisionV1p1beta1SafeSearchAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -1819,15 +1909,11 @@ class GoogleCloudVisionV1p1beta1SafeSearchAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -1841,15 +1927,11 @@ class GoogleCloudVisionV1p1beta1SafeSearchAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -1876,7 +1958,7 @@ class GoogleCloudVisionV1p1beta1Symbol(_messages.Message):
       orientation. For example:   * when the text is horizontal it might look
       like:      0----1      |    |      3----2   * when it's rotated 180
       degrees around the top-left corner it becomes:      2----3      |    |
-      1----0   and the vertice order will still be (0, 1, 2, 3).
+      1----0   and the vertex order will still be (0, 1, 2, 3).
     confidence: Confidence of the OCR results for the symbol. Range [0, 1].
     property: Additional information detected for the symbol.
     text: The actual UTF-8 representation of the symbol.
@@ -2095,13 +2177,19 @@ class GoogleCloudVisionV1p2beta1AnnotateFileResponse(_messages.Message):
   more images, which individually have their own responses.
 
   Fields:
+    error: If set, represents the error message for the failed request. The
+      `responses` field will not be set in this case.
     inputConfig: Information about the file for which this response is
       generated.
-    responses: Individual responses to images found within the file.
+    responses: Individual responses to images found within the file. This
+      field will be empty if the `error` field is set.
+    totalPages: This field gives the total number of pages in the file.
   """
 
-  inputConfig = _messages.MessageField('GoogleCloudVisionV1p2beta1InputConfig', 1)
-  responses = _messages.MessageField('GoogleCloudVisionV1p2beta1AnnotateImageResponse', 2, repeated=True)
+  error = _messages.MessageField('Status', 1)
+  inputConfig = _messages.MessageField('GoogleCloudVisionV1p2beta1InputConfig', 2)
+  responses = _messages.MessageField('GoogleCloudVisionV1p2beta1AnnotateImageResponse', 3, repeated=True)
+  totalPages = _messages.IntegerField(4, variant=_messages.Variant.INT32)
 
 
 class GoogleCloudVisionV1p2beta1AnnotateImageResponse(_messages.Message):
@@ -2383,15 +2471,11 @@ class GoogleCloudVisionV1p2beta1FaceAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -2405,15 +2489,11 @@ class GoogleCloudVisionV1p2beta1FaceAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -2427,15 +2507,11 @@ class GoogleCloudVisionV1p2beta1FaceAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -2449,15 +2525,11 @@ class GoogleCloudVisionV1p2beta1FaceAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -2471,15 +2543,11 @@ class GoogleCloudVisionV1p2beta1FaceAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -2493,15 +2561,11 @@ class GoogleCloudVisionV1p2beta1FaceAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -2515,15 +2579,11 @@ class GoogleCloudVisionV1p2beta1FaceAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -2644,16 +2704,22 @@ class GoogleCloudVisionV1p2beta1GcsDestination(_messages.Message):
   r"""The Google Cloud Storage location where the output will be written to.
 
   Fields:
-    uri: Google Cloud Storage URI where the results will be stored. Results
-      will be in JSON format and preceded by its corresponding input URI. This
-      field can either represent a single file, or a prefix for multiple
-      outputs. Prefixes must end in a `/`.  Examples:  *    File: gs://bucket-
-      name/filename.json *    Prefix: gs://bucket-name/prefix/here/ *    File:
-      gs://bucket-name/prefix/here  If multiple outputs, each response is
-      still AnnotateFileResponse, each of which contains some subset of the
-      full list of AnnotateImageResponse. Multiple outputs can happen if, for
-      example, the output JSON is too large and overflows into multiple
-      sharded files.
+    uri: Google Cloud Storage URI prefix where the results will be stored.
+      Results will be in JSON format and preceded by its corresponding input
+      URI prefix. This field can either represent a gcs file prefix or gcs
+      directory. In either case, the uri should be unique because in order to
+      get all of the output files, you will need to do a wildcard gcs search
+      on the uri prefix you provide.  Examples:  *    File Prefix: gs
+      ://bucket-name/here/filenameprefix   The output files will be created in
+      gs://bucket-name/here/ and the names of the output files will begin with
+      "filenameprefix".  *    Directory Prefix: gs://bucket-
+      name/some/location/   The output files will be created in gs://bucket-
+      name/some/location/ and the names of the output files could be anything
+      because there was no filename prefix specified.  If multiple outputs,
+      each response is still AnnotateFileResponse, each of which contains some
+      subset of the full list of AnnotateImageResponse. Multiple outputs can
+      happen if, for example, the output JSON is too large and overflows into
+      multiple sharded files.
   """
 
   uri = _messages.StringField(1)
@@ -2698,13 +2764,19 @@ class GoogleCloudVisionV1p2beta1InputConfig(_messages.Message):
   r"""The desired input location and metadata.
 
   Fields:
+    content: File content, represented as a stream of bytes. Note: As with all
+      `bytes` fields, protobuffers use a pure binary representation, whereas
+      JSON representations use base64.  Currently, this field only works for
+      BatchAnnotateFiles requests. It does not work for
+      AsyncBatchAnnotateFiles requests.
     gcsSource: The Google Cloud Storage location to read the input from.
-    mimeType: The type of the file. Currently only "application/pdf" and
-      "image/tiff" are supported. Wildcards are not supported.
+    mimeType: The type of the file. Currently only "application/pdf",
+      "image/tiff" and "image/gif" are supported. Wildcards are not supported.
   """
 
-  gcsSource = _messages.MessageField('GoogleCloudVisionV1p2beta1GcsSource', 1)
-  mimeType = _messages.StringField(2)
+  content = _messages.BytesField(1)
+  gcsSource = _messages.MessageField('GoogleCloudVisionV1p2beta1GcsSource', 2)
+  mimeType = _messages.StringField(3)
 
 
 class GoogleCloudVisionV1p2beta1LocalizedObjectAnnotation(_messages.Message):
@@ -2838,7 +2910,7 @@ class GoogleCloudVisionV1p2beta1Paragraph(_messages.Message):
       1----0   and the vertex order will still be (0, 1, 2, 3).
     confidence: Confidence of the OCR results for the paragraph. Range [0, 1].
     property: Additional information detected for the paragraph.
-    words: List of words in this paragraph.
+    words: List of all words in this paragraph.
   """
 
   boundingBox = _messages.MessageField('GoogleCloudVisionV1p2beta1BoundingPoly', 1)
@@ -2874,15 +2946,19 @@ class GoogleCloudVisionV1p2beta1Product(_messages.Message):
     name: The resource name of the product.  Format is:
       `projects/PROJECT_ID/locations/LOC_ID/products/PRODUCT_ID`.  This field
       is ignored when creating a product.
-    productCategory: The category for the product identified by the reference
-      image. This should be either "homegoods", "apparel", or "toys".  This
-      field is immutable.
+    productCategory: Immutable. The category for the product identified by the
+      reference image. This should be either "homegoods-v2", "apparel-v2", or
+      "toys-v2". The legacy categories "homegoods", "apparel", and "toys" are
+      still supported, but these should not be used for new products.
     productLabels: Key-value pairs that can be attached to a product. At query
       time, constraints can be specified based on the product_labels.  Note
       that integer values can be provided as strings, e.g. "1199". Only
       strings with integer values can match a range-based restriction which is
       to be supported soon.  Multiple values can be assigned to the same key.
-      One product may have up to 100 product_labels.
+      One product may have up to 500 product_labels.  Notice that the total
+      number of distinct product_labels over all products in one ProductSet
+      cannot exceed 1M, otherwise the product search pipeline will refuse to
+      work for that ProductSet.
   """
 
   description = _messages.StringField(1)
@@ -2910,8 +2986,9 @@ class GoogleCloudVisionV1p2beta1ProductSearchResults(_messages.Message):
   r"""Results for a product search request.
 
   Fields:
-    indexTime: Timestamp of the index which provided these results. Changes
-      made after this time are not reflected in the current results.
+    indexTime: Timestamp of the index which provided these results. Products
+      added to the product set and products removed from the product set after
+      this time are not reflected in the current results.
     productGroupedResults: List of results grouped by products detected in the
       query image. Each entry corresponds to one bounding polygon in the query
       image, and contains the matching products specific to that region. There
@@ -2932,11 +3009,32 @@ class GoogleCloudVisionV1p2beta1ProductSearchResultsGroupedResult(_messages.Mess
   Fields:
     boundingPoly: The bounding polygon around the product detected in the
       query image.
+    objectAnnotations: List of generic predictions for the object in the
+      bounding box.
     results: List of results, one for each product match.
   """
 
   boundingPoly = _messages.MessageField('GoogleCloudVisionV1p2beta1BoundingPoly', 1)
-  results = _messages.MessageField('GoogleCloudVisionV1p2beta1ProductSearchResultsResult', 2, repeated=True)
+  objectAnnotations = _messages.MessageField('GoogleCloudVisionV1p2beta1ProductSearchResultsObjectAnnotation', 2, repeated=True)
+  results = _messages.MessageField('GoogleCloudVisionV1p2beta1ProductSearchResultsResult', 3, repeated=True)
+
+
+class GoogleCloudVisionV1p2beta1ProductSearchResultsObjectAnnotation(_messages.Message):
+  r"""Prediction for what the object in the bounding box is.
+
+  Fields:
+    languageCode: The BCP-47 language code, such as "en-US" or "sr-Latn". For
+      more information, see
+      http://www.unicode.org/reports/tr35/#Unicode_locale_identifier.
+    mid: Object ID that should align with EntityAnnotation mid.
+    name: Object name, expressed in its `language_code` language.
+    score: Score of the result. Range [0, 1].
+  """
+
+  languageCode = _messages.StringField(1)
+  mid = _messages.StringField(2)
+  name = _messages.StringField(3)
+  score = _messages.FloatField(4, variant=_messages.Variant.FLOAT)
 
 
 class GoogleCloudVisionV1p2beta1ProductSearchResultsResult(_messages.Message):
@@ -3010,15 +3108,11 @@ class GoogleCloudVisionV1p2beta1SafeSearchAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -3032,15 +3126,11 @@ class GoogleCloudVisionV1p2beta1SafeSearchAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -3057,15 +3147,11 @@ class GoogleCloudVisionV1p2beta1SafeSearchAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -3080,15 +3166,11 @@ class GoogleCloudVisionV1p2beta1SafeSearchAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -3102,15 +3184,11 @@ class GoogleCloudVisionV1p2beta1SafeSearchAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -3137,7 +3215,7 @@ class GoogleCloudVisionV1p2beta1Symbol(_messages.Message):
       orientation. For example:   * when the text is horizontal it might look
       like:      0----1      |    |      3----2   * when it's rotated 180
       degrees around the top-left corner it becomes:      2----3      |    |
-      1----0   and the vertice order will still be (0, 1, 2, 3).
+      1----0   and the vertex order will still be (0, 1, 2, 3).
     confidence: Confidence of the OCR results for the symbol. Range [0, 1].
     property: Additional information detected for the symbol.
     text: The actual UTF-8 representation of the symbol.
@@ -3356,13 +3434,19 @@ class GoogleCloudVisionV1p3beta1AnnotateFileResponse(_messages.Message):
   more images, which individually have their own responses.
 
   Fields:
+    error: If set, represents the error message for the failed request. The
+      `responses` field will not be set in this case.
     inputConfig: Information about the file for which this response is
       generated.
-    responses: Individual responses to images found within the file.
+    responses: Individual responses to images found within the file. This
+      field will be empty if the `error` field is set.
+    totalPages: This field gives the total number of pages in the file.
   """
 
-  inputConfig = _messages.MessageField('GoogleCloudVisionV1p3beta1InputConfig', 1)
-  responses = _messages.MessageField('GoogleCloudVisionV1p3beta1AnnotateImageResponse', 2, repeated=True)
+  error = _messages.MessageField('Status', 1)
+  inputConfig = _messages.MessageField('GoogleCloudVisionV1p3beta1InputConfig', 2)
+  responses = _messages.MessageField('GoogleCloudVisionV1p3beta1AnnotateImageResponse', 3, repeated=True)
+  totalPages = _messages.IntegerField(4, variant=_messages.Variant.INT32)
 
 
 class GoogleCloudVisionV1p3beta1AnnotateImageResponse(_messages.Message):
@@ -3684,15 +3768,11 @@ class GoogleCloudVisionV1p3beta1FaceAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -3706,15 +3786,11 @@ class GoogleCloudVisionV1p3beta1FaceAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -3728,15 +3804,11 @@ class GoogleCloudVisionV1p3beta1FaceAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -3750,15 +3822,11 @@ class GoogleCloudVisionV1p3beta1FaceAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -3772,15 +3840,11 @@ class GoogleCloudVisionV1p3beta1FaceAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -3794,15 +3858,11 @@ class GoogleCloudVisionV1p3beta1FaceAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -3816,15 +3876,11 @@ class GoogleCloudVisionV1p3beta1FaceAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -3945,16 +4001,22 @@ class GoogleCloudVisionV1p3beta1GcsDestination(_messages.Message):
   r"""The Google Cloud Storage location where the output will be written to.
 
   Fields:
-    uri: Google Cloud Storage URI where the results will be stored. Results
-      will be in JSON format and preceded by its corresponding input URI. This
-      field can either represent a single file, or a prefix for multiple
-      outputs. Prefixes must end in a `/`.  Examples:  *    File: gs://bucket-
-      name/filename.json *    Prefix: gs://bucket-name/prefix/here/ *    File:
-      gs://bucket-name/prefix/here  If multiple outputs, each response is
-      still AnnotateFileResponse, each of which contains some subset of the
-      full list of AnnotateImageResponse. Multiple outputs can happen if, for
-      example, the output JSON is too large and overflows into multiple
-      sharded files.
+    uri: Google Cloud Storage URI prefix where the results will be stored.
+      Results will be in JSON format and preceded by its corresponding input
+      URI prefix. This field can either represent a gcs file prefix or gcs
+      directory. In either case, the uri should be unique because in order to
+      get all of the output files, you will need to do a wildcard gcs search
+      on the uri prefix you provide.  Examples:  *    File Prefix: gs
+      ://bucket-name/here/filenameprefix   The output files will be created in
+      gs://bucket-name/here/ and the names of the output files will begin with
+      "filenameprefix".  *    Directory Prefix: gs://bucket-
+      name/some/location/   The output files will be created in gs://bucket-
+      name/some/location/ and the names of the output files could be anything
+      because there was no filename prefix specified.  If multiple outputs,
+      each response is still AnnotateFileResponse, each of which contains some
+      subset of the full list of AnnotateImageResponse. Multiple outputs can
+      happen if, for example, the output JSON is too large and overflows into
+      multiple sharded files.
   """
 
   uri = _messages.StringField(1)
@@ -4017,13 +4079,19 @@ class GoogleCloudVisionV1p3beta1InputConfig(_messages.Message):
   r"""The desired input location and metadata.
 
   Fields:
+    content: File content, represented as a stream of bytes. Note: As with all
+      `bytes` fields, protobuffers use a pure binary representation, whereas
+      JSON representations use base64.  Currently, this field only works for
+      BatchAnnotateFiles requests. It does not work for
+      AsyncBatchAnnotateFiles requests.
     gcsSource: The Google Cloud Storage location to read the input from.
-    mimeType: The type of the file. Currently only "application/pdf" and
-      "image/tiff" are supported. Wildcards are not supported.
+    mimeType: The type of the file. Currently only "application/pdf",
+      "image/tiff" and "image/gif" are supported. Wildcards are not supported.
   """
 
-  gcsSource = _messages.MessageField('GoogleCloudVisionV1p3beta1GcsSource', 1)
-  mimeType = _messages.StringField(2)
+  content = _messages.BytesField(1)
+  gcsSource = _messages.MessageField('GoogleCloudVisionV1p3beta1GcsSource', 2)
+  mimeType = _messages.StringField(3)
 
 
 class GoogleCloudVisionV1p3beta1LocalizedObjectAnnotation(_messages.Message):
@@ -4157,7 +4225,7 @@ class GoogleCloudVisionV1p3beta1Paragraph(_messages.Message):
       1----0   and the vertex order will still be (0, 1, 2, 3).
     confidence: Confidence of the OCR results for the paragraph. Range [0, 1].
     property: Additional information detected for the paragraph.
-    words: List of words in this paragraph.
+    words: List of all words in this paragraph.
   """
 
   boundingBox = _messages.MessageField('GoogleCloudVisionV1p3beta1BoundingPoly', 1)
@@ -4193,15 +4261,19 @@ class GoogleCloudVisionV1p3beta1Product(_messages.Message):
     name: The resource name of the product.  Format is:
       `projects/PROJECT_ID/locations/LOC_ID/products/PRODUCT_ID`.  This field
       is ignored when creating a product.
-    productCategory: The category for the product identified by the reference
-      image. This should be either "homegoods", "apparel", or "toys".  This
-      field is immutable.
+    productCategory: Immutable. The category for the product identified by the
+      reference image. This should be either "homegoods-v2", "apparel-v2", or
+      "toys-v2". The legacy categories "homegoods", "apparel", and "toys" are
+      still supported, but these should not be used for new products.
     productLabels: Key-value pairs that can be attached to a product. At query
       time, constraints can be specified based on the product_labels.  Note
       that integer values can be provided as strings, e.g. "1199". Only
       strings with integer values can match a range-based restriction which is
       to be supported soon.  Multiple values can be assigned to the same key.
-      One product may have up to 100 product_labels.
+      One product may have up to 500 product_labels.  Notice that the total
+      number of distinct product_labels over all products in one ProductSet
+      cannot exceed 1M, otherwise the product search pipeline will refuse to
+      work for that ProductSet.
   """
 
   description = _messages.StringField(1)
@@ -4229,8 +4301,9 @@ class GoogleCloudVisionV1p3beta1ProductSearchResults(_messages.Message):
   r"""Results for a product search request.
 
   Fields:
-    indexTime: Timestamp of the index which provided these results. Changes
-      made after this time are not reflected in the current results.
+    indexTime: Timestamp of the index which provided these results. Products
+      added to the product set and products removed from the product set after
+      this time are not reflected in the current results.
     productGroupedResults: List of results grouped by products detected in the
       query image. Each entry corresponds to one bounding polygon in the query
       image, and contains the matching products specific to that region. There
@@ -4251,11 +4324,32 @@ class GoogleCloudVisionV1p3beta1ProductSearchResultsGroupedResult(_messages.Mess
   Fields:
     boundingPoly: The bounding polygon around the product detected in the
       query image.
+    objectAnnotations: List of generic predictions for the object in the
+      bounding box.
     results: List of results, one for each product match.
   """
 
   boundingPoly = _messages.MessageField('GoogleCloudVisionV1p3beta1BoundingPoly', 1)
-  results = _messages.MessageField('GoogleCloudVisionV1p3beta1ProductSearchResultsResult', 2, repeated=True)
+  objectAnnotations = _messages.MessageField('GoogleCloudVisionV1p3beta1ProductSearchResultsObjectAnnotation', 2, repeated=True)
+  results = _messages.MessageField('GoogleCloudVisionV1p3beta1ProductSearchResultsResult', 3, repeated=True)
+
+
+class GoogleCloudVisionV1p3beta1ProductSearchResultsObjectAnnotation(_messages.Message):
+  r"""Prediction for what the object in the bounding box is.
+
+  Fields:
+    languageCode: The BCP-47 language code, such as "en-US" or "sr-Latn". For
+      more information, see
+      http://www.unicode.org/reports/tr35/#Unicode_locale_identifier.
+    mid: Object ID that should align with EntityAnnotation mid.
+    name: Object name, expressed in its `language_code` language.
+    score: Score of the result. Range [0, 1].
+  """
+
+  languageCode = _messages.StringField(1)
+  mid = _messages.StringField(2)
+  name = _messages.StringField(3)
+  score = _messages.FloatField(4, variant=_messages.Variant.FLOAT)
 
 
 class GoogleCloudVisionV1p3beta1ProductSearchResultsResult(_messages.Message):
@@ -4293,18 +4387,18 @@ class GoogleCloudVisionV1p3beta1ReferenceImage(_messages.Message):
   metadata, such as bounding boxes.
 
   Fields:
-    boundingPolys: Bounding polygons around the areas of interest in the
-      reference image. Optional. If this field is empty, the system will try
-      to detect regions of interest. At most 10 bounding polygons will be
-      used.  The provided shape is converted into a non-rotated rectangle.
-      Once converted, the small edge of the rectangle must be greater than or
-      equal to 300 pixels. The aspect ratio must be 1:4 or less (i.e. 1:3 is
-      ok; 1:5 is not).
+    boundingPolys: Optional. Bounding polygons around the areas of interest in
+      the reference image. If this field is empty, the system will try to
+      detect regions of interest. At most 10 bounding polygons will be used.
+      The provided shape is converted into a non-rotated rectangle. Once
+      converted, the small edge of the rectangle must be greater than or equal
+      to 300 pixels. The aspect ratio must be 1:4 or less (i.e. 1:3 is ok; 1:5
+      is not).
     name: The resource name of the reference image.  Format is:  `projects/PRO
       JECT_ID/locations/LOC_ID/products/PRODUCT_ID/referenceImages/IMAGE_ID`.
       This field is ignored when creating a reference image.
-    uri: The Google Cloud Storage URI of the reference image.  The URI must
-      start with `gs://`.  Required.
+    uri: Required. The Google Cloud Storage URI of the reference image.  The
+      URI must start with `gs://`.
   """
 
   boundingPolys = _messages.MessageField('GoogleCloudVisionV1p3beta1BoundingPoly', 1, repeated=True)
@@ -4353,15 +4447,11 @@ class GoogleCloudVisionV1p3beta1SafeSearchAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -4375,15 +4465,11 @@ class GoogleCloudVisionV1p3beta1SafeSearchAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -4400,15 +4486,11 @@ class GoogleCloudVisionV1p3beta1SafeSearchAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -4423,15 +4505,11 @@ class GoogleCloudVisionV1p3beta1SafeSearchAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -4445,15 +4523,11 @@ class GoogleCloudVisionV1p3beta1SafeSearchAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -4480,7 +4554,7 @@ class GoogleCloudVisionV1p3beta1Symbol(_messages.Message):
       orientation. For example:   * when the text is horizontal it might look
       like:      0----1      |    |      3----2   * when it's rotated 180
       degrees around the top-left corner it becomes:      2----3      |    |
-      1----0   and the vertice order will still be (0, 1, 2, 3).
+      1----0   and the vertex order will still be (0, 1, 2, 3).
     confidence: Confidence of the OCR results for the symbol. Range [0, 1].
     property: Additional information detected for the symbol.
     text: The actual UTF-8 representation of the symbol.
@@ -4699,15 +4773,19 @@ class GoogleCloudVisionV1p4beta1AnnotateFileResponse(_messages.Message):
   more images, which individually have their own responses.
 
   Fields:
+    error: If set, represents the error message for the failed request. The
+      `responses` field will not be set in this case.
     inputConfig: Information about the file for which this response is
       generated.
-    responses: Individual responses to images found within the file.
+    responses: Individual responses to images found within the file. This
+      field will be empty if the `error` field is set.
     totalPages: This field gives the total number of pages in the file.
   """
 
-  inputConfig = _messages.MessageField('GoogleCloudVisionV1p4beta1InputConfig', 1)
-  responses = _messages.MessageField('GoogleCloudVisionV1p4beta1AnnotateImageResponse', 2, repeated=True)
-  totalPages = _messages.IntegerField(3, variant=_messages.Variant.INT32)
+  error = _messages.MessageField('Status', 1)
+  inputConfig = _messages.MessageField('GoogleCloudVisionV1p4beta1InputConfig', 2)
+  responses = _messages.MessageField('GoogleCloudVisionV1p4beta1AnnotateImageResponse', 3, repeated=True)
+  totalPages = _messages.IntegerField(4, variant=_messages.Variant.INT32)
 
 
 class GoogleCloudVisionV1p4beta1AnnotateImageResponse(_messages.Message):
@@ -4903,6 +4981,21 @@ class GoogleCloudVisionV1p4beta1BoundingPoly(_messages.Message):
   vertices = _messages.MessageField('GoogleCloudVisionV1p4beta1Vertex', 2, repeated=True)
 
 
+class GoogleCloudVisionV1p4beta1Celebrity(_messages.Message):
+  r"""A Celebrity is a group of Faces with an identity.
+
+  Fields:
+    description: The Celebrity's description.
+    displayName: The Celebrity's display name.
+    name: The resource name of the preloaded Celebrity. Has the format
+      `builtin/{mid}`.
+  """
+
+  description = _messages.StringField(1)
+  displayName = _messages.StringField(2)
+  name = _messages.StringField(3)
+
+
 class GoogleCloudVisionV1p4beta1ColorInfo(_messages.Message):
   r"""Color information consists of RGB channels, score, and the fraction of
   the image that the color occupies in the image.
@@ -5035,6 +5128,10 @@ class GoogleCloudVisionV1p4beta1FaceAnnotation(_messages.Message):
     panAngle: Yaw angle, which indicates the leftward/rightward angle that the
       face is pointing relative to the vertical plane perpendicular to the
       image. Range [-180,180].
+    recognitionResult: Additional recognition information. Only computed if
+      image_context.face_recognition_params is provided, **and** a match is
+      found to a Celebrity in the input CelebritySet. This field is sorted in
+      order of decreasing confidence values.
     rollAngle: Roll angle, which indicates the amount of clockwise/anti-
       clockwise rotation of the face relative to the image vertical about the
       axis perpendicular to the face. Range [-180,180].
@@ -5051,15 +5148,11 @@ class GoogleCloudVisionV1p4beta1FaceAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -5073,15 +5166,11 @@ class GoogleCloudVisionV1p4beta1FaceAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -5095,15 +5184,11 @@ class GoogleCloudVisionV1p4beta1FaceAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -5117,15 +5202,11 @@ class GoogleCloudVisionV1p4beta1FaceAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -5139,15 +5220,11 @@ class GoogleCloudVisionV1p4beta1FaceAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -5161,15 +5238,11 @@ class GoogleCloudVisionV1p4beta1FaceAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -5183,15 +5256,11 @@ class GoogleCloudVisionV1p4beta1FaceAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -5210,11 +5279,12 @@ class GoogleCloudVisionV1p4beta1FaceAnnotation(_messages.Message):
   landmarkingConfidence = _messages.FloatField(8, variant=_messages.Variant.FLOAT)
   landmarks = _messages.MessageField('GoogleCloudVisionV1p4beta1FaceAnnotationLandmark', 9, repeated=True)
   panAngle = _messages.FloatField(10, variant=_messages.Variant.FLOAT)
-  rollAngle = _messages.FloatField(11, variant=_messages.Variant.FLOAT)
-  sorrowLikelihood = _messages.EnumField('SorrowLikelihoodValueValuesEnum', 12)
-  surpriseLikelihood = _messages.EnumField('SurpriseLikelihoodValueValuesEnum', 13)
-  tiltAngle = _messages.FloatField(14, variant=_messages.Variant.FLOAT)
-  underExposedLikelihood = _messages.EnumField('UnderExposedLikelihoodValueValuesEnum', 15)
+  recognitionResult = _messages.MessageField('GoogleCloudVisionV1p4beta1FaceRecognitionResult', 11, repeated=True)
+  rollAngle = _messages.FloatField(12, variant=_messages.Variant.FLOAT)
+  sorrowLikelihood = _messages.EnumField('SorrowLikelihoodValueValuesEnum', 13)
+  surpriseLikelihood = _messages.EnumField('SurpriseLikelihoodValueValuesEnum', 14)
+  tiltAngle = _messages.FloatField(15, variant=_messages.Variant.FLOAT)
+  underExposedLikelihood = _messages.EnumField('UnderExposedLikelihoodValueValuesEnum', 16)
 
 
 class GoogleCloudVisionV1p4beta1FaceAnnotationLandmark(_messages.Message):
@@ -5308,20 +5378,38 @@ class GoogleCloudVisionV1p4beta1FaceAnnotationLandmark(_messages.Message):
   type = _messages.EnumField('TypeValueValuesEnum', 2)
 
 
+class GoogleCloudVisionV1p4beta1FaceRecognitionResult(_messages.Message):
+  r"""Information about a face's identity.
+
+  Fields:
+    celebrity: The Celebrity that this face was matched to.
+    confidence: Recognition confidence. Range [0, 1].
+  """
+
+  celebrity = _messages.MessageField('GoogleCloudVisionV1p4beta1Celebrity', 1)
+  confidence = _messages.FloatField(2, variant=_messages.Variant.FLOAT)
+
+
 class GoogleCloudVisionV1p4beta1GcsDestination(_messages.Message):
   r"""The Google Cloud Storage location where the output will be written to.
 
   Fields:
-    uri: Google Cloud Storage URI where the results will be stored. Results
-      will be in JSON format and preceded by its corresponding input URI. This
-      field can either represent a single file, or a prefix for multiple
-      outputs. Prefixes must end in a `/`.  Examples:  *    File: gs://bucket-
-      name/filename.json *    Prefix: gs://bucket-name/prefix/here/ *    File:
-      gs://bucket-name/prefix/here  If multiple outputs, each response is
-      still AnnotateFileResponse, each of which contains some subset of the
-      full list of AnnotateImageResponse. Multiple outputs can happen if, for
-      example, the output JSON is too large and overflows into multiple
-      sharded files.
+    uri: Google Cloud Storage URI prefix where the results will be stored.
+      Results will be in JSON format and preceded by its corresponding input
+      URI prefix. This field can either represent a gcs file prefix or gcs
+      directory. In either case, the uri should be unique because in order to
+      get all of the output files, you will need to do a wildcard gcs search
+      on the uri prefix you provide.  Examples:  *    File Prefix: gs
+      ://bucket-name/here/filenameprefix   The output files will be created in
+      gs://bucket-name/here/ and the names of the output files will begin with
+      "filenameprefix".  *    Directory Prefix: gs://bucket-
+      name/some/location/   The output files will be created in gs://bucket-
+      name/some/location/ and the names of the output files could be anything
+      because there was no filename prefix specified.  If multiple outputs,
+      each response is still AnnotateFileResponse, each of which contains some
+      subset of the full list of AnnotateImageResponse. Multiple outputs can
+      happen if, for example, the output JSON is too large and overflows into
+      multiple sharded files.
   """
 
   uri = _messages.StringField(1)
@@ -5390,8 +5478,8 @@ class GoogleCloudVisionV1p4beta1InputConfig(_messages.Message):
       BatchAnnotateFiles requests. It does not work for
       AsyncBatchAnnotateFiles requests.
     gcsSource: The Google Cloud Storage location to read the input from.
-    mimeType: The type of the file. Currently only "application/pdf" and
-      "image/tiff" are supported. Wildcards are not supported.
+    mimeType: The type of the file. Currently only "application/pdf",
+      "image/tiff" and "image/gif" are supported. Wildcards are not supported.
   """
 
   content = _messages.BytesField(1)
@@ -5530,7 +5618,7 @@ class GoogleCloudVisionV1p4beta1Paragraph(_messages.Message):
       1----0   and the vertex order will still be (0, 1, 2, 3).
     confidence: Confidence of the OCR results for the paragraph. Range [0, 1].
     property: Additional information detected for the paragraph.
-    words: List of words in this paragraph.
+    words: List of all words in this paragraph.
   """
 
   boundingBox = _messages.MessageField('GoogleCloudVisionV1p4beta1BoundingPoly', 1)
@@ -5566,15 +5654,19 @@ class GoogleCloudVisionV1p4beta1Product(_messages.Message):
     name: The resource name of the product.  Format is:
       `projects/PROJECT_ID/locations/LOC_ID/products/PRODUCT_ID`.  This field
       is ignored when creating a product.
-    productCategory: The category for the product identified by the reference
-      image. This should be either "homegoods", "apparel", or "toys".  This
-      field is immutable.
+    productCategory: Immutable. The category for the product identified by the
+      reference image. This should be either "homegoods-v2", "apparel-v2", or
+      "toys-v2". The legacy categories "homegoods", "apparel", and "toys" are
+      still supported, but these should not be used for new products.
     productLabels: Key-value pairs that can be attached to a product. At query
       time, constraints can be specified based on the product_labels.  Note
       that integer values can be provided as strings, e.g. "1199". Only
       strings with integer values can match a range-based restriction which is
       to be supported soon.  Multiple values can be assigned to the same key.
-      One product may have up to 100 product_labels.
+      One product may have up to 500 product_labels.  Notice that the total
+      number of distinct product_labels over all products in one ProductSet
+      cannot exceed 1M, otherwise the product search pipeline will refuse to
+      work for that ProductSet.
   """
 
   description = _messages.StringField(1)
@@ -5602,8 +5694,9 @@ class GoogleCloudVisionV1p4beta1ProductSearchResults(_messages.Message):
   r"""Results for a product search request.
 
   Fields:
-    indexTime: Timestamp of the index which provided these results. Changes
-      made after this time are not reflected in the current results.
+    indexTime: Timestamp of the index which provided these results. Products
+      added to the product set and products removed from the product set after
+      this time are not reflected in the current results.
     productGroupedResults: List of results grouped by products detected in the
       query image. Each entry corresponds to one bounding polygon in the query
       image, and contains the matching products specific to that region. There
@@ -5624,11 +5717,32 @@ class GoogleCloudVisionV1p4beta1ProductSearchResultsGroupedResult(_messages.Mess
   Fields:
     boundingPoly: The bounding polygon around the product detected in the
       query image.
+    objectAnnotations: List of generic predictions for the object in the
+      bounding box.
     results: List of results, one for each product match.
   """
 
   boundingPoly = _messages.MessageField('GoogleCloudVisionV1p4beta1BoundingPoly', 1)
-  results = _messages.MessageField('GoogleCloudVisionV1p4beta1ProductSearchResultsResult', 2, repeated=True)
+  objectAnnotations = _messages.MessageField('GoogleCloudVisionV1p4beta1ProductSearchResultsObjectAnnotation', 2, repeated=True)
+  results = _messages.MessageField('GoogleCloudVisionV1p4beta1ProductSearchResultsResult', 3, repeated=True)
+
+
+class GoogleCloudVisionV1p4beta1ProductSearchResultsObjectAnnotation(_messages.Message):
+  r"""Prediction for what the object in the bounding box is.
+
+  Fields:
+    languageCode: The BCP-47 language code, such as "en-US" or "sr-Latn". For
+      more information, see
+      http://www.unicode.org/reports/tr35/#Unicode_locale_identifier.
+    mid: Object ID that should align with EntityAnnotation mid.
+    name: Object name, expressed in its `language_code` language.
+    score: Score of the result. Range [0, 1].
+  """
+
+  languageCode = _messages.StringField(1)
+  mid = _messages.StringField(2)
+  name = _messages.StringField(3)
+  score = _messages.FloatField(4, variant=_messages.Variant.FLOAT)
 
 
 class GoogleCloudVisionV1p4beta1ProductSearchResultsResult(_messages.Message):
@@ -5666,18 +5780,18 @@ class GoogleCloudVisionV1p4beta1ReferenceImage(_messages.Message):
   metadata, such as bounding boxes.
 
   Fields:
-    boundingPolys: Bounding polygons around the areas of interest in the
-      reference image. Optional. If this field is empty, the system will try
-      to detect regions of interest. At most 10 bounding polygons will be
-      used.  The provided shape is converted into a non-rotated rectangle.
-      Once converted, the small edge of the rectangle must be greater than or
-      equal to 300 pixels. The aspect ratio must be 1:4 or less (i.e. 1:3 is
-      ok; 1:5 is not).
+    boundingPolys: Optional. Bounding polygons around the areas of interest in
+      the reference image. If this field is empty, the system will try to
+      detect regions of interest. At most 10 bounding polygons will be used.
+      The provided shape is converted into a non-rotated rectangle. Once
+      converted, the small edge of the rectangle must be greater than or equal
+      to 300 pixels. The aspect ratio must be 1:4 or less (i.e. 1:3 is ok; 1:5
+      is not).
     name: The resource name of the reference image.  Format is:  `projects/PRO
       JECT_ID/locations/LOC_ID/products/PRODUCT_ID/referenceImages/IMAGE_ID`.
       This field is ignored when creating a reference image.
-    uri: The Google Cloud Storage URI of the reference image.  The URI must
-      start with `gs://`.  Required.
+    uri: Required. The Google Cloud Storage URI of the reference image.  The
+      URI must start with `gs://`.
   """
 
   boundingPolys = _messages.MessageField('GoogleCloudVisionV1p4beta1BoundingPoly', 1, repeated=True)
@@ -5726,15 +5840,11 @@ class GoogleCloudVisionV1p4beta1SafeSearchAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -5748,15 +5858,11 @@ class GoogleCloudVisionV1p4beta1SafeSearchAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -5773,15 +5879,11 @@ class GoogleCloudVisionV1p4beta1SafeSearchAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -5796,15 +5898,11 @@ class GoogleCloudVisionV1p4beta1SafeSearchAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -5818,15 +5916,11 @@ class GoogleCloudVisionV1p4beta1SafeSearchAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -5853,7 +5947,7 @@ class GoogleCloudVisionV1p4beta1Symbol(_messages.Message):
       orientation. For example:   * when the text is horizontal it might look
       like:      0----1      |    |      3----2   * when it's rotated 180
       degrees around the top-left corner it becomes:      2----3      |    |
-      1----0   and the vertice order will still be (0, 1, 2, 3).
+      1----0   and the vertex order will still be (0, 1, 2, 3).
     confidence: Confidence of the OCR results for the symbol. Range [0, 1].
     property: Additional information detected for the symbol.
     text: The actual UTF-8 representation of the symbol.
@@ -6074,11 +6168,14 @@ class GroupedResult(_messages.Message):
   Fields:
     boundingPoly: The bounding polygon around the product detected in the
       query image.
+    objectAnnotations: List of generic predictions for the object in the
+      bounding box.
     results: List of results, one for each product match.
   """
 
   boundingPoly = _messages.MessageField('BoundingPoly', 1)
-  results = _messages.MessageField('Result', 2, repeated=True)
+  objectAnnotations = _messages.MessageField('ObjectAnnotation', 2, repeated=True)
+  results = _messages.MessageField('Result', 3, repeated=True)
 
 
 class Image(_messages.Message):
@@ -6232,7 +6329,7 @@ class ImportProductSetsRequest(_messages.Message):
   r"""Request message for the `ImportProductSets` method.
 
   Fields:
-    inputConfig: The input content for the list of requests.
+    inputConfig: Required. The input content for the list of requests.
   """
 
   inputConfig = _messages.MessageField('ImportProductSetsInputConfig', 1)
@@ -6260,13 +6357,19 @@ class InputConfig(_messages.Message):
   r"""The desired input location and metadata.
 
   Fields:
+    content: File content, represented as a stream of bytes. Note: As with all
+      `bytes` fields, protobuffers use a pure binary representation, whereas
+      JSON representations use base64.  Currently, this field only works for
+      BatchAnnotateFiles requests. It does not work for
+      AsyncBatchAnnotateFiles requests.
     gcsSource: The Google Cloud Storage location to read the input from.
-    mimeType: The type of the file. Currently only "application/pdf" and
-      "image/tiff" are supported. Wildcards are not supported.
+    mimeType: The type of the file. Currently only "application/pdf",
+      "image/tiff" and "image/gif" are supported. Wildcards are not supported.
   """
 
-  gcsSource = _messages.MessageField('GcsSource', 1)
-  mimeType = _messages.StringField(2)
+  content = _messages.BytesField(1)
+  gcsSource = _messages.MessageField('GcsSource', 2)
+  mimeType = _messages.StringField(3)
 
 
 class KeyValue(_messages.Message):
@@ -6514,6 +6617,24 @@ class NormalizedVertex(_messages.Message):
   y = _messages.FloatField(2, variant=_messages.Variant.FLOAT)
 
 
+class ObjectAnnotation(_messages.Message):
+  r"""Prediction for what the object in the bounding box is.
+
+  Fields:
+    languageCode: The BCP-47 language code, such as "en-US" or "sr-Latn". For
+      more information, see
+      http://www.unicode.org/reports/tr35/#Unicode_locale_identifier.
+    mid: Object ID that should align with EntityAnnotation mid.
+    name: Object name, expressed in its `language_code` language.
+    score: Score of the result. Range [0, 1].
+  """
+
+  languageCode = _messages.StringField(1)
+  mid = _messages.StringField(2)
+  name = _messages.StringField(3)
+  score = _messages.FloatField(4, variant=_messages.Variant.FLOAT)
+
+
 class Operation(_messages.Message):
   r"""This resource represents a long-running operation that is the result of
   a network API call.
@@ -6545,7 +6666,8 @@ class Operation(_messages.Message):
       if any.
     name: The server-assigned name, which is only unique within the same
       service that originally returns it. If you use the default HTTP mapping,
-      the `name` should have the format of `operations/some/unique/name`.
+      the `name` should be a resource name ending with
+      `operations/{unique_id}`.
     response: The normal response of the operation in case of success.  If the
       original method returns no data on success, such as `Delete`, the
       response is `google.protobuf.Empty`.  If the original method is standard
@@ -6708,7 +6830,7 @@ class Paragraph(_messages.Message):
       1----0   and the vertex order will still be (0, 1, 2, 3).
     confidence: Confidence of the OCR results for the paragraph. Range [0, 1].
     property: Additional information detected for the paragraph.
-    words: List of words in this paragraph.
+    words: List of all words in this paragraph.
   """
 
   boundingBox = _messages.MessageField('BoundingPoly', 1)
@@ -6744,15 +6866,19 @@ class Product(_messages.Message):
     name: The resource name of the product.  Format is:
       `projects/PROJECT_ID/locations/LOC_ID/products/PRODUCT_ID`.  This field
       is ignored when creating a product.
-    productCategory: The category for the product identified by the reference
-      image. This should be either "homegoods", "apparel", or "toys".  This
-      field is immutable.
+    productCategory: Immutable. The category for the product identified by the
+      reference image. This should be either "homegoods-v2", "apparel-v2", or
+      "toys-v2". The legacy categories "homegoods", "apparel", and "toys" are
+      still supported, but these should not be used for new products.
     productLabels: Key-value pairs that can be attached to a product. At query
       time, constraints can be specified based on the product_labels.  Note
       that integer values can be provided as strings, e.g. "1199". Only
       strings with integer values can match a range-based restriction which is
       to be supported soon.  Multiple values can be assigned to the same key.
-      One product may have up to 100 product_labels.
+      One product may have up to 500 product_labels.  Notice that the total
+      number of distinct product_labels over all products in one ProductSet
+      cannot exceed 1M, otherwise the product search pipeline will refuse to
+      work for that ProductSet.
   """
 
   description = _messages.StringField(1)
@@ -6767,17 +6893,22 @@ class ProductSearchParams(_messages.Message):
 
   Fields:
     boundingPoly: The bounding polygon around the area of interest in the
-      image. Optional. If it is not specified, system discretion will be
-      applied.
+      image. If it is not specified, system discretion will be applied.
     filter: The filtering expression. This can be used to restrict search
       results based on Product labels. We currently support an AND of OR of
       key-value expressions, where each expression within an OR must have the
-      same key.  For example, "(color = red OR color = blue) AND brand =
-      Google" is acceptable, but not "(color = red OR brand = Google)" or
-      "color: red".
+      same key. An '=' should be used to connect the key and value.  For
+      example, "(color = red OR color = blue) AND brand = Google" is
+      acceptable, but "(color = red OR brand = Google)" is not acceptable.
+      "color: red" is not acceptable because it uses a ':' instead of an '='.
     productCategories: The list of product categories to search in. Currently,
-      we only consider the first category, and either "homegoods", "apparel",
-      or "toys" should be specified.
+      we only consider the first category, and either "homegoods-v2",
+      "apparel-v2", "toys-v2", "packagedgoods-v1", or "general-v1" should be
+      specified. The legacy categories "homegoods", "apparel", and "toys" are
+      still supported but will be deprecated. For new products, please use
+      "homegoods-v2", "apparel-v2", or "toys-v2" for better product search
+      accuracy. It is recommended to migrate existing products to these
+      categories as well.
     productSet: The resource name of a ProductSet to be searched for similar
       images.  Format is:
       `projects/PROJECT_ID/locations/LOC_ID/productSets/PRODUCT_SET_ID`.
@@ -6793,8 +6924,9 @@ class ProductSearchResults(_messages.Message):
   r"""Results for a product search request.
 
   Fields:
-    indexTime: Timestamp of the index which provided these results. Changes
-      made after this time are not reflected in the current results.
+    indexTime: Timestamp of the index which provided these results. Products
+      added to the product set and products removed from the product set after
+      this time are not reflected in the current results.
     productGroupedResults: List of results grouped by products detected in the
       query image. Each entry corresponds to one bounding polygon in the query
       image, and contains the matching products specific to that region. There
@@ -6835,6 +6967,18 @@ class ProductSet(_messages.Message):
   name = _messages.StringField(4)
 
 
+class ProductSetPurgeConfig(_messages.Message):
+  r"""Config to control which ProductSet contains the Products to be deleted.
+
+  Fields:
+    productSetId: The ProductSet that contains the Products to delete. If a
+      Product is a member of product_set_id in addition to other ProductSets,
+      the Product will still be deleted.
+  """
+
+  productSetId = _messages.StringField(1)
+
+
 class Property(_messages.Message):
   r"""A `Property` consists of a user-supplied name/value pair.
 
@@ -6849,23 +6993,40 @@ class Property(_messages.Message):
   value = _messages.StringField(3)
 
 
+class PurgeProductsRequest(_messages.Message):
+  r"""Request message for the `PurgeProducts` method.
+
+  Fields:
+    deleteOrphanProducts: If delete_orphan_products is true, all Products that
+      are not in any ProductSet will be deleted.
+    force: The default value is false. Override this value to true to actually
+      perform the purge.
+    productSetPurgeConfig: Specify which ProductSet contains the Products to
+      be deleted.
+  """
+
+  deleteOrphanProducts = _messages.BooleanField(1)
+  force = _messages.BooleanField(2)
+  productSetPurgeConfig = _messages.MessageField('ProductSetPurgeConfig', 3)
+
+
 class ReferenceImage(_messages.Message):
   r"""A `ReferenceImage` represents a product image and its associated
   metadata, such as bounding boxes.
 
   Fields:
-    boundingPolys: Bounding polygons around the areas of interest in the
-      reference image. Optional. If this field is empty, the system will try
-      to detect regions of interest. At most 10 bounding polygons will be
-      used.  The provided shape is converted into a non-rotated rectangle.
-      Once converted, the small edge of the rectangle must be greater than or
-      equal to 300 pixels. The aspect ratio must be 1:4 or less (i.e. 1:3 is
-      ok; 1:5 is not).
+    boundingPolys: Optional. Bounding polygons around the areas of interest in
+      the reference image. If this field is empty, the system will try to
+      detect regions of interest. At most 10 bounding polygons will be used.
+      The provided shape is converted into a non-rotated rectangle. Once
+      converted, the small edge of the rectangle must be greater than or equal
+      to 300 pixels. The aspect ratio must be 1:4 or less (i.e. 1:3 is ok; 1:5
+      is not).
     name: The resource name of the reference image.  Format is:  `projects/PRO
       JECT_ID/locations/LOC_ID/products/PRODUCT_ID/referenceImages/IMAGE_ID`.
       This field is ignored when creating a reference image.
-    uri: The Google Cloud Storage URI of the reference image.  The URI must
-      start with `gs://`.  Required.
+    uri: Required. The Google Cloud Storage URI of the reference image.  The
+      URI must start with `gs://`.
   """
 
   boundingPolys = _messages.MessageField('BoundingPoly', 1, repeated=True)
@@ -6877,8 +7038,8 @@ class RemoveProductFromProductSetRequest(_messages.Message):
   r"""Request message for the `RemoveProductFromProductSet` method.
 
   Fields:
-    product: The resource name for the Product to be removed from this
-      ProductSet.  Format is:
+    product: Required. The resource name for the Product to be removed from
+      this ProductSet.  Format is:
       `projects/PROJECT_ID/locations/LOC_ID/products/PRODUCT_ID`
   """
 
@@ -6942,15 +7103,11 @@ class SafeSearchAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -6964,15 +7121,11 @@ class SafeSearchAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -6989,15 +7142,11 @@ class SafeSearchAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -7012,15 +7161,11 @@ class SafeSearchAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -7034,15 +7179,11 @@ class SafeSearchAnnotation(_messages.Message):
 
     Values:
       UNKNOWN: Unknown likelihood.
-      VERY_UNLIKELY: It is very unlikely that the image belongs to the
-        specified vertical.
-      UNLIKELY: It is unlikely that the image belongs to the specified
-        vertical.
-      POSSIBLE: It is possible that the image belongs to the specified
-        vertical.
-      LIKELY: It is likely that the image belongs to the specified vertical.
-      VERY_LIKELY: It is very likely that the image belongs to the specified
-        vertical.
+      VERY_UNLIKELY: It is very unlikely.
+      UNLIKELY: It is unlikely.
+      POSSIBLE: It is possible.
+      LIKELY: It is likely.
+      VERY_LIKELY: It is very likely.
     """
     UNKNOWN = 0
     VERY_UNLIKELY = 1
@@ -7124,37 +7265,10 @@ class StandardQueryParameters(_messages.Message):
 class Status(_messages.Message):
   r"""The `Status` type defines a logical error model that is suitable for
   different programming environments, including REST APIs and RPC APIs. It is
-  used by [gRPC](https://github.com/grpc). The error model is designed to be:
-  - Simple to use and understand for most users - Flexible enough to meet
-  unexpected needs  # Overview  The `Status` message contains three pieces of
-  data: error code, error message, and error details. The error code should be
-  an enum value of google.rpc.Code, but it may accept additional error codes
-  if needed.  The error message should be a developer-facing English message
-  that helps developers *understand* and *resolve* the error. If a localized
-  user-facing error message is needed, put the localized message in the error
-  details or localize it in the client. The optional error details may contain
-  arbitrary information about the error. There is a predefined set of error
-  detail types in the package `google.rpc` that can be used for common error
-  conditions.  # Language mapping  The `Status` message is the logical
-  representation of the error model, but it is not necessarily the actual wire
-  format. When the `Status` message is exposed in different client libraries
-  and different wire protocols, it can be mapped differently. For example, it
-  will likely be mapped to some exceptions in Java, but more likely mapped to
-  some error codes in C.  # Other uses  The error model and the `Status`
-  message can be used in a variety of environments, either with or without
-  APIs, to provide a consistent developer experience across different
-  environments.  Example uses of this error model include:  - Partial errors.
-  If a service needs to return partial errors to the client,     it may embed
-  the `Status` in the normal response to indicate the partial     errors.  -
-  Workflow errors. A typical workflow has multiple steps. Each step may
-  have a `Status` message for error reporting.  - Batch operations. If a
-  client uses batch request and batch response, the     `Status` message
-  should be used directly inside batch response, one for     each error sub-
-  response.  - Asynchronous operations. If an API call embeds asynchronous
-  operation     results in its response, the status of those operations should
-  be     represented directly using the `Status` message.  - Logging. If some
-  API errors are stored in logs, the message `Status` could     be used
-  directly after any stripping needed for security/privacy reasons.
+  used by [gRPC](https://github.com/grpc). Each `Status` message contains
+  three pieces of data: error code, error message, and error details.  You can
+  find out more about this error model and how to work with it in the [API
+  Design Guide](https://cloud.google.com/apis/design/errors).
 
   Messages:
     DetailsValueListEntry: A DetailsValueListEntry object.
@@ -7210,7 +7324,7 @@ class Symbol(_messages.Message):
       orientation. For example:   * when the text is horizontal it might look
       like:      0----1      |    |      3----2   * when it's rotated 180
       degrees around the top-left corner it becomes:      2----3      |    |
-      1----0   and the vertice order will still be (0, 1, 2, 3).
+      1----0   and the vertex order will still be (0, 1, 2, 3).
     confidence: Confidence of the OCR results for the symbol. Range [0, 1].
     property: Additional information detected for the symbol.
     text: The actual UTF-8 representation of the symbol.
@@ -7324,14 +7438,24 @@ class VisionOperationsListRequest(_messages.Message):
   pageToken = _messages.StringField(4)
 
 
+class VisionProjectsLocationsOperationsGetRequest(_messages.Message):
+  r"""A VisionProjectsLocationsOperationsGetRequest object.
+
+  Fields:
+    name: The name of the operation resource.
+  """
+
+  name = _messages.StringField(1, required=True)
+
+
 class VisionProjectsLocationsProductSetsAddProductRequest(_messages.Message):
   r"""A VisionProjectsLocationsProductSetsAddProductRequest object.
 
   Fields:
     addProductToProductSetRequest: A AddProductToProductSetRequest resource to
       be passed as the request body.
-    name: The resource name for the ProductSet to modify.  Format is:
-      `projects/PROJECT_ID/locations/LOC_ID/productSets/PRODUCT_SET_ID`
+    name: Required. The resource name for the ProductSet to modify.  Format
+      is: `projects/PROJECT_ID/locations/LOC_ID/productSets/PRODUCT_SET_ID`
   """
 
   addProductToProductSetRequest = _messages.MessageField('AddProductToProductSetRequest', 1)
@@ -7342,8 +7466,8 @@ class VisionProjectsLocationsProductSetsCreateRequest(_messages.Message):
   r"""A VisionProjectsLocationsProductSetsCreateRequest object.
 
   Fields:
-    parent: The project in which the ProductSet should be created.  Format is
-      `projects/PROJECT_ID/locations/LOC_ID`.
+    parent: Required. The project in which the ProductSet should be created.
+      Format is `projects/PROJECT_ID/locations/LOC_ID`.
     productSet: A ProductSet resource to be passed as the request body.
     productSetId: A user-supplied resource id for this ProductSet. If set, the
       server will attempt to use this value as the resource id. If it is
@@ -7360,7 +7484,7 @@ class VisionProjectsLocationsProductSetsDeleteRequest(_messages.Message):
   r"""A VisionProjectsLocationsProductSetsDeleteRequest object.
 
   Fields:
-    name: Resource name of the ProductSet to delete.  Format is:
+    name: Required. Resource name of the ProductSet to delete.  Format is:
       `projects/PROJECT_ID/locations/LOC_ID/productSets/PRODUCT_SET_ID`
   """
 
@@ -7371,7 +7495,7 @@ class VisionProjectsLocationsProductSetsGetRequest(_messages.Message):
   r"""A VisionProjectsLocationsProductSetsGetRequest object.
 
   Fields:
-    name: Resource name of the ProductSet to get.  Format is:
+    name: Required. Resource name of the ProductSet to get.  Format is:
       `projects/PROJECT_ID/locations/LOG_ID/productSets/PRODUCT_SET_ID`
   """
 
@@ -7384,8 +7508,8 @@ class VisionProjectsLocationsProductSetsImportRequest(_messages.Message):
   Fields:
     importProductSetsRequest: A ImportProductSetsRequest resource to be passed
       as the request body.
-    parent: The project in which the ProductSets should be imported.  Format
-      is `projects/PROJECT_ID/locations/LOC_ID`.
+    parent: Required. The project in which the ProductSets should be imported.
+      Format is `projects/PROJECT_ID/locations/LOC_ID`.
   """
 
   importProductSetsRequest = _messages.MessageField('ImportProductSetsRequest', 1)
@@ -7399,8 +7523,8 @@ class VisionProjectsLocationsProductSetsListRequest(_messages.Message):
     pageSize: The maximum number of items to return. Default 10, maximum 100.
     pageToken: The next_page_token returned from a previous List request, if
       any.
-    parent: The project from which ProductSets should be listed.  Format is
-      `projects/PROJECT_ID/locations/LOC_ID`.
+    parent: Required. The project from which ProductSets should be listed.
+      Format is `projects/PROJECT_ID/locations/LOC_ID`.
   """
 
   pageSize = _messages.IntegerField(1, variant=_messages.Variant.INT32)
@@ -7430,7 +7554,8 @@ class VisionProjectsLocationsProductSetsProductsListRequest(_messages.Message):
   r"""A VisionProjectsLocationsProductSetsProductsListRequest object.
 
   Fields:
-    name: The ProductSet resource for which to retrieve Products.  Format is:
+    name: Required. The ProductSet resource for which to retrieve Products.
+      Format is:
       `projects/PROJECT_ID/locations/LOC_ID/productSets/PRODUCT_SET_ID`
     pageSize: The maximum number of items to return. Default 10, maximum 100.
     pageToken: The next_page_token returned from a previous List request, if
@@ -7446,8 +7571,8 @@ class VisionProjectsLocationsProductSetsRemoveProductRequest(_messages.Message):
   r"""A VisionProjectsLocationsProductSetsRemoveProductRequest object.
 
   Fields:
-    name: The resource name for the ProductSet to modify.  Format is:
-      `projects/PROJECT_ID/locations/LOC_ID/productSets/PRODUCT_SET_ID`
+    name: Required. The resource name for the ProductSet to modify.  Format
+      is: `projects/PROJECT_ID/locations/LOC_ID/productSets/PRODUCT_SET_ID`
     removeProductFromProductSetRequest: A RemoveProductFromProductSetRequest
       resource to be passed as the request body.
   """
@@ -7460,8 +7585,8 @@ class VisionProjectsLocationsProductsCreateRequest(_messages.Message):
   r"""A VisionProjectsLocationsProductsCreateRequest object.
 
   Fields:
-    parent: The project in which the Product should be created.  Format is
-      `projects/PROJECT_ID/locations/LOC_ID`.
+    parent: Required. The project in which the Product should be created.
+      Format is `projects/PROJECT_ID/locations/LOC_ID`.
     product: A Product resource to be passed as the request body.
     productId: A user-supplied resource id for this Product. If set, the
       server will attempt to use this value as the resource id. If it is
@@ -7478,7 +7603,7 @@ class VisionProjectsLocationsProductsDeleteRequest(_messages.Message):
   r"""A VisionProjectsLocationsProductsDeleteRequest object.
 
   Fields:
-    name: Resource name of product to delete.  Format is:
+    name: Required. Resource name of product to delete.  Format is:
       `projects/PROJECT_ID/locations/LOC_ID/products/PRODUCT_ID`
   """
 
@@ -7489,7 +7614,7 @@ class VisionProjectsLocationsProductsGetRequest(_messages.Message):
   r"""A VisionProjectsLocationsProductsGetRequest object.
 
   Fields:
-    name: Resource name of the Product to get.  Format is:
+    name: Required. Resource name of the Product to get.  Format is:
       `projects/PROJECT_ID/locations/LOC_ID/products/PRODUCT_ID`
   """
 
@@ -7503,8 +7628,8 @@ class VisionProjectsLocationsProductsListRequest(_messages.Message):
     pageSize: The maximum number of items to return. Default 10, maximum 100.
     pageToken: The next_page_token returned from a previous List request, if
       any.
-    parent: The project OR ProductSet from which Products should be listed.
-      Format: `projects/PROJECT_ID/locations/LOC_ID`
+    parent: Required. The project OR ProductSet from which Products should be
+      listed.  Format: `projects/PROJECT_ID/locations/LOC_ID`
   """
 
   pageSize = _messages.IntegerField(1, variant=_messages.Variant.INT32)
@@ -7530,12 +7655,26 @@ class VisionProjectsLocationsProductsPatchRequest(_messages.Message):
   updateMask = _messages.StringField(3)
 
 
+class VisionProjectsLocationsProductsPurgeRequest(_messages.Message):
+  r"""A VisionProjectsLocationsProductsPurgeRequest object.
+
+  Fields:
+    parent: Required. The project and location in which the Products should be
+      deleted.  Format is `projects/PROJECT_ID/locations/LOC_ID`.
+    purgeProductsRequest: A PurgeProductsRequest resource to be passed as the
+      request body.
+  """
+
+  parent = _messages.StringField(1, required=True)
+  purgeProductsRequest = _messages.MessageField('PurgeProductsRequest', 2)
+
+
 class VisionProjectsLocationsProductsReferenceImagesCreateRequest(_messages.Message):
   r"""A VisionProjectsLocationsProductsReferenceImagesCreateRequest object.
 
   Fields:
-    parent: Resource name of the product in which to create the reference
-      image.  Format is
+    parent: Required. Resource name of the product in which to create the
+      reference image.  Format is
       `projects/PROJECT_ID/locations/LOC_ID/products/PRODUCT_ID`.
     referenceImage: A ReferenceImage resource to be passed as the request
       body.
@@ -7555,9 +7694,9 @@ class VisionProjectsLocationsProductsReferenceImagesDeleteRequest(_messages.Mess
   r"""A VisionProjectsLocationsProductsReferenceImagesDeleteRequest object.
 
   Fields:
-    name: The resource name of the reference image to delete.  Format is:  `pr
-      ojects/PROJECT_ID/locations/LOC_ID/products/PRODUCT_ID/referenceImages/I
-      MAGE_ID`
+    name: Required. The resource name of the reference image to delete.
+      Format is:  `projects/PROJECT_ID/locations/LOC_ID/products/PRODUCT_ID/re
+      ferenceImages/IMAGE_ID`
   """
 
   name = _messages.StringField(1, required=True)
@@ -7567,9 +7706,9 @@ class VisionProjectsLocationsProductsReferenceImagesGetRequest(_messages.Message
   r"""A VisionProjectsLocationsProductsReferenceImagesGetRequest object.
 
   Fields:
-    name: The resource name of the ReferenceImage to get.  Format is:  `projec
-      ts/PROJECT_ID/locations/LOC_ID/products/PRODUCT_ID/referenceImages/IMAGE
-      _ID`.
+    name: Required. The resource name of the ReferenceImage to get.  Format
+      is:  `projects/PROJECT_ID/locations/LOC_ID/products/PRODUCT_ID/reference
+      Images/IMAGE_ID`.
   """
 
   name = _messages.StringField(1, required=True)
@@ -7583,13 +7722,24 @@ class VisionProjectsLocationsProductsReferenceImagesListRequest(_messages.Messag
     pageToken: A token identifying a page of results to be returned. This is
       the value of `nextPageToken` returned in a previous reference image list
       request.  Defaults to the first page if not specified.
-    parent: Resource name of the product containing the reference images.
-      Format is `projects/PROJECT_ID/locations/LOC_ID/products/PRODUCT_ID`.
+    parent: Required. Resource name of the product containing the reference
+      images.  Format is
+      `projects/PROJECT_ID/locations/LOC_ID/products/PRODUCT_ID`.
   """
 
   pageSize = _messages.IntegerField(1, variant=_messages.Variant.INT32)
   pageToken = _messages.StringField(2)
   parent = _messages.StringField(3, required=True)
+
+
+class VisionProjectsOperationsGetRequest(_messages.Message):
+  r"""A VisionProjectsOperationsGetRequest object.
+
+  Fields:
+    name: The name of the operation resource.
+  """
+
+  name = _messages.StringField(1, required=True)
 
 
 class WebDetection(_messages.Message):

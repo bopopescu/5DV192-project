@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ import textwrap
 from googlecloudsdk.calliope import cli_tree
 from googlecloudsdk.command_lib.static_completion import generate as generate_static
 from googlecloudsdk.command_lib.static_completion import lookup
+from googlecloudsdk.core import argv_utils
 from googlecloudsdk.core import exceptions
 from googlecloudsdk.core import http
 from googlecloudsdk.core import log
@@ -51,7 +52,6 @@ from googlecloudsdk.core.resource import resource_printer
 from googlecloudsdk.core.util import encoding
 from googlecloudsdk.core.util import files
 from googlecloudsdk.core.util import text as text_utils
-from googlecloudsdk.core.util import typing  # pylint: disable=unused-import
 
 import six
 from six.moves import range
@@ -81,7 +81,8 @@ def _DisableLongRunningCliTreeGeneration(command):
     return False
   # Only generate these CLI trees on the fly for explicit requests.
   # It can take ~1minute, not good, especially at the interactive prompt.
-  if 'update-cli-trees' in sys.argv or '--update-cli-trees' in sys.argv:
+  decoded_argv = argv_utils.GetDecodedArgv()
+  if 'update-cli-trees' in decoded_argv or '--update-cli-trees' in decoded_argv:
     return False
   # It's a long running generator, not explicitly requested -- disable.
   return True
@@ -122,7 +123,6 @@ def _Positional(name, description='', default=None, nargs='0'):
 
 
 def _Command(path):
-  # type: (str) -> typing.Dict[str, typing.Any]
   """Initializes and returns a command/group dict node."""
   return {
       cli_tree.LOOKUP_CAPSULE: '',
@@ -217,7 +217,7 @@ class CliTreeGenerator(six.with_metaclass(abc.ABCMeta, object)):
         return path, files.FileReader(path)
       except files.Error:
         pass
-    return path, None  # pytype: disable=name-error
+    return path, None
 
   def IsUpToDate(self, tree, verbose=False):
     """Returns a bool tuple (readonly, up_to_date)."""
@@ -416,13 +416,13 @@ class BqCliTreeGenerator(CliTreeGenerator):
         else:
           paragraph.append(line)
       subcommand = _Command(path + [name])
-      command[cli_tree.LOOKUP_COMMANDS][name] = subcommand  # pytype: disable=attribute-error
+      command[cli_tree.LOOKUP_COMMANDS][name] = subcommand
       if description:
         subcommand[cli_tree.LOOKUP_SECTIONS]['DESCRIPTION'] = '\n'.join(
-            description)  # pytype: disable=attribute-error
+            description)
       if examples:
         subcommand[cli_tree.LOOKUP_SECTIONS]['EXAMPLES'] = '\n'.join(
-            examples)  # pytype: disable=attribute-error
+            examples)
 
     return command
 
@@ -748,7 +748,7 @@ class KubectlCliTreeGenerator(CliTreeGenerator):
           command[cli_tree.LOOKUP_IS_GROUP] = True
           command[cli_tree.LOOKUP_COMMANDS][name] = self.SubTree(path + [name])
       elif heading in ('DESCRIPTION', 'EXAMPLES'):
-        command[cli_tree.LOOKUP_SECTIONS][heading] = '\n'.join(content)  # pytype: disable=attribute-error
+        command[cli_tree.LOOKUP_SECTIONS][heading] = '\n'.join(content)
       elif heading == 'FLAGS':
         self.AddFlags(command, content)
     return command
@@ -1105,9 +1105,9 @@ class ManPageCliTreeGenerator(CliTreeGenerator):
           blocks.append(_NormalizeSpace('\n'.join(content[begin:end])))
         text = '\n'.join(blocks)
         if heading in command[cli_tree.LOOKUP_SECTIONS]:
-          command[cli_tree.LOOKUP_SECTIONS][heading] += '\n\n' + text  # pytype: disable=attribute-error
+          command[cli_tree.LOOKUP_SECTIONS][heading] += '\n\n' + text
         else:
-          command[cli_tree.LOOKUP_SECTIONS][heading] = text  # pytype: disable=attribute-error
+          command[cli_tree.LOOKUP_SECTIONS][heading] = text
     return command
 
   def Generate(self):
@@ -1340,7 +1340,7 @@ def LoadAll(directory=None, ignore_out_of_date=False, root=None,
   for directory in directories:
     if not directory or not os.path.exists(directory):
       continue
-    for (dirpath, _, filenames) in os.walk(directory):
+    for (dirpath, _, filenames) in os.walk(six.text_type(directory)):
       for filename in sorted(filenames):  # For stability across runs.
         command, extension = os.path.splitext(filename)
         if extension != '.json':

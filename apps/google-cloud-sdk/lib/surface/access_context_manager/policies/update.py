@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,9 +24,10 @@ from googlecloudsdk.command_lib.accesscontextmanager import common
 from googlecloudsdk.command_lib.accesscontextmanager import policies
 
 
-@base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA)
-class Update(base.UpdateCommand):
+@base.ReleaseTracks(base.ReleaseTrack.GA)
+class UpdatePoliciesGA(base.UpdateCommand):
   """Update an existing access policy."""
+  _API_VERSION = 'v1'
 
   @staticmethod
   def Args(parser):
@@ -34,8 +35,18 @@ class Update(base.UpdateCommand):
     common.GetTitleArg('access policy').AddToParser(parser)
 
   def Run(self, args):
-    client = policies_api.Client()
+    client = policies_api.Client(version=self._API_VERSION)
 
     policy_ref = args.CONCEPTS.policy.Parse()
 
     return client.Patch(policy_ref, title=args.title)
+
+
+@base.ReleaseTracks(base.ReleaseTrack.ALPHA)
+class UpdatePoliciesAlpha(UpdatePoliciesGA):
+  _API_VERSION = 'v1alpha'
+
+
+@base.ReleaseTracks(base.ReleaseTrack.BETA)
+class UpdatePoliciesBeta(UpdatePoliciesGA):
+  _API_VERSION = 'v1beta'

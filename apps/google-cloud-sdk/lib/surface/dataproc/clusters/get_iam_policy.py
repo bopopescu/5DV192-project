@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ from __future__ import division
 from __future__ import unicode_literals
 
 from googlecloudsdk.api_lib.dataproc import dataproc as dp
-from googlecloudsdk.api_lib.dataproc import util
 from googlecloudsdk.calliope import base
+from googlecloudsdk.command_lib.dataproc import flags
 
 
 @base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA,
@@ -39,18 +39,18 @@ class GetIamPolicy(base.ListCommand):
     $ {command} example-cluster-name-1
   """
 
-  @staticmethod
-  def Args(parser):
-    parser.add_argument(
-        'cluster',
-        help='The id of the cluster to retrieve the policy for.')
+  @classmethod
+  def Args(cls, parser):
+    dataproc = dp.Dataproc(cls.ReleaseTrack())
+    flags.AddClusterResourceArg(parser, 'retrieve the policy for',
+                                dataproc.api_version)
     base.URI_FLAG.RemoveFromParser(parser)
 
   def Run(self, args):
     dataproc = dp.Dataproc(self.ReleaseTrack())
     messages = dataproc.messages
 
-    cluster_ref = util.ParseCluster(args.cluster, dataproc)
+    cluster_ref = args.CONCEPTS.cluster.Parse()
     request = messages.DataprocProjectsRegionsClustersGetIamPolicyRequest(
         resource=cluster_ref.RelativeName())
 

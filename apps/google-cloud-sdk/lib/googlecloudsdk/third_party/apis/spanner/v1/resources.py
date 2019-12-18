@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -53,11 +53,18 @@ class Collections(enum.Enum):
   )
   PROJECTS_INSTANCES_BACKUPS = (
       'projects.instances.backups',
+      'projects/{projectsId}/instances/{instancesId}/backups/{backupsId}',
+      {},
+      [u'projectsId', u'instancesId', u'backupsId'],
+      True
+  )
+  PROJECTS_INSTANCES_BACKUPS_OPERATIONS = (
+      'projects.instances.backups.operations',
       '{+name}',
       {
           '':
               'projects/{projectsId}/instances/{instancesId}/backups/'
-              '{backupsId}',
+              '{backupsId}/operations/{operationsId}',
       },
       [u'name'],
       True

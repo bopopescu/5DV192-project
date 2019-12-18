@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,8 +25,18 @@ from googlecloudsdk.command_lib.compute import flags as compute_flags
 from googlecloudsdk.command_lib.compute.sole_tenancy.node_groups import flags
 
 
+@base.ReleaseTracks(base.ReleaseTrack.GA)
 class Update(base.UpdateCommand):
-  """Updates a Google Compute Engine node group."""
+  """Update a Compute Engine node group."""
+
+  detailed_help = {
+      'brief': 'Update a Compute Engine node group.',
+      'EXAMPLES': """
+         To update a node group to have two more nodes, run:
+
+           $ {command} my-node-group --add-nodes=2
+       """
+  }
 
   @staticmethod
   def Args(parser):
@@ -43,8 +53,30 @@ class Update(base.UpdateCommand):
         args, holder.resources,
         scope_lister=compute_flags.GetDefaultScopeLister(holder.client))
 
+    autoscaling_policy = (hasattr(args, 'autoscaler_mode') and args.IsSpecified('autoscaler_mode')) or \
+                         (hasattr(args, 'min_nodes') and args.IsSpecified('min_nodes')) or \
+                         (hasattr(args, 'max_nodes') and args.IsSpecified('max_nodes'))
+
     return groups_client.Update(
         node_group_ref,
         node_template=args.node_template,
         additional_node_count=args.add_nodes,
-        delete_nodes=args.delete_nodes)
+        delete_nodes=args.delete_nodes,
+        autoscaling_policy_args=args if autoscaling_policy else None)
+
+
+@base.ReleaseTracks(base.ReleaseTrack.BETA)
+class UpdateBeta(Update):
+  """Update a Compute Engine node group."""
+
+  @staticmethod
+  def Args(parser):
+    flags.MakeNodeGroupArg().AddArgument(parser)
+    flags.AddUpdateArgsToParser(parser)
+    flags.AddAutoscalingPolicyArgToParser(parser)
+
+
+@base.ReleaseTracks(base.ReleaseTrack.ALPHA)
+class UpdateAlpha(UpdateBeta):
+  """Update a Compute Engine node group."""
+

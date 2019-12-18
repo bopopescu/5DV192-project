@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,13 +26,14 @@ from googlecloudsdk.command_lib.compute.resource_policies import flags
 from googlecloudsdk.command_lib.compute.resource_policies import util
 
 
-@base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA)
+@base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA,
+                    base.ReleaseTrack.GA)
 class DisksAddResourcePolicies(base.UpdateCommand):
   """Add resource policies to a Google Compute Engine disk."""
 
   @staticmethod
   def Args(parser):
-    disks_flags.MakeDiskArgZonalOrRegional(plural=False).AddArgument(
+    disks_flags.MakeDiskArg(plural=False).AddArgument(
         parser, operation_type='add resource policies to')
     flags.AddResourcePoliciesArgs(parser, 'added to', 'disk', required=True)
 
@@ -41,7 +42,7 @@ class DisksAddResourcePolicies(base.UpdateCommand):
     client = holder.client.apitools_client
     messages = holder.client.messages
 
-    disk_ref = disks_flags.MakeDiskArgZonalOrRegional(
+    disk_ref = disks_flags.MakeDiskArg(
         plural=False).ResolveAsResource(args, holder.resources)
     disk_info = api_util.GetDiskInfo(disk_ref, client, messages)
     disk_region = disk_info.GetDiskRegionName()

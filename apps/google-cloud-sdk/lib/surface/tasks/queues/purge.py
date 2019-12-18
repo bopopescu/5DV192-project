@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,6 +34,16 @@ class Purge(base.Command):
   purge takes effect. A purge is irreversible. All tasks created before this
   command is run are permanently deleted.
   """
+  detailed_help = {
+      'DESCRIPTION': """\
+          {description}
+          """,
+      'EXAMPLES': """\
+          To purge a queue:
+
+              $ {command} my-queue
+         """,
+  }
 
   @staticmethod
   def Args(parser):

@@ -154,7 +154,7 @@ set.
         method_id=u'ml.projects.jobs.getIamPolicy',
         ordered_params=[u'resource'],
         path_params=[u'resource'],
-        query_params=[],
+        query_params=[u'options_requestedPolicyVersion'],
         relative_path=u'v1/{+resource}:getIamPolicy',
         request_field='',
         request_type_name=u'MlProjectsJobsGetIamPolicyRequest',
@@ -224,6 +224,8 @@ Currently the only supported fields to update are `labels`.
     def SetIamPolicy(self, request, global_params=None):
       r"""Sets the access control policy on the specified resource. Replaces any.
 existing policy.
+
+Can return Public Errors: NOT_FOUND, INVALID_ARGUMENT and PERMISSION_DENIED
 
       Args:
         request: (MlProjectsJobsSetIamPolicyRequest) input message
@@ -365,7 +367,7 @@ version of the specified model, it will be made the default version of the
 model. When you add a version to a model that already has one or more
 versions, the default version does not automatically change. If you want a
 new version to be the default, you must call
-[projects.models.versions.setDefault](/ml-engine/reference/rest/v1/projects.models.versions/setDefault).
+projects.models.versions.setDefault.
 
       Args:
         request: (MlProjectsModelsVersionsCreateRequest) input message
@@ -428,7 +430,7 @@ of the model unless it is the only remaining version.
       r"""Gets information about a model version.
 
 Models can have multiple versions. You can call
-[projects.models.versions.list](/ml-engine/reference/rest/v1/projects.models.versions/list)
+projects.models.versions.list
 to get the same information that this method returns for all of the
 versions of a model.
 
@@ -493,8 +495,8 @@ request returns an empty response body: {}.
     def Patch(self, request, global_params=None):
       r"""Updates the specified Version resource.
 
-Currently the only update-able fields are `description` and
-`autoScaling.minNodes`.
+Currently the only update-able fields are `description`,
+`requestLoggingConfig`, `autoScaling.minNodes`, and `manualScaling.nodes`.
 
       Args:
         request: (MlProjectsModelsVersionsPatchRequest) input message
@@ -569,7 +571,7 @@ setting manually using this method.
 
 You must add at least one version before you can request predictions from
 the model. Add versions by calling
-[projects.models.versions.create](/ml-engine/reference/rest/v1/projects.models.versions/create).
+projects.models.versions.create.
 
       Args:
         request: (MlProjectsModelsCreateRequest) input message
@@ -600,7 +602,7 @@ the model. Add versions by calling
 
 You can only delete a model if there are no versions in it. You can delete
 versions by calling
-[projects.models.versions.delete](/ml-engine/reference/rest/v1/projects.models.versions/delete).
+projects.models.versions.delete.
 
       Args:
         request: (MlProjectsModelsDeleteRequest) input message
@@ -676,7 +678,7 @@ set.
         method_id=u'ml.projects.models.getIamPolicy',
         ordered_params=[u'resource'],
         path_params=[u'resource'],
-        query_params=[],
+        query_params=[u'options_requestedPolicyVersion'],
         relative_path=u'v1/{+resource}:getIamPolicy',
         request_field='',
         request_type_name=u'MlProjectsModelsGetIamPolicyRequest',
@@ -750,6 +752,8 @@ Currently the only supported fields to update are `description` and
     def SetIamPolicy(self, request, global_params=None):
       r"""Sets the access control policy on the specified resource. Replaces any.
 existing policy.
+
+Can return Public Errors: NOT_FOUND, INVALID_ARGUMENT and PERMISSION_DENIED
 
       Args:
         request: (MlProjectsModelsSetIamPolicyRequest) input message
@@ -854,36 +858,6 @@ corresponding to `Code.CANCELLED`.
         supports_download=False,
     )
 
-    def Delete(self, request, global_params=None):
-      r"""Deletes a long-running operation. This method indicates that the client is.
-no longer interested in the operation result. It does not cancel the
-operation. If the server doesn't support this method, it returns
-`google.rpc.Code.UNIMPLEMENTED`.
-
-      Args:
-        request: (MlProjectsOperationsDeleteRequest) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-      Returns:
-        (GoogleProtobufEmpty) The response message.
-      """
-      config = self.GetMethodConfig('Delete')
-      return self._RunMethod(
-          config, request, global_params=global_params)
-
-    Delete.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path=u'v1/projects/{projectsId}/operations/{operationsId}',
-        http_method=u'DELETE',
-        method_id=u'ml.projects.operations.delete',
-        ordered_params=[u'name'],
-        path_params=[u'name'],
-        query_params=[],
-        relative_path=u'v1/{+name}',
-        request_field='',
-        request_type_name=u'MlProjectsOperationsDeleteRequest',
-        response_type_name=u'GoogleProtobufEmpty',
-        supports_download=False,
-    )
-
     def Get(self, request, global_params=None):
       r"""Gets the latest state of a long-running operation.  Clients can use this.
 method to poll the operation result at intervals as recommended by the API
@@ -959,6 +933,38 @@ is the parent resource, without the operations collection id.
       self._upload_configs = {
           }
 
+    def Explain(self, request, global_params=None):
+      r"""Performs explanation on the data in the request.
+AI Platform implements a custom `explain` verb on top of an HTTP POST
+method.
+
+For details of the request and response format, see the **guide
+to the [explain request format](/ml-engine/docs/v1/explain-request)**.
+
+      Args:
+        request: (MlProjectsExplainRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleApiHttpBody) The response message.
+      """
+      config = self.GetMethodConfig('Explain')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Explain.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1/projects/{projectsId}:explain',
+        http_method=u'POST',
+        method_id=u'ml.projects.explain',
+        ordered_params=[u'name'],
+        path_params=[u'name'],
+        query_params=[],
+        relative_path=u'v1/{+name}:explain',
+        request_field=u'googleCloudMlV1ExplainRequest',
+        request_type_name=u'MlProjectsExplainRequest',
+        response_type_name=u'GoogleApiHttpBody',
+        supports_download=False,
+    )
+
     def GetConfig(self, request, global_params=None):
       r"""Get the service account information associated with your project. You need.
 this information in order to grant the service account permissions for
@@ -991,8 +997,10 @@ for training the model with Google Cloud Machine Learning.
 
     def Predict(self, request, global_params=None):
       r"""Performs prediction on the data in the request.
-Cloud ML Engine implements a custom `predict` verb on top of an HTTP POST
-method. <p>For details of the request and response format, see the **guide
+AI Platform implements a custom `predict` verb on top of an HTTP POST
+method.
+
+For details of the request and response format, see the **guide
 to the [predict request format](/ml-engine/docs/v1/predict-request)**.
 
       Args:

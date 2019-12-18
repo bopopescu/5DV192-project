@@ -22,6 +22,73 @@ class Empty(_messages.Message):
 
 
 
+class ExportInstanceRequest(_messages.Message):
+  r"""Request for Export.
+
+  Fields:
+    outputConfig: Required. Specify data to be exported.
+  """
+
+  outputConfig = _messages.MessageField('OutputConfig', 1)
+
+
+class FailoverInstanceRequest(_messages.Message):
+  r"""Request for Failover.
+
+  Enums:
+    DataProtectionModeValueValuesEnum: Optional. Available data protection
+      modes that the user can choose. If it's unspecified, data protection
+      mode will be LIMITED_DATA_LOSS by default.
+
+  Fields:
+    dataProtectionMode: Optional. Available data protection modes that the
+      user can choose. If it's unspecified, data protection mode will be
+      LIMITED_DATA_LOSS by default.
+  """
+
+  class DataProtectionModeValueValuesEnum(_messages.Enum):
+    r"""Optional. Available data protection modes that the user can choose. If
+    it's unspecified, data protection mode will be LIMITED_DATA_LOSS by
+    default.
+
+    Values:
+      DATA_PROTECTION_MODE_UNSPECIFIED: Defaults to LIMITED_DATA_LOSS if a
+        data protection mode is not specified.
+      LIMITED_DATA_LOSS: Instance failover will be protected with data loss
+        control. More specifically, the failover will only be performed if the
+        current replication offset diff between master and replica is under a
+        certain threshold.
+      FORCE_DATA_LOSS: Instance failover will be performed without data loss
+        control.
+    """
+    DATA_PROTECTION_MODE_UNSPECIFIED = 0
+    LIMITED_DATA_LOSS = 1
+    FORCE_DATA_LOSS = 2
+
+  dataProtectionMode = _messages.EnumField('DataProtectionModeValueValuesEnum', 1)
+
+
+class GcsDestination(_messages.Message):
+  r"""The Cloud Storage location for the output content
+
+  Fields:
+    uri: Required. Data destination URI (e.g. 'gs://my_bucket/my_object').
+      Existing files will be overwritten.
+  """
+
+  uri = _messages.StringField(1)
+
+
+class GcsSource(_messages.Message):
+  r"""The Cloud Storage location for the input content
+
+  Fields:
+    uri: Required. Source data URI. (e.g. 'gs://my_bucket/my_object').
+  """
+
+  uri = _messages.StringField(1)
+
+
 class GoogleCloudCommonOperationMetadata(_messages.Message):
   r"""Represents the metadata of the long-running operation.
 
@@ -106,6 +173,26 @@ class GoogleCloudRedisV1beta1ZoneMetadata(_messages.Message):
 
 
 
+class ImportInstanceRequest(_messages.Message):
+  r"""Request for Import.
+
+  Fields:
+    inputConfig: Required. Specify data to be imported.
+  """
+
+  inputConfig = _messages.MessageField('InputConfig', 1)
+
+
+class InputConfig(_messages.Message):
+  r"""The input content
+
+  Fields:
+    gcsSource: Google Cloud Storage location where input content is located.
+  """
+
+  gcsSource = _messages.MessageField('GcsSource', 1)
+
+
 class Instance(_messages.Message):
   r"""A Google Cloud Redis instance.
 
@@ -117,13 +204,15 @@ class Instance(_messages.Message):
     LabelsValue: Resource labels to represent user provided metadata
     RedisConfigsValue: Optional. Redis configuration parameters, according to
       http://redis.io/topics/config. Currently, the only supported parameters
-      are:   *   maxmemory-policy  *   notify-keyspace-events
+      are:   Redis 3.2 and above:   *   maxmemory-policy  *   notify-keyspace-
+      events   Redis 4.0 and above:   *   activedefrag  *   lfu-log-factor  *
+      lfu-decay-time
 
   Fields:
     alternativeLocationId: Optional. Only applicable to STANDARD_HA tier which
       protects the instance against zonal failures by provisioning it across
       two zones. If provided, it must be a different zone from the one
-      provided in [location_id].
+      provided in location_id.
     authorizedNetwork: Optional. The full name of the Google Compute Engine
       [network](/compute/docs/networks-and-firewalls#networks) to which the
       instance is connected. If left unspecified, the `default` network will
@@ -131,9 +220,9 @@ class Instance(_messages.Message):
     createTime: Output only. The time the instance was created.
     currentLocationId: Output only. The current zone where the Redis endpoint
       is placed. For Basic Tier instances, this will always be the same as the
-      [location_id] provided by the user at creation time. For Standard Tier
-      instances, this can be either [location_id] or [alternative_location_id]
-      and can change after a failover event.
+      location_id provided by the user at creation time. For Standard Tier
+      instances, this can be either location_id or alternative_location_id and
+      can change after a failover event.
     displayName: An arbitrary and optional user-provided name for the
       instance.
     host: Output only. Hostname or IP address of the exposed Redis endpoint
@@ -142,8 +231,8 @@ class Instance(_messages.Message):
     locationId: Optional. The zone where the instance will be provisioned. If
       not provided, the service will choose a zone for the instance. For
       STANDARD_HA tier, instances will be created across two zones for
-      protection against zonal failures. If [alternative_location_id] is also
-      provided, it must be different from [location_id].
+      protection against zonal failures. If alternative_location_id is also
+      provided, it must be different from location_id.
     memorySizeGb: Required. Redis memory size in GiB.
     name: Required. Unique name of the resource in this scope including
       project and location using the form:
@@ -151,16 +240,23 @@ class Instance(_messages.Message):
       Note: Redis instances are managed and addressed at regional level so
       location_id here refers to a GCP region; however, users may choose which
       specific zone (or collection of zones for cross-zone instances) an
-      instance should be provisioned in. Refer to [location_id] and
-      [alternative_location_id] fields for more details.
+      instance should be provisioned in. Refer to location_id and
+      alternative_location_id fields for more details.
+    persistenceIamIdentity: Output only. Cloud IAM identity used by import /
+      export operations to transfer data to/from Cloud Storage. Format is
+      "serviceAccount:<service_account_email>". The value may change over time
+      for a given instance so should be checked before each import/export
+      operation.
     port: Output only. The port number of the exposed Redis endpoint.
     redisConfigs: Optional. Redis configuration parameters, according to
       http://redis.io/topics/config. Currently, the only supported parameters
-      are:   *   maxmemory-policy  *   notify-keyspace-events
+      are:   Redis 3.2 and above:   *   maxmemory-policy  *   notify-keyspace-
+      events   Redis 4.0 and above:   *   activedefrag  *   lfu-log-factor  *
+      lfu-decay-time
     redisVersion: Optional. The version of Redis software. If not provided,
-      latest supported version will be used. Updating the version will perform
-      an upgrade/downgrade to the new version. Currently, the supported values
-      are `REDIS_3_2` for Redis 3.2.
+      latest supported version will be used. Currently, the supported values
+      are:   *   `REDIS_4_0` for Redis 4.0 compatibility (default)  *
+      `REDIS_3_2` for Redis 3.2 compatibility
     reservedIpRange: Optional. The CIDR range of internal addresses that are
       reserved for this instance. If not provided, the service will choose an
       unused /29 block, for example, 10.0.0.0/29 or 192.168.0.0/29. Ranges
@@ -241,7 +337,9 @@ class Instance(_messages.Message):
   class RedisConfigsValue(_messages.Message):
     r"""Optional. Redis configuration parameters, according to
     http://redis.io/topics/config. Currently, the only supported parameters
-    are:   *   maxmemory-policy  *   notify-keyspace-events
+    are:   Redis 3.2 and above:   *   maxmemory-policy  *   notify-keyspace-
+    events   Redis 4.0 and above:   *   activedefrag  *   lfu-log-factor  *
+    lfu-decay-time
 
     Messages:
       AdditionalProperty: An additional property for a RedisConfigsValue
@@ -274,13 +372,14 @@ class Instance(_messages.Message):
   locationId = _messages.StringField(8)
   memorySizeGb = _messages.IntegerField(9, variant=_messages.Variant.INT32)
   name = _messages.StringField(10)
-  port = _messages.IntegerField(11, variant=_messages.Variant.INT32)
-  redisConfigs = _messages.MessageField('RedisConfigsValue', 12)
-  redisVersion = _messages.StringField(13)
-  reservedIpRange = _messages.StringField(14)
-  state = _messages.EnumField('StateValueValuesEnum', 15)
-  statusMessage = _messages.StringField(16)
-  tier = _messages.EnumField('TierValueValuesEnum', 17)
+  persistenceIamIdentity = _messages.StringField(11)
+  port = _messages.IntegerField(12, variant=_messages.Variant.INT32)
+  redisConfigs = _messages.MessageField('RedisConfigsValue', 13)
+  redisVersion = _messages.StringField(14)
+  reservedIpRange = _messages.StringField(15)
+  state = _messages.EnumField('StateValueValuesEnum', 16)
+  statusMessage = _messages.StringField(17)
+  tier = _messages.EnumField('TierValueValuesEnum', 18)
 
 
 class ListInstancesResponse(_messages.Message):
@@ -292,9 +391,9 @@ class ListInstancesResponse(_messages.Message):
       field of the request is "-", all regions available to the project are
       queried, and the results aggregated. If in such an aggregated query a
       location is unavailable, a dummy Redis entry is included in the response
-      with the "name" field set to a value of the form
-      projects/{project_id}/locations/{location_id}/instances/- and the
-      "status" field set to ERROR and "status_message" field set to "location
+      with the `name` field set to a value of the form
+      `projects/{project_id}/locations/{location_id}/instances/`- and the
+      `status` field set to ERROR and `status_message` field set to "location
       not available for ListInstances".
     nextPageToken: Token to retrieve the next page of results, or empty if
       there are no more results in the list.
@@ -456,7 +555,8 @@ class Operation(_messages.Message):
       `apiVersion`: API version used to start the operation.  }
     name: The server-assigned name, which is only unique within the same
       service that originally returns it. If you use the default HTTP mapping,
-      the `name` should have the format of `operations/some/unique/name`.
+      the `name` should be a resource name ending with
+      `operations/{unique_id}`.
     response: The normal response of the operation in case of success.  If the
       original method returns no data on success, such as `Delete`, the
       response is `google.protobuf.Empty`.  If the original method is standard
@@ -537,6 +637,16 @@ class Operation(_messages.Message):
   response = _messages.MessageField('ResponseValue', 5)
 
 
+class OutputConfig(_messages.Message):
+  r"""The output content
+
+  Fields:
+    gcsDestination: Google Cloud Storage destination for output content.
+  """
+
+  gcsDestination = _messages.MessageField('GcsDestination', 1)
+
+
 class RedisProjectsLocationsGetRequest(_messages.Message):
   r"""A RedisProjectsLocationsGetRequest object.
 
@@ -559,7 +669,7 @@ class RedisProjectsLocationsInstancesCreateRequest(_messages.Message):
       Must be unique within the customer project / location
     parent: Required. The resource name of the instance location using the
       form:     `projects/{project_id}/locations/{location_id}` where
-      `location_id` refers to a GCP region
+      `location_id` refers to a GCP region.
   """
 
   instance = _messages.MessageField('Instance', 1)
@@ -573,10 +683,40 @@ class RedisProjectsLocationsInstancesDeleteRequest(_messages.Message):
   Fields:
     name: Required. Redis instance resource name using the form:
       `projects/{project_id}/locations/{location_id}/instances/{instance_id}`
-      where `location_id` refers to a GCP region
+      where `location_id` refers to a GCP region.
   """
 
   name = _messages.StringField(1, required=True)
+
+
+class RedisProjectsLocationsInstancesExportRequest(_messages.Message):
+  r"""A RedisProjectsLocationsInstancesExportRequest object.
+
+  Fields:
+    exportInstanceRequest: A ExportInstanceRequest resource to be passed as
+      the request body.
+    name: Required. Redis instance resource name using the form:
+      `projects/{project_id}/locations/{location_id}/instances/{instance_id}`
+      where `location_id` refers to a GCP region.
+  """
+
+  exportInstanceRequest = _messages.MessageField('ExportInstanceRequest', 1)
+  name = _messages.StringField(2, required=True)
+
+
+class RedisProjectsLocationsInstancesFailoverRequest(_messages.Message):
+  r"""A RedisProjectsLocationsInstancesFailoverRequest object.
+
+  Fields:
+    failoverInstanceRequest: A FailoverInstanceRequest resource to be passed
+      as the request body.
+    name: Required. Redis instance resource name using the form:
+      `projects/{project_id}/locations/{location_id}/instances/{instance_id}`
+      where `location_id` refers to a GCP region.
+  """
+
+  failoverInstanceRequest = _messages.MessageField('FailoverInstanceRequest', 1)
+  name = _messages.StringField(2, required=True)
 
 
 class RedisProjectsLocationsInstancesGetRequest(_messages.Message):
@@ -585,10 +725,25 @@ class RedisProjectsLocationsInstancesGetRequest(_messages.Message):
   Fields:
     name: Required. Redis instance resource name using the form:
       `projects/{project_id}/locations/{location_id}/instances/{instance_id}`
-      where `location_id` refers to a GCP region
+      where `location_id` refers to a GCP region.
   """
 
   name = _messages.StringField(1, required=True)
+
+
+class RedisProjectsLocationsInstancesImportRequest(_messages.Message):
+  r"""A RedisProjectsLocationsInstancesImportRequest object.
+
+  Fields:
+    importInstanceRequest: A ImportInstanceRequest resource to be passed as
+      the request body.
+    name: Required. Redis instance resource name using the form:
+      `projects/{project_id}/locations/{location_id}/instances/{instance_id}`
+      where `location_id` refers to a GCP region.
+  """
+
+  importInstanceRequest = _messages.MessageField('ImportInstanceRequest', 1)
+  name = _messages.StringField(2, required=True)
 
 
 class RedisProjectsLocationsInstancesListRequest(_messages.Message):
@@ -598,13 +753,13 @@ class RedisProjectsLocationsInstancesListRequest(_messages.Message):
     pageSize: The maximum number of items to return.  If not specified, a
       default value of 1000 will be used by the service. Regardless of the
       page_size value, the response may include a partial list and a caller
-      should only rely on response's next_page_token to determine if there are
-      more instances left to be queried.
-    pageToken: The next_page_token value returned from a previous List
-      request, if any.
+      should only rely on response's `next_page_token` to determine if there
+      are more instances left to be queried.
+    pageToken: The `next_page_token` value returned from a previous
+      ListInstances request, if any.
     parent: Required. The resource name of the instance location using the
       form:     `projects/{project_id}/locations/{location_id}` where
-      `location_id` refers to a GCP region
+      `location_id` refers to a GCP region.
   """
 
   pageSize = _messages.IntegerField(1, variant=_messages.Variant.INT32)
@@ -623,8 +778,8 @@ class RedisProjectsLocationsInstancesPatchRequest(_messages.Message):
       Note: Redis instances are managed and addressed at regional level so
       location_id here refers to a GCP region; however, users may choose which
       specific zone (or collection of zones for cross-zone instances) an
-      instance should be provisioned in. Refer to [location_id] and
-      [alternative_location_id] fields for more details.
+      instance should be provisioned in. Refer to location_id and
+      alternative_location_id fields for more details.
     updateMask: Required. Mask of fields to update. At least one path must be
       supplied in this field. The elements of the repeated paths field may
       only include these fields from Instance:   *   `displayName`  *
@@ -764,37 +919,10 @@ class StandardQueryParameters(_messages.Message):
 class Status(_messages.Message):
   r"""The `Status` type defines a logical error model that is suitable for
   different programming environments, including REST APIs and RPC APIs. It is
-  used by [gRPC](https://github.com/grpc). The error model is designed to be:
-  - Simple to use and understand for most users - Flexible enough to meet
-  unexpected needs  # Overview  The `Status` message contains three pieces of
-  data: error code, error message, and error details. The error code should be
-  an enum value of google.rpc.Code, but it may accept additional error codes
-  if needed.  The error message should be a developer-facing English message
-  that helps developers *understand* and *resolve* the error. If a localized
-  user-facing error message is needed, put the localized message in the error
-  details or localize it in the client. The optional error details may contain
-  arbitrary information about the error. There is a predefined set of error
-  detail types in the package `google.rpc` that can be used for common error
-  conditions.  # Language mapping  The `Status` message is the logical
-  representation of the error model, but it is not necessarily the actual wire
-  format. When the `Status` message is exposed in different client libraries
-  and different wire protocols, it can be mapped differently. For example, it
-  will likely be mapped to some exceptions in Java, but more likely mapped to
-  some error codes in C.  # Other uses  The error model and the `Status`
-  message can be used in a variety of environments, either with or without
-  APIs, to provide a consistent developer experience across different
-  environments.  Example uses of this error model include:  - Partial errors.
-  If a service needs to return partial errors to the client,     it may embed
-  the `Status` in the normal response to indicate the partial     errors.  -
-  Workflow errors. A typical workflow has multiple steps. Each step may
-  have a `Status` message for error reporting.  - Batch operations. If a
-  client uses batch request and batch response, the     `Status` message
-  should be used directly inside batch response, one for     each error sub-
-  response.  - Asynchronous operations. If an API call embeds asynchronous
-  operation     results in its response, the status of those operations should
-  be     represented directly using the `Status` message.  - Logging. If some
-  API errors are stored in logs, the message `Status` could     be used
-  directly after any stripping needed for security/privacy reasons.
+  used by [gRPC](https://github.com/grpc). Each `Status` message contains
+  three pieces of data: error code, error message, and error details.  You can
+  find out more about this error model and how to work with it in the [API
+  Design Guide](https://cloud.google.com/apis/design/errors).
 
   Messages:
     DetailsValueListEntry: A DetailsValueListEntry object.

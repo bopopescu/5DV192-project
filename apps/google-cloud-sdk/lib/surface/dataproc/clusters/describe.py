@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ from __future__ import division
 from __future__ import unicode_literals
 
 from googlecloudsdk.api_lib.dataproc import dataproc as dp
-from googlecloudsdk.api_lib.dataproc import util
 from googlecloudsdk.calliope import base
+from googlecloudsdk.command_lib.dataproc import flags
 
 
 class Describe(base.DescribeCommand):
@@ -31,18 +31,19 @@ class Describe(base.DescribeCommand):
       'EXAMPLES': """\
           To view the details of a cluster, run:
 
-            $ {command} my_cluster
+            $ {command} my_cluster --region=us-central1
           """,
   }
 
-  @staticmethod
-  def Args(parser):
-    parser.add_argument('name', help='The name of the cluster to describe.')
+  @classmethod
+  def Args(cls, parser):
+    dataproc = dp.Dataproc(cls.ReleaseTrack())
+    flags.AddClusterResourceArg(parser, 'describe', dataproc.api_version)
 
   def Run(self, args):
     dataproc = dp.Dataproc(self.ReleaseTrack())
 
-    cluster_ref = util.ParseCluster(args.name, dataproc)
+    cluster_ref = args.CONCEPTS.cluster.Parse()
     request = dataproc.messages.DataprocProjectsRegionsClustersGetRequest(
         projectId=cluster_ref.projectId,
         region=cluster_ref.region,

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -44,8 +44,10 @@ from googlecloudsdk.core import log
 import six
 
 DETAILED_HELP = {
-    'brief': 'Create Google Compute Engine persistent disks',
-    'DESCRIPTION': """\
+    'brief':
+        'Create Google Compute Engine persistent disks',
+    'DESCRIPTION':
+        """\
         *{command}* creates one or more Google Compute Engine
         persistent disks. When creating virtual machine instances,
         disks can be attached to the instances through the
@@ -62,15 +64,18 @@ DETAILED_HELP = {
         image (using `gcloud compute images create`) and creating a
         new disk using `--image` in the desired project and/or
         zone.
+        """,
+    'EXAMPLES':
+        """\
+        When creating disks, be sure to include the `--zone` option. To create
+        disks 'my-disk-1' and 'my-disk-2' in zone us-east1-a:
 
-        When creating disks, be sure to include the `--zone` option:
-
-          $ {command} my-disk-1 my-disk-2 --zone us-east1-a
+          $ {command} my-disk-1 my-disk-2 --zone=us-east1-a
         """,
 }
 
 
-def _SourceArgs(parser, source_snapshot_arg):
+def _SourceArgs(parser, source_disk_enabled=False):
   """Add mutually exclusive source args."""
   source_parent_group = parser.add_group()
   source_group = source_parent_group.add_mutually_exclusive_group()
@@ -87,24 +92,31 @@ def _SourceArgs(parser, source_snapshot_arg):
         """
     return template
 
-  source_group.add_argument(
-      '--image',
-      help=AddImageHelp)
+  source_group.add_argument('--image', help=AddImageHelp)
 
   image_utils.AddImageProjectFlag(source_parent_group)
 
   source_group.add_argument(
       '--image-family',
-      help=('The family of the image that the boot disk will be initialized '
-            'with. When a family is used instead of an image, the latest '
-            'non-deprecated image associated with that family is used.')
-  )
-  source_snapshot_arg.AddArgument(source_group)
+      help="""\
+        The image family for the operating system that the boot disk will be
+        initialized with. Compute Engine offers multiple Linux
+        distributions, some of which are available as both regular and
+        Shielded VM images.  When a family is specified instead of an image,
+        the latest non-deprecated image associated with that family is
+        used. It is best practice to use --image-family when the latest
+        version of an image is needed.
+        """)
+  disks_flags.SOURCE_SNAPSHOT_ARG.AddArgument(source_group)
+  if source_disk_enabled:
+    source_disk = source_group.add_group('Source disk options')
+    disks_flags.SOURCE_DISK_ARG.AddArgument(source_disk)
 
 
 def _CommonArgs(parser,
-                source_snapshot_arg,
-                include_physical_block_size_support=False):
+                include_physical_block_size_support=False,
+                vss_erase_enabled=False,
+                source_disk_enabled=False):
   """Add arguments used for parsing in all command tracks."""
   Create.disks_arg.AddArgument(parser, operation_type='create')
   parser.add_argument(
@@ -148,7 +160,7 @@ def _CommonArgs(parser,
             'be added onto the created disks to indicate the licensing and '
             'billing policies.'))
 
-  _SourceArgs(parser, source_snapshot_arg)
+  _SourceArgs(parser, source_disk_enabled)
 
   csek_utils.AddCsekKeyArgs(parser)
   labels_util.AddCreateLabelsFlags(parser)
@@ -162,6 +174,10 @@ def _CommonArgs(parser,
 Physical block size of the persistent disk in bytes.
 Valid values are 4096(default) and 16384.
 """)
+  if vss_erase_enabled:
+    flags.AddEraseVssSignature(parser, resource='a source snapshot')
+
+  resource_flags.AddResourcePoliciesArgs(parser, 'added to', 'disk')
 
 
 def _AddReplicaZonesArg(parser):
@@ -193,11 +209,14 @@ def _ParseGuestOsFeaturesToMessages(args, client_messages):
 class Create(base.Command):
   """Create Google Compute Engine persistent disks."""
 
+  source_disk_enabled = False
+
   @staticmethod
   def Args(parser):
     Create.disks_arg = disks_flags.MakeDiskArg(plural=True)
-    _CommonArgs(parser, disks_flags.SOURCE_SNAPSHOT_ARG)
+    _CommonArgs(parser)
     image_utils.AddGuestOsFeaturesArg(parser, base.ReleaseTrack.GA)
+    _AddReplicaZonesArg(parser)
     kms_resource_args.AddKmsKeyResourceArg(
         parser, 'disk', region_fallthrough=True)
 
@@ -217,29 +236,21 @@ class Create(base.Command):
     return []
 
   def ValidateAndParseDiskRefs(self, args, compute_holder):
-    """Validate flags and parse disks references.
-
-    Subclasses may override it to customize parsing.
-
-    Args:
-      args: The argument namespace
-      compute_holder: base_classes.ComputeApiHolder instance
-
-    Returns:
-      List of compute.regionDisks resources.
-    """
-    return Create.disks_arg.ResolveAsResource(
-        args,
-        compute_holder.resources,
-        scope_lister=flags.GetDefaultScopeLister(compute_holder.client))
+    return _ValidateAndParseDiskRefsRegionalReplica(args, compute_holder)
 
   def GetFromImage(self, args):
     return args.image or args.image_family
 
+  def GetFromSourceDisk(self, args):
+    if not self.source_disk_enabled:
+      return False
+    return args.source_disk
+
   def GetDiskSizeGb(self, args, from_image):
     size_gb = utils.BytesToGb(args.size)
 
-    if not size_gb and not args.source_snapshot and not from_image:
+    if (not size_gb and not args.source_snapshot and not from_image and
+        not self.GetFromSourceDisk(args)):
       if args.type and 'pd-ssd' in args.type:
         size_gb = constants.DEFAULT_SSD_DISK_SIZE_GB
       else:
@@ -247,12 +258,12 @@ class Create(base.Command):
     utils.WarnIfDiskSizeIsTooSmall(size_gb, args.type)
     return size_gb
 
-  def GetProjectToSourceImageDict(
-      self, args, disk_refs, compute_holder, from_image):
+  def GetProjectToSourceImageDict(self, args, disk_refs, compute_holder,
+                                  from_image):
     project_to_source_image = {}
 
-    image_expander = image_utils.ImageExpander(
-        compute_holder.client, compute_holder.resources)
+    image_expander = image_utils.ImageExpander(compute_holder.client,
+                                               compute_holder.resources)
 
     for disk_ref in disk_refs:
       if from_image:
@@ -270,7 +281,7 @@ class Create(base.Command):
         project_to_source_image[disk_ref.project].uri = None
     return project_to_source_image
 
-  def WarnAboutScopeDeprecationsAndMaintainance(self, disk_refs, client):
+  def WarnAboutScopeDeprecationsAndMaintenance(self, disk_refs, client):
     # Check if the zone is deprecated or has maintenance coming.
     zone_resource_fetcher = zone_utils.ZoneResourceFetcher(client)
     zone_resource_fetcher.WarnForZonalCreation(
@@ -287,6 +298,13 @@ class Create(base.Command):
       return snapshot_ref.SelfLink()
     return None
 
+  def GetSourceDiskUri(self, args, compute_holder):
+    disk_ref = disks_flags.SOURCE_DISK_ARG.ResolveAsResource(
+        args, compute_holder.resources)
+    if disk_ref:
+      return disk_ref.SelfLink()
+    return None
+
   def GetLabels(self, args, client):
     labels = None
     args_labels = getattr(args, 'labels', None)
@@ -294,21 +312,24 @@ class Create(base.Command):
       labels = client.messages.Disk.LabelsValue(additionalProperties=[
           client.messages.Disk.LabelsValue.AdditionalProperty(
               key=key, value=value)
-          for key, value in sorted(six.iteritems(args.labels))])
+          for key, value in sorted(six.iteritems(args.labels))
+      ])
     return labels
 
   def GetDiskTypeUri(self, args, disk_ref, compute_holder):
     if args.type:
       if disk_ref.Collection() == 'compute.disks':
         type_ref = compute_holder.resources.Parse(
-            args.type, collection='compute.diskTypes',
+            args.type,
+            collection='compute.diskTypes',
             params={
                 'project': disk_ref.project,
                 'zone': disk_ref.zone
             })
       elif disk_ref.Collection() == 'compute.regionDisks':
         type_ref = compute_holder.resources.Parse(
-            args.type, collection='compute.regionDiskTypes',
+            args.type,
+            collection='compute.regionDiskTypes',
             params={
                 'project': disk_ref.project,
                 'region': disk_ref.region
@@ -322,27 +343,33 @@ class Create(base.Command):
       zone_ref = compute_holder.resources.Parse(
           zone,
           collection='compute.zones',
-          params={
-              'project': disk_ref.project
-          })
+          params={'project': disk_ref.project})
       result.append(zone_ref.SelfLink())
     return result
 
   def Run(self, args):
     return self._Run(args, supports_kms_keys=True)
 
-  def _Run(self, args, supports_kms_keys=False, supports_physical_block=False):
+  def _Run(self,
+           args,
+           supports_kms_keys=False,
+           supports_physical_block=False,
+           support_shared_disk=False,
+           support_vss_erase=False):
     compute_holder = base_classes.ComputeApiHolder(self.ReleaseTrack())
     client = compute_holder.client
 
     self.show_unformated_message = not (args.IsSpecified('image') or
                                         args.IsSpecified('image_family') or
                                         args.IsSpecified('source_snapshot'))
+    if self.source_disk_enabled:
+      self.show_unformated_message = self.show_unformated_message and not (
+          args.IsSpecified('source_disk'))
 
     disk_refs = self.ValidateAndParseDiskRefs(args, compute_holder)
     from_image = self.GetFromImage(args)
     size_gb = self.GetDiskSizeGb(args, from_image)
-    self.WarnAboutScopeDeprecationsAndMaintainance(disk_refs, client)
+    self.WarnAboutScopeDeprecationsAndMaintenance(disk_refs, client)
     project_to_source_image = self.GetProjectToSourceImageDict(
         args, disk_refs, compute_holder, from_image)
     snapshot_uri = self.GetSnapshotUri(args, compute_holder)
@@ -351,8 +378,9 @@ class Create(base.Command):
     # code supporting them only in alpha and beta versions of the command.
     labels = self.GetLabels(args, client)
 
-    allow_rsa_encrypted = self.ReleaseTrack() in [base.ReleaseTrack.ALPHA,
-                                                  base.ReleaseTrack.BETA]
+    allow_rsa_encrypted = self.ReleaseTrack() in [
+        base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA
+    ]
     csek_keys = csek_utils.CsekKeyStore.FromArgs(args, allow_rsa_encrypted)
 
     for project in project_to_source_image:
@@ -362,7 +390,6 @@ class Create(base.Command):
               csek_keys, compute_holder.resources,
               [source_image_uri, snapshot_uri], client.apitools_client))
 
-    resource_policies = getattr(args, 'resource_policies', None)
     # end of alpha/beta features.
 
     guest_os_feature_messages = _ParseGuestOsFeaturesToMessages(
@@ -377,8 +404,8 @@ class Create(base.Command):
       # TODO(b/65161039): Stop checking release path in the middle of GA code.
       kwargs = {}
       if csek_keys:
-        disk_key_or_none = csek_keys.LookupKey(
-            disk_ref, args.require_csek_key_create)
+        disk_key_or_none = csek_keys.LookupKey(disk_ref,
+                                               args.require_csek_key_create)
         disk_key_message_or_none = csek_utils.MaybeToMessage(
             disk_key_or_none, client.apitools_client)
         kwargs['diskEncryptionKey'] = disk_key_message_or_none
@@ -393,6 +420,14 @@ class Create(base.Command):
         kwargs['diskEncryptionKey'] = kms_utils.MaybeGetKmsKey(
             args, client.messages, kwargs.get('diskEncryptionKey', None))
 
+      # end of alpha/beta features.
+
+      if supports_physical_block and args.IsSpecified('physical_block_size'):
+        physical_block_size_bytes = int(args.physical_block_size)
+      else:
+        physical_block_size_bytes = None
+
+      resource_policies = getattr(args, 'resource_policies', None)
       if resource_policies:
         if disk_ref.Collection() == 'compute.regionDisks':
           disk_region = disk_ref.region
@@ -408,13 +443,6 @@ class Create(base.Command):
           parsed_resource_policies.append(resource_policy_ref.SelfLink())
         kwargs['resourcePolicies'] = parsed_resource_policies
 
-      # end of alpha/beta features.
-
-      if supports_physical_block and args.IsSpecified('physical_block_size'):
-        physical_block_size_bytes = int(args.physical_block_size)
-      else:
-        physical_block_size_bytes = None
-
       disk = client.messages.Disk(
           name=disk_ref.Name(),
           description=args.description,
@@ -423,9 +451,25 @@ class Create(base.Command):
           type=type_uri,
           physicalBlockSizeBytes=physical_block_size_bytes,
           **kwargs)
+      if self.source_disk_enabled:
+        source_disk_ref = self.GetSourceDiskUri(args, compute_holder)
+        disk.sourceDisk = source_disk_ref
+      if (support_shared_disk and
+          disk_ref.Collection() == 'compute.regionDisks' and
+          args.IsSpecified('multi_writer')):
+        raise exceptions.InvalidArgumentException(
+            '--multi-writer',
+            ('--multi-writer can be used only with --zone flag'))
+
+      if (support_shared_disk and disk_ref.Collection() == 'compute.disks' and
+          args.IsSpecified('multi_writer')):
+        disk.multiWriter = args.multi_writer
 
       if guest_os_feature_messages:
         disk.guestOsFeatures = guest_os_feature_messages
+
+      if support_vss_erase and args.IsSpecified('erase_windows_vss_signature'):
+        disk.eraseWindowsVssSignature = args.erase_windows_vss_signature
 
       disk.licenses = self.ParseLicenses(args)
 
@@ -467,50 +511,64 @@ class Create(base.Command):
 class CreateBeta(Create):
   """Create Google Compute Engine persistent disks."""
 
+  source_disk_enabled = False
+
   @staticmethod
   def Args(parser):
-    Create.disks_arg = disks_flags.MakeDiskArgZonalOrRegional(plural=True)
+    Create.disks_arg = disks_flags.MakeDiskArg(plural=True)
 
     _CommonArgs(
         parser,
-        disks_flags.SOURCE_SNAPSHOT_ARG,
-        include_physical_block_size_support=True)
+        include_physical_block_size_support=True,
+        vss_erase_enabled=True)
     image_utils.AddGuestOsFeaturesArg(parser, base.ReleaseTrack.BETA)
     _AddReplicaZonesArg(parser)
-    resource_flags.AddResourcePoliciesArgs(parser, 'added to', 'disk')
     kms_resource_args.AddKmsKeyResourceArg(
         parser, 'disk', region_fallthrough=True)
 
-  def ValidateAndParseDiskRefs(self, args, compute_holder):
-    return _ValidateAndParseDiskRefsRegionalReplica(args, compute_holder)
-
   def Run(self, args):
-    return self._Run(args, supports_kms_keys=True, supports_physical_block=True)
+    return self._Run(
+        args,
+        supports_kms_keys=True,
+        supports_physical_block=True,
+        support_vss_erase=True)
 
 
 @base.ReleaseTracks(base.ReleaseTrack.ALPHA)
 class CreateAlpha(Create):
   """Create Google Compute Engine persistent disks."""
 
+  source_disk_enabled = True
+
   @staticmethod
   def Args(parser):
-    Create.disks_arg = disks_flags.MakeDiskArgZonalOrRegional(plural=True)
+    Create.disks_arg = disks_flags.MakeDiskArg(plural=True)
 
     _CommonArgs(
         parser,
-        disks_flags.SOURCE_SNAPSHOT_ARG,
-        include_physical_block_size_support=True)
+        include_physical_block_size_support=True,
+        vss_erase_enabled=True,
+        source_disk_enabled=True)
     image_utils.AddGuestOsFeaturesArg(parser, base.ReleaseTrack.ALPHA)
     _AddReplicaZonesArg(parser)
-    resource_flags.AddResourcePoliciesArgs(parser, 'added to', 'disk')
     kms_resource_args.AddKmsKeyResourceArg(
         parser, 'disk', region_fallthrough=True)
-
-  def ValidateAndParseDiskRefs(self, args, compute_holder):
-    return _ValidateAndParseDiskRefsRegionalReplica(args, compute_holder)
+    parser.add_argument(
+        '--multi-writer',
+        action='store_true',
+        help=('Create the disk in shared mode so that it can be attached with '
+              'read-write access to multiple VMs. Available only for zonal '
+              'disks. Cannot be used with regional disks. Shared disk is '
+              'exposed only as an NVMe device. Shared PD does not yet support '
+              'resize and snapshot operations.'))
 
   def Run(self, args):
-    return self._Run(args, supports_kms_keys=True, supports_physical_block=True)
+    return self._Run(
+        args,
+        supports_kms_keys=True,
+        supports_physical_block=True,
+        support_shared_disk=True,
+        support_vss_erase=True)
 
 
 def _ValidateAndParseDiskRefsRegionalReplica(args, compute_holder):
@@ -530,9 +588,9 @@ def _ValidateAndParseDiskRefsRegionalReplica(args, compute_holder):
         '--replica-zones',
         '--replica-zones is required for regional disk creation')
   if args.replica_zones is not None:
-    return create.ParseRegionDisksResources(
-        compute_holder.resources, args.DISK_NAME, args.replica_zones,
-        args.project, args.region)
+    return create.ParseRegionDisksResources(compute_holder.resources,
+                                            args.DISK_NAME, args.replica_zones,
+                                            args.project, args.region)
 
   disk_refs = Create.disks_arg.ResolveAsResource(
       args,
@@ -545,8 +603,8 @@ def _ValidateAndParseDiskRefsRegionalReplica(args, compute_holder):
     if disk_ref.Collection() == 'compute.regionDisks':
       raise exceptions.RequiredArgumentException(
           '--replica-zones',
-          '--replica-zones is required for regional disk creation [{}]'.
-          format(disk_ref.SelfLink()))
+          '--replica-zones is required for regional disk creation [{}]'.format(
+              disk_ref.SelfLink()))
 
   return disk_refs
 

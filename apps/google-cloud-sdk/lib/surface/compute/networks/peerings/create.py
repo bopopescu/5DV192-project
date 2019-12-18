@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2016 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -54,10 +54,29 @@ def _MakeRequests(client, requests, is_async):
 
 @base.ReleaseTracks(base.ReleaseTrack.GA)
 class Create(base.Command):
-  """Create a Google Compute Engine network peering."""
+  r"""Create a Google Compute Engine network peering.
 
-  @staticmethod
-  def ArgsCommon(parser):
+  *{command}* is used to create peerings between virtual networks. Each side of
+  a peering association is set up independently. Peering will be active only
+  when the configuration from both sides matches.
+
+  ## EXAMPLES
+
+  To create a network peering with the name 'peering-name' between the network
+  'local-network' and the network 'peer-network', run:
+
+    $ {command} peering-name \
+      --network=local-network \
+      --peer-network=peer-network
+
+  """
+
+  enable_custom_route = False
+  enable_subnet_routes_with_public_ip = False
+  enable_nested_network_peering = False
+
+  @classmethod
+  def ArgsCommon(cls, parser):
 
     parser.add_argument('name', help='The name of the peering.')
 
@@ -80,9 +99,17 @@ class Create(base.Command):
 
     base.ASYNC_FLAG.AddToParser(parser)
 
-  @staticmethod
-  def Args(parser):
-    Create.ArgsCommon(parser)
+    if cls.enable_custom_route:
+      flags.AddImportCustomRoutesFlag(parser)
+      flags.AddExportCustomRoutesFlag(parser)
+
+    if cls.enable_subnet_routes_with_public_ip:
+      flags.AddImportSubnetRoutesWithPublicIpFlag(parser)
+      flags.AddExportSubnetRoutesWithPublicIpFlag(parser)
+
+  @classmethod
+  def Args(cls, parser):
+    cls.ArgsCommon(parser)
     parser.add_argument(
         '--auto-create-routes',
         action='store_true',
@@ -105,27 +132,68 @@ class Create(base.Command):
         },
         collection='compute.networks')
 
-    request = client.messages.ComputeNetworksAddPeeringRequest(
-        network=args.network,
-        networksAddPeeringRequest=client.messages.NetworksAddPeeringRequest(
-            autoCreateRoutes=args.auto_create_routes,
-            name=args.name,
-            peerNetwork=peer_network_ref.RelativeName()),
-        project=properties.VALUES.core.project.GetOrFail())
+    if self.enable_nested_network_peering:
+      network_peering = client.messages.NetworkPeering(
+          name=args.name,
+          network=peer_network_ref.RelativeName(),
+          exchangeSubnetRoutes=True)
+
+      if self.enable_custom_route:
+        network_peering.exportCustomRoutes = args.export_custom_routes
+        network_peering.importCustomRoutes = args.import_custom_routes
+
+      if self.enable_subnet_routes_with_public_ip:
+        network_peering.exportSubnetRoutesWithPublicIp = \
+          args.export_subnet_routes_with_public_ip
+        network_peering.importSubnetRoutesWithPublicIp = \
+          args.import_subnet_routes_with_public_ip
+
+      request = client.messages.ComputeNetworksAddPeeringRequest(
+          network=args.network,
+          networksAddPeeringRequest=client.messages.NetworksAddPeeringRequest(
+              networkPeering=network_peering),
+          project=properties.VALUES.core.project.GetOrFail())
+    else:
+      request = client.messages.ComputeNetworksAddPeeringRequest(
+          network=args.network,
+          networksAddPeeringRequest=client.messages.NetworksAddPeeringRequest(
+              autoCreateRoutes=args.auto_create_routes,
+              name=args.name,
+              peerNetwork=peer_network_ref.RelativeName()),
+          project=properties.VALUES.core.project.GetOrFail())
 
     requests = [(client.apitools_client.networks, 'AddPeering', request)]
-    return _MakeRequests(client, requests, args.async)
+    return _MakeRequests(client, requests, args.async_)
 
 
-@base.ReleaseTracks(base.ReleaseTrack.BETA, base.ReleaseTrack.ALPHA)
-class CreateAlphaBeta(Create):
-  """Create a Google Compute Engine network peering."""
+@base.ReleaseTracks(base.ReleaseTrack.BETA)
+class CreateBeta(Create):
+  r"""Create a Google Compute Engine network peering.
 
-  @staticmethod
-  def Args(parser):
-    super(CreateAlphaBeta, CreateAlphaBeta).ArgsCommon(parser)
-    flags.AddImportCustomRoutesFlag(parser)
-    flags.AddExportCustomRoutesFlag(parser)
+  *{command}* is used to create peerings between virtual networks. Each side of
+  a peering association is set up independently. Peering will be active only
+  when the configuration from both sides matches.
+
+  ## EXAMPLES
+
+  To create a network peering with the name 'peering-name' between the network
+  'local-network' and the network 'peer-network' which exports and imports
+  custom routes, run:
+
+    $ {command} peering-name \
+      --network=local-network \
+      --peer-network=peer-network \
+      --export-custom-routes \
+      --import-custom-routes
+
+  """
+
+  enable_custom_route = True
+  enable_nested_network_peering = True
+
+  @classmethod
+  def Args(cls, parser):
+    cls.ArgsCommon(parser)
 
     action = actions.DeprecationAction(
         'auto-create-routes',
@@ -141,29 +209,29 @@ class CreateAlphaBeta(Create):
         'network peering. Flag auto-create-routes is deprecated. Peer network '
         'subnet routes are always created in a network when peered.')
 
-  def Run(self, args):
-    """Issues the request necessary for adding the peering."""
-    holder = base_classes.ComputeApiHolder(self.ReleaseTrack())
-    client = holder.client
 
-    peer_network_ref = resources.REGISTRY.Parse(
-        args.peer_network,
-        params={
-            'project':
-                args.peer_project or properties.VALUES.core.project.GetOrFail
-        },
-        collection='compute.networks')
+@base.ReleaseTracks(base.ReleaseTrack.ALPHA)
+class CreateAlpha(CreateBeta):
+  r"""Create a Google Compute Engine network peering.
 
-    request = client.messages.ComputeNetworksAddPeeringRequest(
-        network=args.network,
-        networksAddPeeringRequest=client.messages.NetworksAddPeeringRequest(
-            networkPeering=client.messages.NetworkPeering(
-                name=args.name,
-                network=peer_network_ref.RelativeName(),
-                exportCustomRoutes=args.export_custom_routes,
-                importCustomRoutes=args.import_custom_routes,
-                exchangeSubnetRoutes=True)),
-        project=properties.VALUES.core.project.GetOrFail())
+  *{command}* is used to create peerings between virtual networks. Each side of
+  a peering association is set up independently. Peering will be active only
+  when the configuration from both sides matches.
 
-    requests = [(client.apitools_client.networks, 'AddPeering', request)]
-    return _MakeRequests(client, requests, args.async)
+  ## EXAMPLES
+
+  To create a network peering with the name 'peering-name' between the network
+  'local-network' and the network 'peer-network' which exports and imports
+  custom routes and subnet routes with public IPs, run:
+
+    $ {command} peering-name \
+      --network=local-network \
+      --peer-network=peer-network \
+      --export-custom-routes \
+      --import-custom-routes \
+      --export-subnet-routes-with-public-ip \
+      --import-subnet-routes-with-public-ip
+
+  """
+
+  enable_subnet_routes_with_public_ip = True

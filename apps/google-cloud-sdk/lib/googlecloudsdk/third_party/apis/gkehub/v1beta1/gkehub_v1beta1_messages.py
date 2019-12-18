@@ -11,8 +11,136 @@ from apitools.base.py import extra_types
 package = 'gkehub'
 
 
+class AuditConfig(_messages.Message):
+  r"""Specifies the audit configuration for a service. The configuration
+  determines which permission types are logged, and what identities, if any,
+  are exempted from logging. An AuditConfig must have one or more
+  AuditLogConfigs.  If there are AuditConfigs for both `allServices` and a
+  specific service, the union of the two AuditConfigs is used for that
+  service: the log_types specified in each AuditConfig are enabled, and the
+  exempted_members in each AuditLogConfig are exempted.  Example Policy with
+  multiple AuditConfigs:      {       "audit_configs": [         {
+  "service": "allServices"           "audit_log_configs": [             {
+  "log_type": "DATA_READ",               "exempted_members": [
+  "user:jose@example.com"               ]             },             {
+  "log_type": "DATA_WRITE",             },             {
+  "log_type": "ADMIN_READ",             }           ]         },         {
+  "service": "sampleservice.googleapis.com"           "audit_log_configs": [
+  {               "log_type": "DATA_READ",             },             {
+  "log_type": "DATA_WRITE",               "exempted_members": [
+  "user:aliya@example.com"               ]             }           ]         }
+  ]     }  For sampleservice, this policy enables DATA_READ, DATA_WRITE and
+  ADMIN_READ logging. It also exempts jose@example.com from DATA_READ logging,
+  and aliya@example.com from DATA_WRITE logging.
+
+  Fields:
+    auditLogConfigs: The configuration for logging of each type of permission.
+    service: Specifies a service that will be enabled for audit logging. For
+      example, `storage.googleapis.com`, `cloudsql.googleapis.com`.
+      `allServices` is a special value that covers all services.
+  """
+
+  auditLogConfigs = _messages.MessageField('AuditLogConfig', 1, repeated=True)
+  service = _messages.StringField(2)
+
+
+class AuditLogConfig(_messages.Message):
+  r"""Provides the configuration for logging a type of permissions. Example:
+  {       "audit_log_configs": [         {           "log_type": "DATA_READ",
+  "exempted_members": [             "user:jose@example.com"           ]
+  },         {           "log_type": "DATA_WRITE",         }       ]     }
+  This enables 'DATA_READ' and 'DATA_WRITE' logging, while exempting
+  jose@example.com from DATA_READ logging.
+
+  Enums:
+    LogTypeValueValuesEnum: The log type that this config enables.
+
+  Fields:
+    exemptedMembers: Specifies the identities that do not cause logging for
+      this type of permission. Follows the same format of Binding.members.
+    logType: The log type that this config enables.
+  """
+
+  class LogTypeValueValuesEnum(_messages.Enum):
+    r"""The log type that this config enables.
+
+    Values:
+      LOG_TYPE_UNSPECIFIED: Default case. Should never be this.
+      ADMIN_READ: Admin reads. Example: CloudIAM getIamPolicy
+      DATA_WRITE: Data writes. Example: CloudSQL Users create
+      DATA_READ: Data reads. Example: CloudSQL Users list
+    """
+    LOG_TYPE_UNSPECIFIED = 0
+    ADMIN_READ = 1
+    DATA_WRITE = 2
+    DATA_READ = 3
+
+  exemptedMembers = _messages.StringField(1, repeated=True)
+  logType = _messages.EnumField('LogTypeValueValuesEnum', 2)
+
+
+class Binding(_messages.Message):
+  r"""Associates `members` with a `role`.
+
+  Fields:
+    condition: The condition that is associated with this binding. NOTE: An
+      unsatisfied condition will not allow user access via current binding.
+      Different bindings, including their conditions, are examined
+      independently.
+    members: Specifies the identities requesting access for a Cloud Platform
+      resource. `members` can have the following values:  * `allUsers`: A
+      special identifier that represents anyone who is    on the internet;
+      with or without a Google account.  * `allAuthenticatedUsers`: A special
+      identifier that represents anyone    who is authenticated with a Google
+      account or a service account.  * `user:{emailid}`: An email address that
+      represents a specific Google    account. For example,
+      `alice@example.com` .   * `serviceAccount:{emailid}`: An email address
+      that represents a service    account. For example, `my-other-
+      app@appspot.gserviceaccount.com`.  * `group:{emailid}`: An email address
+      that represents a Google group.    For example, `admins@example.com`.  *
+      `deleted:user:{emailid}?uid={uniqueid}`: An email address (plus unique
+      identifier) representing a user that has been recently deleted. For
+      example, `alice@example.com?uid=123456789012345678901`. If the user is
+      recovered, this value reverts to `user:{emailid}` and the recovered user
+      retains the role in the binding.  *
+      `deleted:serviceAccount:{emailid}?uid={uniqueid}`: An email address
+      (plus    unique identifier) representing a service account that has been
+      recently    deleted. For example,    `my-other-
+      app@appspot.gserviceaccount.com?uid=123456789012345678901`.    If the
+      service account is undeleted, this value reverts to
+      `serviceAccount:{emailid}` and the undeleted service account retains the
+      role in the binding.  * `deleted:group:{emailid}?uid={uniqueid}`: An
+      email address (plus unique    identifier) representing a Google group
+      that has been recently    deleted. For example,
+      `admins@example.com?uid=123456789012345678901`. If    the group is
+      recovered, this value reverts to `group:{emailid}` and the    recovered
+      group retains the role in the binding.   * `domain:{domain}`: The G
+      Suite domain (primary) that represents all the    users of that domain.
+      For example, `google.com` or `example.com`.
+    role: Role that is assigned to `members`. For example, `roles/viewer`,
+      `roles/editor`, or `roles/owner`.
+  """
+
+  condition = _messages.MessageField('Expr', 1)
+  members = _messages.StringField(2, repeated=True)
+  role = _messages.StringField(3)
+
+
 class CancelOperationRequest(_messages.Message):
   r"""The request message for Operations.CancelOperation."""
+
+
+class ConnectAgentResource(_messages.Message):
+  r"""ConnectAgentResource represents a Kubernetes resource manifest for
+  connect agent deployment.
+
+  Fields:
+    manifest: YAML manifest of the resource.
+    type: Kubernetes type of the resource.
+  """
+
+  manifest = _messages.StringField(1)
+  type = _messages.MessageField('TypeMeta', 2)
 
 
 class Empty(_messages.Message):
@@ -25,6 +153,54 @@ class Empty(_messages.Message):
 
 
 
+class Expr(_messages.Message):
+  r"""Represents an expression text. Example:      title: "User account
+  presence"     description: "Determines whether the request has a user
+  account"     expression: "size(request.user) > 0"
+
+  Fields:
+    description: An optional description of the expression. This is a longer
+      text which describes the expression, e.g. when hovered over it in a UI.
+    expression: Textual representation of an expression in Common Expression
+      Language syntax.  The application context of the containing message
+      determines which well-known feature set of CEL is supported.
+    location: An optional string indicating the location of the expression for
+      error reporting, e.g. a file name and a position in the file.
+    title: An optional title for the expression, i.e. a short string
+      describing its purpose. This can be used e.g. in UIs which allow to
+      enter the expression.
+  """
+
+  description = _messages.StringField(1)
+  expression = _messages.StringField(2)
+  location = _messages.StringField(3)
+  title = _messages.StringField(4)
+
+
+class GenerateConnectManifestResponse(_messages.Message):
+  r"""Response message for `GkeHubService.GenerateConnectManifest` method.
+
+  Fields:
+    manifest: The ordered list of Kubernetes resources that need to be applied
+      to the cluster for GKE Connect agent installation/upgrade.
+  """
+
+  manifest = _messages.MessageField('ConnectAgentResource', 1, repeated=True)
+
+
+class GkeCluster(_messages.Message):
+  r"""GkeCluster represents a k8s cluster on GKE.
+
+  Fields:
+    resourceLink: Self-link of the GCP resource for the GKE cluster. For
+      example: //container.googleapis.com/v1/projects/my-project/zones/us-
+      west1-a/clusters/my-cluster It can be at the most 1000 characters in
+      length.
+  """
+
+  resourceLink = _messages.StringField(1)
+
+
 class GkehubProjectsLocationsGetRequest(_messages.Message):
   r"""A GkehubProjectsLocationsGetRequest object.
 
@@ -33,97 +209,6 @@ class GkehubProjectsLocationsGetRequest(_messages.Message):
   """
 
   name = _messages.StringField(1, required=True)
-
-
-class GkehubProjectsLocationsGlobalMembershipsCreateRequest(_messages.Message):
-  r"""A GkehubProjectsLocationsGlobalMembershipsCreateRequest object.
-
-  Fields:
-    membership: A Membership resource to be passed as the request body.
-    membershipId: Client chosen ID for the membership. The ID must be a valid
-      RFC 1123 compliant DNS label. In particular, the ID must be:   1. At
-      most 63 characters in length   2. It must consist of lower case
-      alphanumeric characters or `-`   3. It must start and end with an
-      alphanumeric character I.e. ID must match the regex:
-      `[a-z0-9]([-a-z0-9]*[a-z0-9])?` with at most 63 characters.
-    parent: The parent in whose context the membership is created. The parent
-      value is in the format: `projects/[project_id]/locations/global`.
-  """
-
-  membership = _messages.MessageField('Membership', 1)
-  membershipId = _messages.StringField(2)
-  parent = _messages.StringField(3, required=True)
-
-
-class GkehubProjectsLocationsGlobalMembershipsDeleteRequest(_messages.Message):
-  r"""A GkehubProjectsLocationsGlobalMembershipsDeleteRequest object.
-
-  Fields:
-    name: The membership resource name in the format:
-      `projects/[project_id]/locations/global/memberships/[membership_id]`
-  """
-
-  name = _messages.StringField(1, required=True)
-
-
-class GkehubProjectsLocationsGlobalMembershipsGetRequest(_messages.Message):
-  r"""A GkehubProjectsLocationsGlobalMembershipsGetRequest object.
-
-  Fields:
-    name: The Membership resource name in the format:
-      `projects/[project_id]/locations/global/memberships/[membership_id]`
-  """
-
-  name = _messages.StringField(1, required=True)
-
-
-class GkehubProjectsLocationsGlobalMembershipsListRequest(_messages.Message):
-  r"""A GkehubProjectsLocationsGlobalMembershipsListRequest object.
-
-  Fields:
-    filter: Lists the Memberships that match the filter expression. A filter
-      expression filters the resources listed in the response. The expression
-      must be of the form `<field> <operator> <value>` where operators: `<`,
-      `>`, `<=`, `>=`, `!=`, `=`, `:` are supported (colon `:` represents a
-      HAS operator which is roughly synonymous with equality). <field> can
-      refer to a proto or JSON field, or a synthetic field. Field names can be
-      camelCase or snake_case.  Examples: - Filter by name:   name = "projects
-      /foo-proj/locations/global/membership/bar  - Filter by labels:   -
-      Resources that have a key called `foo`     labels.foo:*   - Resources
-      that have a key called `foo` whose value is `bar`     labels.foo = bar
-      - Filter by state:    - Members in CREATING state.      state = CREATING
-    orderBy: Field to use to sort the list.
-    pageSize: When requesting a 'page' of resources, `page_size` specifies
-      number of resources to return. If unspecified or set to 0, all resources
-      will be returned.
-    pageToken: Token returned by previous call to `ListMemberships` which
-      specifies the position in the list from where to continue listing the
-      resources.
-    parent: The parent in whose context the memberships are listed. The parent
-      value is in the format: `projects/[project_id]/locations/global`.
-  """
-
-  filter = _messages.StringField(1)
-  orderBy = _messages.StringField(2)
-  pageSize = _messages.IntegerField(3, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(4)
-  parent = _messages.StringField(5, required=True)
-
-
-class GkehubProjectsLocationsGlobalMembershipsPatchRequest(_messages.Message):
-  r"""A GkehubProjectsLocationsGlobalMembershipsPatchRequest object.
-
-  Fields:
-    membership: A Membership resource to be passed as the request body.
-    name: The membership resource name in the format:
-      `projects/[project_id]/locations/global/memberships/[membership_id]`
-    updateMask: Mask of fields to update. At least one field path must be
-      specified in this mask.
-  """
-
-  membership = _messages.MessageField('Membership', 1)
-  name = _messages.StringField(2, required=True)
-  updateMask = _messages.StringField(3)
 
 
 class GkehubProjectsLocationsListRequest(_messages.Message):
@@ -140,6 +225,185 @@ class GkehubProjectsLocationsListRequest(_messages.Message):
   name = _messages.StringField(2, required=True)
   pageSize = _messages.IntegerField(3, variant=_messages.Variant.INT32)
   pageToken = _messages.StringField(4)
+
+
+class GkehubProjectsLocationsMembershipsCreateRequest(_messages.Message):
+  r"""A GkehubProjectsLocationsMembershipsCreateRequest object.
+
+  Fields:
+    membership: A Membership resource to be passed as the request body.
+    membershipId: Required. Client chosen ID for the membership. The ID must
+      be a valid RFC 1123 compliant DNS label. In particular, the ID must be:
+      1. At most 63 characters in length   2. It must consist of lower case
+      alphanumeric characters or `-`   3. It must start and end with an
+      alphanumeric character I.e. ID must match the regex:
+      `[a-z0-9]([-a-z0-9]*[a-z0-9])?` with at most 63 characters.
+    parent: Required. The parent in whose context the membership is created.
+      The parent value is in the format:
+      `projects/[project_id]/locations/global`.
+  """
+
+  membership = _messages.MessageField('Membership', 1)
+  membershipId = _messages.StringField(2)
+  parent = _messages.StringField(3, required=True)
+
+
+class GkehubProjectsLocationsMembershipsDeleteRequest(_messages.Message):
+  r"""A GkehubProjectsLocationsMembershipsDeleteRequest object.
+
+  Fields:
+    name: Required. The membership resource name in the format:
+      `projects/[project_id]/locations/global/memberships/[membership_id]`
+  """
+
+  name = _messages.StringField(1, required=True)
+
+
+class GkehubProjectsLocationsMembershipsGenerateConnectManifestRequest(_messages.Message):
+  r"""A GkehubProjectsLocationsMembershipsGenerateConnectManifestRequest
+  object.
+
+  Fields:
+    connectAgent_name: Optional. Deprecated. Do not set.
+    connectAgent_namespace: Optional. Namespace for GKE Connect agent
+      resources. If empty, uses 'gke-connect'.
+    connectAgent_proxy: Optional. URI of the proxy to reach
+      gkeconnect.googleapis.com. The format must be in the form
+      http(s)://{proxy_address}, depends on HTTP/HTTPS protocol supported by
+      the proxy. This will direct connect agent's outbound traffic through a
+      HTTP(S) proxy.
+    imagePullSecretContent: Optional. The image pull secret content for the
+      registry, if not public.
+    isUpgrade: Optional. If true, generate the resources for upgrade only.
+      Some resources (e.g. secrets) generated for installation will be
+      excluded.
+    name: Required. The membership resource the connect agent is associated
+      with.
+      `projects/[project_id]/locations/global/memberships/[membership_id]`.
+    registry: Optional. The registry to fetch connect agent image; default to
+      gcr.io/gkeconnect.
+    version: Optional. The version to use for connect agent. If empty, the
+      current default version will be used.
+  """
+
+  connectAgent_name = _messages.StringField(1)
+  connectAgent_namespace = _messages.StringField(2)
+  connectAgent_proxy = _messages.BytesField(3)
+  imagePullSecretContent = _messages.BytesField(4)
+  isUpgrade = _messages.BooleanField(5)
+  name = _messages.StringField(6, required=True)
+  registry = _messages.StringField(7)
+  version = _messages.StringField(8)
+
+
+class GkehubProjectsLocationsMembershipsGetIamPolicyRequest(_messages.Message):
+  r"""A GkehubProjectsLocationsMembershipsGetIamPolicyRequest object.
+
+  Fields:
+    options_requestedPolicyVersion: Optional. The policy format version to be
+      returned.  Valid values are 0, 1, and 3. Requests specifying an invalid
+      value will be rejected.  Requests for policies with any conditional
+      bindings must specify version 3. Policies without any conditional
+      bindings may specify any valid value or leave the field unset.
+    resource: REQUIRED: The resource for which the policy is being requested.
+      See the operation documentation for the appropriate value for this
+      field.
+  """
+
+  options_requestedPolicyVersion = _messages.IntegerField(1, variant=_messages.Variant.INT32)
+  resource = _messages.StringField(2, required=True)
+
+
+class GkehubProjectsLocationsMembershipsGetRequest(_messages.Message):
+  r"""A GkehubProjectsLocationsMembershipsGetRequest object.
+
+  Fields:
+    name: Required. The Membership resource name in the format:
+      `projects/[project_id]/locations/global/memberships/[membership_id]`
+  """
+
+  name = _messages.StringField(1, required=True)
+
+
+class GkehubProjectsLocationsMembershipsListRequest(_messages.Message):
+  r"""A GkehubProjectsLocationsMembershipsListRequest object.
+
+  Fields:
+    filter: Optional. Lists the Memberships that match the filter expression.
+      A filter expression filters the resources listed in the response. The
+      expression must be of the form `<field> <operator> <value>` where
+      operators: `<`, `>`, `<=`, `>=`, `!=`, `=`, `:` are supported (colon `:`
+      represents a HAS operator which is roughly synonymous with equality).
+      <field> can refer to a proto or JSON field, or a synthetic field. Field
+      names can be camelCase or snake_case.  Examples: - Filter by name:
+      name = "projects/foo-proj/locations/global/membership/bar  - Filter by
+      labels:   - Resources that have a key called `foo`     labels.foo:*   -
+      Resources that have a key called `foo` whose value is `bar`
+      labels.foo = bar   - Filter by state:    - Members in CREATING state.
+      state = CREATING
+    orderBy: Optional. Field to use to sort the list.
+    pageSize: Optional. When requesting a 'page' of resources, `page_size`
+      specifies number of resources to return. If unspecified or set to 0, all
+      resources will be returned.
+    pageToken: Optional. Token returned by previous call to `ListMemberships`
+      which specifies the position in the list from where to continue listing
+      the resources.
+    parent: Required. The parent in whose context the memberships are listed.
+      The parent value is in the format:
+      `projects/[project_id]/locations/global`.
+  """
+
+  filter = _messages.StringField(1)
+  orderBy = _messages.StringField(2)
+  pageSize = _messages.IntegerField(3, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(4)
+  parent = _messages.StringField(5, required=True)
+
+
+class GkehubProjectsLocationsMembershipsPatchRequest(_messages.Message):
+  r"""A GkehubProjectsLocationsMembershipsPatchRequest object.
+
+  Fields:
+    membership: A Membership resource to be passed as the request body.
+    name: Required. The membership resource name in the format:
+      `projects/[project_id]/locations/global/memberships/[membership_id]`
+    updateMask: Required. Mask of fields to update. At least one field path
+      must be specified in this mask.
+  """
+
+  membership = _messages.MessageField('Membership', 1)
+  name = _messages.StringField(2, required=True)
+  updateMask = _messages.StringField(3)
+
+
+class GkehubProjectsLocationsMembershipsSetIamPolicyRequest(_messages.Message):
+  r"""A GkehubProjectsLocationsMembershipsSetIamPolicyRequest object.
+
+  Fields:
+    resource: REQUIRED: The resource for which the policy is being specified.
+      See the operation documentation for the appropriate value for this
+      field.
+    setIamPolicyRequest: A SetIamPolicyRequest resource to be passed as the
+      request body.
+  """
+
+  resource = _messages.StringField(1, required=True)
+  setIamPolicyRequest = _messages.MessageField('SetIamPolicyRequest', 2)
+
+
+class GkehubProjectsLocationsMembershipsTestIamPermissionsRequest(_messages.Message):
+  r"""A GkehubProjectsLocationsMembershipsTestIamPermissionsRequest object.
+
+  Fields:
+    resource: REQUIRED: The resource for which the policy detail is being
+      requested. See the operation documentation for the appropriate value for
+      this field.
+    testIamPermissionsRequest: A TestIamPermissionsRequest resource to be
+      passed as the request body.
+  """
+
+  resource = _messages.StringField(1, required=True)
+  testIamPermissionsRequest = _messages.MessageField('TestIamPermissionsRequest', 2)
 
 
 class GkehubProjectsLocationsOperationsCancelRequest(_messages.Message):
@@ -194,37 +458,10 @@ class GkehubProjectsLocationsOperationsListRequest(_messages.Message):
 class GoogleRpcStatus(_messages.Message):
   r"""The `Status` type defines a logical error model that is suitable for
   different programming environments, including REST APIs and RPC APIs. It is
-  used by [gRPC](https://github.com/grpc). The error model is designed to be:
-  - Simple to use and understand for most users - Flexible enough to meet
-  unexpected needs  # Overview  The `Status` message contains three pieces of
-  data: error code, error message, and error details. The error code should be
-  an enum value of google.rpc.Code, but it may accept additional error codes
-  if needed.  The error message should be a developer-facing English message
-  that helps developers *understand* and *resolve* the error. If a localized
-  user-facing error message is needed, put the localized message in the error
-  details or localize it in the client. The optional error details may contain
-  arbitrary information about the error. There is a predefined set of error
-  detail types in the package `google.rpc` that can be used for common error
-  conditions.  # Language mapping  The `Status` message is the logical
-  representation of the error model, but it is not necessarily the actual wire
-  format. When the `Status` message is exposed in different client libraries
-  and different wire protocols, it can be mapped differently. For example, it
-  will likely be mapped to some exceptions in Java, but more likely mapped to
-  some error codes in C.  # Other uses  The error model and the `Status`
-  message can be used in a variety of environments, either with or without
-  APIs, to provide a consistent developer experience across different
-  environments.  Example uses of this error model include:  - Partial errors.
-  If a service needs to return partial errors to the client,     it may embed
-  the `Status` in the normal response to indicate the partial     errors.  -
-  Workflow errors. A typical workflow has multiple steps. Each step may
-  have a `Status` message for error reporting.  - Batch operations. If a
-  client uses batch request and batch response, the     `Status` message
-  should be used directly inside batch response, one for     each error sub-
-  response.  - Asynchronous operations. If an API call embeds asynchronous
-  operation     results in its response, the status of those operations should
-  be     represented directly using the `Status` message.  - Logging. If some
-  API errors are stored in logs, the message `Status` could     be used
-  directly after any stripping needed for security/privacy reasons.
+  used by [gRPC](https://github.com/grpc). Each `Status` message contains
+  three pieces of data: error code, error message, and error details.  You can
+  find out more about this error model and how to work with it in the [API
+  Design Guide](https://cloud.google.com/apis/design/errors).
 
   Messages:
     DetailsValueListEntry: A DetailsValueListEntry object.
@@ -291,10 +528,13 @@ class ListMembershipsResponse(_messages.Message):
       `ListMemberships` method. The value of an empty string means that there
       are no more resources to return.
     resources: The list of Memberships contained within the parent.
+    unreachable: List of locations that could not be reached while fetching
+      this list.
   """
 
   nextPageToken = _messages.StringField(1)
   resources = _messages.MessageField('Membership', 2, repeated=True)
+  unreachable = _messages.StringField(3, repeated=True)
 
 
 class ListOperationsResponse(_messages.Message):
@@ -391,7 +631,7 @@ class Location(_messages.Message):
 
 
 class Membership(_messages.Message):
-  r"""Membership contains information about a member cluster.
+  r"""Membership contains information about a member cluster. Next tag: 11
 
   Messages:
     LabelsValue: GCP labels for this membership.
@@ -399,9 +639,12 @@ class Membership(_messages.Message):
   Fields:
     createTime: Output only. Timestamp for when the Membership was created.
     deleteTime: Output only. Timestamp for when the Membership was deleted.
-    description: An optional description of this membership, limited to 2048
-      characters.
-    endpoint: Endpoint information to reach this member.
+    description: Required. Description of this membership, limited to 63
+      characters. It must match the regex: `a-zA-Z0-9*`
+    endpoint: A MembershipEndpoint attribute.
+    externalId: An externally-generated and managed ID for this Membership.
+      This ID may still be modified after creation but it is not recommended
+      to do so. The ID must match the regex: `a-zA-Z0-9*`
     labels: GCP labels for this membership.
     name: Output only. The unique name of this domain resource in the format:
       `projects/[project_id]/locations/global/memberships/[membership_id]`.
@@ -445,33 +688,22 @@ class Membership(_messages.Message):
   deleteTime = _messages.StringField(2)
   description = _messages.StringField(3)
   endpoint = _messages.MessageField('MembershipEndpoint', 4)
-  labels = _messages.MessageField('LabelsValue', 5)
-  name = _messages.StringField(6)
-  state = _messages.MessageField('MembershipState', 7)
-  updateTime = _messages.StringField(8)
+  externalId = _messages.StringField(5)
+  labels = _messages.MessageField('LabelsValue', 6)
+  name = _messages.StringField(7)
+  state = _messages.MessageField('MembershipState', 8)
+  updateTime = _messages.StringField(9)
 
 
 class MembershipEndpoint(_messages.Message):
   r"""MembershipEndpoint contains the information to reach a member.
 
   Fields:
-    gcpResourceLink: If this API server is also a Google service provide the
-      self link of its GCP resource. For example, the FQDN to a GKE Cluster
-      that backs this Membership:
-      https://container.googleapis.com/v1/projects/x/zones/us-
-      west1-a/clusters/c0 It can be at the most 1000 characters in length.
-    oidcConfig: OIDC configuration to use to authenticate users against with
-      this member.
-    resourceId: Unique per-project identification for this endpoint (in space
-      and time) to be provided by the user at creation time. While a self_link
-      is optional for endpoints that may not be on GCP, all membership
-      endpoints must provide a unique resource_id string. It is not mutable
-      after creation. It can be at the most 1000 characters in length.
+    gkeCluster: If this Membership is a Kubernetes API server hosted on GKE,
+      this is a self link to its GCP resource.
   """
 
-  gcpResourceLink = _messages.StringField(1)
-  oidcConfig = _messages.MessageField('OidcConfig', 2)
-  resourceId = _messages.StringField(3)
+  gkeCluster = _messages.MessageField('GkeCluster', 1)
 
 
 class MembershipState(_messages.Message):
@@ -508,57 +740,6 @@ class MembershipState(_messages.Message):
   updateTime = _messages.StringField(3)
 
 
-class OidcConfig(_messages.Message):
-  r"""OidcConfig holds the configuration for the OIDC provider that's used to
-  authenticate users against a member.
-
-  Enums:
-    TokenEndpointRoutabilityValueValuesEnum: Connection method to be used when
-      accessing the token endpoint.
-
-  Fields:
-    aud: Audience claims to request when fetching the id_token - should
-      include the --oidc-client-id configured for the cluster.
-    authorizationEndpoint: Endpoint to be used for authentication of end user,
-      ex. https://accounts.google.com/o/oauth2/v2/auth. See
-      https://openid.net/specs/openid-connect-core-
-      1_0.html#AuthorizationEndpoint
-    clientId: Client Id for the OAuth client to be used when communicating
-      with Identity Provider.
-    clientSecret: Client Secret for the OAuth client to be used when
-      communicating with Identity Provider.
-    issuer: Identity Provider that needs to issue tokens accepted by this
-      cluster, ex. https://accounts.google.com. Should match the --oidc-
-      issuer-url configured for the cluster.
-    tokenEndpoint: Endpoint to be used to obtain the id_token, ex.
-      https://www.googleapis.com/oauth2/v4/token. See https://openid.net/specs
-      /openid-connect-core-1_0.html#TokenEndpoint
-    tokenEndpointRoutability: Connection method to be used when accessing the
-      token endpoint.
-  """
-
-  class TokenEndpointRoutabilityValueValuesEnum(_messages.Enum):
-    r"""Connection method to be used when accessing the token endpoint.
-
-    Values:
-      ENDPOINT_ROUTABILITY_UNSPECIFIED: Not set.
-      PUBLIC: Identity Provider is available over internet
-      GKE_CONNECT: Identity Provider is available On-Prem, use On-Prem proxy
-        over GKE Connect.
-    """
-    ENDPOINT_ROUTABILITY_UNSPECIFIED = 0
-    PUBLIC = 1
-    GKE_CONNECT = 2
-
-  aud = _messages.StringField(1, repeated=True)
-  authorizationEndpoint = _messages.StringField(2)
-  clientId = _messages.StringField(3)
-  clientSecret = _messages.BytesField(4)
-  issuer = _messages.StringField(5)
-  tokenEndpoint = _messages.StringField(6)
-  tokenEndpointRoutability = _messages.EnumField('TokenEndpointRoutabilityValueValuesEnum', 7)
-
-
 class Operation(_messages.Message):
   r"""This resource represents a long-running operation that is the result of
   a network API call.
@@ -590,7 +771,8 @@ class Operation(_messages.Message):
       if any.
     name: The server-assigned name, which is only unique within the same
       service that originally returns it. If you use the default HTTP mapping,
-      the `name` should have the format of `operations/some/unique/name`.
+      the `name` should be a resource name ending with
+      `operations/{unique_id}`.
     response: The normal response of the operation in case of success.  If the
       original method returns no data on success, such as `Delete`, the
       response is `google.protobuf.Empty`.  If the original method is standard
@@ -666,6 +848,94 @@ class Operation(_messages.Message):
   response = _messages.MessageField('ResponseValue', 5)
 
 
+class Policy(_messages.Message):
+  r"""An Identity and Access Management (IAM) policy, which specifies access
+  controls for Google Cloud resources.   A `Policy` is a collection of
+  `bindings`. A `binding` binds one or more `members` to a single `role`.
+  Members can be user accounts, service accounts, Google groups, and domains
+  (such as G Suite). A `role` is a named list of permissions; each `role` can
+  be an IAM predefined role or a user-created custom role.  Optionally, a
+  `binding` can specify a `condition`, which is a logical expression that
+  allows access to a resource only if the expression evaluates to `true`. A
+  condition can add constraints based on attributes of the request, the
+  resource, or both.  **JSON example:**      {       "bindings": [         {
+  "role": "roles/resourcemanager.organizationAdmin",           "members": [
+  "user:mike@example.com",             "group:admins@example.com",
+  "domain:google.com",             "serviceAccount:my-project-
+  id@appspot.gserviceaccount.com"           ]         },         {
+  "role": "roles/resourcemanager.organizationViewer",           "members":
+  ["user:eve@example.com"],           "condition": {             "title":
+  "expirable access",             "description": "Does not grant access after
+  Sep 2020",             "expression": "request.time <
+  timestamp('2020-10-01T00:00:00.000Z')",           }         }       ],
+  "etag": "BwWWja0YfJA=",       "version": 3     }  **YAML example:**
+  bindings:     - members:       - user:mike@example.com       -
+  group:admins@example.com       - domain:google.com       - serviceAccount
+  :my-project-id@appspot.gserviceaccount.com       role:
+  roles/resourcemanager.organizationAdmin     - members:       -
+  user:eve@example.com       role: roles/resourcemanager.organizationViewer
+  condition:         title: expirable access         description: Does not
+  grant access after Sep 2020         expression: request.time <
+  timestamp('2020-10-01T00:00:00.000Z')     - etag: BwWWja0YfJA=     -
+  version: 3  For a description of IAM and its features, see the [IAM
+  documentation](https://cloud.google.com/iam/docs/).
+
+  Fields:
+    auditConfigs: Specifies cloud audit logging configuration for this policy.
+    bindings: Associates a list of `members` to a `role`. Optionally, may
+      specify a `condition` that determines how and when the `bindings` are
+      applied. Each of the `bindings` must contain at least one member.
+    etag: `etag` is used for optimistic concurrency control as a way to help
+      prevent simultaneous updates of a policy from overwriting each other. It
+      is strongly suggested that systems make use of the `etag` in the read-
+      modify-write cycle to perform policy updates in order to avoid race
+      conditions: An `etag` is returned in the response to `getIamPolicy`, and
+      systems are expected to put that etag in the request to `setIamPolicy`
+      to ensure that their change will be applied to the same version of the
+      policy.  **Important:** If you use IAM Conditions, you must include the
+      `etag` field whenever you call `setIamPolicy`. If you omit this field,
+      then IAM allows you to overwrite a version `3` policy with a version `1`
+      policy, and all of the conditions in the version `3` policy are lost.
+    version: Specifies the format of the policy.  Valid values are `0`, `1`,
+      and `3`. Requests that specify an invalid value are rejected.  Any
+      operation that affects conditional role bindings must specify version
+      `3`. This requirement applies to the following operations:  * Getting a
+      policy that includes a conditional role binding * Adding a conditional
+      role binding to a policy * Changing a conditional role binding in a
+      policy * Removing any role binding, with or without a condition, from a
+      policy   that includes conditions  **Important:** If you use IAM
+      Conditions, you must include the `etag` field whenever you call
+      `setIamPolicy`. If you omit this field, then IAM allows you to overwrite
+      a version `3` policy with a version `1` policy, and all of the
+      conditions in the version `3` policy are lost.  If a policy does not
+      include any conditions, operations on that policy may specify any valid
+      version or leave the field unset.
+  """
+
+  auditConfigs = _messages.MessageField('AuditConfig', 1, repeated=True)
+  bindings = _messages.MessageField('Binding', 2, repeated=True)
+  etag = _messages.BytesField(3)
+  version = _messages.IntegerField(4, variant=_messages.Variant.INT32)
+
+
+class SetIamPolicyRequest(_messages.Message):
+  r"""Request message for `SetIamPolicy` method.
+
+  Fields:
+    policy: REQUIRED: The complete policy to be applied to the `resource`. The
+      size of the policy is limited to a few 10s of KB. An empty policy is a
+      valid policy but certain Cloud Platform services (such as Projects)
+      might reject them.
+    updateMask: OPTIONAL: A FieldMask specifying which fields of the policy to
+      modify. Only the fields in the mask will be modified. If no mask is
+      provided, the following default mask is used: paths: "bindings, etag"
+      This field is only used by Cloud IAM.
+  """
+
+  policy = _messages.MessageField('Policy', 1)
+  updateMask = _messages.StringField(2)
+
+
 class StandardQueryParameters(_messages.Message):
   r"""Query parameters accepted by all methods.
 
@@ -727,6 +997,43 @@ class StandardQueryParameters(_messages.Message):
   trace = _messages.StringField(10)
   uploadType = _messages.StringField(11)
   upload_protocol = _messages.StringField(12)
+
+
+class TestIamPermissionsRequest(_messages.Message):
+  r"""Request message for `TestIamPermissions` method.
+
+  Fields:
+    permissions: The set of permissions to check for the `resource`.
+      Permissions with wildcards (such as '*' or 'storage.*') are not allowed.
+      For more information see [IAM
+      Overview](https://cloud.google.com/iam/docs/overview#permissions).
+  """
+
+  permissions = _messages.StringField(1, repeated=True)
+
+
+class TestIamPermissionsResponse(_messages.Message):
+  r"""Response message for `TestIamPermissions` method.
+
+  Fields:
+    permissions: A subset of `TestPermissionsRequest.permissions` that the
+      caller is allowed.
+  """
+
+  permissions = _messages.StringField(1, repeated=True)
+
+
+class TypeMeta(_messages.Message):
+  r"""TypeMeta is the type information needed for content unmarshalling of the
+  Kubernetes resources in the manifest.
+
+  Fields:
+    apiVersion: APIVersion of the resource (e.g. v1).
+    kind: Kind of the resource (e.g. Deployment).
+  """
+
+  apiVersion = _messages.StringField(1)
+  kind = _messages.StringField(2)
 
 
 encoding.AddCustomJsonFieldMapping(

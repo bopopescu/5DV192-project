@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,13 +21,10 @@ from __future__ import unicode_literals
 from googlecloudsdk.calliope import base
 
 
-@base.ReleaseTracks(base.ReleaseTrack.BETA, base.ReleaseTrack.ALPHA)
+@base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA,
+                    base.ReleaseTrack.GA)
 class Queues(base.Group):
   """Manage Cloud Tasks queues.
 
-  Commands for managing Google Cloud Tasks queues. If you have early access
-  to Cloud Tasks, refer to the following guide for more information about
-  the different queue target types:
-  https://cloud.google.com/cloud-tasks/docs/queue-types.
-  For access, sign up here: https://goo.gl/Ya0AZd
+  Commands for managing Google Cloud Tasks queues.
   """

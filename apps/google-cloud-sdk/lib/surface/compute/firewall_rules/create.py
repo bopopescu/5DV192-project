@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,10 @@ from __future__ import unicode_literals
 
 from googlecloudsdk.api_lib.compute import base_classes
 from googlecloudsdk.api_lib.compute import firewalls_utils
+from googlecloudsdk.api_lib.compute import utils as compute_api
+from googlecloudsdk.api_lib.util import apis
 from googlecloudsdk.calliope import base
+from googlecloudsdk.calliope import exceptions
 from googlecloudsdk.command_lib.compute.firewall_rules import flags
 from googlecloudsdk.command_lib.compute.networks import flags as network_flags
 from googlecloudsdk.core.console import progress_tracker
@@ -120,9 +123,12 @@ class Create(base.CreateCommand):
     firewall, project = self._CreateFirewall(holder, args)
     request = client.messages.ComputeFirewallsInsertRequest(
         firewall=firewall, project=project)
-    with progress_tracker.ProgressTracker('Creating firewall'):
+    with progress_tracker.ProgressTracker(
+        'Creating firewall',
+        autotick=False
+    ) as tracker:
       return client.MakeRequests([(client.apitools_client.firewalls, 'Insert',
-                                   request)])
+                                   request)], progress_tracker=tracker)
 
 
 @base.ReleaseTracks(base.ReleaseTrack.BETA)
@@ -151,6 +157,8 @@ class AlphaCreate(BetaCreate):
 
   @classmethod
   def Args(cls, parser):
+    messages = apis.GetMessagesModule('compute',
+                                      compute_api.COMPUTE_ALPHA_API_VERSION)
     parser.display_info.AddFormat(flags.DEFAULT_LIST_FORMAT)
     cls.FIREWALL_RULE_ARG = flags.FirewallRuleArgument()
     cls.FIREWALL_RULE_ARG.AddArgument(parser, operation_type='create')
@@ -163,34 +171,52 @@ class AlphaCreate(BetaCreate):
         with_service_account=True)
     firewalls_utils.AddArgsForServiceAccount(parser, for_update=False)
     flags.AddEnableLogging(parser, default=None)
+    flags.AddLoggingMetadata(parser, messages)
+
+  def _CreateFirewall(self, holder, args):
+    client = holder.client
+    firewall, project = super(AlphaCreate, self)._CreateFirewall(holder, args)
+
+    if args.IsSpecified('logging_metadata') and not args.enable_logging:
+      raise exceptions.InvalidArgumentException(
+          '--logging-metadata',
+          'cannot toggle logging metadata if logging is not enabled.')
+
+    if args.IsSpecified('enable_logging'):
+      log_config = client.messages.FirewallLogConfig(enable=args.enable_logging)
+
+      if args.IsSpecified('logging_metadata'):
+        log_config.metadata = flags.GetLoggingMetadataArg(
+            client.messages).GetEnumForChoice(args.logging_metadata)
+      firewall.logConfig = log_config
+
+    return firewall, project
 
 
 Create.detailed_help = {
     'brief': 'Create a Google Compute Engine firewall rule.',
-    'DESCRIPTION':
-        """\
-        *{command}* is used to create firewall rules to allow/deny
-        incoming/outgoing traffic.
-        """,
-    'EXAMPLES':
-        """\
-      To create a firewall rule allowing incoming TCP traffic on port 8080, run:
+    'DESCRIPTION': """
+*{command}* is used to create firewall rules to allow/deny
+incoming/outgoing traffic.
+""",
+    'EXAMPLES': """
+To create a firewall rule allowing incoming TCP traffic on port 8080, run:
 
-        $ {command} FooService --allow tcp:8080 \
---description "Allow incoming traffic on TCP port 8080" --direction INGRESS
+  $ {command} FooService --allow=tcp:8080
+      --description="Allow incoming traffic on TCP port 8080" --direction=INGRESS
 
-      To create a firewall rule that allows TCP traffic through port 80 and
-      determines a list of specific IP address blocks that are allowed to make
-      inbound connections, run:
+To create a firewall rule that allows TCP traffic through port 80 and
+determines a list of specific IP address blocks that are allowed to make
+inbound connections, run:
 
-        $ {command} "tcp-rule" --allow tcp:80 \
---source-ranges="10.0.0.0/22,10.0.0.0/14" --description="Narrowing TCP traffic"
+  $ {command} "tcp-rule" --allow=tcp:80
+      --source-ranges="10.0.0.0/22,10.0.0.0/14" --description="Narrowing TCP traffic"
 
-      To list existing firewall rules, run:
+To list existing firewall rules, run:
 
-        $ gcloud compute firewall-rules list
+  $ gcloud compute firewall-rules list
 
-      For more detailed examples see
-      [](https://cloud.google.com/vpc/docs/using-firewalls)
-        """,
+For more detailed examples see
+[](https://cloud.google.com/vpc/docs/using-firewalls)
+  """,
 }

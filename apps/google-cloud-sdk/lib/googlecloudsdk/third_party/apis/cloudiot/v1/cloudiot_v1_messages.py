@@ -17,11 +17,11 @@ class BindDeviceToGatewayRequest(_messages.Message):
   r"""Request for `BindDeviceToGateway`.
 
   Fields:
-    deviceId: The device to associate with the specified gateway. The value of
-      `device_id` can be either the device numeric ID or the user-defined
-      device identifier.
-    gatewayId: The value of `gateway_id` can be either the device numeric ID
-      or the user-defined device identifier.
+    deviceId: Required. The device to associate with the specified gateway.
+      The value of `device_id` can be either the device numeric ID or the
+      user-defined device identifier.
+    gatewayId: Required. The value of `gateway_id` can be either the device
+      numeric ID or the user-defined device identifier.
   """
 
   deviceId = _messages.StringField(1)
@@ -36,23 +36,40 @@ class Binding(_messages.Message):
   r"""Associates `members` with a `role`.
 
   Fields:
-    condition: Unimplemented. The condition that is associated with this
-      binding. NOTE: an unsatisfied condition will not allow user access via
-      current binding. Different bindings, including their conditions, are
-      examined independently.
+    condition: The condition that is associated with this binding. NOTE: An
+      unsatisfied condition will not allow user access via current binding.
+      Different bindings, including their conditions, are examined
+      independently.
     members: Specifies the identities requesting access for a Cloud Platform
       resource. `members` can have the following values:  * `allUsers`: A
       special identifier that represents anyone who is    on the internet;
       with or without a Google account.  * `allAuthenticatedUsers`: A special
       identifier that represents anyone    who is authenticated with a Google
       account or a service account.  * `user:{emailid}`: An email address that
-      represents a specific Google    account. For example, `alice@gmail.com`
-      .   * `serviceAccount:{emailid}`: An email address that represents a
-      service    account. For example, `my-other-
+      represents a specific Google    account. For example,
+      `alice@example.com` .   * `serviceAccount:{emailid}`: An email address
+      that represents a service    account. For example, `my-other-
       app@appspot.gserviceaccount.com`.  * `group:{emailid}`: An email address
-      that represents a Google group.    For example, `admins@example.com`.
-      * `domain:{domain}`: The G Suite domain (primary) that represents all
-      the    users of that domain. For example, `google.com` or `example.com`.
+      that represents a Google group.    For example, `admins@example.com`.  *
+      `deleted:user:{emailid}?uid={uniqueid}`: An email address (plus unique
+      identifier) representing a user that has been recently deleted. For
+      example, `alice@example.com?uid=123456789012345678901`. If the user is
+      recovered, this value reverts to `user:{emailid}` and the recovered user
+      retains the role in the binding.  *
+      `deleted:serviceAccount:{emailid}?uid={uniqueid}`: An email address
+      (plus    unique identifier) representing a service account that has been
+      recently    deleted. For example,    `my-other-
+      app@appspot.gserviceaccount.com?uid=123456789012345678901`.    If the
+      service account is undeleted, this value reverts to
+      `serviceAccount:{emailid}` and the undeleted service account retains the
+      role in the binding.  * `deleted:group:{emailid}?uid={uniqueid}`: An
+      email address (plus unique    identifier) representing a Google group
+      that has been recently    deleted. For example,
+      `admins@example.com?uid=123456789012345678901`. If    the group is
+      recovered, this value reverts to `group:{emailid}` and the    recovered
+      group retains the role in the binding.   * `domain:{domain}`: The G
+      Suite domain (primary) that represents all the    users of that domain.
+      For example, `google.com` or `example.com`.
     role: Role that is assigned to `members`. For example, `roles/viewer`,
       `roles/editor`, or `roles/owner`.
   """
@@ -68,8 +85,8 @@ class CloudiotProjectsLocationsRegistriesBindDeviceToGatewayRequest(_messages.Me
   Fields:
     bindDeviceToGatewayRequest: A BindDeviceToGatewayRequest resource to be
       passed as the request body.
-    parent: The name of the registry. For example, `projects/example-
-      project/locations/us-central1/registries/my-registry`.
+    parent: Required. The name of the registry. For example, `projects
+      /example-project/locations/us-central1/registries/my-registry`.
   """
 
   bindDeviceToGatewayRequest = _messages.MessageField('BindDeviceToGatewayRequest', 1)
@@ -82,8 +99,9 @@ class CloudiotProjectsLocationsRegistriesCreateRequest(_messages.Message):
   Fields:
     deviceRegistry: A DeviceRegistry resource to be passed as the request
       body.
-    parent: The project and cloud region where this device registry must be
-      created. For example, `projects/example-project/locations/us-central1`.
+    parent: Required. The project and cloud region where this device registry
+      must be created. For example, `projects/example-project/locations/us-
+      central1`.
   """
 
   deviceRegistry = _messages.MessageField('DeviceRegistry', 1)
@@ -94,8 +112,8 @@ class CloudiotProjectsLocationsRegistriesDeleteRequest(_messages.Message):
   r"""A CloudiotProjectsLocationsRegistriesDeleteRequest object.
 
   Fields:
-    name: The name of the device registry. For example, `projects/example-
-      project/locations/us-central1/registries/my-registry`.
+    name: Required. The name of the device registry. For example, `projects
+      /example-project/locations/us-central1/registries/my-registry`.
   """
 
   name = _messages.StringField(1, required=True)
@@ -106,9 +124,10 @@ class CloudiotProjectsLocationsRegistriesDevicesConfigVersionsListRequest(_messa
   object.
 
   Fields:
-    name: The name of the device. For example, `projects/p0/locations/us-
-      central1/registries/registry0/devices/device0` or `projects/p0/locations
-      /us-central1/registries/registry0/devices/{num_id}`.
+    name: Required. The name of the device. For example,
+      `projects/p0/locations/us-central1/registries/registry0/devices/device0`
+      or `projects/p0/locations/us-
+      central1/registries/registry0/devices/{num_id}`.
     numVersions: The number of versions to list. Versions are listed in
       decreasing order of the version number. The maximum number of versions
       retained is 10. If this value is zero, it will return all the versions
@@ -124,8 +143,8 @@ class CloudiotProjectsLocationsRegistriesDevicesCreateRequest(_messages.Message)
 
   Fields:
     device: A Device resource to be passed as the request body.
-    parent: The name of the device registry where this device should be
-      created. For example, `projects/example-project/locations/us-
+    parent: Required. The name of the device registry where this device should
+      be created. For example, `projects/example-project/locations/us-
       central1/registries/my-registry`.
   """
 
@@ -137,9 +156,10 @@ class CloudiotProjectsLocationsRegistriesDevicesDeleteRequest(_messages.Message)
   r"""A CloudiotProjectsLocationsRegistriesDevicesDeleteRequest object.
 
   Fields:
-    name: The name of the device. For example, `projects/p0/locations/us-
-      central1/registries/registry0/devices/device0` or `projects/p0/locations
-      /us-central1/registries/registry0/devices/{num_id}`.
+    name: Required. The name of the device. For example,
+      `projects/p0/locations/us-central1/registries/registry0/devices/device0`
+      or `projects/p0/locations/us-
+      central1/registries/registry0/devices/{num_id}`.
   """
 
   name = _messages.StringField(1, required=True)
@@ -151,9 +171,10 @@ class CloudiotProjectsLocationsRegistriesDevicesGetRequest(_messages.Message):
   Fields:
     fieldMask: The fields of the `Device` resource to be returned in the
       response. If the field mask is unset or empty, all fields are returned.
-    name: The name of the device. For example, `projects/p0/locations/us-
-      central1/registries/registry0/devices/device0` or `projects/p0/locations
-      /us-central1/registries/registry0/devices/{num_id}`.
+    name: Required. The name of the device. For example,
+      `projects/p0/locations/us-central1/registries/registry0/devices/device0`
+      or `projects/p0/locations/us-
+      central1/registries/registry0/devices/{num_id}`.
   """
 
   fieldMask = _messages.StringField(1)
@@ -198,8 +219,8 @@ class CloudiotProjectsLocationsRegistriesDevicesListRequest(_messages.Message):
     pageToken: The value returned by the last `ListDevicesResponse`; indicates
       that this is a continuation of a prior `ListDevices` call and the system
       should return the next page of data.
-    parent: The device registry path. Required. For example, `projects/my-
-      project/locations/us-central1/registries/my-registry`.
+    parent: Required. The device registry path. Required. For example,
+      `projects/my-project/locations/us-central1/registries/my-registry`.
   """
 
   class GatewayListOptionsGatewayTypeValueValuesEnum(_messages.Enum):
@@ -235,9 +256,10 @@ class CloudiotProjectsLocationsRegistriesDevicesModifyCloudToDeviceConfigRequest
   Fields:
     modifyCloudToDeviceConfigRequest: A ModifyCloudToDeviceConfigRequest
       resource to be passed as the request body.
-    name: The name of the device. For example, `projects/p0/locations/us-
-      central1/registries/registry0/devices/device0` or `projects/p0/locations
-      /us-central1/registries/registry0/devices/{num_id}`.
+    name: Required. The name of the device. For example,
+      `projects/p0/locations/us-central1/registries/registry0/devices/device0`
+      or `projects/p0/locations/us-
+      central1/registries/registry0/devices/{num_id}`.
   """
 
   modifyCloudToDeviceConfigRequest = _messages.MessageField('ModifyCloudToDeviceConfigRequest', 1)
@@ -254,9 +276,9 @@ class CloudiotProjectsLocationsRegistriesDevicesPatchRequest(_messages.Message):
       /us-central1/registries/registry0/devices/{num_id}`. When `name` is
       populated as a response from the service, it always ends in the device
       numeric ID.
-    updateMask: Only updates the `device` fields indicated by this mask. The
-      field mask must not be empty, and it must not contain fields that are
-      immutable or only set by the server. Mutable top-level fields:
+    updateMask: Required. Only updates the `device` fields indicated by this
+      mask. The field mask must not be empty, and it must not contain fields
+      that are immutable or only set by the server. Mutable top-level fields:
       `credentials`, `blocked`, and `metadata`
   """
 
@@ -270,9 +292,10 @@ class CloudiotProjectsLocationsRegistriesDevicesSendCommandToDeviceRequest(_mess
   object.
 
   Fields:
-    name: The name of the device. For example, `projects/p0/locations/us-
-      central1/registries/registry0/devices/device0` or `projects/p0/locations
-      /us-central1/registries/registry0/devices/{num_id}`.
+    name: Required. The name of the device. For example,
+      `projects/p0/locations/us-central1/registries/registry0/devices/device0`
+      or `projects/p0/locations/us-
+      central1/registries/registry0/devices/{num_id}`.
     sendCommandToDeviceRequest: A SendCommandToDeviceRequest resource to be
       passed as the request body.
   """
@@ -285,9 +308,10 @@ class CloudiotProjectsLocationsRegistriesDevicesStatesListRequest(_messages.Mess
   r"""A CloudiotProjectsLocationsRegistriesDevicesStatesListRequest object.
 
   Fields:
-    name: The name of the device. For example, `projects/p0/locations/us-
-      central1/registries/registry0/devices/device0` or `projects/p0/locations
-      /us-central1/registries/registry0/devices/{num_id}`.
+    name: Required. The name of the device. For example,
+      `projects/p0/locations/us-central1/registries/registry0/devices/device0`
+      or `projects/p0/locations/us-
+      central1/registries/registry0/devices/{num_id}`.
     numStates: The number of states to list. States are listed in descending
       order of update time. The maximum number of states retained is 10. If
       this value is zero, it will return all the states available.
@@ -316,60 +340,11 @@ class CloudiotProjectsLocationsRegistriesGetRequest(_messages.Message):
   r"""A CloudiotProjectsLocationsRegistriesGetRequest object.
 
   Fields:
-    name: The name of the device registry. For example, `projects/example-
-      project/locations/us-central1/registries/my-registry`.
+    name: Required. The name of the device registry. For example, `projects
+      /example-project/locations/us-central1/registries/my-registry`.
   """
 
   name = _messages.StringField(1, required=True)
-
-
-class CloudiotProjectsLocationsRegistriesGroupsBindDeviceToGatewayRequest(_messages.Message):
-  r"""A CloudiotProjectsLocationsRegistriesGroupsBindDeviceToGatewayRequest
-  object.
-
-  Fields:
-    bindDeviceToGatewayRequest: A BindDeviceToGatewayRequest resource to be
-      passed as the request body.
-    parent: The name of the registry. For example, `projects/example-
-      project/locations/us-central1/registries/my-registry`.
-  """
-
-  bindDeviceToGatewayRequest = _messages.MessageField('BindDeviceToGatewayRequest', 1)
-  parent = _messages.StringField(2, required=True)
-
-
-class CloudiotProjectsLocationsRegistriesGroupsDevicesConfigVersionsListRequest(_messages.Message):
-  r"""A
-  CloudiotProjectsLocationsRegistriesGroupsDevicesConfigVersionsListRequest
-  object.
-
-  Fields:
-    name: The name of the device. For example, `projects/p0/locations/us-
-      central1/registries/registry0/devices/device0` or `projects/p0/locations
-      /us-central1/registries/registry0/devices/{num_id}`.
-    numVersions: The number of versions to list. Versions are listed in
-      decreasing order of the version number. The maximum number of versions
-      retained is 10. If this value is zero, it will return all the versions
-      available.
-  """
-
-  name = _messages.StringField(1, required=True)
-  numVersions = _messages.IntegerField(2, variant=_messages.Variant.INT32)
-
-
-class CloudiotProjectsLocationsRegistriesGroupsDevicesGetRequest(_messages.Message):
-  r"""A CloudiotProjectsLocationsRegistriesGroupsDevicesGetRequest object.
-
-  Fields:
-    fieldMask: The fields of the `Device` resource to be returned in the
-      response. If the field mask is unset or empty, all fields are returned.
-    name: The name of the device. For example, `projects/p0/locations/us-
-      central1/registries/registry0/devices/device0` or `projects/p0/locations
-      /us-central1/registries/registry0/devices/{num_id}`.
-  """
-
-  fieldMask = _messages.StringField(1)
-  name = _messages.StringField(2, required=True)
 
 
 class CloudiotProjectsLocationsRegistriesGroupsDevicesListRequest(_messages.Message):
@@ -410,8 +385,8 @@ class CloudiotProjectsLocationsRegistriesGroupsDevicesListRequest(_messages.Mess
     pageToken: The value returned by the last `ListDevicesResponse`; indicates
       that this is a continuation of a prior `ListDevices` call and the system
       should return the next page of data.
-    parent: The device registry path. Required. For example, `projects/my-
-      project/locations/us-central1/registries/my-registry`.
+    parent: Required. The device registry path. Required. For example,
+      `projects/my-project/locations/us-central1/registries/my-registry`.
   """
 
   class GatewayListOptionsGatewayTypeValueValuesEnum(_messages.Enum):
@@ -437,77 +412,6 @@ class CloudiotProjectsLocationsRegistriesGroupsDevicesListRequest(_messages.Mess
   pageSize = _messages.IntegerField(7, variant=_messages.Variant.INT32)
   pageToken = _messages.StringField(8)
   parent = _messages.StringField(9, required=True)
-
-
-class CloudiotProjectsLocationsRegistriesGroupsDevicesModifyCloudToDeviceConfigRequest(_messages.Message):
-  r"""A CloudiotProjectsLocationsRegistriesGroupsDevicesModifyCloudToDeviceCon
-  figRequest object.
-
-  Fields:
-    modifyCloudToDeviceConfigRequest: A ModifyCloudToDeviceConfigRequest
-      resource to be passed as the request body.
-    name: The name of the device. For example, `projects/p0/locations/us-
-      central1/registries/registry0/devices/device0` or `projects/p0/locations
-      /us-central1/registries/registry0/devices/{num_id}`.
-  """
-
-  modifyCloudToDeviceConfigRequest = _messages.MessageField('ModifyCloudToDeviceConfigRequest', 1)
-  name = _messages.StringField(2, required=True)
-
-
-class CloudiotProjectsLocationsRegistriesGroupsDevicesPatchRequest(_messages.Message):
-  r"""A CloudiotProjectsLocationsRegistriesGroupsDevicesPatchRequest object.
-
-  Fields:
-    device: A Device resource to be passed as the request body.
-    name: The resource path name. For example, `projects/p1/locations/us-
-      central1/registries/registry0/devices/dev0` or `projects/p1/locations
-      /us-central1/registries/registry0/devices/{num_id}`. When `name` is
-      populated as a response from the service, it always ends in the device
-      numeric ID.
-    updateMask: Only updates the `device` fields indicated by this mask. The
-      field mask must not be empty, and it must not contain fields that are
-      immutable or only set by the server. Mutable top-level fields:
-      `credentials`, `blocked`, and `metadata`
-  """
-
-  device = _messages.MessageField('Device', 1)
-  name = _messages.StringField(2, required=True)
-  updateMask = _messages.StringField(3)
-
-
-class CloudiotProjectsLocationsRegistriesGroupsDevicesSendCommandToDeviceRequest(_messages.Message):
-  r"""A
-  CloudiotProjectsLocationsRegistriesGroupsDevicesSendCommandToDeviceRequest
-  object.
-
-  Fields:
-    name: The name of the device. For example, `projects/p0/locations/us-
-      central1/registries/registry0/devices/device0` or `projects/p0/locations
-      /us-central1/registries/registry0/devices/{num_id}`.
-    sendCommandToDeviceRequest: A SendCommandToDeviceRequest resource to be
-      passed as the request body.
-  """
-
-  name = _messages.StringField(1, required=True)
-  sendCommandToDeviceRequest = _messages.MessageField('SendCommandToDeviceRequest', 2)
-
-
-class CloudiotProjectsLocationsRegistriesGroupsDevicesStatesListRequest(_messages.Message):
-  r"""A CloudiotProjectsLocationsRegistriesGroupsDevicesStatesListRequest
-  object.
-
-  Fields:
-    name: The name of the device. For example, `projects/p0/locations/us-
-      central1/registries/registry0/devices/device0` or `projects/p0/locations
-      /us-central1/registries/registry0/devices/{num_id}`.
-    numStates: The number of states to list. States are listed in descending
-      order of update time. The maximum number of states retained is 10. If
-      this value is zero, it will return all the states available.
-  """
-
-  name = _messages.StringField(1, required=True)
-  numStates = _messages.IntegerField(2, variant=_messages.Variant.INT32)
 
 
 class CloudiotProjectsLocationsRegistriesGroupsGetIamPolicyRequest(_messages.Message):
@@ -556,22 +460,6 @@ class CloudiotProjectsLocationsRegistriesGroupsTestIamPermissionsRequest(_messag
   testIamPermissionsRequest = _messages.MessageField('TestIamPermissionsRequest', 2)
 
 
-class CloudiotProjectsLocationsRegistriesGroupsUnbindDeviceFromGatewayRequest(_messages.Message):
-  r"""A
-  CloudiotProjectsLocationsRegistriesGroupsUnbindDeviceFromGatewayRequest
-  object.
-
-  Fields:
-    parent: The name of the registry. For example, `projects/example-
-      project/locations/us-central1/registries/my-registry`.
-    unbindDeviceFromGatewayRequest: A UnbindDeviceFromGatewayRequest resource
-      to be passed as the request body.
-  """
-
-  parent = _messages.StringField(1, required=True)
-  unbindDeviceFromGatewayRequest = _messages.MessageField('UnbindDeviceFromGatewayRequest', 2)
-
-
 class CloudiotProjectsLocationsRegistriesListRequest(_messages.Message):
   r"""A CloudiotProjectsLocationsRegistriesListRequest object.
 
@@ -583,8 +471,8 @@ class CloudiotProjectsLocationsRegistriesListRequest(_messages.Message):
     pageToken: The value returned by the last `ListDeviceRegistriesResponse`;
       indicates that this is a continuation of a prior `ListDeviceRegistries`
       call and the system should return the next page of data.
-    parent: The project and cloud region path. For example, `projects/example-
-      project/locations/us-central1`.
+    parent: Required. The project and cloud region path. For example,
+      `projects/example-project/locations/us-central1`.
   """
 
   pageSize = _messages.IntegerField(1, variant=_messages.Variant.INT32)
@@ -600,10 +488,10 @@ class CloudiotProjectsLocationsRegistriesPatchRequest(_messages.Message):
       body.
     name: The resource path name. For example, `projects/example-
       project/locations/us-central1/registries/my-registry`.
-    updateMask: Only updates the `device_registry` fields indicated by this
-      mask. The field mask must not be empty, and it must not contain fields
-      that are immutable or only set by the server. Mutable top-level fields:
-      `event_notification_config`, `http_config`, `mqtt_config`, and
+    updateMask: Required. Only updates the `device_registry` fields indicated
+      by this mask. The field mask must not be empty, and it must not contain
+      fields that are immutable or only set by the server. Mutable top-level
+      fields: `event_notification_config`, `http_config`, `mqtt_config`, and
       `state_notification_config`.
   """
 
@@ -647,8 +535,8 @@ class CloudiotProjectsLocationsRegistriesUnbindDeviceFromGatewayRequest(_message
   object.
 
   Fields:
-    parent: The name of the registry. For example, `projects/example-
-      project/locations/us-central1/registries/my-registry`.
+    parent: Required. The name of the registry. For example, `projects
+      /example-project/locations/us-central1/registries/my-registry`.
     unbindDeviceFromGatewayRequest: A UnbindDeviceFromGatewayRequest resource
       to be passed as the request body.
   """
@@ -1057,7 +945,28 @@ class GatewayConfig(_messages.Message):
 
 
 class GetIamPolicyRequest(_messages.Message):
-  r"""Request message for `GetIamPolicy` method."""
+  r"""Request message for `GetIamPolicy` method.
+
+  Fields:
+    options: OPTIONAL: A `GetPolicyOptions` object for specifying options to
+      `GetIamPolicy`. This field is only used by Cloud IAM.
+  """
+
+  options = _messages.MessageField('GetPolicyOptions', 1)
+
+
+class GetPolicyOptions(_messages.Message):
+  r"""Encapsulates settings provided to GetIamPolicy.
+
+  Fields:
+    requestedPolicyVersion: Optional. The policy format version to be
+      returned.  Valid values are 0, 1, and 3. Requests specifying an invalid
+      value will be rejected.  Requests for policies with any conditional
+      bindings must specify version 3. Policies without any conditional
+      bindings may specify any valid value or leave the field unset.
+  """
+
+  requestedPolicyVersion = _messages.IntegerField(1, variant=_messages.Variant.INT32)
 
 
 class HttpConfig(_messages.Message):
@@ -1146,7 +1055,7 @@ class ModifyCloudToDeviceConfigRequest(_messages.Message):
   r"""Request for `ModifyCloudToDeviceConfig`.
 
   Fields:
-    binaryData: The configuration data for the device.
+    binaryData: Required. The configuration data for the device.
     versionToUpdate: The version number to update. If this value is zero, it
       will not check the version number of the server and will always update
       the current version; otherwise, this update will fail if the version
@@ -1188,28 +1097,41 @@ class MqttConfig(_messages.Message):
 
 
 class Policy(_messages.Message):
-  r"""Defines an Identity and Access Management (IAM) policy. It is used to
-  specify access control policies for Cloud Platform resources.   A `Policy`
-  consists of a list of `bindings`. A `binding` binds a list of `members` to a
-  `role`, where the members can be user accounts, Google groups, Google
-  domains, and service accounts. A `role` is a named list of permissions
-  defined by IAM.  **JSON Example**      {       "bindings": [         {
-  "role": "roles/owner",           "members": [
+  r"""An Identity and Access Management (IAM) policy, which specifies access
+  controls for Google Cloud resources.   A `Policy` is a collection of
+  `bindings`. A `binding` binds one or more `members` to a single `role`.
+  Members can be user accounts, service accounts, Google groups, and domains
+  (such as G Suite). A `role` is a named list of permissions; each `role` can
+  be an IAM predefined role or a user-created custom role.  Optionally, a
+  `binding` can specify a `condition`, which is a logical expression that
+  allows access to a resource only if the expression evaluates to `true`. A
+  condition can add constraints based on attributes of the request, the
+  resource, or both.  **JSON example:**      {       "bindings": [         {
+  "role": "roles/resourcemanager.organizationAdmin",           "members": [
   "user:mike@example.com",             "group:admins@example.com",
-  "domain:google.com",             "serviceAccount:my-other-
-  app@appspot.gserviceaccount.com"           ]         },         {
-  "role": "roles/viewer",           "members": ["user:sean@example.com"]
-  }       ]     }  **YAML Example**      bindings:     - members:       -
-  user:mike@example.com       - group:admins@example.com       -
-  domain:google.com       - serviceAccount:my-other-
-  app@appspot.gserviceaccount.com       role: roles/owner     - members:
-  - user:sean@example.com       role: roles/viewer   For a description of IAM
-  and its features, see the [IAM developer's
-  guide](https://cloud.google.com/iam/docs).
+  "domain:google.com",             "serviceAccount:my-project-
+  id@appspot.gserviceaccount.com"           ]         },         {
+  "role": "roles/resourcemanager.organizationViewer",           "members":
+  ["user:eve@example.com"],           "condition": {             "title":
+  "expirable access",             "description": "Does not grant access after
+  Sep 2020",             "expression": "request.time <
+  timestamp('2020-10-01T00:00:00.000Z')",           }         }       ],
+  "etag": "BwWWja0YfJA=",       "version": 3     }  **YAML example:**
+  bindings:     - members:       - user:mike@example.com       -
+  group:admins@example.com       - domain:google.com       - serviceAccount
+  :my-project-id@appspot.gserviceaccount.com       role:
+  roles/resourcemanager.organizationAdmin     - members:       -
+  user:eve@example.com       role: roles/resourcemanager.organizationViewer
+  condition:         title: expirable access         description: Does not
+  grant access after Sep 2020         expression: request.time <
+  timestamp('2020-10-01T00:00:00.000Z')     - etag: BwWWja0YfJA=     -
+  version: 3  For a description of IAM and its features, see the [IAM
+  documentation](https://cloud.google.com/iam/docs/).
 
   Fields:
-    bindings: Associates a list of `members` to a `role`. `bindings` with no
-      members will result in an error.
+    bindings: Associates a list of `members` to a `role`. Optionally, may
+      specify a `condition` that determines how and when the `bindings` are
+      applied. Each of the `bindings` must contain at least one member.
     etag: `etag` is used for optimistic concurrency control as a way to help
       prevent simultaneous updates of a policy from overwriting each other. It
       is strongly suggested that systems make use of the `etag` in the read-
@@ -1217,9 +1139,24 @@ class Policy(_messages.Message):
       conditions: An `etag` is returned in the response to `getIamPolicy`, and
       systems are expected to put that etag in the request to `setIamPolicy`
       to ensure that their change will be applied to the same version of the
-      policy.  If no `etag` is provided in the call to `setIamPolicy`, then
-      the existing policy is overwritten blindly.
-    version: Deprecated.
+      policy.  **Important:** If you use IAM Conditions, you must include the
+      `etag` field whenever you call `setIamPolicy`. If you omit this field,
+      then IAM allows you to overwrite a version `3` policy with a version `1`
+      policy, and all of the conditions in the version `3` policy are lost.
+    version: Specifies the format of the policy.  Valid values are `0`, `1`,
+      and `3`. Requests that specify an invalid value are rejected.  Any
+      operation that affects conditional role bindings must specify version
+      `3`. This requirement applies to the following operations:  * Getting a
+      policy that includes a conditional role binding * Adding a conditional
+      role binding to a policy * Changing a conditional role binding in a
+      policy * Removing any role binding, with or without a condition, from a
+      policy   that includes conditions  **Important:** If you use IAM
+      Conditions, you must include the `etag` field whenever you call
+      `setIamPolicy`. If you omit this field, then IAM allows you to overwrite
+      a version `3` policy with a version `1` policy, and all of the
+      conditions in the version `3` policy are lost.  If a policy does not
+      include any conditions, operations on that policy may specify any valid
+      version or leave the field unset.
   """
 
   bindings = _messages.MessageField('Binding', 1, repeated=True)
@@ -1321,7 +1258,7 @@ class SendCommandToDeviceRequest(_messages.Message):
   r"""Request for `SendCommandToDevice`.
 
   Fields:
-    binaryData: The command data to send to the device.
+    binaryData: Required. The command data to send to the device.
     subfolder: Optional subfolder for the command. If empty, the command will
       be delivered to the /devices/{device-id}/commands topic, otherwise it
       will be delivered to the /devices/{device-id}/commands/{subfolder}
@@ -1429,37 +1366,10 @@ class StateNotificationConfig(_messages.Message):
 class Status(_messages.Message):
   r"""The `Status` type defines a logical error model that is suitable for
   different programming environments, including REST APIs and RPC APIs. It is
-  used by [gRPC](https://github.com/grpc). The error model is designed to be:
-  - Simple to use and understand for most users - Flexible enough to meet
-  unexpected needs  # Overview  The `Status` message contains three pieces of
-  data: error code, error message, and error details. The error code should be
-  an enum value of google.rpc.Code, but it may accept additional error codes
-  if needed.  The error message should be a developer-facing English message
-  that helps developers *understand* and *resolve* the error. If a localized
-  user-facing error message is needed, put the localized message in the error
-  details or localize it in the client. The optional error details may contain
-  arbitrary information about the error. There is a predefined set of error
-  detail types in the package `google.rpc` that can be used for common error
-  conditions.  # Language mapping  The `Status` message is the logical
-  representation of the error model, but it is not necessarily the actual wire
-  format. When the `Status` message is exposed in different client libraries
-  and different wire protocols, it can be mapped differently. For example, it
-  will likely be mapped to some exceptions in Java, but more likely mapped to
-  some error codes in C.  # Other uses  The error model and the `Status`
-  message can be used in a variety of environments, either with or without
-  APIs, to provide a consistent developer experience across different
-  environments.  Example uses of this error model include:  - Partial errors.
-  If a service needs to return partial errors to the client,     it may embed
-  the `Status` in the normal response to indicate the partial     errors.  -
-  Workflow errors. A typical workflow has multiple steps. Each step may
-  have a `Status` message for error reporting.  - Batch operations. If a
-  client uses batch request and batch response, the     `Status` message
-  should be used directly inside batch response, one for     each error sub-
-  response.  - Asynchronous operations. If an API call embeds asynchronous
-  operation     results in its response, the status of those operations should
-  be     represented directly using the `Status` message.  - Logging. If some
-  API errors are stored in logs, the message `Status` could     be used
-  directly after any stripping needed for security/privacy reasons.
+  used by [gRPC](https://github.com/grpc). Each `Status` message contains
+  three pieces of data: error code, error message, and error details.  You can
+  find out more about this error model and how to work with it in the [API
+  Design Guide](https://cloud.google.com/apis/design/errors).
 
   Messages:
     DetailsValueListEntry: A DetailsValueListEntry object.
@@ -1532,11 +1442,11 @@ class UnbindDeviceFromGatewayRequest(_messages.Message):
   r"""Request for `UnbindDeviceFromGateway`.
 
   Fields:
-    deviceId: The device to disassociate from the specified gateway. The value
-      of `device_id` can be either the device numeric ID or the user-defined
-      device identifier.
-    gatewayId: The value of `gateway_id` can be either the device numeric ID
-      or the user-defined device identifier.
+    deviceId: Required. The device to disassociate from the specified gateway.
+      The value of `device_id` can be either the device numeric ID or the
+      user-defined device identifier.
+    gatewayId: Required. The value of `gateway_id` can be either the device
+      numeric ID or the user-defined device identifier.
   """
 
   deviceId = _messages.StringField(1)

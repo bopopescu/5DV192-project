@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2016 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,6 +31,11 @@ DETAILED_HELP = {
         *{command}* is used to update access configurations for network
         interfaces of Google Compute Engine virtual machines.
         """,
+    'EXAMPLES': """
+    To update network interface of an instance to 'nic0', run:
+
+      $ {command} example-instance  --network-interface=nic0 --zone=us-central1-b
+  """
 }
 
 

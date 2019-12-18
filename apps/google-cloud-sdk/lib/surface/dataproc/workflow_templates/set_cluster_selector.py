@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,27 +25,32 @@ from googlecloudsdk.command_lib.dataproc import flags
 from googlecloudsdk.command_lib.util.args import labels_util
 
 
-def _CommonArgs(parser):
-  parser.add_argument(
-      '--cluster-labels',
-      metavar='KEY=VALUE',
-      type=arg_parsers.ArgDict(
-          key_type=labels_util.KEY_FORMAT_VALIDATOR,
-          value_type=labels_util.VALUE_FORMAT_VALIDATOR,
-          min_length=1),
-      action=arg_parsers.UpdateAction,
-      help='A list of label KEY=VALUE pairs to add.')
-
-
-@base.ReleaseTracks(base.ReleaseTrack.GA)
 class SetClusterSelector(base.UpdateCommand):
   """Set cluster selector for the workflow template."""
 
-  @staticmethod
-  def Args(parser):
-    _CommonArgs(parser)
-    flags.AddTemplateResourceArg(
-        parser, 'set cluster selector', api_version='v1')
+  detailed_help = {
+      'EXAMPLES': """
+To set placement cluster selector labels on a workflow template, run:
+
+  $ {command} my_template --region=us-central1 \
+--cluster-labels=environment:production
+"""
+  }
+
+  @classmethod
+  def Args(cls, parser):
+    dataproc = dp.Dataproc(cls.ReleaseTrack())
+    parser.add_argument(
+        '--cluster-labels',
+        metavar='KEY=VALUE',
+        type=arg_parsers.ArgDict(
+            key_type=labels_util.KEY_FORMAT_VALIDATOR,
+            value_type=labels_util.VALUE_FORMAT_VALIDATOR,
+            min_length=1),
+        action=arg_parsers.UpdateAction,
+        help='A list of label KEY=VALUE pairs to add.')
+    flags.AddTemplateResourceArg(parser, 'set cluster selector',
+                                 dataproc.api_version)
 
   def Run(self, args):
     dataproc = dp.Dataproc(self.ReleaseTrack())
@@ -66,14 +71,3 @@ class SetClusterSelector(base.UpdateCommand):
     response = dataproc.client.projects_regions_workflowTemplates.Update(
         workflow_template)
     return response
-
-
-@base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA)
-class SetClusterSelectorBeta(SetClusterSelector):
-  """Set cluster selector for the workflow template."""
-
-  @staticmethod
-  def Args(parser):
-    _CommonArgs(parser)
-    flags.AddTemplateResourceArg(
-        parser, 'set cluster selector', api_version='v1beta2')

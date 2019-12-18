@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -54,14 +54,14 @@ class Create(base.CreateCommand):
     instance = client.ParseFilestoreConfig(
         tier=tier, description=args.description,
         file_share=args.file_share, network=args.network,
-        labels=labels)
+        labels=labels, zone=instance_ref.locationsId)
     try:
       client.ValidateFileShares(instance)
     except filestore_client.InvalidCapacityError as e:
       raise exceptions.InvalidArgumentException('--file-share',
                                                 six.text_type(e))
-    result = client.CreateInstance(instance_ref, args.async, instance)
-    if args.async:
+    result = client.CreateInstance(instance_ref, args.async_, instance)
+    if args.async_:
       command = properties.VALUES.metrics.command_name.Get().split('.')
       if command:
         command[-1] = 'list'

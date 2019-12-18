@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,9 +21,23 @@ from __future__ import unicode_literals
 from googlecloudsdk.calliope import base
 
 
+@base.ReleaseTracks(base.ReleaseTrack.GA, base.ReleaseTrack.BETA)
+class VpcAccess(base.Group):
+  """Manage VPC Access Service resources.
+
+  Commands for managing Google VPC Access Service resources.
+  """
+
+  def Filter(self, context, args):
+    del context, args
+    # Explicitly enables user-project-override as it's disabled at compute
+    # level.
+    base.EnableUserProjectQuota()
+
+
 @base.Hidden
 @base.ReleaseTracks(base.ReleaseTrack.ALPHA)
-class VpcAccess(base.Group):
+class VpcAccessAlpha(base.Group):
   """Manage VPC Access Service resources.
 
   Commands for managing Google VPC Access Service resources.

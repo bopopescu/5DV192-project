@@ -323,36 +323,11 @@ set.
         supports_download=False,
     )
 
-    def List(self, request, global_params=None):
-      r"""Lists consumer settings for managed services.
-To search across all services, specify {service_name} as '-'.
-
-      Args:
-        request: (ServicemanagementServicesConsumersListRequest) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-      Returns:
-        (ListServiceConsumersResponse) The response message.
-      """
-      config = self.GetMethodConfig('List')
-      return self._RunMethod(
-          config, request, global_params=global_params)
-
-    List.method_config = lambda: base_api.ApiMethodInfo(
-        http_method=u'GET',
-        method_id=u'servicemanagement.services.consumers.list',
-        ordered_params=[u'serviceName'],
-        path_params=[u'serviceName'],
-        query_params=[u'consumerId', u'consumerIds', u'pageSize', u'pageToken'],
-        relative_path=u'v1/services/{serviceName}/consumers',
-        request_field='',
-        request_type_name=u'ServicemanagementServicesConsumersListRequest',
-        response_type_name=u'ListServiceConsumersResponse',
-        supports_download=False,
-    )
-
     def SetIamPolicy(self, request, global_params=None):
       r"""Sets the access control policy on the specified resource. Replaces any.
 existing policy.
+
+Can return Public Errors: NOT_FOUND, INVALID_ARGUMENT and PERMISSION_DENIED
 
       Args:
         request: (ServicemanagementServicesConsumersSetIamPolicyRequest) input message
@@ -541,38 +516,6 @@ object.
         relative_path=u'v1/services/{serviceName}/projectSettings/{consumerProjectId}',
         request_field=u'projectSettings',
         request_type_name=u'ServicemanagementServicesProjectSettingsPatchRequest',
-        response_type_name=u'Operation',
-        supports_download=False,
-    )
-
-    def Update(self, request, global_params=None):
-      r"""NOTE: Currently unsupported.  Use PatchProjectSettings instead.
-
-Updates the settings that control the specified consumer project's usage
-of the service.  Attempts to update a field not controlled by the caller
-will result in an access denied error.
-
-Operation<response: ProjectSettings>
-
-      Args:
-        request: (ProjectSettings) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-      Returns:
-        (Operation) The response message.
-      """
-      config = self.GetMethodConfig('Update')
-      return self._RunMethod(
-          config, request, global_params=global_params)
-
-    Update.method_config = lambda: base_api.ApiMethodInfo(
-        http_method=u'PUT',
-        method_id=u'servicemanagement.services.projectSettings.update',
-        ordered_params=[u'serviceName', u'consumerProjectId'],
-        path_params=[u'consumerProjectId', u'serviceName'],
-        query_params=[],
-        relative_path=u'v1/services/{serviceName}/projectSettings/{consumerProjectId}',
-        request_field='<request>',
-        request_type_name=u'ProjectSettings',
         response_type_name=u'Operation',
         supports_download=False,
     )
@@ -994,6 +937,8 @@ Operation<response: ManagedService>
     def SetIamPolicy(self, request, global_params=None):
       r"""Sets the access control policy on the specified resource. Replaces any.
 existing policy.
+
+Can return Public Errors: NOT_FOUND, INVALID_ARGUMENT and PERMISSION_DENIED
 
       Args:
         request: (ServicemanagementServicesSetIamPolicyRequest) input message

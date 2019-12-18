@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2016 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,6 +29,12 @@ class List(base.ListCommand):
 
   *{command}* ACCOUNT_ID -- lists all active projects, for the specified
   billing account id.
+
+  ## EXAMPLES
+
+  To list projects linked to billing account `0X0X0X-0X0X0X-0X0X0X`, run:
+
+      $ {command} 0X0X0X-0X0X0X-0X0X0X
   """
 
   @staticmethod

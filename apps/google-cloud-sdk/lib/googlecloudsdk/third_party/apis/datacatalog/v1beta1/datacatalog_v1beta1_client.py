@@ -37,10 +37,14 @@ class DatacatalogV1beta1(base_api.BaseApiClient):
         response_encoding=response_encoding)
     self.catalog = self.CatalogService(self)
     self.entries = self.EntriesService(self)
-    self.projects_datasets_entries_tags = self.ProjectsDatasetsEntriesTagsService(self)
-    self.projects_datasets_entries = self.ProjectsDatasetsEntriesService(self)
-    self.projects_datasets = self.ProjectsDatasetsService(self)
-    self.projects_tagTemplates = self.ProjectsTagTemplatesService(self)
+    self.projects_locations_entryGroups_entries_tags = self.ProjectsLocationsEntryGroupsEntriesTagsService(self)
+    self.projects_locations_entryGroups_entries = self.ProjectsLocationsEntryGroupsEntriesService(self)
+    self.projects_locations_entryGroups = self.ProjectsLocationsEntryGroupsService(self)
+    self.projects_locations_tagTemplates_fields = self.ProjectsLocationsTagTemplatesFieldsService(self)
+    self.projects_locations_tagTemplates = self.ProjectsLocationsTagTemplatesService(self)
+    self.projects_locations_taxonomies_policyTags = self.ProjectsLocationsTaxonomiesPolicyTagsService(self)
+    self.projects_locations_taxonomies = self.ProjectsLocationsTaxonomiesService(self)
+    self.projects_locations = self.ProjectsLocationsService(self)
     self.projects = self.ProjectsService(self)
 
   class CatalogService(base_api.BaseApiService):
@@ -54,19 +58,24 @@ class DatacatalogV1beta1(base_api.BaseApiClient):
           }
 
     def Search(self, request, global_params=None):
-      r"""Searches Cloud Data Catalog for multiple resources like entries, tags that.
+      r"""Searches Data Catalog for multiple resources like entries, tags that.
 match a query.
 
-This API is a custom method
-(https://cloud.google.com/apis/design/custom_methods), and does not return
+This is a custom method
+(https://cloud.google.com/apis/design/custom_methods) and does not return
 the complete resource, only the resource identifier and high level
-fields. Clients can subsequentally call Get APIs.
+fields. Clients can subsequentally call `Get` methods.
 
-See [Cloud Data Catalog Search
-Syntax](/data-catalog/docs/how-to/search-reference)
+Note that searches do not have full recall. There may be results that match
+your query but are not returned, even in subsequent pages of results. These
+missing results may vary across repeated calls to search. Do not rely on
+this method if you need to guarantee full recall.
+
+See [Data Catalog Search
+Syntax](/data-catalog/docs/how-to/search-reference) for more information.
 
       Args:
-        request: (DatacatalogCatalogSearchRequest) input message
+        request: (GoogleCloudDatacatalogV1beta1SearchCatalogRequest) input message
         global_params: (StandardQueryParameters, default: None) global arguments
       Returns:
         (GoogleCloudDatacatalogV1beta1SearchCatalogResponse) The response message.
@@ -76,14 +85,14 @@ Syntax](/data-catalog/docs/how-to/search-reference)
           config, request, global_params=global_params)
 
     Search.method_config = lambda: base_api.ApiMethodInfo(
-        http_method=u'GET',
+        http_method=u'POST',
         method_id=u'datacatalog.catalog.search',
         ordered_params=[],
         path_params=[],
-        query_params=[u'orderBy', u'pageSize', u'pageToken', u'query'],
+        query_params=[],
         relative_path=u'v1beta1/catalog:search',
-        request_field='',
-        request_type_name=u'DatacatalogCatalogSearchRequest',
+        request_field='<request>',
+        request_type_name=u'GoogleCloudDatacatalogV1beta1SearchCatalogRequest',
         response_type_name=u'GoogleCloudDatacatalogV1beta1SearchCatalogResponse',
         supports_download=False,
     )
@@ -99,7 +108,9 @@ Syntax](/data-catalog/docs/how-to/search-reference)
           }
 
     def Lookup(self, request, global_params=None):
-      r"""Get an entry by Resource name.
+      r"""Get an entry by target resource name. This method allows clients to use.
+the resource name from the source Google Cloud Platform service to get the
+Data Catalog Entry.
 
       Args:
         request: (DatacatalogEntriesLookupRequest) input message
@@ -116,7 +127,7 @@ Syntax](/data-catalog/docs/how-to/search-reference)
         method_id=u'datacatalog.entries.lookup',
         ordered_params=[],
         path_params=[],
-        query_params=[u'fullResourceName'],
+        query_params=[u'linkedResource', u'sqlResource'],
         relative_path=u'v1beta1/entries:lookup',
         request_field='',
         request_type_name=u'DatacatalogEntriesLookupRequest',
@@ -124,21 +135,27 @@ Syntax](/data-catalog/docs/how-to/search-reference)
         supports_download=False,
     )
 
-  class ProjectsDatasetsEntriesTagsService(base_api.BaseApiService):
-    """Service class for the projects_datasets_entries_tags resource."""
+  class ProjectsLocationsEntryGroupsEntriesTagsService(base_api.BaseApiService):
+    """Service class for the projects_locations_entryGroups_entries_tags resource."""
 
-    _NAME = u'projects_datasets_entries_tags'
+    _NAME = u'projects_locations_entryGroups_entries_tags'
 
     def __init__(self, client):
-      super(DatacatalogV1beta1.ProjectsDatasetsEntriesTagsService, self).__init__(client)
+      super(DatacatalogV1beta1.ProjectsLocationsEntryGroupsEntriesTagsService, self).__init__(client)
       self._upload_configs = {
           }
 
     def Create(self, request, global_params=None):
-      r"""Create a Tag on an Entry.
+      r"""Creates a tag on an Entry.
+Note: The project identified by the `parent` parameter for the
+[tag](/data-catalog/docs/reference/rest/v1beta1/projects.locations.entryGroups.entries.tags/create#path-parameters)
+and the
+[tag
+template](/data-catalog/docs/reference/rest/v1beta1/projects.locations.tagTemplates/create#path-parameters)
+used to create the tag must be from the same organization.
 
       Args:
-        request: (DatacatalogProjectsDatasetsEntriesTagsCreateRequest) input message
+        request: (DatacatalogProjectsLocationsEntryGroupsEntriesTagsCreateRequest) input message
         global_params: (StandardQueryParameters, default: None) global arguments
       Returns:
         (GoogleCloudDatacatalogV1beta1Tag) The response message.
@@ -148,24 +165,24 @@ Syntax](/data-catalog/docs/how-to/search-reference)
           config, request, global_params=global_params)
 
     Create.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path=u'v1beta1/projects/{projectsId}/datasets/{datasetsId}/entries/{entriesId}/tags',
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/entryGroups/{entryGroupsId}/entries/{entriesId}/tags',
         http_method=u'POST',
-        method_id=u'datacatalog.projects.datasets.entries.tags.create',
+        method_id=u'datacatalog.projects.locations.entryGroups.entries.tags.create',
         ordered_params=[u'parent'],
         path_params=[u'parent'],
         query_params=[],
         relative_path=u'v1beta1/{+parent}/tags',
-        request_field=u'googleCloudDatacatalogV1beta1CreateTagRequest',
-        request_type_name=u'DatacatalogProjectsDatasetsEntriesTagsCreateRequest',
+        request_field=u'googleCloudDatacatalogV1beta1Tag',
+        request_type_name=u'DatacatalogProjectsLocationsEntryGroupsEntriesTagsCreateRequest',
         response_type_name=u'GoogleCloudDatacatalogV1beta1Tag',
         supports_download=False,
     )
 
     def Delete(self, request, global_params=None):
-      r"""Delete a tag.
+      r"""Deletes a tag.
 
       Args:
-        request: (DatacatalogProjectsDatasetsEntriesTagsDeleteRequest) input message
+        request: (DatacatalogProjectsLocationsEntryGroupsEntriesTagsDeleteRequest) input message
         global_params: (StandardQueryParameters, default: None) global arguments
       Returns:
         (Empty) The response message.
@@ -175,24 +192,24 @@ Syntax](/data-catalog/docs/how-to/search-reference)
           config, request, global_params=global_params)
 
     Delete.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path=u'v1beta1/projects/{projectsId}/datasets/{datasetsId}/entries/{entriesId}/tags/{tagsId}',
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/entryGroups/{entryGroupsId}/entries/{entriesId}/tags/{tagsId}',
         http_method=u'DELETE',
-        method_id=u'datacatalog.projects.datasets.entries.tags.delete',
+        method_id=u'datacatalog.projects.locations.entryGroups.entries.tags.delete',
         ordered_params=[u'name'],
         path_params=[u'name'],
         query_params=[],
         relative_path=u'v1beta1/{+name}',
         request_field='',
-        request_type_name=u'DatacatalogProjectsDatasetsEntriesTagsDeleteRequest',
+        request_type_name=u'DatacatalogProjectsLocationsEntryGroupsEntriesTagsDeleteRequest',
         response_type_name=u'Empty',
         supports_download=False,
     )
 
     def List(self, request, global_params=None):
-      r"""List tags on an entry.
+      r"""Lists the tags on an Entry.
 
       Args:
-        request: (DatacatalogProjectsDatasetsEntriesTagsListRequest) input message
+        request: (DatacatalogProjectsLocationsEntryGroupsEntriesTagsListRequest) input message
         global_params: (StandardQueryParameters, default: None) global arguments
       Returns:
         (GoogleCloudDatacatalogV1beta1ListTagsResponse) The response message.
@@ -202,24 +219,24 @@ Syntax](/data-catalog/docs/how-to/search-reference)
           config, request, global_params=global_params)
 
     List.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path=u'v1beta1/projects/{projectsId}/datasets/{datasetsId}/entries/{entriesId}/tags',
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/entryGroups/{entryGroupsId}/entries/{entriesId}/tags',
         http_method=u'GET',
-        method_id=u'datacatalog.projects.datasets.entries.tags.list',
+        method_id=u'datacatalog.projects.locations.entryGroups.entries.tags.list',
         ordered_params=[u'parent'],
         path_params=[u'parent'],
-        query_params=[u'filter', u'fullResourceName', u'pageSize', u'pageToken'],
+        query_params=[u'pageSize', u'pageToken'],
         relative_path=u'v1beta1/{+parent}/tags',
         request_field='',
-        request_type_name=u'DatacatalogProjectsDatasetsEntriesTagsListRequest',
+        request_type_name=u'DatacatalogProjectsLocationsEntryGroupsEntriesTagsListRequest',
         response_type_name=u'GoogleCloudDatacatalogV1beta1ListTagsResponse',
         supports_download=False,
     )
 
     def Patch(self, request, global_params=None):
-      r"""Update an existing tag.
+      r"""Updates an existing tag.
 
       Args:
-        request: (DatacatalogProjectsDatasetsEntriesTagsPatchRequest) input message
+        request: (DatacatalogProjectsLocationsEntryGroupsEntriesTagsPatchRequest) input message
         global_params: (StandardQueryParameters, default: None) global arguments
       Returns:
         (GoogleCloudDatacatalogV1beta1Tag) The response message.
@@ -229,178 +246,71 @@ Syntax](/data-catalog/docs/how-to/search-reference)
           config, request, global_params=global_params)
 
     Patch.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path=u'v1beta1/projects/{projectsId}/datasets/{datasetsId}/entries/{entriesId}/tags/{tagsId}',
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/entryGroups/{entryGroupsId}/entries/{entriesId}/tags/{tagsId}',
         http_method=u'PATCH',
-        method_id=u'datacatalog.projects.datasets.entries.tags.patch',
+        method_id=u'datacatalog.projects.locations.entryGroups.entries.tags.patch',
         ordered_params=[u'name'],
         path_params=[u'name'],
-        query_params=[],
+        query_params=[u'updateMask'],
         relative_path=u'v1beta1/{+name}',
-        request_field=u'googleCloudDatacatalogV1beta1UpdateTagRequest',
-        request_type_name=u'DatacatalogProjectsDatasetsEntriesTagsPatchRequest',
+        request_field=u'googleCloudDatacatalogV1beta1Tag',
+        request_type_name=u'DatacatalogProjectsLocationsEntryGroupsEntriesTagsPatchRequest',
         response_type_name=u'GoogleCloudDatacatalogV1beta1Tag',
         supports_download=False,
     )
 
-  class ProjectsDatasetsEntriesService(base_api.BaseApiService):
-    """Service class for the projects_datasets_entries resource."""
+  class ProjectsLocationsEntryGroupsEntriesService(base_api.BaseApiService):
+    """Service class for the projects_locations_entryGroups_entries resource."""
 
-    _NAME = u'projects_datasets_entries'
-
-    def __init__(self, client):
-      super(DatacatalogV1beta1.ProjectsDatasetsEntriesService, self).__init__(client)
-      self._upload_configs = {
-          }
-
-    def GetIamPolicy(self, request, global_params=None):
-      r"""Gets the access control policy for a resource. A `NOT_FOUND` error.
-is returned if the resource does not exist. An empty policy is returned
-if the resource exists but does not have a policy set on it.
-
-Supported resource are :- Tag Templates.
-Note, this API cannot be used to manage policies for BigQuery, Pub/Sub and
-any external GCP resources synced to Cloud Data Catalog.
-
-Caller must have Google IAM `datacatalog.tagTemplates.getIamPolicy`
-permission on the tag template resource.
-
-      Args:
-        request: (DatacatalogProjectsDatasetsEntriesGetIamPolicyRequest) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-      Returns:
-        (Policy) The response message.
-      """
-      config = self.GetMethodConfig('GetIamPolicy')
-      return self._RunMethod(
-          config, request, global_params=global_params)
-
-    GetIamPolicy.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path=u'v1beta1/projects/{projectsId}/datasets/{datasetsId}/entries/{entriesId}:getIamPolicy',
-        http_method=u'POST',
-        method_id=u'datacatalog.projects.datasets.entries.getIamPolicy',
-        ordered_params=[u'resource'],
-        path_params=[u'resource'],
-        query_params=[],
-        relative_path=u'v1beta1/{+resource}:getIamPolicy',
-        request_field=u'getIamPolicyRequest',
-        request_type_name=u'DatacatalogProjectsDatasetsEntriesGetIamPolicyRequest',
-        response_type_name=u'Policy',
-        supports_download=False,
-    )
-
-    def List(self, request, global_params=None):
-      r"""Lists entries.
-
-      Args:
-        request: (DatacatalogProjectsDatasetsEntriesListRequest) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-      Returns:
-        (GoogleCloudDatacatalogV1beta1ListEntriesResponse) The response message.
-      """
-      config = self.GetMethodConfig('List')
-      return self._RunMethod(
-          config, request, global_params=global_params)
-
-    List.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path=u'v1beta1/projects/{projectsId}/datasets/{datasetsId}/entries',
-        http_method=u'GET',
-        method_id=u'datacatalog.projects.datasets.entries.list',
-        ordered_params=[u'parent'],
-        path_params=[u'parent'],
-        query_params=[u'pageSize', u'pageToken'],
-        relative_path=u'v1beta1/{+parent}/entries',
-        request_field='',
-        request_type_name=u'DatacatalogProjectsDatasetsEntriesListRequest',
-        response_type_name=u'GoogleCloudDatacatalogV1beta1ListEntriesResponse',
-        supports_download=False,
-    )
-
-    def SetIamPolicy(self, request, global_params=None):
-      r"""Sets the access control policy for a resource. Replaces any existing.
-policy.
-Supported resources are :- Tag Templates.
-Note, this API cannot be used to manage policies for BigQuery, Pub/Sub and
-any external GCP resources synced to Cloud Data Catalog.
-
-Callers must have Google IAM `datacatalog.tagTemplates.setIamPolicy` to
-set set policy on tag templates.
-
-      Args:
-        request: (DatacatalogProjectsDatasetsEntriesSetIamPolicyRequest) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-      Returns:
-        (Policy) The response message.
-      """
-      config = self.GetMethodConfig('SetIamPolicy')
-      return self._RunMethod(
-          config, request, global_params=global_params)
-
-    SetIamPolicy.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path=u'v1beta1/projects/{projectsId}/datasets/{datasetsId}/entries/{entriesId}:setIamPolicy',
-        http_method=u'POST',
-        method_id=u'datacatalog.projects.datasets.entries.setIamPolicy',
-        ordered_params=[u'resource'],
-        path_params=[u'resource'],
-        query_params=[],
-        relative_path=u'v1beta1/{+resource}:setIamPolicy',
-        request_field=u'setIamPolicyRequest',
-        request_type_name=u'DatacatalogProjectsDatasetsEntriesSetIamPolicyRequest',
-        response_type_name=u'Policy',
-        supports_download=False,
-    )
-
-  class ProjectsDatasetsService(base_api.BaseApiService):
-    """Service class for the projects_datasets resource."""
-
-    _NAME = u'projects_datasets'
+    _NAME = u'projects_locations_entryGroups_entries'
 
     def __init__(self, client):
-      super(DatacatalogV1beta1.ProjectsDatasetsService, self).__init__(client)
-      self._upload_configs = {
-          }
-
-  class ProjectsTagTemplatesService(base_api.BaseApiService):
-    """Service class for the projects_tagTemplates resource."""
-
-    _NAME = u'projects_tagTemplates'
-
-    def __init__(self, client):
-      super(DatacatalogV1beta1.ProjectsTagTemplatesService, self).__init__(client)
+      super(DatacatalogV1beta1.ProjectsLocationsEntryGroupsEntriesService, self).__init__(client)
       self._upload_configs = {
           }
 
     def Create(self, request, global_params=None):
-      r"""Create a tag template.
+      r"""Alpha feature.
+Creates an entry. Currently only entries of 'FILESET' type can be created.
+The user should enable the Data Catalog API in the project identified by
+the `parent` parameter (see [Data Catalog Resource Project]
+(/data-catalog/docs/concepts/resource-project) for more information).
 
       Args:
-        request: (DatacatalogProjectsTagTemplatesCreateRequest) input message
+        request: (DatacatalogProjectsLocationsEntryGroupsEntriesCreateRequest) input message
         global_params: (StandardQueryParameters, default: None) global arguments
       Returns:
-        (GoogleCloudDatacatalogV1beta1TagTemplate) The response message.
+        (GoogleCloudDatacatalogV1beta1Entry) The response message.
       """
       config = self.GetMethodConfig('Create')
       return self._RunMethod(
           config, request, global_params=global_params)
 
     Create.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path=u'v1beta1/projects/{projectsId}/tagTemplates',
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/entryGroups/{entryGroupsId}/entries',
         http_method=u'POST',
-        method_id=u'datacatalog.projects.tagTemplates.create',
+        method_id=u'datacatalog.projects.locations.entryGroups.entries.create',
         ordered_params=[u'parent'],
         path_params=[u'parent'],
-        query_params=[],
-        relative_path=u'v1beta1/{+parent}/tagTemplates',
-        request_field=u'googleCloudDatacatalogV1beta1CreateTagTemplateRequest',
-        request_type_name=u'DatacatalogProjectsTagTemplatesCreateRequest',
-        response_type_name=u'GoogleCloudDatacatalogV1beta1TagTemplate',
+        query_params=[u'entryId'],
+        relative_path=u'v1beta1/{+parent}/entries',
+        request_field=u'googleCloudDatacatalogV1beta1Entry',
+        request_type_name=u'DatacatalogProjectsLocationsEntryGroupsEntriesCreateRequest',
+        response_type_name=u'GoogleCloudDatacatalogV1beta1Entry',
         supports_download=False,
     )
 
     def Delete(self, request, global_params=None):
-      r"""Delete a tag template and all of that template's uses.
+      r"""Alpha feature.
+Deletes an existing entry. Only entries created through
+CreateEntry
+method can be deleted.
+The user should enable the Data Catalog API in the project identified by
+the `name` parameter (see [Data Catalog Resource Project]
+(/data-catalog/docs/concepts/resource-project) for more information).
 
       Args:
-        request: (DatacatalogProjectsTagTemplatesDeleteRequest) input message
+        request: (DatacatalogProjectsLocationsEntryGroupsEntriesDeleteRequest) input message
         global_params: (StandardQueryParameters, default: None) global arguments
       Returns:
         (Empty) The response message.
@@ -410,43 +320,43 @@ set set policy on tag templates.
           config, request, global_params=global_params)
 
     Delete.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path=u'v1beta1/projects/{projectsId}/tagTemplates/{tagTemplatesId}',
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/entryGroups/{entryGroupsId}/entries/{entriesId}',
         http_method=u'DELETE',
-        method_id=u'datacatalog.projects.tagTemplates.delete',
+        method_id=u'datacatalog.projects.locations.entryGroups.entries.delete',
         ordered_params=[u'name'],
         path_params=[u'name'],
         query_params=[],
         relative_path=u'v1beta1/{+name}',
         request_field='',
-        request_type_name=u'DatacatalogProjectsTagTemplatesDeleteRequest',
+        request_type_name=u'DatacatalogProjectsLocationsEntryGroupsEntriesDeleteRequest',
         response_type_name=u'Empty',
         supports_download=False,
     )
 
     def Get(self, request, global_params=None):
-      r"""Gets a tag template.
+      r"""Gets an entry.
 
       Args:
-        request: (DatacatalogProjectsTagTemplatesGetRequest) input message
+        request: (DatacatalogProjectsLocationsEntryGroupsEntriesGetRequest) input message
         global_params: (StandardQueryParameters, default: None) global arguments
       Returns:
-        (GoogleCloudDatacatalogV1beta1TagTemplate) The response message.
+        (GoogleCloudDatacatalogV1beta1Entry) The response message.
       """
       config = self.GetMethodConfig('Get')
       return self._RunMethod(
           config, request, global_params=global_params)
 
     Get.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path=u'v1beta1/projects/{projectsId}/tagTemplates/{tagTemplatesId}',
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/entryGroups/{entryGroupsId}/entries/{entriesId}',
         http_method=u'GET',
-        method_id=u'datacatalog.projects.tagTemplates.get',
+        method_id=u'datacatalog.projects.locations.entryGroups.entries.get',
         ordered_params=[u'name'],
         path_params=[u'name'],
         query_params=[],
         relative_path=u'v1beta1/{+name}',
         request_field='',
-        request_type_name=u'DatacatalogProjectsTagTemplatesGetRequest',
-        response_type_name=u'GoogleCloudDatacatalogV1beta1TagTemplate',
+        request_type_name=u'DatacatalogProjectsLocationsEntryGroupsEntriesGetRequest',
+        response_type_name=u'GoogleCloudDatacatalogV1beta1Entry',
         supports_download=False,
     )
 
@@ -455,15 +365,22 @@ set set policy on tag templates.
 is returned if the resource does not exist. An empty policy is returned
 if the resource exists but does not have a policy set on it.
 
-Supported resource are :- Tag Templates.
-Note, this API cannot be used to manage policies for BigQuery, Pub/Sub and
-any external GCP resources synced to Cloud Data Catalog.
+Supported resources are:
+  - Tag templates.
+  - Entries.
+  - Entry groups.
+Note, this method cannot be used to manage policies for BigQuery, Cloud
+Pub/Sub and any external Google Cloud Platform resources synced to Cloud
+Data Catalog.
 
-Caller must have Google IAM `datacatalog.tagTemplates.getIamPolicy`
-permission on the tag template resource.
+Callers must have following Google IAM permission
+  - `datacatalog.tagTemplates.getIamPolicy` to get policies on tag
+    templates.
+  - `datacatalog.entries.getIamPolicy` to get policies on entries.
+  - `datacatalog.entryGroups.getIamPolicy` to get policies on entry groups.
 
       Args:
-        request: (DatacatalogProjectsTagTemplatesGetIamPolicyRequest) input message
+        request: (DatacatalogProjectsLocationsEntryGroupsEntriesGetIamPolicyRequest) input message
         global_params: (StandardQueryParameters, default: None) global arguments
       Returns:
         (Policy) The response message.
@@ -473,88 +390,68 @@ permission on the tag template resource.
           config, request, global_params=global_params)
 
     GetIamPolicy.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path=u'v1beta1/projects/{projectsId}/tagTemplates/{tagTemplatesId}:getIamPolicy',
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/entryGroups/{entryGroupsId}/entries/{entriesId}:getIamPolicy',
         http_method=u'POST',
-        method_id=u'datacatalog.projects.tagTemplates.getIamPolicy',
+        method_id=u'datacatalog.projects.locations.entryGroups.entries.getIamPolicy',
         ordered_params=[u'resource'],
         path_params=[u'resource'],
         query_params=[],
         relative_path=u'v1beta1/{+resource}:getIamPolicy',
         request_field=u'getIamPolicyRequest',
-        request_type_name=u'DatacatalogProjectsTagTemplatesGetIamPolicyRequest',
+        request_type_name=u'DatacatalogProjectsLocationsEntryGroupsEntriesGetIamPolicyRequest',
         response_type_name=u'Policy',
         supports_download=False,
     )
 
-    def Mutate(self, request, global_params=None):
-      r"""Mutates the fields of a tag template. This API can only modify the fields.
-of a template. To modify anything else, use UpdateTagTemplate.
-
-      Args:
-        request: (DatacatalogProjectsTagTemplatesMutateRequest) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-      Returns:
-        (GoogleCloudDatacatalogV1beta1TagTemplate) The response message.
-      """
-      config = self.GetMethodConfig('Mutate')
-      return self._RunMethod(
-          config, request, global_params=global_params)
-
-    Mutate.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path=u'v1beta1/projects/{projectsId}/tagTemplates/{tagTemplatesId}:mutate',
-        http_method=u'POST',
-        method_id=u'datacatalog.projects.tagTemplates.mutate',
-        ordered_params=[u'name'],
-        path_params=[u'name'],
-        query_params=[],
-        relative_path=u'v1beta1/{+name}:mutate',
-        request_field=u'googleCloudDatacatalogV1beta1MutateTagTemplateRequest',
-        request_type_name=u'DatacatalogProjectsTagTemplatesMutateRequest',
-        response_type_name=u'GoogleCloudDatacatalogV1beta1TagTemplate',
-        supports_download=False,
-    )
-
     def Patch(self, request, global_params=None):
-      r"""Updates a tag template. This API cannot be used to update the fields of a.
-template (add/remove/change a field) -- use MutateTagTemplate to modify
-fields.
+      r"""Updates an existing entry.
+The user should enable the Data Catalog API in the project identified by
+the `entry.name` parameter (see [Data Catalog Resource Project]
+(/data-catalog/docs/concepts/resource-project) for more information).
 
       Args:
-        request: (DatacatalogProjectsTagTemplatesPatchRequest) input message
+        request: (DatacatalogProjectsLocationsEntryGroupsEntriesPatchRequest) input message
         global_params: (StandardQueryParameters, default: None) global arguments
       Returns:
-        (GoogleCloudDatacatalogV1beta1TagTemplate) The response message.
+        (GoogleCloudDatacatalogV1beta1Entry) The response message.
       """
       config = self.GetMethodConfig('Patch')
       return self._RunMethod(
           config, request, global_params=global_params)
 
     Patch.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path=u'v1beta1/projects/{projectsId}/tagTemplates/{tagTemplatesId}',
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/entryGroups/{entryGroupsId}/entries/{entriesId}',
         http_method=u'PATCH',
-        method_id=u'datacatalog.projects.tagTemplates.patch',
+        method_id=u'datacatalog.projects.locations.entryGroups.entries.patch',
         ordered_params=[u'name'],
         path_params=[u'name'],
         query_params=[u'updateMask'],
         relative_path=u'v1beta1/{+name}',
-        request_field=u'googleCloudDatacatalogV1beta1TagTemplate',
-        request_type_name=u'DatacatalogProjectsTagTemplatesPatchRequest',
-        response_type_name=u'GoogleCloudDatacatalogV1beta1TagTemplate',
+        request_field=u'googleCloudDatacatalogV1beta1Entry',
+        request_type_name=u'DatacatalogProjectsLocationsEntryGroupsEntriesPatchRequest',
+        response_type_name=u'GoogleCloudDatacatalogV1beta1Entry',
         supports_download=False,
     )
 
     def SetIamPolicy(self, request, global_params=None):
       r"""Sets the access control policy for a resource. Replaces any existing.
 policy.
-Supported resources are :- Tag Templates.
-Note, this API cannot be used to manage policies for BigQuery, Pub/Sub and
-any external GCP resources synced to Cloud Data Catalog.
+Supported resources are:
+  - Tag templates.
+  - Entries.
+  - Entry groups.
+Note, this method cannot be used to manage policies for BigQuery, Cloud
+Pub/Sub and any external Google Cloud Platform resources synced to Cloud
+Data Catalog.
 
-Callers must have Google IAM `datacatalog.tagTemplates.setIamPolicy` to
-set set policy on tag templates.
+Callers must have following Google IAM permission
+  - `datacatalog.tagTemplates.setIamPolicy` to set policies on tag
+    templates.
+  - `datacatalog.entries.setIamPolicy` to set policies on entries.
+  - `datacatalog.entryGroups.setIamPolicy` to set policies on entry groups.
 
       Args:
-        request: (DatacatalogProjectsTagTemplatesSetIamPolicyRequest) input message
+        request: (DatacatalogProjectsLocationsEntryGroupsEntriesSetIamPolicyRequest) input message
         global_params: (StandardQueryParameters, default: None) global arguments
       Returns:
         (Policy) The response message.
@@ -564,18 +461,1193 @@ set set policy on tag templates.
           config, request, global_params=global_params)
 
     SetIamPolicy.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path=u'v1beta1/projects/{projectsId}/tagTemplates/{tagTemplatesId}:setIamPolicy',
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/entryGroups/{entryGroupsId}/entries/{entriesId}:setIamPolicy',
         http_method=u'POST',
-        method_id=u'datacatalog.projects.tagTemplates.setIamPolicy',
+        method_id=u'datacatalog.projects.locations.entryGroups.entries.setIamPolicy',
         ordered_params=[u'resource'],
         path_params=[u'resource'],
         query_params=[],
         relative_path=u'v1beta1/{+resource}:setIamPolicy',
         request_field=u'setIamPolicyRequest',
-        request_type_name=u'DatacatalogProjectsTagTemplatesSetIamPolicyRequest',
+        request_type_name=u'DatacatalogProjectsLocationsEntryGroupsEntriesSetIamPolicyRequest',
         response_type_name=u'Policy',
         supports_download=False,
     )
+
+    def TestIamPermissions(self, request, global_params=None):
+      r"""Returns the caller's permissions on a resource.
+If the resource does not exist, an empty set of permissions is returned
+(We don't return a `NOT_FOUND` error).
+
+Supported resources are:
+  - Tag templates.
+  - Entries.
+  - Entry groups.
+Note, this method cannot be used to manage policies for BigQuery, Cloud
+Pub/Sub and any external Google Cloud Platform resources synced to Cloud
+Data Catalog.
+
+A caller is not required to have Google IAM permission to make this
+request.
+
+      Args:
+        request: (DatacatalogProjectsLocationsEntryGroupsEntriesTestIamPermissionsRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (TestIamPermissionsResponse) The response message.
+      """
+      config = self.GetMethodConfig('TestIamPermissions')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    TestIamPermissions.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/entryGroups/{entryGroupsId}/entries/{entriesId}:testIamPermissions',
+        http_method=u'POST',
+        method_id=u'datacatalog.projects.locations.entryGroups.entries.testIamPermissions',
+        ordered_params=[u'resource'],
+        path_params=[u'resource'],
+        query_params=[],
+        relative_path=u'v1beta1/{+resource}:testIamPermissions',
+        request_field=u'testIamPermissionsRequest',
+        request_type_name=u'DatacatalogProjectsLocationsEntryGroupsEntriesTestIamPermissionsRequest',
+        response_type_name=u'TestIamPermissionsResponse',
+        supports_download=False,
+    )
+
+  class ProjectsLocationsEntryGroupsService(base_api.BaseApiService):
+    """Service class for the projects_locations_entryGroups resource."""
+
+    _NAME = u'projects_locations_entryGroups'
+
+    def __init__(self, client):
+      super(DatacatalogV1beta1.ProjectsLocationsEntryGroupsService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Create(self, request, global_params=None):
+      r"""Alpha feature.
+Creates an EntryGroup.
+The user should enable the Data Catalog API in the project identified by
+the `parent` parameter (see [Data Catalog Resource Project]
+(/data-catalog/docs/concepts/resource-project) for more information).
+
+      Args:
+        request: (DatacatalogProjectsLocationsEntryGroupsCreateRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudDatacatalogV1beta1EntryGroup) The response message.
+      """
+      config = self.GetMethodConfig('Create')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Create.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/entryGroups',
+        http_method=u'POST',
+        method_id=u'datacatalog.projects.locations.entryGroups.create',
+        ordered_params=[u'parent'],
+        path_params=[u'parent'],
+        query_params=[u'entryGroupId'],
+        relative_path=u'v1beta1/{+parent}/entryGroups',
+        request_field=u'googleCloudDatacatalogV1beta1EntryGroup',
+        request_type_name=u'DatacatalogProjectsLocationsEntryGroupsCreateRequest',
+        response_type_name=u'GoogleCloudDatacatalogV1beta1EntryGroup',
+        supports_download=False,
+    )
+
+    def Delete(self, request, global_params=None):
+      r"""Alpha feature.
+Deletes an EntryGroup. Only entry groups that do not contain entries can be
+deleted. The user should enable the Data Catalog API in the project
+identified by the `name` parameter (see [Data Catalog Resource Project]
+(/data-catalog/docs/concepts/resource-project) for more information).
+
+      Args:
+        request: (DatacatalogProjectsLocationsEntryGroupsDeleteRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Empty) The response message.
+      """
+      config = self.GetMethodConfig('Delete')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Delete.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/entryGroups/{entryGroupsId}',
+        http_method=u'DELETE',
+        method_id=u'datacatalog.projects.locations.entryGroups.delete',
+        ordered_params=[u'name'],
+        path_params=[u'name'],
+        query_params=[],
+        relative_path=u'v1beta1/{+name}',
+        request_field='',
+        request_type_name=u'DatacatalogProjectsLocationsEntryGroupsDeleteRequest',
+        response_type_name=u'Empty',
+        supports_download=False,
+    )
+
+    def Get(self, request, global_params=None):
+      r"""Alpha feature.
+Gets an EntryGroup.
+
+      Args:
+        request: (DatacatalogProjectsLocationsEntryGroupsGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudDatacatalogV1beta1EntryGroup) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/entryGroups/{entryGroupsId}',
+        http_method=u'GET',
+        method_id=u'datacatalog.projects.locations.entryGroups.get',
+        ordered_params=[u'name'],
+        path_params=[u'name'],
+        query_params=[u'readMask'],
+        relative_path=u'v1beta1/{+name}',
+        request_field='',
+        request_type_name=u'DatacatalogProjectsLocationsEntryGroupsGetRequest',
+        response_type_name=u'GoogleCloudDatacatalogV1beta1EntryGroup',
+        supports_download=False,
+    )
+
+    def GetIamPolicy(self, request, global_params=None):
+      r"""Gets the access control policy for a resource. A `NOT_FOUND` error.
+is returned if the resource does not exist. An empty policy is returned
+if the resource exists but does not have a policy set on it.
+
+Supported resources are:
+  - Tag templates.
+  - Entries.
+  - Entry groups.
+Note, this method cannot be used to manage policies for BigQuery, Cloud
+Pub/Sub and any external Google Cloud Platform resources synced to Cloud
+Data Catalog.
+
+Callers must have following Google IAM permission
+  - `datacatalog.tagTemplates.getIamPolicy` to get policies on tag
+    templates.
+  - `datacatalog.entries.getIamPolicy` to get policies on entries.
+  - `datacatalog.entryGroups.getIamPolicy` to get policies on entry groups.
+
+      Args:
+        request: (DatacatalogProjectsLocationsEntryGroupsGetIamPolicyRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Policy) The response message.
+      """
+      config = self.GetMethodConfig('GetIamPolicy')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    GetIamPolicy.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/entryGroups/{entryGroupsId}:getIamPolicy',
+        http_method=u'POST',
+        method_id=u'datacatalog.projects.locations.entryGroups.getIamPolicy',
+        ordered_params=[u'resource'],
+        path_params=[u'resource'],
+        query_params=[],
+        relative_path=u'v1beta1/{+resource}:getIamPolicy',
+        request_field=u'getIamPolicyRequest',
+        request_type_name=u'DatacatalogProjectsLocationsEntryGroupsGetIamPolicyRequest',
+        response_type_name=u'Policy',
+        supports_download=False,
+    )
+
+    def SetIamPolicy(self, request, global_params=None):
+      r"""Sets the access control policy for a resource. Replaces any existing.
+policy.
+Supported resources are:
+  - Tag templates.
+  - Entries.
+  - Entry groups.
+Note, this method cannot be used to manage policies for BigQuery, Cloud
+Pub/Sub and any external Google Cloud Platform resources synced to Cloud
+Data Catalog.
+
+Callers must have following Google IAM permission
+  - `datacatalog.tagTemplates.setIamPolicy` to set policies on tag
+    templates.
+  - `datacatalog.entries.setIamPolicy` to set policies on entries.
+  - `datacatalog.entryGroups.setIamPolicy` to set policies on entry groups.
+
+      Args:
+        request: (DatacatalogProjectsLocationsEntryGroupsSetIamPolicyRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Policy) The response message.
+      """
+      config = self.GetMethodConfig('SetIamPolicy')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    SetIamPolicy.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/entryGroups/{entryGroupsId}:setIamPolicy',
+        http_method=u'POST',
+        method_id=u'datacatalog.projects.locations.entryGroups.setIamPolicy',
+        ordered_params=[u'resource'],
+        path_params=[u'resource'],
+        query_params=[],
+        relative_path=u'v1beta1/{+resource}:setIamPolicy',
+        request_field=u'setIamPolicyRequest',
+        request_type_name=u'DatacatalogProjectsLocationsEntryGroupsSetIamPolicyRequest',
+        response_type_name=u'Policy',
+        supports_download=False,
+    )
+
+    def TestIamPermissions(self, request, global_params=None):
+      r"""Returns the caller's permissions on a resource.
+If the resource does not exist, an empty set of permissions is returned
+(We don't return a `NOT_FOUND` error).
+
+Supported resources are:
+  - Tag templates.
+  - Entries.
+  - Entry groups.
+Note, this method cannot be used to manage policies for BigQuery, Cloud
+Pub/Sub and any external Google Cloud Platform resources synced to Cloud
+Data Catalog.
+
+A caller is not required to have Google IAM permission to make this
+request.
+
+      Args:
+        request: (DatacatalogProjectsLocationsEntryGroupsTestIamPermissionsRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (TestIamPermissionsResponse) The response message.
+      """
+      config = self.GetMethodConfig('TestIamPermissions')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    TestIamPermissions.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/entryGroups/{entryGroupsId}:testIamPermissions',
+        http_method=u'POST',
+        method_id=u'datacatalog.projects.locations.entryGroups.testIamPermissions',
+        ordered_params=[u'resource'],
+        path_params=[u'resource'],
+        query_params=[],
+        relative_path=u'v1beta1/{+resource}:testIamPermissions',
+        request_field=u'testIamPermissionsRequest',
+        request_type_name=u'DatacatalogProjectsLocationsEntryGroupsTestIamPermissionsRequest',
+        response_type_name=u'TestIamPermissionsResponse',
+        supports_download=False,
+    )
+
+  class ProjectsLocationsTagTemplatesFieldsService(base_api.BaseApiService):
+    """Service class for the projects_locations_tagTemplates_fields resource."""
+
+    _NAME = u'projects_locations_tagTemplates_fields'
+
+    def __init__(self, client):
+      super(DatacatalogV1beta1.ProjectsLocationsTagTemplatesFieldsService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Create(self, request, global_params=None):
+      r"""Creates a field in a tag template. The user should enable the Data Catalog.
+API in the project identified by the `parent` parameter (see
+[Data Catalog Resource
+Project](/data-catalog/docs/concepts/resource-project) for more
+information).
+
+      Args:
+        request: (DatacatalogProjectsLocationsTagTemplatesFieldsCreateRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudDatacatalogV1beta1TagTemplateField) The response message.
+      """
+      config = self.GetMethodConfig('Create')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Create.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/tagTemplates/{tagTemplatesId}/fields',
+        http_method=u'POST',
+        method_id=u'datacatalog.projects.locations.tagTemplates.fields.create',
+        ordered_params=[u'parent'],
+        path_params=[u'parent'],
+        query_params=[u'tagTemplateFieldId'],
+        relative_path=u'v1beta1/{+parent}/fields',
+        request_field=u'googleCloudDatacatalogV1beta1TagTemplateField',
+        request_type_name=u'DatacatalogProjectsLocationsTagTemplatesFieldsCreateRequest',
+        response_type_name=u'GoogleCloudDatacatalogV1beta1TagTemplateField',
+        supports_download=False,
+    )
+
+    def Delete(self, request, global_params=None):
+      r"""Deletes a field in a tag template and all uses of that field.
+The user should enable the Data Catalog API in the project identified by
+the `name` parameter (see [Data Catalog Resource Project]
+(/data-catalog/docs/concepts/resource-project) for more information).
+
+      Args:
+        request: (DatacatalogProjectsLocationsTagTemplatesFieldsDeleteRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Empty) The response message.
+      """
+      config = self.GetMethodConfig('Delete')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Delete.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/tagTemplates/{tagTemplatesId}/fields/{fieldsId}',
+        http_method=u'DELETE',
+        method_id=u'datacatalog.projects.locations.tagTemplates.fields.delete',
+        ordered_params=[u'name'],
+        path_params=[u'name'],
+        query_params=[u'force'],
+        relative_path=u'v1beta1/{+name}',
+        request_field='',
+        request_type_name=u'DatacatalogProjectsLocationsTagTemplatesFieldsDeleteRequest',
+        response_type_name=u'Empty',
+        supports_download=False,
+    )
+
+    def Patch(self, request, global_params=None):
+      r"""Updates a field in a tag template. This method cannot be used to update the.
+field type. The user should enable the Data Catalog API in the project
+identified by the `name` parameter (see [Data Catalog Resource Project]
+(/data-catalog/docs/concepts/resource-project) for more information).
+
+      Args:
+        request: (DatacatalogProjectsLocationsTagTemplatesFieldsPatchRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudDatacatalogV1beta1TagTemplateField) The response message.
+      """
+      config = self.GetMethodConfig('Patch')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Patch.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/tagTemplates/{tagTemplatesId}/fields/{fieldsId}',
+        http_method=u'PATCH',
+        method_id=u'datacatalog.projects.locations.tagTemplates.fields.patch',
+        ordered_params=[u'name'],
+        path_params=[u'name'],
+        query_params=[u'updateMask'],
+        relative_path=u'v1beta1/{+name}',
+        request_field=u'googleCloudDatacatalogV1beta1TagTemplateField',
+        request_type_name=u'DatacatalogProjectsLocationsTagTemplatesFieldsPatchRequest',
+        response_type_name=u'GoogleCloudDatacatalogV1beta1TagTemplateField',
+        supports_download=False,
+    )
+
+    def Rename(self, request, global_params=None):
+      r"""Renames a field in a tag template. The user should enable the Data Catalog.
+API in the project identified by the `name` parameter (see [Data Catalog
+Resource Project](/data-catalog/docs/concepts/resource-project) for more
+information).
+
+      Args:
+        request: (DatacatalogProjectsLocationsTagTemplatesFieldsRenameRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudDatacatalogV1beta1TagTemplateField) The response message.
+      """
+      config = self.GetMethodConfig('Rename')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Rename.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/tagTemplates/{tagTemplatesId}/fields/{fieldsId}:rename',
+        http_method=u'POST',
+        method_id=u'datacatalog.projects.locations.tagTemplates.fields.rename',
+        ordered_params=[u'name'],
+        path_params=[u'name'],
+        query_params=[],
+        relative_path=u'v1beta1/{+name}:rename',
+        request_field=u'googleCloudDatacatalogV1beta1RenameTagTemplateFieldRequest',
+        request_type_name=u'DatacatalogProjectsLocationsTagTemplatesFieldsRenameRequest',
+        response_type_name=u'GoogleCloudDatacatalogV1beta1TagTemplateField',
+        supports_download=False,
+    )
+
+  class ProjectsLocationsTagTemplatesService(base_api.BaseApiService):
+    """Service class for the projects_locations_tagTemplates resource."""
+
+    _NAME = u'projects_locations_tagTemplates'
+
+    def __init__(self, client):
+      super(DatacatalogV1beta1.ProjectsLocationsTagTemplatesService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Create(self, request, global_params=None):
+      r"""Creates a tag template. The user should enable the Data Catalog API in.
+the project identified by the `parent` parameter (see [Data Catalog
+Resource Project](/data-catalog/docs/concepts/resource-project) for more
+information).
+
+      Args:
+        request: (DatacatalogProjectsLocationsTagTemplatesCreateRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudDatacatalogV1beta1TagTemplate) The response message.
+      """
+      config = self.GetMethodConfig('Create')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Create.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/tagTemplates',
+        http_method=u'POST',
+        method_id=u'datacatalog.projects.locations.tagTemplates.create',
+        ordered_params=[u'parent'],
+        path_params=[u'parent'],
+        query_params=[u'tagTemplateId'],
+        relative_path=u'v1beta1/{+parent}/tagTemplates',
+        request_field=u'googleCloudDatacatalogV1beta1TagTemplate',
+        request_type_name=u'DatacatalogProjectsLocationsTagTemplatesCreateRequest',
+        response_type_name=u'GoogleCloudDatacatalogV1beta1TagTemplate',
+        supports_download=False,
+    )
+
+    def Delete(self, request, global_params=None):
+      r"""Deletes a tag template and all tags using the template.
+The user should enable the Data Catalog API in the project identified by
+the `name` parameter (see [Data Catalog Resource Project]
+(/data-catalog/docs/concepts/resource-project) for more information).
+
+      Args:
+        request: (DatacatalogProjectsLocationsTagTemplatesDeleteRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Empty) The response message.
+      """
+      config = self.GetMethodConfig('Delete')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Delete.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/tagTemplates/{tagTemplatesId}',
+        http_method=u'DELETE',
+        method_id=u'datacatalog.projects.locations.tagTemplates.delete',
+        ordered_params=[u'name'],
+        path_params=[u'name'],
+        query_params=[u'force'],
+        relative_path=u'v1beta1/{+name}',
+        request_field='',
+        request_type_name=u'DatacatalogProjectsLocationsTagTemplatesDeleteRequest',
+        response_type_name=u'Empty',
+        supports_download=False,
+    )
+
+    def Get(self, request, global_params=None):
+      r"""Gets a tag template.
+
+      Args:
+        request: (DatacatalogProjectsLocationsTagTemplatesGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudDatacatalogV1beta1TagTemplate) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/tagTemplates/{tagTemplatesId}',
+        http_method=u'GET',
+        method_id=u'datacatalog.projects.locations.tagTemplates.get',
+        ordered_params=[u'name'],
+        path_params=[u'name'],
+        query_params=[],
+        relative_path=u'v1beta1/{+name}',
+        request_field='',
+        request_type_name=u'DatacatalogProjectsLocationsTagTemplatesGetRequest',
+        response_type_name=u'GoogleCloudDatacatalogV1beta1TagTemplate',
+        supports_download=False,
+    )
+
+    def GetIamPolicy(self, request, global_params=None):
+      r"""Gets the access control policy for a resource. A `NOT_FOUND` error.
+is returned if the resource does not exist. An empty policy is returned
+if the resource exists but does not have a policy set on it.
+
+Supported resources are:
+  - Tag templates.
+  - Entries.
+  - Entry groups.
+Note, this method cannot be used to manage policies for BigQuery, Cloud
+Pub/Sub and any external Google Cloud Platform resources synced to Cloud
+Data Catalog.
+
+Callers must have following Google IAM permission
+  - `datacatalog.tagTemplates.getIamPolicy` to get policies on tag
+    templates.
+  - `datacatalog.entries.getIamPolicy` to get policies on entries.
+  - `datacatalog.entryGroups.getIamPolicy` to get policies on entry groups.
+
+      Args:
+        request: (DatacatalogProjectsLocationsTagTemplatesGetIamPolicyRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Policy) The response message.
+      """
+      config = self.GetMethodConfig('GetIamPolicy')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    GetIamPolicy.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/tagTemplates/{tagTemplatesId}:getIamPolicy',
+        http_method=u'POST',
+        method_id=u'datacatalog.projects.locations.tagTemplates.getIamPolicy',
+        ordered_params=[u'resource'],
+        path_params=[u'resource'],
+        query_params=[],
+        relative_path=u'v1beta1/{+resource}:getIamPolicy',
+        request_field=u'getIamPolicyRequest',
+        request_type_name=u'DatacatalogProjectsLocationsTagTemplatesGetIamPolicyRequest',
+        response_type_name=u'Policy',
+        supports_download=False,
+    )
+
+    def Patch(self, request, global_params=None):
+      r"""Updates a tag template. This method cannot be used to update the fields of.
+a template. The tag template fields are represented as separate resources
+and should be updated using their own create/update/delete methods.
+The user should enable the Data Catalog API in the project identified by
+the `tag_template.name` parameter (see [Data Catalog Resource Project]
+(/data-catalog/docs/concepts/resource-project) for more information).
+
+      Args:
+        request: (DatacatalogProjectsLocationsTagTemplatesPatchRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudDatacatalogV1beta1TagTemplate) The response message.
+      """
+      config = self.GetMethodConfig('Patch')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Patch.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/tagTemplates/{tagTemplatesId}',
+        http_method=u'PATCH',
+        method_id=u'datacatalog.projects.locations.tagTemplates.patch',
+        ordered_params=[u'name'],
+        path_params=[u'name'],
+        query_params=[u'updateMask'],
+        relative_path=u'v1beta1/{+name}',
+        request_field=u'googleCloudDatacatalogV1beta1TagTemplate',
+        request_type_name=u'DatacatalogProjectsLocationsTagTemplatesPatchRequest',
+        response_type_name=u'GoogleCloudDatacatalogV1beta1TagTemplate',
+        supports_download=False,
+    )
+
+    def SetIamPolicy(self, request, global_params=None):
+      r"""Sets the access control policy for a resource. Replaces any existing.
+policy.
+Supported resources are:
+  - Tag templates.
+  - Entries.
+  - Entry groups.
+Note, this method cannot be used to manage policies for BigQuery, Cloud
+Pub/Sub and any external Google Cloud Platform resources synced to Cloud
+Data Catalog.
+
+Callers must have following Google IAM permission
+  - `datacatalog.tagTemplates.setIamPolicy` to set policies on tag
+    templates.
+  - `datacatalog.entries.setIamPolicy` to set policies on entries.
+  - `datacatalog.entryGroups.setIamPolicy` to set policies on entry groups.
+
+      Args:
+        request: (DatacatalogProjectsLocationsTagTemplatesSetIamPolicyRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Policy) The response message.
+      """
+      config = self.GetMethodConfig('SetIamPolicy')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    SetIamPolicy.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/tagTemplates/{tagTemplatesId}:setIamPolicy',
+        http_method=u'POST',
+        method_id=u'datacatalog.projects.locations.tagTemplates.setIamPolicy',
+        ordered_params=[u'resource'],
+        path_params=[u'resource'],
+        query_params=[],
+        relative_path=u'v1beta1/{+resource}:setIamPolicy',
+        request_field=u'setIamPolicyRequest',
+        request_type_name=u'DatacatalogProjectsLocationsTagTemplatesSetIamPolicyRequest',
+        response_type_name=u'Policy',
+        supports_download=False,
+    )
+
+    def TestIamPermissions(self, request, global_params=None):
+      r"""Returns the caller's permissions on a resource.
+If the resource does not exist, an empty set of permissions is returned
+(We don't return a `NOT_FOUND` error).
+
+Supported resources are:
+  - Tag templates.
+  - Entries.
+  - Entry groups.
+Note, this method cannot be used to manage policies for BigQuery, Cloud
+Pub/Sub and any external Google Cloud Platform resources synced to Cloud
+Data Catalog.
+
+A caller is not required to have Google IAM permission to make this
+request.
+
+      Args:
+        request: (DatacatalogProjectsLocationsTagTemplatesTestIamPermissionsRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (TestIamPermissionsResponse) The response message.
+      """
+      config = self.GetMethodConfig('TestIamPermissions')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    TestIamPermissions.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/tagTemplates/{tagTemplatesId}:testIamPermissions',
+        http_method=u'POST',
+        method_id=u'datacatalog.projects.locations.tagTemplates.testIamPermissions',
+        ordered_params=[u'resource'],
+        path_params=[u'resource'],
+        query_params=[],
+        relative_path=u'v1beta1/{+resource}:testIamPermissions',
+        request_field=u'testIamPermissionsRequest',
+        request_type_name=u'DatacatalogProjectsLocationsTagTemplatesTestIamPermissionsRequest',
+        response_type_name=u'TestIamPermissionsResponse',
+        supports_download=False,
+    )
+
+  class ProjectsLocationsTaxonomiesPolicyTagsService(base_api.BaseApiService):
+    """Service class for the projects_locations_taxonomies_policyTags resource."""
+
+    _NAME = u'projects_locations_taxonomies_policyTags'
+
+    def __init__(self, client):
+      super(DatacatalogV1beta1.ProjectsLocationsTaxonomiesPolicyTagsService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Create(self, request, global_params=None):
+      r"""Creates a policy tag in the specified taxonomy.
+
+      Args:
+        request: (DatacatalogProjectsLocationsTaxonomiesPolicyTagsCreateRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudDatacatalogV1beta1PolicyTag) The response message.
+      """
+      config = self.GetMethodConfig('Create')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Create.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/taxonomies/{taxonomiesId}/policyTags',
+        http_method=u'POST',
+        method_id=u'datacatalog.projects.locations.taxonomies.policyTags.create',
+        ordered_params=[u'parent'],
+        path_params=[u'parent'],
+        query_params=[],
+        relative_path=u'v1beta1/{+parent}/policyTags',
+        request_field=u'googleCloudDatacatalogV1beta1PolicyTag',
+        request_type_name=u'DatacatalogProjectsLocationsTaxonomiesPolicyTagsCreateRequest',
+        response_type_name=u'GoogleCloudDatacatalogV1beta1PolicyTag',
+        supports_download=False,
+    )
+
+    def Delete(self, request, global_params=None):
+      r"""Deletes a policy tag. Also deletes all of its descendant policy tags.
+
+      Args:
+        request: (DatacatalogProjectsLocationsTaxonomiesPolicyTagsDeleteRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Empty) The response message.
+      """
+      config = self.GetMethodConfig('Delete')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Delete.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/taxonomies/{taxonomiesId}/policyTags/{policyTagsId}',
+        http_method=u'DELETE',
+        method_id=u'datacatalog.projects.locations.taxonomies.policyTags.delete',
+        ordered_params=[u'name'],
+        path_params=[u'name'],
+        query_params=[],
+        relative_path=u'v1beta1/{+name}',
+        request_field='',
+        request_type_name=u'DatacatalogProjectsLocationsTaxonomiesPolicyTagsDeleteRequest',
+        response_type_name=u'Empty',
+        supports_download=False,
+    )
+
+    def Get(self, request, global_params=None):
+      r"""Gets a policy tag.
+
+      Args:
+        request: (DatacatalogProjectsLocationsTaxonomiesPolicyTagsGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudDatacatalogV1beta1PolicyTag) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/taxonomies/{taxonomiesId}/policyTags/{policyTagsId}',
+        http_method=u'GET',
+        method_id=u'datacatalog.projects.locations.taxonomies.policyTags.get',
+        ordered_params=[u'name'],
+        path_params=[u'name'],
+        query_params=[],
+        relative_path=u'v1beta1/{+name}',
+        request_field='',
+        request_type_name=u'DatacatalogProjectsLocationsTaxonomiesPolicyTagsGetRequest',
+        response_type_name=u'GoogleCloudDatacatalogV1beta1PolicyTag',
+        supports_download=False,
+    )
+
+    def GetIamPolicy(self, request, global_params=None):
+      r"""Gets the IAM policy for a taxonomy or a policy tag.
+
+      Args:
+        request: (DatacatalogProjectsLocationsTaxonomiesPolicyTagsGetIamPolicyRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Policy) The response message.
+      """
+      config = self.GetMethodConfig('GetIamPolicy')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    GetIamPolicy.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/taxonomies/{taxonomiesId}/policyTags/{policyTagsId}:getIamPolicy',
+        http_method=u'POST',
+        method_id=u'datacatalog.projects.locations.taxonomies.policyTags.getIamPolicy',
+        ordered_params=[u'resource'],
+        path_params=[u'resource'],
+        query_params=[],
+        relative_path=u'v1beta1/{+resource}:getIamPolicy',
+        request_field=u'getIamPolicyRequest',
+        request_type_name=u'DatacatalogProjectsLocationsTaxonomiesPolicyTagsGetIamPolicyRequest',
+        response_type_name=u'Policy',
+        supports_download=False,
+    )
+
+    def List(self, request, global_params=None):
+      r"""Lists all policy tags in a taxonomy.
+
+      Args:
+        request: (DatacatalogProjectsLocationsTaxonomiesPolicyTagsListRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudDatacatalogV1beta1ListPolicyTagsResponse) The response message.
+      """
+      config = self.GetMethodConfig('List')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/taxonomies/{taxonomiesId}/policyTags',
+        http_method=u'GET',
+        method_id=u'datacatalog.projects.locations.taxonomies.policyTags.list',
+        ordered_params=[u'parent'],
+        path_params=[u'parent'],
+        query_params=[u'pageSize', u'pageToken'],
+        relative_path=u'v1beta1/{+parent}/policyTags',
+        request_field='',
+        request_type_name=u'DatacatalogProjectsLocationsTaxonomiesPolicyTagsListRequest',
+        response_type_name=u'GoogleCloudDatacatalogV1beta1ListPolicyTagsResponse',
+        supports_download=False,
+    )
+
+    def Patch(self, request, global_params=None):
+      r"""Updates a policy tag.
+
+      Args:
+        request: (DatacatalogProjectsLocationsTaxonomiesPolicyTagsPatchRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudDatacatalogV1beta1PolicyTag) The response message.
+      """
+      config = self.GetMethodConfig('Patch')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Patch.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/taxonomies/{taxonomiesId}/policyTags/{policyTagsId}',
+        http_method=u'PATCH',
+        method_id=u'datacatalog.projects.locations.taxonomies.policyTags.patch',
+        ordered_params=[u'name'],
+        path_params=[u'name'],
+        query_params=[u'updateMask'],
+        relative_path=u'v1beta1/{+name}',
+        request_field=u'googleCloudDatacatalogV1beta1PolicyTag',
+        request_type_name=u'DatacatalogProjectsLocationsTaxonomiesPolicyTagsPatchRequest',
+        response_type_name=u'GoogleCloudDatacatalogV1beta1PolicyTag',
+        supports_download=False,
+    )
+
+    def SetIamPolicy(self, request, global_params=None):
+      r"""Sets the IAM policy for a taxonomy or a policy tag.
+
+      Args:
+        request: (DatacatalogProjectsLocationsTaxonomiesPolicyTagsSetIamPolicyRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Policy) The response message.
+      """
+      config = self.GetMethodConfig('SetIamPolicy')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    SetIamPolicy.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/taxonomies/{taxonomiesId}/policyTags/{policyTagsId}:setIamPolicy',
+        http_method=u'POST',
+        method_id=u'datacatalog.projects.locations.taxonomies.policyTags.setIamPolicy',
+        ordered_params=[u'resource'],
+        path_params=[u'resource'],
+        query_params=[],
+        relative_path=u'v1beta1/{+resource}:setIamPolicy',
+        request_field=u'setIamPolicyRequest',
+        request_type_name=u'DatacatalogProjectsLocationsTaxonomiesPolicyTagsSetIamPolicyRequest',
+        response_type_name=u'Policy',
+        supports_download=False,
+    )
+
+    def TestIamPermissions(self, request, global_params=None):
+      r"""Returns the permissions that a caller has on the specified taxonomy or.
+policy tag.
+
+      Args:
+        request: (DatacatalogProjectsLocationsTaxonomiesPolicyTagsTestIamPermissionsRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (TestIamPermissionsResponse) The response message.
+      """
+      config = self.GetMethodConfig('TestIamPermissions')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    TestIamPermissions.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/taxonomies/{taxonomiesId}/policyTags/{policyTagsId}:testIamPermissions',
+        http_method=u'POST',
+        method_id=u'datacatalog.projects.locations.taxonomies.policyTags.testIamPermissions',
+        ordered_params=[u'resource'],
+        path_params=[u'resource'],
+        query_params=[],
+        relative_path=u'v1beta1/{+resource}:testIamPermissions',
+        request_field=u'testIamPermissionsRequest',
+        request_type_name=u'DatacatalogProjectsLocationsTaxonomiesPolicyTagsTestIamPermissionsRequest',
+        response_type_name=u'TestIamPermissionsResponse',
+        supports_download=False,
+    )
+
+  class ProjectsLocationsTaxonomiesService(base_api.BaseApiService):
+    """Service class for the projects_locations_taxonomies resource."""
+
+    _NAME = u'projects_locations_taxonomies'
+
+    def __init__(self, client):
+      super(DatacatalogV1beta1.ProjectsLocationsTaxonomiesService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Create(self, request, global_params=None):
+      r"""Creates a taxonomy in the specified project.
+
+      Args:
+        request: (DatacatalogProjectsLocationsTaxonomiesCreateRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudDatacatalogV1beta1Taxonomy) The response message.
+      """
+      config = self.GetMethodConfig('Create')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Create.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/taxonomies',
+        http_method=u'POST',
+        method_id=u'datacatalog.projects.locations.taxonomies.create',
+        ordered_params=[u'parent'],
+        path_params=[u'parent'],
+        query_params=[],
+        relative_path=u'v1beta1/{+parent}/taxonomies',
+        request_field=u'googleCloudDatacatalogV1beta1Taxonomy',
+        request_type_name=u'DatacatalogProjectsLocationsTaxonomiesCreateRequest',
+        response_type_name=u'GoogleCloudDatacatalogV1beta1Taxonomy',
+        supports_download=False,
+    )
+
+    def Delete(self, request, global_params=None):
+      r"""Deletes a taxonomy. This operation will also delete all.
+policy tags in this taxonomy along with their associated policies.
+
+      Args:
+        request: (DatacatalogProjectsLocationsTaxonomiesDeleteRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Empty) The response message.
+      """
+      config = self.GetMethodConfig('Delete')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Delete.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/taxonomies/{taxonomiesId}',
+        http_method=u'DELETE',
+        method_id=u'datacatalog.projects.locations.taxonomies.delete',
+        ordered_params=[u'name'],
+        path_params=[u'name'],
+        query_params=[],
+        relative_path=u'v1beta1/{+name}',
+        request_field='',
+        request_type_name=u'DatacatalogProjectsLocationsTaxonomiesDeleteRequest',
+        response_type_name=u'Empty',
+        supports_download=False,
+    )
+
+    def Export(self, request, global_params=None):
+      r"""Exports all taxonomies and their policy tags in a project.
+
+This method generates SerializedTaxonomy protos with nested policy tags
+that can be used as an input for future ImportTaxonomies calls.
+
+      Args:
+        request: (DatacatalogProjectsLocationsTaxonomiesExportRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudDatacatalogV1beta1ExportTaxonomiesResponse) The response message.
+      """
+      config = self.GetMethodConfig('Export')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Export.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/taxonomies:export',
+        http_method=u'GET',
+        method_id=u'datacatalog.projects.locations.taxonomies.export',
+        ordered_params=[u'parent'],
+        path_params=[u'parent'],
+        query_params=[u'serializedTaxonomies', u'taxonomies'],
+        relative_path=u'v1beta1/{+parent}/taxonomies:export',
+        request_field='',
+        request_type_name=u'DatacatalogProjectsLocationsTaxonomiesExportRequest',
+        response_type_name=u'GoogleCloudDatacatalogV1beta1ExportTaxonomiesResponse',
+        supports_download=False,
+    )
+
+    def Get(self, request, global_params=None):
+      r"""Gets a taxonomy.
+
+      Args:
+        request: (DatacatalogProjectsLocationsTaxonomiesGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudDatacatalogV1beta1Taxonomy) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/taxonomies/{taxonomiesId}',
+        http_method=u'GET',
+        method_id=u'datacatalog.projects.locations.taxonomies.get',
+        ordered_params=[u'name'],
+        path_params=[u'name'],
+        query_params=[],
+        relative_path=u'v1beta1/{+name}',
+        request_field='',
+        request_type_name=u'DatacatalogProjectsLocationsTaxonomiesGetRequest',
+        response_type_name=u'GoogleCloudDatacatalogV1beta1Taxonomy',
+        supports_download=False,
+    )
+
+    def GetIamPolicy(self, request, global_params=None):
+      r"""Gets the IAM policy for a taxonomy or a policy tag.
+
+      Args:
+        request: (DatacatalogProjectsLocationsTaxonomiesGetIamPolicyRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Policy) The response message.
+      """
+      config = self.GetMethodConfig('GetIamPolicy')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    GetIamPolicy.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/taxonomies/{taxonomiesId}:getIamPolicy',
+        http_method=u'POST',
+        method_id=u'datacatalog.projects.locations.taxonomies.getIamPolicy',
+        ordered_params=[u'resource'],
+        path_params=[u'resource'],
+        query_params=[],
+        relative_path=u'v1beta1/{+resource}:getIamPolicy',
+        request_field=u'getIamPolicyRequest',
+        request_type_name=u'DatacatalogProjectsLocationsTaxonomiesGetIamPolicyRequest',
+        response_type_name=u'Policy',
+        supports_download=False,
+    )
+
+    def Import(self, request, global_params=None):
+      r"""Imports all taxonomies and their policy tags to a project as new.
+taxonomies.
+
+This method provides a bulk taxonomy / policy tag creation using nested
+proto structure.
+
+      Args:
+        request: (DatacatalogProjectsLocationsTaxonomiesImportRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudDatacatalogV1beta1ImportTaxonomiesResponse) The response message.
+      """
+      config = self.GetMethodConfig('Import')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Import.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/taxonomies:import',
+        http_method=u'POST',
+        method_id=u'datacatalog.projects.locations.taxonomies.import',
+        ordered_params=[u'parent'],
+        path_params=[u'parent'],
+        query_params=[],
+        relative_path=u'v1beta1/{+parent}/taxonomies:import',
+        request_field=u'googleCloudDatacatalogV1beta1ImportTaxonomiesRequest',
+        request_type_name=u'DatacatalogProjectsLocationsTaxonomiesImportRequest',
+        response_type_name=u'GoogleCloudDatacatalogV1beta1ImportTaxonomiesResponse',
+        supports_download=False,
+    )
+
+    def List(self, request, global_params=None):
+      r"""Lists all taxonomies in a project in a particular location that the caller.
+has permission to view.
+
+      Args:
+        request: (DatacatalogProjectsLocationsTaxonomiesListRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudDatacatalogV1beta1ListTaxonomiesResponse) The response message.
+      """
+      config = self.GetMethodConfig('List')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/taxonomies',
+        http_method=u'GET',
+        method_id=u'datacatalog.projects.locations.taxonomies.list',
+        ordered_params=[u'parent'],
+        path_params=[u'parent'],
+        query_params=[u'pageSize', u'pageToken'],
+        relative_path=u'v1beta1/{+parent}/taxonomies',
+        request_field='',
+        request_type_name=u'DatacatalogProjectsLocationsTaxonomiesListRequest',
+        response_type_name=u'GoogleCloudDatacatalogV1beta1ListTaxonomiesResponse',
+        supports_download=False,
+    )
+
+    def Patch(self, request, global_params=None):
+      r"""Updates a taxonomy.
+
+      Args:
+        request: (DatacatalogProjectsLocationsTaxonomiesPatchRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (GoogleCloudDatacatalogV1beta1Taxonomy) The response message.
+      """
+      config = self.GetMethodConfig('Patch')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Patch.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/taxonomies/{taxonomiesId}',
+        http_method=u'PATCH',
+        method_id=u'datacatalog.projects.locations.taxonomies.patch',
+        ordered_params=[u'name'],
+        path_params=[u'name'],
+        query_params=[u'updateMask'],
+        relative_path=u'v1beta1/{+name}',
+        request_field=u'googleCloudDatacatalogV1beta1Taxonomy',
+        request_type_name=u'DatacatalogProjectsLocationsTaxonomiesPatchRequest',
+        response_type_name=u'GoogleCloudDatacatalogV1beta1Taxonomy',
+        supports_download=False,
+    )
+
+    def SetIamPolicy(self, request, global_params=None):
+      r"""Sets the IAM policy for a taxonomy or a policy tag.
+
+      Args:
+        request: (DatacatalogProjectsLocationsTaxonomiesSetIamPolicyRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Policy) The response message.
+      """
+      config = self.GetMethodConfig('SetIamPolicy')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    SetIamPolicy.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/taxonomies/{taxonomiesId}:setIamPolicy',
+        http_method=u'POST',
+        method_id=u'datacatalog.projects.locations.taxonomies.setIamPolicy',
+        ordered_params=[u'resource'],
+        path_params=[u'resource'],
+        query_params=[],
+        relative_path=u'v1beta1/{+resource}:setIamPolicy',
+        request_field=u'setIamPolicyRequest',
+        request_type_name=u'DatacatalogProjectsLocationsTaxonomiesSetIamPolicyRequest',
+        response_type_name=u'Policy',
+        supports_download=False,
+    )
+
+    def TestIamPermissions(self, request, global_params=None):
+      r"""Returns the permissions that a caller has on the specified taxonomy or.
+policy tag.
+
+      Args:
+        request: (DatacatalogProjectsLocationsTaxonomiesTestIamPermissionsRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (TestIamPermissionsResponse) The response message.
+      """
+      config = self.GetMethodConfig('TestIamPermissions')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    TestIamPermissions.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1beta1/projects/{projectsId}/locations/{locationsId}/taxonomies/{taxonomiesId}:testIamPermissions',
+        http_method=u'POST',
+        method_id=u'datacatalog.projects.locations.taxonomies.testIamPermissions',
+        ordered_params=[u'resource'],
+        path_params=[u'resource'],
+        query_params=[],
+        relative_path=u'v1beta1/{+resource}:testIamPermissions',
+        request_field=u'testIamPermissionsRequest',
+        request_type_name=u'DatacatalogProjectsLocationsTaxonomiesTestIamPermissionsRequest',
+        response_type_name=u'TestIamPermissionsResponse',
+        supports_download=False,
+    )
+
+  class ProjectsLocationsService(base_api.BaseApiService):
+    """Service class for the projects_locations resource."""
+
+    _NAME = u'projects_locations'
+
+    def __init__(self, client):
+      super(DatacatalogV1beta1.ProjectsLocationsService, self).__init__(client)
+      self._upload_configs = {
+          }
 
   class ProjectsService(base_api.BaseApiService):
     """Service class for the projects resource."""

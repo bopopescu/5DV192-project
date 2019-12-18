@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2019 Google Inc. All Rights Reserved.
+# Copyright 2019 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -122,8 +122,8 @@ def ParseIapIamResource(release_track, args):
       command invocation.
 
   Raises:
-    calliope_exc.InvalidArgumentException: if `--version` was specified with
-        resource type 'backend-services'.
+    calliope_exc.InvalidArgumentException: if a provided argument does not apply
+        to the specified resource type.
     iap_exc.InvalidIapIamResourceError: if an IapIamResource could not be parsed
         from the arguments.
 
@@ -132,6 +132,14 @@ def ParseIapIamResource(release_track, args):
   """
   project = properties.VALUES.core.project.GetOrFail()
   if not args.resource_type:
+    if args.service:
+      raise calliope_exc.InvalidArgumentException(
+          '--service',
+          '`--service` cannot be specified without `--resource-type`.')
+    if args.version:
+      raise calliope_exc.InvalidArgumentException(
+          '--version',
+          '`--version` cannot be specified without `--resource-type`.')
     return iap_api.IAPWeb(
         release_track,
         project)

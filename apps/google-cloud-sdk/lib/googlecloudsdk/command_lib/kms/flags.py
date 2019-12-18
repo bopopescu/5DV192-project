@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ from __future__ import division
 from __future__ import unicode_literals
 
 from googlecloudsdk.calliope import arg_parsers
+from googlecloudsdk.calliope import base
 from googlecloudsdk.command_lib.kms import maps
 from googlecloudsdk.command_lib.util import completers
 from googlecloudsdk.command_lib.util import parameter_info_lib
@@ -32,7 +33,7 @@ LOCATION_COLLECTION = 'cloudkms.projects.locations'
 # Collection names.
 CRYPTO_KEY_COLLECTION = 'cloudkms.projects.locations.keyRings.cryptoKeys'
 CRYPTO_KEY_VERSION_COLLECTION = '%s.cryptoKeyVersions' % CRYPTO_KEY_COLLECTION
-
+IMPORT_JOB_COLLECTION = 'cloudkms.projects.locations.keyRings.importJobs'
 # list command aggregators
 
 
@@ -104,12 +105,24 @@ class KeyVersionCompleter(ListCommandCompleter):
         **kwargs)
 
 
+@base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA)
+class ImportJobCompleter(ListCommandCompleter):
+
+  def __init__(self, **kwargs):
+    super(ImportJobCompleter, self).__init__(
+        collection=IMPORT_JOB_COLLECTION,
+        list_command='beta kms import-jobs list --uri',
+        flags=['location', 'keyring'],
+        **kwargs)
+
+
 # completers by parameter name convention
 
 COMPLETERS_BY_CONVENTION = {
     'location': (LocationCompleter, False),
     'keyring': (KeyRingCompleter, False),
     'key': (KeyCompleter, False),
+    'import-jobs': (ImportJobCompleter, False),
 }
 
 
@@ -178,6 +191,16 @@ def AddRemoveRotationScheduleFlag(parser):
       help='Remove any existing rotation schedule on the key.')
 
 
+def AddSkipInitialVersionCreationFlag(parser):
+  parser.add_argument(
+      '--skip-initial-version-creation',
+      default=None,
+      action='store_true',
+      dest='skip_initial_version_creation',
+      help=('Skip creating the first version in a key and setting it as '
+            'primary during creation.'))
+
+
 def AddPlaintextFileFlag(parser, help_action):
   parser.add_argument(
       '--plaintext-file',
@@ -195,7 +218,8 @@ def AddCiphertextFileFlag(parser, help_action):
 def AddSignatureFileFlag(parser, help_action):
   parser.add_argument(
       '--signature-file',
-      help='Path to the signature file {}.'.format(help_action))
+      help='Path to the signature file {}.'.format(help_action),
+      required=True)
 
 
 def AddInputFileFlag(parser, help_action):
@@ -203,6 +227,12 @@ def AddInputFileFlag(parser, help_action):
       '--input-file',
       help='Path to the input file {}.'.format(help_action),
       required=True)
+
+
+def AddRsaAesWrappedKeyFileFlag(parser, help_action):
+  parser.add_argument(
+      '--rsa-aes-wrapped-key-file',
+      help='Path to the wrapped RSA AES key file {}.'.format(help_action))
 
 
 def AddOutputFileFlag(parser, help_action):
@@ -221,9 +251,17 @@ def AddAadFileFlag(parser):
 def AddProtectionLevelFlag(parser):
   parser.add_argument(
       '--protection-level',
-      choices=['software', 'hsm'],
+      choices=['software', 'hsm', 'external'],
       default='software',
       help='Protection level of the key.')
+
+
+def AddRequiredProtectionLevelFlag(parser):
+  parser.add_argument(
+      '--protection-level',
+      choices=['software', 'hsm'],
+      help='Protection level of the import job.',
+      required=True)
 
 
 def AddAttestationFileFlag(parser):
@@ -236,7 +274,33 @@ def AddDefaultAlgorithmFlag(parser):
   parser.add_argument(
       '--default-algorithm',
       choices=sorted(maps.ALL_ALGORITHMS),
-      help='The default algorithm for the crypto key.')
+      help='The default algorithm for the crypto key. See '
+      'https://cloud.google.com/kms/docs/algorithms for guidance on choosing '
+      'an algorithm.')
+
+
+def AddRequiredImportMethodFlag(parser):
+  parser.add_argument(
+      '--import-method',
+      choices=sorted(maps.IMPORT_METHOD_MAPPER.choices)[1:],
+      help='Import method to use for this import job.',
+      required=True)
+
+
+def AddOptionalPublicKeyFileArgument(parser):
+  parser.add_argument(
+      '--public-key-file',
+      help='Optional path to the public key of the ImportJob, used to wrap the '
+      'key for import. If missing, the public key will be fetched on your '
+      'behalf.')
+
+
+def AddOptionalTargetKeyFileArgument(parser):
+  parser.add_argument(
+      '--target-key-file',
+      help='Optional path to the target key to import into a KMS key version. '
+      'If specified, the key will be wrapped in the format produced by the '
+      'PKCS#11 mechanism CKM_RSA_AES_KEY_WRAP')
 
 
 def AddDigestAlgorithmFlag(parser, help_action):
@@ -245,6 +309,23 @@ def AddDigestAlgorithmFlag(parser, help_action):
       choices=sorted(maps.DIGESTS),
       help=help_action,
       required=True)
+
+
+def AddImportedVersionAlgorithmFlag(parser):
+  parser.add_argument(
+      '--algorithm',
+      choices=sorted(maps.ALGORITHMS_FOR_IMPORT),
+      help='The algorithm of the key being imported. See'
+      'https://cloud.google.com/kms/docs/algorithms for guidance on choosing '
+      'an algorithm.',
+      required=True)
+
+
+def AddExternalKeyUriFlag(parser):
+  parser.add_argument(
+      '--external-key-uri',
+      help='The URI of the external key for keys with protection level'
+      ' "external".')
 
 
 # Arguments
@@ -278,6 +359,21 @@ def AddCryptoKeyVersionArgument(parser, help_action):
 def AddKeyVersionResourceArgument(parser, help_action):
   AddKeyResourceFlags(parser)
   AddCryptoKeyVersionArgument(parser, help_action)
+
+
+def AddPositionalImportJobArgument(parser, help_action):
+  parser.add_argument(
+      'import_job',
+      completer=ImportJobCompleter,
+      help='Name of the import job {0}.'.format(help_action))
+
+
+def AddRequiredImportJobArgument(parser, help_action):
+  parser.add_argument(
+      '--import-job',
+      completer=ImportJobCompleter,
+      help='Name of the import job {0}.'.format(help_action),
+      required=True)
 
 
 # Parsing.
@@ -319,6 +415,17 @@ def ParseCryptoKeyVersionName(args):
           'projectsId': properties.VALUES.core.project.GetOrFail,
       },
       collection=CRYPTO_KEY_VERSION_COLLECTION)
+
+
+def ParseImportJobName(args):
+  return resources.REGISTRY.Parse(
+      args.import_job,
+      params={
+          'keyRingsId': args.MakeGetOrRaise('--keyring'),
+          'locationsId': args.MakeGetOrRaise('--location'),
+          'projectsId': properties.VALUES.core.project.GetOrFail,
+      },
+      collection=IMPORT_JOB_COLLECTION)
 
 
 # Get parent type Resource from output of Parse functions above.

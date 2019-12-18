@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import sys
 sys.path.pop(0)
 
 # pylint: disable=g-import-not-at-top
+from googlecloudsdk.core import argv_utils
 from googlecloudsdk.core import http_proxy
 from googlecloudsdk.core.util import files
 
@@ -71,7 +72,7 @@ def ReportMetrics(metrics_file_path):
 
 if __name__ == '__main__':
   try:
-    ReportMetrics(sys.argv[1])
+    ReportMetrics(argv_utils.GetDecodedArgv()[1])
   # pylint: disable=bare-except, Never fail or output a stacktrace here.
   except:
     pass

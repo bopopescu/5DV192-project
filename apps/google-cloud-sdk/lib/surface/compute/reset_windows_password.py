@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -108,7 +108,7 @@ RESET_PASSWORD_WARNING = textwrap.dedent("""
 class ResetWindowsPassword(base.UpdateCommand):
   """Reset and return a password for a Windows machine instance.
 
-    *{command}* allows a user to reset and retrieve a password for
+  *{command}* allows a user to reset and retrieve a password for
   a Windows virtual machine instance. If the Windows account does not
   exist, this command will cause the account to be created and the
   password for that new account will be returned.
@@ -129,6 +129,13 @@ class ResetWindowsPassword(base.UpdateCommand):
 
   The user running this command must have write permission for the
   Google Compute Engine project containing the Windows instance.
+
+  ## EXAMPLES
+
+  To reset the password for user 'foo' on a Windows instance 'my-instance' in
+  zone 'us-central1-f', run:
+
+    $ {command} my-instance --zone=us-central1-f --user=foo
   """
 
   category = base.TOOLS_CATEGORY
@@ -290,7 +297,8 @@ class ResetWindowsPassword(base.UpdateCommand):
         if not encrypted_password_dict.get('encryptedPassword'):
           continue
 
-        if search_modulus == modulus:
+        if (core_encoding.Decode(search_modulus) == core_encoding.Decode(
+            modulus)):
           encrypted_password_data = encrypted_password_dict
           break
       if not agent_ready:

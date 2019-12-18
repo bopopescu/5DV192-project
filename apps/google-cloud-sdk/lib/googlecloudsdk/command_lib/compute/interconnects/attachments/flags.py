@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,15 +18,14 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
-from collections import OrderedDict
+import collections
 
 from googlecloudsdk.calliope import arg_parsers
 from googlecloudsdk.calliope import base
 from googlecloudsdk.command_lib.compute import completers as compute_completers
 from googlecloudsdk.command_lib.compute import flags as compute_flags
 
-
-_BANDWIDTH_CHOICES = OrderedDict([
+_BANDWIDTH_CHOICES = collections.OrderedDict([
     ('50m', '50 Mbit/s'),
     ('100m', '100 Mbit/s'),
     ('200m', '200 Mbit/s'),
@@ -37,16 +36,8 @@ _BANDWIDTH_CHOICES = OrderedDict([
     ('2g', '2 Gbit/s'),
     ('5g', '5 Gbit/s'),
     ('10g', '10 Gbit/s'),
-    ('bps-50m', '50 Mbit/s'),
-    ('bps-100m', '100 Mbit/s'),
-    ('bps-200m', '200 Mbit/s'),
-    ('bps-300m', '300 Mbit/s'),
-    ('bps-400m', '400 Mbit/s'),
-    ('bps-500m', '500 Mbit/s'),
-    ('bps-1g', '1 Gbit/s'),
-    ('bps-2g', '2 Gbit/s'),
-    ('bps-5g', '5 Gbit/s'),
-    ('bps-10g', '10 Gbit/s'),
+    ('20g', '20 Gbit/s'),
+    ('50g', '50 Gbit/s'),
 ])
 
 _EDGE_AVAILABILITY_DOMAIN_CHOICES = {
@@ -94,9 +85,7 @@ def InterconnectAttachmentArgumentForRouter(required=False,
 
 def AddAdminEnabled(parser, default_behavior=True, update=False):
   """Adds adminEnabled flag to the argparse.ArgumentParser."""
-  group = parser.add_group(mutex=True,
-                           required=False,
-                           help='')
+  group = parser.add_group(mutex=True, required=False, help='')
   if update:
     # Update command
     help_text = """\
@@ -139,11 +128,12 @@ def AddBandwidth(parser, required):
   help_text = """\
       Provisioned capacity of the attachment.
       """
+  choices = _BANDWIDTH_CHOICES
+
   base.ChoiceArgument(
       '--bandwidth',
       # TODO(b/80311900): use arg_parsers.BinarySize()
-      # and deprecate the proto enum names
-      choices=_BANDWIDTH_CHOICES,
+      choices=choices,
       required=required,
       help_str=help_text).AddToParser(parser)
 
@@ -172,9 +162,8 @@ def AddPartnerAsn(parser):
 
 def AddPartnerMetadata(parser, required=True):
   """Adds partner metadata flags to the argparse.ArgumentParser."""
-  group = parser.add_group(mutex=False,
-                           required=required,
-                           help='Partner metadata.')
+  group = parser.add_group(
+      mutex=False, required=required, help='Partner metadata.')
   group.add_argument(
       '--partner-name',
       required=required,
@@ -255,3 +244,24 @@ def AddCandidateSubnets(parser):
       one of the candidate subnets. The request will fail if all /29s within the
       candidate subnets are in use at Google's edge.""",
       default=[])
+
+
+def AddDryRun(parser):
+  """Adds dry-run flag to the argparse.ArgumentParser."""
+  parser.add_argument(
+      '--dry-run',
+      default=None,
+      action='store_true',
+      help='If supplied, validates the attachment without creating it.')
+
+
+def AddMtu(parser):
+  """Adds mtu flag to the argparse.ArgumentParser."""
+  parser.add_argument(
+      '--mtu',
+      type=int,
+      help="""\
+      Maximum transmission unit(MTU) is the size of the largest frame passing
+      through this interconnect attachment. Only 1440 and 1500 are allowed.
+      If not specified, the value will default to 1440.
+      """)

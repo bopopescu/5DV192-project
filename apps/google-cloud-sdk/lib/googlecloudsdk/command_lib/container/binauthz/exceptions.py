@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -36,3 +36,7 @@ class AlreadyExistsError(Error):
 
 class InvalidStateError(Error):
   """Indicates a resource is in an invalid state."""
+
+
+class InvalidArgumentError(Error):
+  """Indicates a flag/argument is invalid."""

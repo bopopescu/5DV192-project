@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -42,7 +42,9 @@ def _Args(parser, deprecate_maintenance_policy=False,
   instances_flags.AddCreateDiskArgs(
       parser, container_mount_enabled=container_mount_enabled)
   instances_flags.AddCanIpForwardArgs(parser)
+  instances_flags.AddContainerMountDiskFlag(parser)
   instances_flags.AddAddressArgs(parser, instances=True)
+  instances_flags.AddAcceleratorArgs(parser)
   instances_flags.AddMachineTypeArgs(parser)
   instances_flags.AddMaintenancePolicyArgs(
       parser, deprecate=deprecate_maintenance_policy)
@@ -78,11 +80,12 @@ class CreateWithContainer(base.CreateCommand):
   @staticmethod
   def Args(parser):
     """Register parser args."""
-    _Args(parser)
+    _Args(parser, container_mount_enabled=True)
     instances_flags.AddNetworkTierArgs(parser, instance=True)
     instances_flags.AddMinCpuPlatformArgs(parser, base.ReleaseTrack.GA)
 
   def _ValidateArgs(self, args):
+    instances_flags.ValidateAcceleratorArgs(args)
     instances_flags.ValidateNicFlags(args)
     instances_flags.ValidateNetworkTierArgs(args)
     instances_flags.ValidateKonletArgs(args)
@@ -131,6 +134,11 @@ class CreateWithContainer(base.CreateCommand):
     self._ValidateArgs(args)
 
     holder = base_classes.ComputeApiHolder(self.ReleaseTrack())
+    container_mount_disk = instances_flags.GetValidatedContainerMountDisk(
+        holder,
+        args.container_mount_disk,
+        args.disk,
+        args.create_disk)
     client = holder.client
     source_instance_template = instance_utils.GetSourceInstanceTemplate(
         args, holder.resources, self.SOURCE_INSTANCE_TEMPLATE)
@@ -154,14 +162,19 @@ class CreateWithContainer(base.CreateCommand):
     requests = []
     for instance_ref, machine_type_uri in zip(instance_refs, machine_type_uris):
       metadata = containers_utils.CreateKonletMetadataMessage(
-          client.messages, args, instance_ref.Name(), user_metadata)
+          client.messages, args, instance_ref.Name(), user_metadata,
+          container_mount_disk_enabled=True,
+          container_mount_disk=container_mount_disk)
       disks = instance_utils.CreateDiskMessages(
           holder, args, boot_disk_size_gb, image_uri, instance_ref,
-          skip_defaults)
+          skip_defaults, match_container_mount_disks=True)
+      guest_accelerators = instance_utils.GetAccelerators(
+          args, client, holder.resources, instance_ref)
       request = client.messages.ComputeInstancesInsertRequest(
           instance=client.messages.Instance(
               canIpForward=can_ip_forward,
               disks=disks,
+              guestAccelerators=guest_accelerators,
               description=args.description,
               labels=labels,
               machineType=machine_type_uri,
@@ -191,7 +204,6 @@ class CreateWithContainerBeta(CreateWithContainer):
     """Register parser args."""
     _Args(parser, container_mount_enabled=True)
     instances_flags.AddNetworkTierArgs(parser, instance=True)
-    instances_flags.AddContainerMountDiskFlag(parser)
     instances_flags.AddLocalSsdArgsWithSize(parser)
     instances_flags.AddMinCpuPlatformArgs(parser, base.ReleaseTrack.BETA)
 
@@ -255,10 +267,13 @@ class CreateWithContainerBeta(CreateWithContainer):
       disks = instance_utils.CreateDiskMessages(
           holder, args, boot_disk_size_gb, image_uri, instance_ref,
           skip_defaults, match_container_mount_disks=True)
+      guest_accelerators = instance_utils.GetAccelerators(
+          args, client, holder.resources, instance_ref)
       request = client.messages.ComputeInstancesInsertRequest(
           instance=client.messages.Instance(
               canIpForward=can_ip_forward,
               disks=disks,
+              guestAccelerators=guest_accelerators,
               description=args.description,
               labels=labels,
               machineType=machine_type_uri,
@@ -289,7 +304,6 @@ class CreateWithContainerAlpha(CreateWithContainerBeta):
           container_mount_enabled=True)
 
     instances_flags.AddNetworkTierArgs(parser, instance=True)
-    instances_flags.AddContainerMountDiskFlag(parser)
     instances_flags.AddLocalSsdArgsWithSize(parser)
     instances_flags.AddLocalNvdimmArgs(parser)
     instances_flags.AddMinCpuPlatformArgs(parser, base.ReleaseTrack.ALPHA)
@@ -340,10 +354,13 @@ class CreateWithContainerAlpha(CreateWithContainerBeta):
       disks = instance_utils.CreateDiskMessages(
           holder, args, boot_disk_size_gb, image_uri, instance_ref,
           skip_defaults, match_container_mount_disks=True)
+      guest_accelerators = instance_utils.GetAccelerators(
+          args, client, holder.resources, instance_ref)
       request = client.messages.ComputeInstancesInsertRequest(
           instance=client.messages.Instance(
               canIpForward=can_ip_forward,
               disks=disks,
+              guestAccelerators=guest_accelerators,
               description=args.description,
               labels=labels,
               machineType=machine_type_uri,

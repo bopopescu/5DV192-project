@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2013 Google Inc. All Rights Reserved.
+# Copyright 2013 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -33,6 +33,11 @@ class Restore(base.SilentCommand):
   state is remembered, so it is impossible to restore the state that existed
   before the two most recent `update` commands, for example. A `restore` command
   does not undo a previous `restore` command.
+
+  ## EXAMPLES
+  To restore Cloud SDK installation to its previous state, run:
+
+    $ {command}
   """
 
   @staticmethod

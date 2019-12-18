@@ -1,10 +1,14 @@
 - help_text:
     brief: List Cloud Healthcare API annotation stores.
     description: List Cloud Healthcare API annotation stores.
+    examples: |
+      To list the annotation stores in 'test-dataset', run:
+
+        $ {command} --dataset=test-dataset
 
   request:
     collection: healthcare.projects.locations.datasets.annotationStores
-    api_version: v1alpha
+    api_version: v1alpha2
 
   response:
     id_field: name

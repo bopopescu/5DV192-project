@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -48,14 +48,15 @@ class Wait(base.Command):
     $ {command} job_id
   """
 
-  @staticmethod
-  def Args(parser):
-    flags.AddJobFlag(parser, 'wait for')
+  @classmethod
+  def Args(cls, parser):
+    dataproc = dp.Dataproc(cls.ReleaseTrack())
+    flags.AddJobResourceArg(parser, 'wait for', dataproc.api_version)
 
   def Run(self, args):
     dataproc = dp.Dataproc(self.ReleaseTrack())
 
-    job_ref = util.ParseJob(args.job, dataproc)
+    job_ref = args.CONCEPTS.job.Parse()
 
     job = dataproc.client.projects_regions_jobs.Get(
         dataproc.messages.DataprocProjectsRegionsJobsGetRequest(
@@ -68,8 +69,10 @@ class Wait(base.Command):
     job = util.WaitForJobTermination(
         dataproc,
         job,
+        job_ref,
         message='Waiting for job completion',
         goal_state=dataproc.messages.JobStatus.StateValueValuesEnum.DONE,
+        error_state=dataproc.messages.JobStatus.StateValueValuesEnum.ERROR,
         stream_driver_log=True)
 
     log.status.Print('Job [{0}] finished successfully.'.format(args.job))

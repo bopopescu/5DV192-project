@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ from __future__ import unicode_literals
 from apitools.base.py import exceptions as apitools_exceptions
 
 from googlecloudsdk.api_lib.container import util
+from googlecloudsdk.calliope import actions
 from googlecloudsdk.calliope import base
 from googlecloudsdk.calliope import exceptions
 from googlecloudsdk.command_lib.container import flags
@@ -41,11 +42,20 @@ class Resize(base.Command):
         to capture some information, but behaves like an ArgumentParser.
     """
     parser.add_argument('name', help='The name of this cluster.')
-    parser.add_argument(
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument(
         '--size',
-        required=True,
         type=int,
-        help=('Target number of nodes in the cluster.'))
+        dest='num_nodes',
+        action=actions.DeprecationAction('--size',
+                                         warn='The {flag_name} flag is now '
+                                         'deprecated. Please use `--num-nodes` '
+                                         'instead.'),
+        help='Target number of nodes in the cluster.')
+    group.add_argument(
+        '--num-nodes',
+        type=int,
+        help='Target number of nodes in the cluster.')
     parser.add_argument('--node-pool', help='The node pool to resize.')
     flags.AddAsyncFlag(parser)
 
@@ -83,13 +93,13 @@ class Resize(base.Command):
                  '{new_size}.').format(
                      pool=pool_name,
                      cluster_name=cluster_name,
-                     new_size=args.size),
+                     new_size=args.num_nodes),
         throw_if_unattended=True,
         cancel_on_no=True)
 
-    op_ref = adapter.ResizeNodePool(cluster_ref, pool_name, args.size)
+    op_ref = adapter.ResizeNodePool(cluster_ref, pool_name, args.num_nodes)
 
-    if not args.async:
+    if not args.async_:
       adapter.WaitForOperation(op_ref,
                                'Resizing {0}'.format(cluster_ref.clusterId))
     log.UpdatedResource(cluster_ref)
@@ -120,4 +130,10 @@ they will not be restarted.
 Note that when resizing down, instances running pods and instances without pods
 are not differentiated. Resize will pick instances to remove at random.
 """,
+    'EXAMPLES':
+        """\
+        To resize the default node pool of an existing cluster, run:
+
+          $ {command} sample-cluster --num-nodes=2
+        """,
 }

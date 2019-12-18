@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,11 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""bigtable app-profiles describe command."""
+"""bigtable app profiles describe command."""
 
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
+
+import textwrap
 
 from googlecloudsdk.api_lib.bigtable import app_profiles
 from googlecloudsdk.calliope import base
@@ -24,7 +26,17 @@ from googlecloudsdk.command_lib.bigtable import arguments
 
 
 class DescribeAppProfile(base.DescribeCommand):
-  """Describe an existing Bigtable app-profile."""
+  """Describe an existing Bigtable app profile."""
+
+  detailed_help = {
+      'EXAMPLES':
+          textwrap.dedent("""\
+          To view an app profile's description, run:
+
+            $ {command} my-app-profile-id --instance=my-instance-id
+
+          """),
+  }
 
   @staticmethod
   def Args(parser):

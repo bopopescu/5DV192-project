@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2019 Google Inc. All Rights Reserved.
+# Copyright 2019 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,6 +27,11 @@ def IsZonal(location):
 def IsRegional(location):
   """Returns True if the location string is a GCP region."""
   return len(location.split('-')) == 2
+
+
+def GetRegionFromZone(zone):
+  """Returns the GCP region that the input zone is in."""
+  return '-'.join(zone.split('-')[:-1])
 
 
 def ExtractRegionsFromLocationsListResponse(response, args):

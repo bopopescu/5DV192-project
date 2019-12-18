@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,11 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""bigtable app_profiles update command."""
+"""bigtable app profiles update command."""
 
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
+
+import textwrap
 
 from apitools.base.py.exceptions import HttpError
 from googlecloudsdk.api_lib.bigtable import app_profiles
@@ -27,13 +29,34 @@ from googlecloudsdk.core import log
 
 
 class UpdateAppProfile(base.CreateCommand):
-  """Update a Bigtable app_profile."""
+  """Update a Bigtable app profile."""
+
+  detailed_help = {
+      'EXAMPLES':
+          textwrap.dedent("""\
+          To update an app profile to use a multi-cluster routing policy, run:
+
+            $ {command} my-app-profile-id --instance=my-instance-id --route-any
+
+          To update an app profile to use a single-cluster routing policy that
+          routes all requests to `my-cluster-id` and allows transactional
+          writes, run:
+
+            $ {command} my-app-profile-id --instance=my-instance-id --route-to=my-cluster-id --transactional-writes
+
+          To update the description for an app profile, run:
+
+            $ {command} my-app-profile-id --instance=my-instance-id --description="New description"
+
+          """),
+  }
 
   @staticmethod
   def Args(parser):
     arguments.AddAppProfileResourceArg(parser, 'to update')
-    (arguments.ArgAdder(parser).AddDescription('app-profile', required=False)
-     .AddAppProfileRouting(required=False).AddForce('update').AddAsync())
+    (arguments.ArgAdder(parser).AddDescription(
+        'app profile', required=False).AddAppProfileRouting(
+            required=False).AddForce('update').AddAsync())
 
   def Run(self, args):
     """This is what gets called when the user runs this command.
@@ -63,13 +86,13 @@ class UpdateAppProfile(base.CreateCommand):
     else:
       operation_ref = util.GetOperationRef(result)
 
-      if args.async:
+      if args.async_:
         log.UpdatedResource(
             operation_ref,
-            kind='bigtable app-profile {0}'.format(app_profile_ref.Name()),
+            kind='bigtable app profile {0}'.format(app_profile_ref.Name()),
             is_async=True)
         return result
 
       return util.AwaitAppProfile(
           operation_ref,
-          'Updating bigtable app-profile {0}'.format(app_profile_ref.Name()))
+          'Updating bigtable app profile {0}'.format(app_profile_ref.Name()))

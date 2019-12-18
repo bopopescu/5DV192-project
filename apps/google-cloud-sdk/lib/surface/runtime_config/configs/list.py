@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2016 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ class List(base.ListCommand):
   DEFAULT_PAGE_SIZE = 100
 
   detailed_help = {
-      'EXAMPLES': """\
+      'EXAMPLES': """
           To list all runtime-config resources for the current project, run:
 
             $ {command}
@@ -43,7 +43,7 @@ class List(base.ListCommand):
           For example, to list all runtime-config resources with names that
           begin with 'foo', run:
 
-            $ {command} --filter 'name=foo*'
+            $ {command} --filter='name=foo*'
           """,
   }
 

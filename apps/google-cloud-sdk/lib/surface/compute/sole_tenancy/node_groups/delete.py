@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,7 +26,16 @@ from googlecloudsdk.core.console import console_io
 
 
 class Delete(base.DeleteCommand):
-  """Deletes a Google Compute Engine node group."""
+  """Delete a Compute Engine node group."""
+
+  detailed_help = {
+      'brief': 'Delete a Compute Engine node group.',
+      'EXAMPLES': """
+         To delete a node group, run:
+
+           $ {command} my-node-group
+       """
+  }
 
   @staticmethod
   def Args(parser):

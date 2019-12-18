@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,19 +23,27 @@ from googlecloudsdk.calliope import base
 from googlecloudsdk.command_lib.dataproc import flags
 from googlecloudsdk.command_lib.util.args import labels_util
 
+DETAILED_HELP = {
+    'EXAMPLES':
+        """\
+      To create a workflow template named 'my-workflow-template' in region
+      'us-central1' with label params 'key1'='value1' and 'key2'='value2', run:
 
-def _CommonArgs(parser):
-  labels_util.AddCreateLabelsFlags(parser)
+        $ {command} my-workflow-template --region=us-central1 --labels="key1=value1,key2=value2"
+      """,
+}
 
 
-@base.ReleaseTracks(base.ReleaseTrack.GA)
 class Create(base.CreateCommand):
   """Create a workflow template."""
 
-  @staticmethod
-  def Args(parser):
-    _CommonArgs(parser)
-    flags.AddTemplateResourceArg(parser, 'create', api_version='v1')
+  detailed_help = DETAILED_HELP
+
+  @classmethod
+  def Args(cls, parser):
+    dataproc = dp.Dataproc(cls.ReleaseTrack())
+    labels_util.AddCreateLabelsFlags(parser)
+    flags.AddTemplateResourceArg(parser, 'create', dataproc.api_version)
 
   def Run(self, args):
     dataproc = dp.Dataproc(self.ReleaseTrack())
@@ -59,13 +67,3 @@ class Create(base.CreateCommand):
     template = dataproc.client.projects_regions_workflowTemplates.Create(
         request)
     return template
-
-
-@base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA)
-class CreateBeta(Create):
-  """Create a workflow template."""
-
-  @staticmethod
-  def Args(parser):
-    _CommonArgs(parser)
-    flags.AddTemplateResourceArg(parser, 'create', api_version='v1beta2')

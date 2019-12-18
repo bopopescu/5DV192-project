@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,6 +25,20 @@ from googlecloudsdk.calliope import base
 
 class Describe(base.DescribeCommand):
   """Describe an iOS operating system version."""
+
+  detailed_help = {
+      'DESCRIPTION': 'Describe an iOS operating system version.',
+      'EXAMPLES': """To describe an iOS operating system version available for
+testing, run:
+
+  {command} 12.1
+
+To describe an iOS operating system version available for testing in JSON
+format, run:
+
+  {command} 12.1 --format=json
+"""
+  }
 
   @staticmethod
   def Args(parser):

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ from googlecloudsdk.calliope import base
 
 
 class TargetVpnGateways(base.Group):
-  """Read and manipulate Google Compute Engine VPN Gateways."""
+  """read and manipulate Classic VPN Gateways."""
 
   # Placeholder to indicate that a detailed_help field exists and should
   # be set outside the class definition.
@@ -33,5 +33,6 @@ TargetVpnGateways.category = base.NETWORKING_CATEGORY
 
 TargetVpnGateways.detailed_help = {
     'brief': (
-        'Read and manipulate Google Compute Engine VPN Gateways'),
+        'read and manipulate Google Compute Engine Classic VPN '
+        'Gateways.'),
 }

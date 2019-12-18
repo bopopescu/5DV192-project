@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,6 +26,16 @@ from googlecloudsdk.command_lib.tasks import parsers
 
 class Run(base.Command):
   """Force a task to run now."""
+  detailed_help = {
+      'DESCRIPTION': """\
+          {description}
+          """,
+      'EXAMPLES': """\
+          To run a task:
+
+              $ {command} --queue=my-queue my-task
+         """,
+  }
 
   @staticmethod
   def Args(parser):

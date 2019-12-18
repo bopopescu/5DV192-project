@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ from googlecloudsdk.api_lib.dataproc import constants
 from googlecloudsdk.api_lib.dataproc import dataproc as dp
 from googlecloudsdk.api_lib.dataproc import util
 from googlecloudsdk.calliope import base
+from googlecloudsdk.command_lib.dataproc import flags
 from googlecloudsdk.core import properties
 
 
@@ -67,18 +68,20 @@ class List(base.ListCommand):
 
   To see the list of all jobs, run:
 
-    $ {command}
+    $ {command} --region=us-central1
 
   To see a list of all active jobs in cluster `my_cluster` with a label of
   `env=staging`, run:
 
-    $ {command} --filter='status.state = ACTIVE AND placement.clusterName = my_cluster AND labels.env = staging'
+    $ {command} --region=us-central1 --filter='status.state = ACTIVE AND
+        placement.clusterName = my_cluster AND labels.env = staging'
   """
 
   @staticmethod
   def Args(parser):
     base.URI_FLAG.RemoveFromParser(parser)
     base.PAGE_SIZE_FLAG.SetDefault(parser, constants.DEFAULT_PAGE_SIZE)
+    flags.AddRegionFlag(parser)
 
     parser.add_argument(
         '--cluster',
@@ -100,7 +103,7 @@ class List(base.ListCommand):
     dataproc = dp.Dataproc(self.ReleaseTrack())
 
     project = properties.VALUES.core.project.GetOrFail()
-    region = properties.VALUES.dataproc.region.GetOrFail()
+    region = util.ResolveRegion(self.ReleaseTrack())
 
     request = self.GetRequest(dataproc.messages, project, region, args)
 

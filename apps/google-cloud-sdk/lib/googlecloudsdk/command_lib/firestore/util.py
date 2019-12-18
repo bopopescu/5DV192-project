@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,13 +21,10 @@ from __future__ import unicode_literals
 from apitools.base.py import encoding
 from googlecloudsdk.api_lib.util import apis
 from googlecloudsdk.calliope import exceptions
-from googlecloudsdk.core import log
 from googlecloudsdk.core.util import text
 
 
-# All commands that manage indexes use this API (since v1/v1beta1 don't have
-# index management functionality).
-FIRESTORE_INDEX_API_VERSION = 'v1beta2'
+FIRESTORE_INDEX_API_VERSION = 'v1'
 
 
 def GetMessagesModule():
@@ -129,29 +126,12 @@ def ExtractOperationMetadata(response, unused_args):
     unused_args: The parsed arg namespace (unused).
   Returns:
     The metadata field converted to a
-    GoogleFirestoreAdminV1beta2IndexOperationMetadata message.
+    GoogleFirestoreAdminV1IndexOperationMetadata message.
   """
   messages = GetMessagesModule()
   return encoding.DictToMessage(
       encoding.MessageToDict(response.metadata),
-      messages.GoogleFirestoreAdminV1beta2IndexOperationMetadata)
-
-
-def LogCreatedIndex(response, args):
-  """Python hook to log the creation of the index to stderr.
-
-  The declarative framework doesn't log creation of resources if
-  is_parent_resource=True in the spec, so we have to do it manually here.
-
-  Args:
-    response: GoogleFirestoreAdminV1beta2IndexOperationMetadata message
-    args: The parsed arg namespace.
-  Returns:
-    The same response that was passed in.
-  """
-  if not args.async:
-    log.CreatedResource(response.index.split('/')[-1], kind='index')
-  return response
+      messages.GoogleFirestoreAdminV1IndexOperationMetadata)
 
 
 def ValidateFieldArg(ref, unused_args, request):
@@ -187,19 +167,19 @@ def CreateIndexMessage(messages, index):
     messages: The Cloud Firestore messages module.
     index: The index ArgDict.
   Returns:
-    GoogleFirestoreAdminV1beta2Index
+    GoogleFirestoreAdminV1Index
   """
   # Currently all indexes are COLLECTION-scoped
-  query_scope = (messages.GoogleFirestoreAdminV1beta2Index.
-                 QueryScopeValueValuesEnum.COLLECTION)
+  query_scope = (
+      messages.GoogleFirestoreAdminV1Index.QueryScopeValueValuesEnum.COLLECTION)
   # Since this is a single-field index there will only be 1 field
-  index_fields = [messages.GoogleFirestoreAdminV1beta2IndexField(
-      arrayConfig=index.get('array-config'),
-      order=index.get('order'))]
+  index_fields = [
+      messages.GoogleFirestoreAdminV1IndexField(
+          arrayConfig=index.get('array-config'), order=index.get('order'))
+  ]
 
-  return messages.GoogleFirestoreAdminV1beta2Index(
-      queryScope=query_scope,
-      fields=index_fields)
+  return messages.GoogleFirestoreAdminV1Index(
+      queryScope=query_scope, fields=index_fields)
 
 
 def ValidateFieldIndexArgs(args):
@@ -242,21 +222,19 @@ def CreateFieldUpdateRequest(ref, args):
   messages = GetMessagesModule()
   index_config = None
   if args.disable_indexes:
-    index_config = messages.GoogleFirestoreAdminV1beta2IndexConfig(indexes=[])
+    index_config = messages.GoogleFirestoreAdminV1IndexConfig(indexes=[])
   elif args.IsSpecified('index'):
     # args.index is a repeated argument
-    index_config = messages.GoogleFirestoreAdminV1beta2IndexConfig(
+    index_config = messages.GoogleFirestoreAdminV1IndexConfig(
         indexes=[CreateIndexMessage(messages, index) for index in args.index])
 
-  field = messages.GoogleFirestoreAdminV1beta2Field(
-      name=ref.RelativeName(),
-      indexConfig=index_config)
+  field = messages.GoogleFirestoreAdminV1Field(
+      name=ref.RelativeName(), indexConfig=index_config)
 
   request = (
       messages.FirestoreProjectsDatabasesCollectionGroupsFieldsPatchRequest(
           name=ref.RelativeName(),
           updateMask='indexConfig',
-          googleFirestoreAdminV1beta2Field=field)
-  )
+          googleFirestoreAdminV1Field=field))
 
   return request

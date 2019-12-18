@@ -177,7 +177,7 @@ account, which is often given to billing account
         method_id=u'cloudbilling.billingAccounts.getIamPolicy',
         ordered_params=[u'resource'],
         path_params=[u'resource'],
-        query_params=[],
+        query_params=[u'options_requestedPolicyVersion'],
         relative_path=u'v1/{+resource}:getIamPolicy',
         request_field='',
         request_type_name=u'CloudbillingBillingAccountsGetIamPolicyRequest',
@@ -187,7 +187,8 @@ account, which is often given to billing account
 
     def List(self, request, global_params=None):
       r"""Lists the billing accounts that the current authenticated user has.
-permission to [view](https://cloud.google.com/billing/docs/how-to/billing-access).
+permission to
+[view](https://cloud.google.com/billing/docs/how-to/billing-access).
 
       Args:
         request: (CloudbillingBillingAccountsListRequest) input message

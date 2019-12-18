@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2019 Google Inc. All Rights Reserved.
+# Copyright 2019 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,23 +25,33 @@ from googlecloudsdk.command_lib.iam import iam_util
 
 
 class SetIamPolicy(base.Command):
-  """Set IAM policy for an autoscaling policy.
+  r"""Set IAM policy for an autoscaling policy.
 
   Sets the IAM policy for an autoscaling policy, given an autoscaling policy ID
   and the IAM policy.
+
+  ## EXAMPLES
+    The following command will read an IAM policy defined in a JSON file
+    'policy.json' and set it for an autoscaling-policy with identifier
+    'example-autoscaling-policy'
+
+        $ {command} autoscaling-policies set-iam-policy \
+            example-autoscaling-policy policy.json
+
+    See https://cloud.google.com/iam/docs/managing-policies for details of the
+    policy file format and contents.
   """
 
-  detailed_help = iam_util.GetDetailedHelpForSetIamPolicy(
-      'autoscaling-policy', use_an=True)
-
-  @staticmethod
-  def Args(parser):
-    flags.AddAutoscalingPolicyResourceArg(
-        parser, 'retrieve the IAM policy for', api_version='v1beta2')
+  @classmethod
+  def Args(cls, parser):
+    dataproc = dp.Dataproc(cls.ReleaseTrack())
+    flags.AddAutoscalingPolicyResourceArg(parser, 'retrieve the IAM policy for',
+                                          dataproc.api_version)
     iam_util.AddArgForPolicyFile(parser)
 
   def Run(self, args):
     dataproc = dp.Dataproc(self.ReleaseTrack())
+
     messages = dataproc.messages
 
     policy = iam_util.ParsePolicyFile(args.policy_file, messages.Policy)

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -194,7 +194,7 @@ class Upgrade(base.Command):
     except apitools_exceptions.HttpError as error:
       raise exceptions.HttpException(error, util.HTTP_ERROR_FORMAT)
 
-    if not args.async:
+    if not args.async_:
       adapter.WaitForOperation(
           op_ref,
           'Upgrading {0}'.format(cluster_ref.clusterId),
@@ -230,18 +230,18 @@ Upgrade.detailed_help = {
     """,
     'EXAMPLES':
         """\
-      Upgrade the nodes of <cluster> to the Kubernetes version of the cluster's
-      master.
+      Upgrade the nodes of sample-cluster to the Kubernetes version of the
+      cluster's master.
 
-        $ {command} <cluster>
+        $ {command} sample-cluster
 
-      Upgrade the nodes of <cluster> to Kubernetes version x.y.z:
+      Upgrade the nodes of sample-cluster to Kubernetes version 1.14.7-gke.14:
 
-        $ {command} <cluster> --cluster-version "x.y.z"
+        $ {command} sample-cluster --cluster-version="1.14.7-gke.14"
 
-      Upgrade the master of <cluster> to the default cluster version:
+      Upgrade the master of sample-cluster to the default cluster version:
 
-        $ {command} <cluster> --master"
+        $ {command} sample-cluster --master
 """,
 }
 

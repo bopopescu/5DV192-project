@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ from __future__ import unicode_literals
 from googlecloudsdk.api_lib.filestore import filestore_client
 from googlecloudsdk.calliope import base
 from googlecloudsdk.command_lib.filestore import flags
+from googlecloudsdk.command_lib.filestore.instances import flags as instances_flags
 from googlecloudsdk.command_lib.util.concepts import concept_parsers
 
 
@@ -34,6 +35,7 @@ class Describe(base.DescribeCommand):
   def Args(parser):
     concept_parsers.ConceptParser([flags.GetOperationPresentationSpec(
         'The operation to describe.')]).AddToParser(parser)
+    instances_flags.AddLocationArg(parser)
     parser.display_info.AddFormat('default')
 
   def Run(self, args):

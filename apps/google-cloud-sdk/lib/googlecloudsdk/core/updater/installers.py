@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2013 Google Inc. All Rights Reserved.
+# Copyright 2013 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ from googlecloudsdk.core.util import files as file_utils
 from googlecloudsdk.core.util import http_encoding
 from googlecloudsdk.core.util import retry
 
+import six
 from six.moves import urllib
 
 
@@ -55,7 +56,7 @@ class ComponentDownloadFailedError(Error):
   def __init__(self, component_id, e):
     super(ComponentDownloadFailedError, self).__init__(
         'The component [{component_id}] failed to download.\n\n'.format(
-            component_id=component_id) + str(e))
+            component_id=component_id) + six.text_type(e))
 
 
 class URLFetchError(Error):
@@ -67,7 +68,7 @@ class AuthenticationError(Error):
   """Exception for when the resource is protected by authentication."""
 
   def __init__(self, msg, e):
-    super(AuthenticationError, self).__init__(msg + '\n\n' + str(e))
+    super(AuthenticationError, self).__init__(msg + '\n\n' + six.text_type(e))
 
 
 class UnsupportedSourceError(Error):

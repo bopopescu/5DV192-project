@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -53,4 +53,8 @@ class List(base.ListCommand):
         args.filter)
     log.info('client_filter="%s" server_filter="%s"',
              args.filter, server_filter)
-    return projects_api.List(limit=args.limit, filter=server_filter)
+    server_limit = args.limit
+    if args.filter:
+      # We must use client-side limiting if we are using client-side filtering.
+      server_limit = None
+    return projects_api.List(limit=server_limit, filter=server_filter)

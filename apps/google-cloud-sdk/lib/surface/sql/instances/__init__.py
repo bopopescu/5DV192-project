@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2013 Google Inc. All Rights Reserved.
+# Copyright 2013 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,3 +30,4 @@ class Instances(base.Group):
   Provide commands for managing Cloud SQL instances including creating,
   configuring, restarting, and deleting instances.
   """
+  category = base.DATABASES_CATEGORY

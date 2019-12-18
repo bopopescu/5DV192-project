@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2019 Google Inc. All Rights Reserved.
+# Copyright 2019 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,9 +23,8 @@ from googlecloudsdk.command_lib.dataproc.jobs import presto
 from googlecloudsdk.command_lib.dataproc.jobs import submitter
 
 
-@base.Hidden
 @base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA)
-class PrestoBeta(presto.PrestoBase, submitter.JobSubmitterBeta):
+class PrestoBeta(presto.PrestoBase, submitter.JobSubmitter):
   r"""Submit a Presto job to a cluster.
 
   Submit a Presto job to a cluster
@@ -34,11 +33,11 @@ class PrestoBeta(presto.PrestoBase, submitter.JobSubmitterBeta):
 
   To submit a Presto job with a local script, run:
 
-    $ {command} --cluster my_cluster --file my_script.R
+    $ {command} --cluster=my_cluster --file=my_script.R
 
   To submit a Presto job with inline queries, run:
 
-    $ {command} --cluster my_cluster -e "SELECT * FROM foo WHERE bar > 2"
+    $ {command} --cluster=my_cluster -e="SELECT * FROM foo WHERE bar > 2"
   """
 
   @staticmethod
@@ -50,4 +49,4 @@ class PrestoBeta(presto.PrestoBase, submitter.JobSubmitterBeta):
     presto.PrestoBase.ConfigureJob(
         messages, job, self.files_by_type,
         self.BuildLoggingConfig(messages, args.driver_log_levels), args)
-    submitter.JobSubmitterBeta.ConfigureJob(messages, job, args)
+    submitter.JobSubmitter.ConfigureJob(messages, job, args)

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Command for detaching a disk from an instance."""
 
 from __future__ import absolute_import
@@ -30,7 +29,8 @@ from googlecloudsdk.command_lib.compute.instances import flags
 from googlecloudsdk.core import log
 
 
-@base.ReleaseTracks(base.ReleaseTrack.GA)
+@base.ReleaseTracks(base.ReleaseTrack.GA, base.ReleaseTrack.BETA,
+                    base.ReleaseTrack.ALPHA)
 class DetachDisk(base.UpdateCommand):
   """Detach disks from Compute Engine virtual machine instances.
 
@@ -43,6 +43,20 @@ class DetachDisk(base.UpdateCommand):
 
       $ sudo umount /dev/disk/by-id/google-DEVICE_NAME
   """
+
+  detailed_help = {
+      'EXAMPLES': """
+          To detach a disk named 'my-disk' to an instance named 'my-instance',
+          run:
+
+            $ {command} my-instance --disk=my-disk
+
+          To detach a device named 'my-device' from an instance named
+          'my-instance', run:
+
+            $ {command} my-instance --device-name=my-device
+          """,
+  }
 
   @staticmethod
   def Args(parser):
@@ -67,6 +81,7 @@ class DetachDisk(base.UpdateCommand):
         specified, then its persistent disk name must not be specified
         using the ``--disk'' flag.
         """)
+    flags.AddDiskScopeFlag(parser)
 
   def CreateReference(self, client, resources, args):
     return flags.INSTANCE_ARG.ResolveAsResource(
@@ -88,33 +103,16 @@ class DetachDisk(base.UpdateCommand):
                 deviceName=removed_disk,
                 **instance_ref.AsDict()))
 
-  def ParseDiskRef(self, resources, args, instance_ref):
-    """Parses disk reference.
-
-    Could be overridden by subclasses to customize disk resource parsing as
-    necessary for alpha release track.
-
-    Args:
-      resources: resources.Registry, The resource registry.
-      args: an argparse namespace. All the arguments that were provided to this
-        command invocation.
-      instance_ref: resources.Resource, The instance reference.
-
-    Returns:
-      Disk reference.
-    """
-    return instance_utils.ParseDiskResource(resources, args.disk,
-                                            instance_ref.project,
-                                            instance_ref.zone,
-                                            compute_scopes.ScopeEnum.ZONE)
-
   def Modify(self, resources, args, instance_ref, existing):
     replacement = encoding.CopyProtoMessage(existing)
 
     if args.disk:
       disk_ref = self.ParseDiskRef(resources, args, instance_ref)
-      replacement.disks = [disk for disk in existing.disks
-                           if disk.source != disk_ref.SelfLink()]
+
+      replacement.disks = [
+          disk for disk in existing.disks if resources.ParseURL(
+              disk.source).RelativeName() != disk_ref.RelativeName()
+      ]
 
       if len(existing.disks) == len(replacement.disks):
         raise exceptions.ToolException(
@@ -156,15 +154,6 @@ class DetachDisk(base.UpdateCommand):
     return client.MakeRequests(
         [self.GetSetRequest(client, instance_ref, new_object, objects[0])])
 
-
-@base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA)
-class DetachDiskAlphaBeta(DetachDisk):
-
-  @staticmethod
-  def Args(parser):
-    DetachDisk.Args(parser)
-    flags.AddDiskScopeFlag(parser)
-
   def ParseDiskRef(self, resources, args, instance_ref):
     if args.disk_scope == 'regional':
       scope = compute_scopes.ScopeEnum.REGION
@@ -174,5 +163,3 @@ class DetachDiskAlphaBeta(DetachDisk):
                                             instance_ref.project,
                                             instance_ref.zone,
                                             scope)
-
-DetachDiskAlphaBeta.__doc__ = DetachDisk.__doc__

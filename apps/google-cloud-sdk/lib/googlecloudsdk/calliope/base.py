@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2013 Google Inc. All Rights Reserved.
+# Copyright 2013 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -54,6 +54,16 @@ INSTANCES_CATEGORY = 'Instances'
 LOAD_BALANCING_CATEGORY = 'Load Balancing'
 TOOLS_CATEGORY = 'Tools'
 STORAGE_CATEGORY = 'Storage'
+BILLING_CATEGORY = 'Billing'
+SECURITY_CATEGORY = 'Security'
+IDENTITY_CATEGORY = 'Identity'
+BIG_DATA_CATEGORY = 'Big Data'
+CI_CD_CATEGORY = 'CI/CD'
+MONITORING_CATEGORY = 'Monitoring'
+SOLUTIONS_CATEGORY = 'Solutions'
+SERVERLESS_CATEGORY = 'Serverless'
+UNCATEGORIZED_CATEGORY = 'Other'
+IDENTITY_CATEGORY = 'Identity'
 
 
 # Common markdown.
@@ -104,9 +114,8 @@ class ReleaseTrack(object):
       '{0}(ALPHA){0} '.format(MARKDOWN_BOLD),
       'This command is currently in ALPHA and may change without notice. '
       'If this command fails with API permission errors despite specifying '
-      'the right project, you will have to apply for early access and have your'
-      ' projects registered on the API whitelist to use it. To do so, contact '
-      'Support at https://cloud.google.com/support/.')
+      'the right project, you may be trying to access an API with '
+      'an invitation-only early access whitelist.')
   _ALL = [GA, BETA, ALPHA]
 
   @staticmethod
@@ -349,9 +358,10 @@ LIST_COMMAND_FLAGS = 'LIST COMMAND'
 ASYNC_FLAG = Argument(
     '--async',
     action='store_true',
+    dest='async_',
     help="""\
-    Display information about the operation in progress, without waiting for
-    the operation to complete.""")
+    Return immediately, without waiting for the operation in progress to
+    complete.""")
 
 FILTER_FLAG = Argument(
     '--filter',
@@ -514,8 +524,6 @@ class Group(_Common):
   """Group is a base class for groups to implement."""
 
   IS_COMMAND_GROUP = True
-
-  _allow_py3 = True
 
   def __init__(self):
     super(Group, self).__init__(is_group=True)
@@ -703,23 +711,6 @@ def Hidden(cmd_class):
   # pylint: disable=protected-access
   cmd_class._is_hidden = True
   return cmd_class
-
-
-def DisallowPython3(group_class):
-  """Decorator to indicate a surface doesn't support being run undder Python 3.
-
-  Calliope will error out if sub-elements of this surface are attempted to be
-  loaded. Should only be applied to groups.
-
-  Args:
-    group_class: base.Group, A calliope group.
-
-  Returns:
-    A modified version of the provided class.
-  """
-  # pylint: disable=protected-access
-  group_class._allow_py3 = False
-  return group_class
 
 
 def UnicodeIsSupported(cmd_class):

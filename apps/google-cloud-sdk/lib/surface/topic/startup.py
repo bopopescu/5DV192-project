@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -39,16 +39,13 @@ class Startup(base.TopicCommand):
       * python
       * python3
 
-  Currently `gcloud` requires Python version 2.7.x and there is experimental
-  support for 3.4 and up.
+  Currently `gcloud` requires Python version 2.7.x or 3.5 and up.
 
   Other Python tools shipped in the Cloud SDK do not yet support Python 3,
   including:
 
       * `dev_appserver`
-      * `gsutil`
-      * `bq`
-      * `datalab`
+      * `endpointscfg`
 
   If you have multiple Python interpreters available or if you don't have one
   on your PATH, you can specify which interpreter to use by setting the
@@ -61,6 +58,14 @@ class Startup(base.TopicCommand):
     # Use a python you have installed in a special location
     $ export CLOUDSDK_PYTHON=/usr/local/my-custom-python-install/python
 
+  gsutil now supports Python 3.5 and up in addition to Python 2.7.x. To use a
+  different interpreter for gsutil than for the other Python tools, you can set
+  the desired interpreter by setting the CLOUDSDK_GSUTIL_PYTHON environment
+  variable.
+
+  bq now supports Python 3.5 and up in addition to Python 2.7.x. To use a
+  different interpreter for bq than for the other Python tools, you can set the
+  desired interpreter by setting the CLOUDSDK_BQ_PYTHON environment variable.
 
   # Configuring the Python Interpreter
 

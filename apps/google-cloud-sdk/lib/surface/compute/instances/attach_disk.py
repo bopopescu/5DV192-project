@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ MODE_OPTIONS = {
 }
 
 DETAILED_HELP = {
-    'DESCRIPTION': """\
+    'DESCRIPTION': """
         *{command}* is used to attach a disk to an instance. For example,
 
           $ gcloud compute instances attach-disk example-instance --disk DISK --zone us-central1-a
@@ -45,6 +45,17 @@ DETAILED_HELP = {
         [format and mount](https://cloud.google.com/compute/docs/disks/add-persistent-disk#formatting)
         the disk so that the operating system can use the available storage
         space.
+        """,
+    'EXAMPLES': """
+        To attach a disk named 'my-disk' as a boot disk to an instance named
+        'my-instance', run:
+
+          $ {command} my-instance --disk=my-disk --boot
+
+        To attach a device named 'my-device' for read-only access to an
+        instance named 'my-instance', run:
+
+          $ {command} my-instance --device-name=my-device --mode=ro
         """,
 }
 
@@ -94,13 +105,14 @@ the previous instance in the background.""")
   csek_utils.AddCsekKeyArgs(parser, flags_about_creation=False)
 
 
-@base.ReleaseTracks(base.ReleaseTrack.GA)
+@base.ReleaseTracks(
+    base.ReleaseTrack.GA, base.ReleaseTrack.BETA, base.ReleaseTrack.ALPHA)
 class AttachDisk(base.SilentCommand):
   """Attach a disk to an instance."""
 
   @staticmethod
   def Args(parser):
-    _Args(parser)
+    _Args(parser, support_disk_scope=True)
 
   def ParseDiskRef(self, resources, args, instance_ref, support_disk_scope):
     if support_disk_scope and args.disk_scope == 'regional':
@@ -154,18 +166,6 @@ class AttachDisk(base.SilentCommand):
 
     return client.MakeRequests([(client.apitools_client.instances, 'AttachDisk',
                                  request)])
-
-  def Run(self, args):
-    return self._Run(args)
-
-
-@base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA)
-class AttachDiskAlphaBeta(AttachDisk):
-  """Attach a disk to an instance."""
-
-  @staticmethod
-  def Args(parser):
-    _Args(parser, support_disk_scope=True)
 
   def Run(self, args):
     return self._Run(args, support_disk_scope=True)

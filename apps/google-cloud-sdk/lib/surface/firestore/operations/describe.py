@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,6 +27,15 @@ from googlecloudsdk.core import resources
 
 class Describe(base.DescribeCommand):
   """Retrieves information about a Cloud Firestore admin operation."""
+
+  detailed_help = {
+      'EXAMPLES':
+          """\
+          To retrieve information about the `exampleOperationId` operation, run:
+
+            $ {command} exampleOperationId
+      """
+  }
 
   @staticmethod
   def Args(parser):

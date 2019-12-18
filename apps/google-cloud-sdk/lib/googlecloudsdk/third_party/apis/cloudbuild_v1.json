@@ -133,7 +133,7 @@
       "type": "object",
       "properties": {
         "name": {
-          "description": "The server-assigned name, which is only unique within the same service that\noriginally returns it. If you use the default HTTP mapping, the\n`name` should have the format of `operations\/some\/unique\/name`.",
+          "description": "The server-assigned name, which is only unique within the same service that\noriginally returns it. If you use the default HTTP mapping, the\n`name` should be a resource name ending with `operations\/{unique_id}`.",
           "type": "string"
         },
         "metadata": {
@@ -164,7 +164,7 @@
     },
     "Status": {
       "id": "Status",
-      "description": "The `Status` type defines a logical error model that is suitable for different\nprogramming environments, including REST APIs and RPC APIs. It is used by\n[gRPC](https:\/\/github.com\/grpc). The error model is designed to be:\n\n- Simple to use and understand for most users\n- Flexible enough to meet unexpected needs\n\n# Overview\n\nThe `Status` message contains three pieces of data: error code, error message,\nand error details. The error code should be an enum value of\ngoogle.rpc.Code, but it may accept additional error codes if needed.  The\nerror message should be a developer-facing English message that helps\ndevelopers *understand* and *resolve* the error. If a localized user-facing\nerror message is needed, put the localized message in the error details or\nlocalize it in the client. The optional error details may contain arbitrary\ninformation about the error. There is a predefined set of error detail types\nin the package `google.rpc` that can be used for common error conditions.\n\n# Language mapping\n\nThe `Status` message is the logical representation of the error model, but it\nis not necessarily the actual wire format. When the `Status` message is\nexposed in different client libraries and different wire protocols, it can be\nmapped differently. For example, it will likely be mapped to some exceptions\nin Java, but more likely mapped to some error codes in C.\n\n# Other uses\n\nThe error model and the `Status` message can be used in a variety of\nenvironments, either with or without APIs, to provide a\nconsistent developer experience across different environments.\n\nExample uses of this error model include:\n\n- Partial errors. If a service needs to return partial errors to the client,\n    it may embed the `Status` in the normal response to indicate the partial\n    errors.\n\n- Workflow errors. A typical workflow has multiple steps. Each step may\n    have a `Status` message for error reporting.\n\n- Batch operations. If a client uses batch request and batch response, the\n    `Status` message should be used directly inside batch response, one for\n    each error sub-response.\n\n- Asynchronous operations. If an API call embeds asynchronous operation\n    results in its response, the status of those operations should be\n    represented directly using the `Status` message.\n\n- Logging. If some API errors are stored in logs, the message `Status` could\n    be used directly after any stripping needed for security\/privacy reasons.",
+      "description": "The `Status` type defines a logical error model that is suitable for\ndifferent programming environments, including REST APIs and RPC APIs. It is\nused by [gRPC](https:\/\/github.com\/grpc). Each `Status` message contains\nthree pieces of data: error code, error message, and error details.\n\nYou can find out more about this error model and how to work with it in the\n[API Design Guide](https:\/\/cloud.google.com\/apis\/design\/errors).",
       "type": "object",
       "properties": {
         "code": {
@@ -385,15 +385,15 @@
           "type": "string"
         },
         "repoName": {
-          "description": "Name of the Cloud Source Repository. If omitted, the name \"default\" is\nassumed.",
+          "description": "Required. Name of the Cloud Source Repository.",
           "type": "string"
         },
         "branchName": {
-          "description": "Name of the branch to build.",
+          "description": "Regex matching branches to build.\n\nThe syntax of the regular expressions accepted is the syntax accepted by\nRE2 and described at https:\/\/github.com\/google\/re2\/wiki\/Syntax",
           "type": "string"
         },
         "tagName": {
-          "description": "Name of the tag to build.",
+          "description": "Regex matching tags to build.\n\nThe syntax of the regular expressions accepted is the syntax accepted by\nRE2 and described at https:\/\/github.com\/google\/re2\/wiki\/Syntax",
           "type": "string"
         },
         "commitSha": {
@@ -403,6 +403,13 @@
         "dir": {
           "description": "Directory, relative to the source root, in which to run the build.\n\nThis must be a relative path. If a step's `dir` is specified and is an\nabsolute path, this value is ignored for that step's execution.",
           "type": "string"
+        },
+        "substitutions": {
+          "description": "Substitutions to use in a triggered build.\nShould only be used with RunBuildTrigger",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
         }
       }
     },
@@ -568,6 +575,10 @@
             "type": "string",
             "format": "byte"
           }
+        },
+        "artifactTiming": {
+          "description": "Time to push all non-container artifacts.",
+          "$ref": "TimeSpan"
         }
       }
     },
@@ -772,7 +783,7 @@
           ]
         },
         "workerPool": {
-          "description": "Option to specify a `WorkerPool` for the build. User specifies the pool\nwith the format \"[WORKERPOOL_PROJECT_ID]\/[WORKERPOOL_NAME]\".\nThis is an experimental field.",
+          "description": "Option to specify a `WorkerPool` for the build.\nFormat: projects\/{project}\/workerPools\/{workerPool}\n\nThis field is experimental.",
           "type": "string"
         },
         "logging": {
@@ -876,9 +887,24 @@
           "description": "Human-readable description of this trigger.",
           "type": "string"
         },
+        "name": {
+          "description": "User-assigned name of the trigger. Must be unique within the project.\nTrigger names must meet the following requirements:\n\n+ They must contain only alphanumeric characters and dashes.\n+ They can be 1-64 characters long.\n+ They must begin and end with an alphanumeric character.",
+          "type": "string"
+        },
+        "tags": {
+          "description": "Tags for annotation of a `BuildTrigger`",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "triggerTemplate": {
-          "description": "Template describing the types of source changes to trigger a build.\n\nBranch and tag names in trigger templates are interpreted as regular\nexpressions. Any branch or tag change that matches that regular expression\nwill trigger a build.",
+          "description": "Template describing the types of source changes to trigger a build.\n\nBranch and tag names in trigger templates are interpreted as regular\nexpressions. Any branch or tag change that matches that regular expression\nwill trigger a build.\n\nMutually exclusive with `github`.",
           "$ref": "RepoSource"
+        },
+        "github": {
+          "description": "GitHubEventsConfig describes the configuration of a trigger that creates\na build whenever a GitHub event is received.\n\nMutually exclusive with `trigger_template`.",
+          "$ref": "GitHubEventsConfig"
         },
         "build": {
           "description": "Contents of the build template.",
@@ -920,6 +946,72 @@
         }
       }
     },
+    "GitHubEventsConfig": {
+      "id": "GitHubEventsConfig",
+      "description": "GitHubEventsConfig describes the configuration of a trigger that creates a\nbuild whenever a GitHub event is received.\n\nThis message is experimental.",
+      "type": "object",
+      "properties": {
+        "installationId": {
+          "description": "The installationID that emits the GitHub event.",
+          "type": "string",
+          "format": "int64"
+        },
+        "owner": {
+          "description": "Owner of the repository. For example: The owner for\nhttps:\/\/github.com\/googlecloudplatform\/cloud-builders is\n\"googlecloudplatform\".",
+          "type": "string"
+        },
+        "name": {
+          "description": "Name of the repository. For example: The name for\nhttps:\/\/github.com\/googlecloudplatform\/cloud-builders is \"cloud-builders\".",
+          "type": "string"
+        },
+        "pullRequest": {
+          "description": "filter to match changes in pull requests.",
+          "$ref": "PullRequestFilter"
+        },
+        "push": {
+          "description": "filter to match changes in refs like branches, tags.",
+          "$ref": "PushFilter"
+        }
+      }
+    },
+    "PullRequestFilter": {
+      "id": "PullRequestFilter",
+      "description": "PullRequestFilter contains filter properties for matching GitHub Pull\nRequests.",
+      "type": "object",
+      "properties": {
+        "branch": {
+          "description": "Regex of branches to match.\n\nThe syntax of the regular expressions accepted is the syntax accepted by\nRE2 and described at https:\/\/github.com\/google\/re2\/wiki\/Syntax",
+          "type": "string"
+        },
+        "commentControl": {
+          "description": "Whether to block builds on a \"\/gcbrun\" comment from a repository admin or\ncollaborator.",
+          "enumDescriptions": [
+            "Do not require comments on Pull Requests before builds are triggered.",
+            "Enforce that repository owners or collaborators must comment on Pull\nRequests before builds are triggered."
+          ],
+          "type": "string",
+          "enum": [
+            "COMMENTS_DISABLED",
+            "COMMENTS_ENABLED"
+          ]
+        }
+      }
+    },
+    "PushFilter": {
+      "id": "PushFilter",
+      "description": "Push contains filter properties for matching GitHub git pushes.",
+      "type": "object",
+      "properties": {
+        "branch": {
+          "description": "Regexes matching branches to build.\n\nThe syntax of the regular expressions accepted is the syntax accepted by\nRE2 and described at https:\/\/github.com\/google\/re2\/wiki\/Syntax",
+          "type": "string"
+        },
+        "tag": {
+          "description": "Regexes matching tags to build.\n\nThe syntax of the regular expressions accepted is the syntax accepted by\nRE2 and described at https:\/\/github.com\/google\/re2\/wiki\/Syntax",
+          "type": "string"
+        }
+      }
+    },
     "ListBuildTriggersResponse": {
       "id": "ListBuildTriggersResponse",
       "description": "Response containing existing `BuildTriggers`.",
@@ -931,6 +1023,10 @@
           "items": {
             "$ref": "BuildTrigger"
           }
+        },
+        "nextPageToken": {
+          "description": "Token to receive the next page of results.",
+          "type": "string"
         }
       }
     },
@@ -1074,7 +1170,7 @@
               "httpMethod": "POST",
               "parameters": {
                 "projectId": {
-                  "description": "ID of the project.",
+                  "description": "Required. ID of the project.",
                   "location": "path",
                   "required": true,
                   "type": "string"
@@ -1101,13 +1197,13 @@
               "httpMethod": "GET",
               "parameters": {
                 "projectId": {
-                  "description": "ID of the project.",
+                  "description": "Required. ID of the project.",
                   "location": "path",
                   "required": true,
                   "type": "string"
                 },
                 "id": {
-                  "description": "ID of the build.",
+                  "description": "Required. ID of the build.",
                   "location": "path",
                   "required": true,
                   "type": "string"
@@ -1132,7 +1228,7 @@
               "httpMethod": "GET",
               "parameters": {
                 "projectId": {
-                  "description": "ID of the project.",
+                  "description": "Required. ID of the project.",
                   "location": "path",
                   "required": true,
                   "type": "string"
@@ -1172,13 +1268,13 @@
               "httpMethod": "POST",
               "parameters": {
                 "projectId": {
-                  "description": "ID of the project.",
+                  "description": "Required. ID of the project.",
                   "location": "path",
                   "required": true,
                   "type": "string"
                 },
                 "id": {
-                  "description": "ID of the build.",
+                  "description": "Required. ID of the build.",
                   "location": "path",
                   "required": true,
                   "type": "string"
@@ -1206,13 +1302,13 @@
               "httpMethod": "POST",
               "parameters": {
                 "projectId": {
-                  "description": "ID of the project.",
+                  "description": "Required. ID of the project.",
                   "location": "path",
                   "required": true,
                   "type": "string"
                 },
                 "id": {
-                  "description": "Build ID of the original build.",
+                  "description": "Required. Build ID of the original build.",
                   "location": "path",
                   "required": true,
                   "type": "string"
@@ -1244,7 +1340,7 @@
               "httpMethod": "POST",
               "parameters": {
                 "projectId": {
-                  "description": "ID of the project for which to configure automatic builds.",
+                  "description": "Required. ID of the project for which to configure automatic builds.",
                   "location": "path",
                   "required": true,
                   "type": "string"
@@ -1271,13 +1367,13 @@
               "httpMethod": "GET",
               "parameters": {
                 "projectId": {
-                  "description": "ID of the project that owns the trigger.",
+                  "description": "Required. ID of the project that owns the trigger.",
                   "location": "path",
                   "required": true,
                   "type": "string"
                 },
                 "triggerId": {
-                  "description": "ID of the `BuildTrigger` to get.",
+                  "description": "Required. Identifier (`id` or `name`) of the `BuildTrigger` to get.",
                   "location": "path",
                   "required": true,
                   "type": "string"
@@ -1302,9 +1398,20 @@
               "httpMethod": "GET",
               "parameters": {
                 "projectId": {
-                  "description": "ID of the project for which to list BuildTriggers.",
+                  "description": "Required. ID of the project for which to list BuildTriggers.",
                   "location": "path",
                   "required": true,
+                  "type": "string"
+                },
+                "pageSize": {
+                  "description": "Number of results to return in the list.",
+                  "location": "query",
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "pageToken": {
+                  "description": "Token to provide to skip to a particular spot in the list.",
+                  "location": "query",
                   "type": "string"
                 }
               },
@@ -1326,13 +1433,13 @@
               "httpMethod": "DELETE",
               "parameters": {
                 "projectId": {
-                  "description": "ID of the project that owns the trigger.",
+                  "description": "Required. ID of the project that owns the trigger.",
                   "location": "path",
                   "required": true,
                   "type": "string"
                 },
                 "triggerId": {
-                  "description": "ID of the `BuildTrigger` to delete.",
+                  "description": "Required. ID of the `BuildTrigger` to delete.",
                   "location": "path",
                   "required": true,
                   "type": "string"
@@ -1357,13 +1464,13 @@
               "httpMethod": "PATCH",
               "parameters": {
                 "projectId": {
-                  "description": "ID of the project that owns the trigger.",
+                  "description": "Required. ID of the project that owns the trigger.",
                   "location": "path",
                   "required": true,
                   "type": "string"
                 },
                 "triggerId": {
-                  "description": "ID of the `BuildTrigger` to update.",
+                  "description": "Required. ID of the `BuildTrigger` to update.",
                   "location": "path",
                   "required": true,
                   "type": "string"
@@ -1391,13 +1498,13 @@
               "httpMethod": "POST",
               "parameters": {
                 "projectId": {
-                  "description": "ID of the project.",
+                  "description": "Required. ID of the project.",
                   "location": "path",
                   "required": true,
                   "type": "string"
                 },
                 "triggerId": {
-                  "description": "ID of the trigger.",
+                  "description": "Required. ID of the trigger.",
                   "location": "path",
                   "required": true,
                   "type": "string"

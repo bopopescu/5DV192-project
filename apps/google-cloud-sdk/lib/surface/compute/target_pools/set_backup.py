@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -41,11 +41,11 @@ class SetBackup(base.SilentCommand):
   to `BACKUP-POOL` when more than half of the `TARGET-POOL`
   instances are unhealthy, run:
 
-    $ {command} TARGET-POOL --backup-pool BACKUP-POOL --failover-ratio 0.5 --region us-central1
+    $ {command} TARGET-POOL --backup-pool=BACKUP-POOL --failover-ratio=0.5 --region=us-central1
 
   To remove `BACKUP-POOL` as a backup to `TARGET-POOL`, run:
 
-    $ {command} TARGET-POOL --backup-pool '' --region us-central1
+    $ {command} TARGET-POOL --backup-pool='' --region=us-central1
   """
   # pylint: enable=line-too-long
 

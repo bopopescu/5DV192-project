@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,13 +25,19 @@ from googlecloudsdk.command_lib.compute import flags as compute_flags
 from googlecloudsdk.command_lib.compute.instances import flags
 
 
-@base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA)
 class GetShieldedIdentity(base.DescribeCommand):
   """Get the Shielded identity for a Google Compute Engine instance.
 
   *{command}* displays the Shielded identity associated with a Google Compute
   Engine instance in a project.
   """
+
+  detailed_help = {
+      'EXAMPLES': """
+  To get the shielded identity for an instance, run:
+
+    $ {command} example-instance --zone=us-central1-b
+  """}
 
   @staticmethod
   def Args(parser):
@@ -48,13 +54,12 @@ class GetShieldedIdentity(base.DescribeCommand):
         holder.resources,
         scope_lister=compute_flags.GetDefaultScopeLister(client))
 
-    # TODO(b/121391469): replace the GetShieldedVmIdentity with
-    # GetShieldedIdentity API call.
-    request = (client.apitools_client.instances, 'GetShieldedVmIdentity',
-               client.messages.ComputeInstancesGetShieldedVmIdentityRequest(
-                   instance=instance_ref.instance,
-                   zone=instance_ref.zone,
-                   project=instance_ref.project))
+    request = (
+        client.apitools_client.instances, 'GetShieldedInstanceIdentity',
+        client.messages.ComputeInstancesGetShieldedInstanceIdentityRequest(
+            instance=instance_ref.instance,
+            zone=instance_ref.zone,
+            project=instance_ref.project))
 
     errors = []
     objects = client.MakeRequests(requests=[request], errors_to_collect=errors)

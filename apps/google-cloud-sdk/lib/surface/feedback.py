@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -138,6 +138,20 @@ class Feedback(base.Command):
   information relevant to the current install and configuration pre-populated in
   form fields on that page.
   """
+
+  detailed_help = {
+      'EXAMPLES': """
+          To send feedback, including the log file for the most recent command,
+          run:
+
+            $ {command}
+
+          To send feedback with a previously generated log file named
+          'my-logfile', run:
+
+            $ {command} --log-file=my-logfile
+          """,
+  }
 
   category = base.SDK_TOOLS_CATEGORY
 

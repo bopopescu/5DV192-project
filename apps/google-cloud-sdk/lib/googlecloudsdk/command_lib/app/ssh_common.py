@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ class ConnectionDetails(object):
     return not self.__eq__(other)
 
   def __repr__(self):
-    return str('ConnectionDetails(**{})'.format(self.__dict__))
+    return 'ConnectionDetails(**{})'.format(self.__dict__)
 
 
 def _GetComputeProject(release_track):
@@ -148,7 +148,7 @@ def PopulatePublicKey(api_client, service_id, version_id, instance_id,
   user = ssh.GetDefaultSshUsername()
   project = _GetComputeProject(release_track)
   user, use_oslogin = ssh.CheckForOsloginAndGetUser(
-      None, project, user, public_key.ToEntry(), release_track)
+      None, project, user, public_key.ToEntry(), None, release_track)
   remote = ssh.Remote(instance.vmIp, user=user)
   if not use_oslogin:
     ssh_key = '{user}:{key} {user}'.format(user=user, key=public_key.ToEntry())
@@ -161,4 +161,3 @@ def PopulatePublicKey(api_client, service_id, version_id, instance_id,
       'HostKeyAlias': _HOST_KEY_ALIAS.format(project=api_client.project,
                                              instance_id=instance_id)}
   return ConnectionDetails(remote, options)
-

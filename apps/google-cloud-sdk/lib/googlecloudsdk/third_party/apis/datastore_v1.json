@@ -134,7 +134,7 @@
       "type": "object",
       "properties": {
         "name": {
-          "description": "The server-assigned name, which is only unique within the same service that\noriginally returns it. If you use the default HTTP mapping, the\n`name` should have the format of `operations\/some\/unique\/name`.",
+          "description": "The server-assigned name, which is only unique within the same service that\noriginally returns it. If you use the default HTTP mapping, the\n`name` should be a resource name ending with `operations\/{unique_id}`.",
           "type": "string"
         },
         "metadata": {
@@ -165,7 +165,7 @@
     },
     "Status": {
       "id": "Status",
-      "description": "The `Status` type defines a logical error model that is suitable for different\nprogramming environments, including REST APIs and RPC APIs. It is used by\n[gRPC](https:\/\/github.com\/grpc). The error model is designed to be:\n\n- Simple to use and understand for most users\n- Flexible enough to meet unexpected needs\n\n# Overview\n\nThe `Status` message contains three pieces of data: error code, error message,\nand error details. The error code should be an enum value of\ngoogle.rpc.Code, but it may accept additional error codes if needed.  The\nerror message should be a developer-facing English message that helps\ndevelopers *understand* and *resolve* the error. If a localized user-facing\nerror message is needed, put the localized message in the error details or\nlocalize it in the client. The optional error details may contain arbitrary\ninformation about the error. There is a predefined set of error detail types\nin the package `google.rpc` that can be used for common error conditions.\n\n# Language mapping\n\nThe `Status` message is the logical representation of the error model, but it\nis not necessarily the actual wire format. When the `Status` message is\nexposed in different client libraries and different wire protocols, it can be\nmapped differently. For example, it will likely be mapped to some exceptions\nin Java, but more likely mapped to some error codes in C.\n\n# Other uses\n\nThe error model and the `Status` message can be used in a variety of\nenvironments, either with or without APIs, to provide a\nconsistent developer experience across different environments.\n\nExample uses of this error model include:\n\n- Partial errors. If a service needs to return partial errors to the client,\n    it may embed the `Status` in the normal response to indicate the partial\n    errors.\n\n- Workflow errors. A typical workflow has multiple steps. Each step may\n    have a `Status` message for error reporting.\n\n- Batch operations. If a client uses batch request and batch response, the\n    `Status` message should be used directly inside batch response, one for\n    each error sub-response.\n\n- Asynchronous operations. If an API call embeds asynchronous operation\n    results in its response, the status of those operations should be\n    represented directly using the `Status` message.\n\n- Logging. If some API errors are stored in logs, the message `Status` could\n    be used directly after any stripping needed for security\/privacy reasons.",
+      "description": "The `Status` type defines a logical error model that is suitable for\ndifferent programming environments, including REST APIs and RPC APIs. It is\nused by [gRPC](https:\/\/github.com\/grpc). Each `Status` message contains\nthree pieces of data: error code, error message, and error details.\n\nYou can find out more about this error model and how to work with it in the\n[API Design Guide](https:\/\/cloud.google.com\/apis\/design\/errors).",
       "type": "object",
       "properties": {
         "code": {
@@ -214,7 +214,7 @@
           "$ref": "GoogleDatastoreAdminV1EntityFilter"
         },
         "outputUrlPrefix": {
-          "description": "Location for the export metadata and data files.\n\nThe full resource URL of the external storage location. Currently, only\nGoogle Cloud Storage is supported. So output_url_prefix should be of the\nform: `gs:\/\/BUCKET_NAME[\/NAMESPACE_PATH]`, where `BUCKET_NAME` is the\nname of the Cloud Storage bucket and `NAMESPACE_PATH` is an optional Cloud\nStorage namespace path (this is not a Cloud Datastore namespace). For more\ninformation about Cloud Storage namespace paths, see\n[Object name\nconsiderations](https:\/\/cloud.google.com\/storage\/docs\/naming#object-considerations).\n\nThe resulting files will be nested deeper than the specified URL prefix.\nThe final output URL will be provided in the\ngoogle.datastore.admin.v1.ExportEntitiesResponse.output_url field. That\nvalue should be used for subsequent ImportEntities operations.\n\nBy nesting the data files deeper, the same Cloud Storage bucket can be used\nin multiple ExportEntities operations without conflict.",
+          "description": "Required. Location for the export metadata and data files.\n\nThe full resource URL of the external storage location. Currently, only\nGoogle Cloud Storage is supported. So output_url_prefix should be of the\nform: `gs:\/\/BUCKET_NAME[\/NAMESPACE_PATH]`, where `BUCKET_NAME` is the\nname of the Cloud Storage bucket and `NAMESPACE_PATH` is an optional Cloud\nStorage namespace path (this is not a Cloud Datastore namespace). For more\ninformation about Cloud Storage namespace paths, see\n[Object name\nconsiderations](https:\/\/cloud.google.com\/storage\/docs\/naming#object-considerations).\n\nThe resulting files will be nested deeper than the specified URL prefix.\nThe final output URL will be provided in the\ngoogle.datastore.admin.v1.ExportEntitiesResponse.output_url field. That\nvalue should be used for subsequent ImportEntities operations.\n\nBy nesting the data files deeper, the same Cloud Storage bucket can be used\nin multiple ExportEntities operations without conflict.",
           "type": "string"
         }
       }
@@ -253,7 +253,7 @@
           }
         },
         "inputUrl": {
-          "description": "The full resource URL of the external storage location. Currently, only\nGoogle Cloud Storage is supported. So input_url should be of the form:\n`gs:\/\/BUCKET_NAME[\/NAMESPACE_PATH]\/OVERALL_EXPORT_METADATA_FILE`, where\n`BUCKET_NAME` is the name of the Cloud Storage bucket, `NAMESPACE_PATH` is\nan optional Cloud Storage namespace path (this is not a Cloud Datastore\nnamespace), and `OVERALL_EXPORT_METADATA_FILE` is the metadata file written\nby the ExportEntities operation. For more information about Cloud Storage\nnamespace paths, see\n[Object name\nconsiderations](https:\/\/cloud.google.com\/storage\/docs\/naming#object-considerations).\n\nFor more information, see\ngoogle.datastore.admin.v1.ExportEntitiesResponse.output_url.",
+          "description": "Required. The full resource URL of the external storage location. Currently, only\nGoogle Cloud Storage is supported. So input_url should be of the form:\n`gs:\/\/BUCKET_NAME[\/NAMESPACE_PATH]\/OVERALL_EXPORT_METADATA_FILE`, where\n`BUCKET_NAME` is the name of the Cloud Storage bucket, `NAMESPACE_PATH` is\nan optional Cloud Storage namespace path (this is not a Cloud Datastore\nnamespace), and `OVERALL_EXPORT_METADATA_FILE` is the metadata file written\nby the ExportEntities operation. For more information about Cloud Storage\nnamespace paths, see\n[Object name\nconsiderations](https:\/\/cloud.google.com\/storage\/docs\/naming#object-considerations).\n\nFor more information, see\ngoogle.datastore.admin.v1.ExportEntitiesResponse.output_url.",
           "type": "string"
         },
         "entityFilter": {
@@ -268,19 +268,19 @@
       "type": "object",
       "properties": {
         "projectId": {
-          "description": "Project ID.\nOutput only.",
+          "description": "Output only. Project ID.",
           "type": "string"
         },
         "indexId": {
-          "description": "The resource ID of the index.\nOutput only.",
+          "description": "Output only. The resource ID of the index.",
           "type": "string"
         },
         "kind": {
-          "description": "The entity kind to which this index applies.\nRequired.",
+          "description": "Required. The entity kind to which this index applies.",
           "type": "string"
         },
         "ancestor": {
-          "description": "The index's ancestor mode.  Must not be ANCESTOR_MODE_UNSPECIFIED.\nRequired.",
+          "description": "Required. The index's ancestor mode.  Must not be ANCESTOR_MODE_UNSPECIFIED.",
           "enumDescriptions": [
             "The ancestor mode is unspecified.",
             "Do not include the entity's ancestors in the index.",
@@ -294,14 +294,14 @@
           ]
         },
         "properties": {
-          "description": "An ordered sequence of property names and their index attributes.\nRequired.",
+          "description": "Required. An ordered sequence of property names and their index attributes.",
           "type": "array",
           "items": {
             "$ref": "GoogleDatastoreAdminV1IndexedProperty"
           }
         },
         "state": {
-          "description": "The state of the index.\nOutput only.",
+          "description": "Output only. The state of the index.",
           "enumDescriptions": [
             "The state is unspecified.",
             "The index is being created, and cannot be used by queries.\nThere is an active long-running operation for the index.\nThe index is updated when writing an entity.\nSome index data may exist.",
@@ -326,11 +326,11 @@
       "type": "object",
       "properties": {
         "name": {
-          "description": "The property name to index.\nRequired.",
+          "description": "Required. The property name to index.",
           "type": "string"
         },
         "direction": {
-          "description": "The indexed property's direction.  Must not be DIRECTION_UNSPECIFIED.\nRequired.",
+          "description": "Required. The indexed property's direction.  Must not be DIRECTION_UNSPECIFIED.",
           "enumDescriptions": [
             "The direction is unspecified.",
             "The property's values are indexed so as to support sequencing in\nascending order and also query by <, >, <=, >=, and =.",
@@ -373,7 +373,7 @@
           "$ref": "ReadOptions"
         },
         "keys": {
-          "description": "Keys of entities to look up.",
+          "description": "Required. Keys of entities to look up.",
           "type": "array",
           "items": {
             "$ref": "Key"
@@ -689,12 +689,12 @@
           }
         },
         "startCursor": {
-          "description": "A starting point for the query results. Query cursors are\nreturned in query result batches and\n[can only be used to continue the same query](https:\/\/cloud.google.com\/datastore\/docs\/concepts\/queries#cursors_limits_and_offsets).",
+          "description": "A starting point for the query results. Query cursors are\nreturned in query result batches and\n[can only be used to continue the same\nquery](https:\/\/cloud.google.com\/datastore\/docs\/concepts\/queries#cursors_limits_and_offsets).",
           "type": "string",
           "format": "byte"
         },
         "endCursor": {
-          "description": "An ending point for the query results. Query cursors are\nreturned in query result batches and\n[can only be used to limit the same query](https:\/\/cloud.google.com\/datastore\/docs\/concepts\/queries#cursors_limits_and_offsets).",
+          "description": "An ending point for the query results. Query cursors are\nreturned in query result batches and\n[can only be used to limit the same\nquery](https:\/\/cloud.google.com\/datastore\/docs\/concepts\/queries#cursors_limits_and_offsets).",
           "type": "string",
           "format": "byte"
         },
@@ -848,7 +848,7 @@
     },
     "GqlQuery": {
       "id": "GqlQuery",
-      "description": "A [GQL query](https:\/\/cloud.google.com\/datastore\/docs\/apis\/gql\/gql_reference).",
+      "description": "A [GQL\nquery](https:\/\/cloud.google.com\/datastore\/docs\/apis\/gql\/gql_reference).",
       "type": "object",
       "properties": {
         "queryString": {
@@ -1040,7 +1040,7 @@
           "description": "The type of commit to perform. Defaults to `TRANSACTIONAL`.",
           "enumDescriptions": [
             "Unspecified. This value must not be used.",
-            "Transactional: The mutations are either all applied, or none are applied.\nLearn about transactions [here](https:\/\/cloud.google.com\/datastore\/docs\/concepts\/transactions).",
+            "Transactional: The mutations are either all applied, or none are applied.\nLearn about transactions\n[here](https:\/\/cloud.google.com\/datastore\/docs\/concepts\/transactions).",
             "Non-transactional: The mutations may not apply as all or none."
           ],
           "type": "string",
@@ -1137,7 +1137,7 @@
       "type": "object",
       "properties": {
         "transaction": {
-          "description": "The transaction identifier, returned by a call to\nDatastore.BeginTransaction.",
+          "description": "Required. The transaction identifier, returned by a call to\nDatastore.BeginTransaction.",
           "type": "string",
           "format": "byte"
         }
@@ -1156,7 +1156,7 @@
       "type": "object",
       "properties": {
         "keys": {
-          "description": "A list of keys with incomplete key paths for which to allocate IDs.\nNo key may be reserved\/read-only.",
+          "description": "Required. A list of keys with incomplete key paths for which to allocate IDs.\nNo key may be reserved\/read-only.",
           "type": "array",
           "items": {
             "$ref": "Key"
@@ -1188,7 +1188,7 @@
           "type": "string"
         },
         "keys": {
-          "description": "A list of keys with complete key paths whose numeric IDs should not be\nauto-allocated.",
+          "description": "Required. A list of keys with complete key paths whose numeric IDs should not be\nauto-allocated.",
           "type": "array",
           "items": {
             "$ref": "Key"
@@ -1546,7 +1546,7 @@
           "httpMethod": "POST",
           "parameters": {
             "projectId": {
-              "description": "Project ID against which to make the request.",
+              "description": "Required. Project ID against which to make the request.",
               "location": "path",
               "required": true,
               "type": "string"
@@ -1574,7 +1574,7 @@
           "httpMethod": "POST",
           "parameters": {
             "projectId": {
-              "description": "Project ID against which to make the request.",
+              "description": "Required. Project ID against which to make the request.",
               "location": "path",
               "required": true,
               "type": "string"
@@ -1602,7 +1602,7 @@
           "httpMethod": "POST",
           "parameters": {
             "projectId": {
-              "description": "The ID of the project against which to make the request.",
+              "description": "Required. The ID of the project against which to make the request.",
               "location": "path",
               "required": true,
               "type": "string"
@@ -1630,7 +1630,7 @@
           "httpMethod": "POST",
           "parameters": {
             "projectId": {
-              "description": "The ID of the project against which to make the request.",
+              "description": "Required. The ID of the project against which to make the request.",
               "location": "path",
               "required": true,
               "type": "string"
@@ -1658,7 +1658,7 @@
           "httpMethod": "POST",
           "parameters": {
             "projectId": {
-              "description": "The ID of the project against which to make the request.",
+              "description": "Required. The ID of the project against which to make the request.",
               "location": "path",
               "required": true,
               "type": "string"
@@ -1686,7 +1686,7 @@
           "httpMethod": "POST",
           "parameters": {
             "projectId": {
-              "description": "The ID of the project against which to make the request.",
+              "description": "Required. The ID of the project against which to make the request.",
               "location": "path",
               "required": true,
               "type": "string"
@@ -1714,7 +1714,7 @@
           "httpMethod": "POST",
           "parameters": {
             "projectId": {
-              "description": "The ID of the project against which to make the request.",
+              "description": "Required. The ID of the project against which to make the request.",
               "location": "path",
               "required": true,
               "type": "string"
@@ -1742,7 +1742,7 @@
           "httpMethod": "POST",
           "parameters": {
             "projectId": {
-              "description": "The ID of the project against which to make the request.",
+              "description": "Required. The ID of the project against which to make the request.",
               "location": "path",
               "required": true,
               "type": "string"
@@ -1770,7 +1770,7 @@
           "httpMethod": "POST",
           "parameters": {
             "projectId": {
-              "description": "The ID of the project against which to make the request.",
+              "description": "Required. The ID of the project against which to make the request.",
               "location": "path",
               "required": true,
               "type": "string"
@@ -1920,6 +1920,66 @@
         },
         "indexes": {
           "methods": {
+            "create": {
+              "id": "datastore.projects.indexes.create",
+              "path": "v1/projects/{projectId}/indexes",
+              "flatPath": "v1/projects/{projectId}/indexes",
+              "httpMethod": "POST",
+              "parameters": {
+                "projectId": {
+                  "description": "Project ID against which to make the request.",
+                  "location": "path",
+                  "required": true,
+                  "type": "string"
+                }
+              },
+              "parameterOrder": [
+                "projectId"
+              ],
+              "request": {
+                "$ref": "GoogleDatastoreAdminV1Index"
+              },
+              "response": {
+                "$ref": "GoogleLongrunningOperation"
+              },
+              "scopes": [
+                "https://www.googleapis.com/auth/cloud-platform",
+                "https://www.googleapis.com/auth/datastore"
+              ],
+              "description": "Creates the specified index.\nA newly created index's initial state is `CREATING`. On completion of the\nreturned google.longrunning.Operation, the state will be `READY`.\nIf the index already exists, the call will return an `ALREADY_EXISTS`\nstatus.\n\nDuring index creation, the process could result in an error, in which\ncase the index will move to the `ERROR` state. The process can be recovered\nby fixing the data that caused the error, removing the index with\ndelete, then\nre-creating the index with create.\n\nIndexes with a single property cannot be created."
+            },
+            "delete": {
+              "id": "datastore.projects.indexes.delete",
+              "path": "v1/projects/{projectId}/indexes/{indexId}",
+              "flatPath": "v1/projects/{projectId}/indexes/{indexId}",
+              "httpMethod": "DELETE",
+              "parameters": {
+                "projectId": {
+                  "description": "Project ID against which to make the request.",
+                  "location": "path",
+                  "required": true,
+                  "type": "string"
+                },
+                "indexId": {
+                  "description": "The resource ID of the index to delete.",
+                  "location": "path",
+                  "required": true,
+                  "type": "string"
+                }
+              },
+              "parameterOrder": [
+                "projectId",
+                "indexId"
+              ],
+              "response": {
+                "$ref": "GoogleLongrunningOperation"
+              },
+              "scopes": [
+                "https://www.googleapis.com/auth/cloud-platform",
+                "https://www.googleapis.com/auth/datastore"
+              ],
+              "description": "Deletes an existing index.\nAn index can only be deleted if it is in a `READY` or `ERROR` state. On\nsuccessful execution of the request, the index will be in a `DELETING`\nstate. And on completion of the\nreturned google.longrunning.Operation, the index will be removed.\n\nDuring index deletion, the process could result in an error, in which\ncase the index will move to the `ERROR` state. The process can be recovered\nby fixing the data that caused the error, followed by calling\ndelete again."
+            },
             "get": {
               "id": "datastore.projects.indexes.get",
               "path": "v1/projects/{projectId}/indexes/{indexId}",

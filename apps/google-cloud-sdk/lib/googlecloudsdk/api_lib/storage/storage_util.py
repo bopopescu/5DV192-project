@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ from googlecloudsdk.core import log
 from googlecloudsdk.core import resources
 from googlecloudsdk.core.util import files as file_utils
 from googlecloudsdk.core.util import platforms
+import six
 
 
 GSUTIL_BUCKET_PREFIX = 'gs://'
@@ -132,7 +133,7 @@ def _ValidateBucketName(name):
   #   example, ".." or "-." or ".-" are not valid in DNS names.
 
 
-def _ValidateBucketUrl(url):
+def ValidateBucketUrl(url):
   # These are things that cause unhelpful error messages during parsing, so we
   # check for them here.
   if url.startswith(GSUTIL_BUCKET_PREFIX):
@@ -173,9 +174,9 @@ class BucketReference(object):
           '[gs://somebucket]')
 
     try:
-      _ValidateBucketUrl(value)
+      ValidateBucketUrl(value)
     except InvalidBucketNameError as err:
-      raise argparse.ArgumentTypeError(str(err))
+      raise argparse.ArgumentTypeError(six.text_type(err))
 
     return cls.FromUrl(value)
 
@@ -256,7 +257,7 @@ class ObjectReference(object):
     try:
       return cls.FromUrl(url, allow_empty_object=allow_empty_object)
     except (InvalidObjectNameError, ValueError) as err:
-      raise argparse.ArgumentTypeError(str(err))
+      raise argparse.ArgumentTypeError(six.text_type(err))
 
   @classmethod
   def IsStorageUrl(cls, path):

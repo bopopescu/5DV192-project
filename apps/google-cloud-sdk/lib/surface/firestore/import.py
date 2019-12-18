@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,6 +29,19 @@ from googlecloudsdk.core import properties
 class Import(base.Command):
   """import Cloud Firestore documents from Google Cloud Storage"""
 
+  detailed_help = {
+      'EXAMPLES':
+          """\
+          To import all collection groups from `mybucket/my/path`, run:
+
+            $ {command} gs://mybucket/my/path
+
+          To import a specific set of collections groups asynchronously, run:
+
+            $ {command} gs://mybucket/my/path --collection-ids='specific collection group1','specific collection group2' --async
+      """
+  }
+
   @staticmethod
   def Args(parser):
     """Register flags for this command."""
@@ -53,7 +66,7 @@ class Import(base.Command):
         object_ref.ToUrl().rstrip('/'),
         collection_ids=args.collection_ids)
 
-    if not args.async:
+    if not args.async_:
       operations.WaitForOperation(response)
 
     return response

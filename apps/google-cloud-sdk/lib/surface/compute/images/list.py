@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -100,9 +100,18 @@ class List(base.ListCommand):
     return self.AugmentImagesStatus(holder.resources,
                                     self._FilterDeprecated(args, images))
 
+  def _CheckForDeprecated(self, image):
+    deprecated = False
+    deprecate_info = image.get('deprecated')
+    if deprecate_info is not None:
+      image_state = deprecate_info.get('state')
+      if image_state and image_state != 'ACTIVE':
+        deprecated = True
+    return deprecated
+
   def _FilterDeprecated(self, args, images):
     for image in images:
-      if not image.get('deprecated', False) or args.show_deprecated:
+      if not self._CheckForDeprecated(image) or args.show_deprecated:
         yield image
 
   def AugmentImagesStatus(self, resources, images):

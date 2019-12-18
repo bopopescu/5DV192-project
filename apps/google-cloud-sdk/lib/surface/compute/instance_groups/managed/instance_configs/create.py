@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,71 +28,31 @@ from googlecloudsdk.command_lib.compute import flags as compute_flags
 from googlecloudsdk.command_lib.compute.instance_groups import flags as instance_groups_flags
 from googlecloudsdk.command_lib.compute.instance_groups.managed.instance_configs import instance_configs_getter
 from googlecloudsdk.command_lib.compute.instance_groups.managed.instance_configs import instance_configs_messages
-from googlecloudsdk.command_lib.compute.instance_groups.managed.instance_configs import instance_disk_getter
 import six
 
 
 # TODO(b/70321546): rewrite help
 @base.ReleaseTracks(base.ReleaseTrack.ALPHA)
 class Create(base.CreateCommand):
-  """Create per instance config for managed instance group.
+  """Create per instance config for an instance in a managed instance group.
 
-  *{command}* creates per instance config for instance controlled by a Google
-  Compute Engine managed instance group. An instance with a per instance config
-  will preserve given name and any listed disks during instance recreation and
-  deletion. Preserved names will be (re)used and resources (re)attached in
-  managed instance group during creation of the new instances in effect of
-  recreation, restart and potentially other operations changing existence of the
-  instance.
+  *{command}* creates a per instance config for an instance controlled by a
+  Google Compute Engine managed instance group. An instance with a per instance
+  config preserves the specified metadata and/or disks during instance
+  recreation and deletion.
 
-  You can use this command on an instance that does not exist. In this case
-  config will be added to the pool of per instance configs to utilise for
-  creating new instances. Order of utilisation of these configs from the pool is
-  non deterministic.
-
-  If created for existing instance, changes will be applied during next instance
-  update or recreation - unless it is forced by `--force-instance-update`
-  option.
-
-  When you create config for non existing instance in regional managed instance
-  group, use the full URI to the instance - pointing to target zone. Just
-  instance name will not be resolved.
+  Once created, the config is applied immediately to the corresponding instance,
+  by performing the necessary action (for example, REFRESH), unless overridden
+  by providing the `--no-update-instance` flag.
   """
 
   @staticmethod
   def Args(parser):
     instance_groups_flags.GetInstanceGroupManagerArg(
         region_flag=True).AddArgument(
-            parser, operation_type='create per instance config for')
+            parser, operation_type='create a per instance config for')
     instance_groups_flags.AddMigStatefulFlagsForInstanceConfigs(parser)
-    instance_groups_flags.AddMigStatefulForceInstanceUpdateFlag(parser)
-
-  @staticmethod
-  def _GetPerInstanceConfigMessage(holder, instance_ref, stateful_disks,
-                                   stateful_metadata):
-    disk_getter = instance_disk_getter.InstanceDiskGetter(
-        instance_ref=instance_ref, holder=holder)
-    messages = holder.client.messages
-    disk_overrides = [
-        instance_configs_messages.GetDiskOverride(
-            messages=messages,
-            stateful_disk=stateful_disk,
-            disk_getter=disk_getter) for stateful_disk in stateful_disks or []
-    ]
-    metadata_overrides = [
-        messages.ManagedInstanceOverride.MetadataValueListEntry(
-            key=metadata_key, value=metadata_value)
-        for metadata_key, metadata_value in sorted(
-            six.iteritems(stateful_metadata))
-    ]
-    return messages.PerInstanceConfig(
-        instance=str(instance_ref),
-        name=str(instance_ref).rsplit('/', 1)[-1],
-        override=messages.ManagedInstanceOverride(
-            disks=disk_overrides, metadata=metadata_overrides),
-        preservedState=\
-            instance_configs_messages.MakePreservedStateFromOverrides(
-                holder.client.messages, disk_overrides, metadata_overrides))
+    instance_groups_flags.AddMigStatefulUpdateInstanceFlag(parser)
 
   @staticmethod
   def _CreateInstanceReference(holder, igm_ref, instance_name):
@@ -131,8 +91,9 @@ class Create(base.CreateCommand):
     configs_getter.check_if_instance_config_exists(
         igm_ref=igm_ref, instance_ref=instance_ref, should_exist=False)
 
-    per_instance_config_message = self._GetPerInstanceConfigMessage(
-        holder, instance_ref, args.stateful_disk, args.stateful_metadata)
+    per_instance_config_message = (
+        instance_configs_messages.CreatePerInstanceConfigMessage)(
+            holder, instance_ref, args.stateful_disk, args.stateful_metadata)
 
     operation_ref = instance_configs_messages.CallPerInstanceConfigUpdate(
         holder=holder,
@@ -151,10 +112,12 @@ class Create(base.CreateCommand):
     create_result = waiter.WaitFor(operation_poller, operation_ref,
                                    'Creating instance config.')
 
-    if args.force_instance_update:
+    if args.update_instance:
       apply_operation_ref = (
           instance_configs_messages.CallApplyUpdatesToInstances)(
-              holder=holder, igm_ref=igm_ref, instances=[str(instance_ref)])
+              holder=holder,
+              igm_ref=igm_ref,
+              instances=[six.text_type(instance_ref)])
       return waiter.WaitFor(operation_poller, apply_operation_ref,
                             'Applying updates to instances.')
 

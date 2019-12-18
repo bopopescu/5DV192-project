@@ -215,7 +215,7 @@ class BigqueryJobsListRequest(_messages.Message):
     pageToken: Page token, returned by a previous call, to request the next
       page of results
     parentJobId: If set, retrieves only jobs whose parent is this job.
-      Otherwise, retrieves only jobs which have no parent.
+      Otherwise, retrieves only jobs which have no parent
     projectId: Project ID of the jobs to list
     projection: Restrict information returned to a set of selected fields
     stateFilter: Filter for job state
@@ -533,6 +533,96 @@ class BigtableOptions(_messages.Message):
   readRowkeyAsString = _messages.BooleanField(3)
 
 
+class BqmlIterationResult(_messages.Message):
+  r"""A BqmlIterationResult object.
+
+  Fields:
+    durationMs: [Output-only, Beta] Time taken to run the training iteration
+      in milliseconds.
+    evalLoss: [Output-only, Beta] Eval loss computed on the eval data at the
+      end of the iteration. The eval loss is used for early stopping to avoid
+      overfitting. No eval loss if eval_split_method option is specified as
+      no_split or auto_split with input data size less than 500 rows.
+    index: [Output-only, Beta] Index of the ML training iteration, starting
+      from zero for each training run.
+    learnRate: [Output-only, Beta] Learning rate used for this iteration, it
+      varies for different training iterations if learn_rate_strategy option
+      is not constant.
+    trainingLoss: [Output-only, Beta] Training loss computed on the training
+      data at the end of the iteration. The training loss function is defined
+      by model type.
+  """
+
+  durationMs = _messages.IntegerField(1)
+  evalLoss = _messages.FloatField(2)
+  index = _messages.IntegerField(3, variant=_messages.Variant.INT32)
+  learnRate = _messages.FloatField(4)
+  trainingLoss = _messages.FloatField(5)
+
+
+class BqmlTrainingRun(_messages.Message):
+  r"""A BqmlTrainingRun object.
+
+  Messages:
+    TrainingOptionsValue: [Output-only, Beta] Training options used by this
+      training run. These options are mutable for subsequent training runs.
+      Default values are explicitly stored for options not specified in the
+      input query of the first training run. For subsequent training runs, any
+      option not explicitly specified in the input query will be copied from
+      the previous training run.
+
+  Fields:
+    iterationResults: [Output-only, Beta] List of each iteration results.
+    startTime: [Output-only, Beta] Training run start time in milliseconds
+      since the epoch.
+    state: [Output-only, Beta] Different state applicable for a training run.
+      IN PROGRESS: Training run is in progress. FAILED: Training run ended due
+      to a non-retryable failure. SUCCEEDED: Training run successfully
+      completed. CANCELLED: Training run cancelled by the user.
+    trainingOptions: [Output-only, Beta] Training options used by this
+      training run. These options are mutable for subsequent training runs.
+      Default values are explicitly stored for options not specified in the
+      input query of the first training run. For subsequent training runs, any
+      option not explicitly specified in the input query will be copied from
+      the previous training run.
+  """
+
+  class TrainingOptionsValue(_messages.Message):
+    r"""[Output-only, Beta] Training options used by this training run. These
+    options are mutable for subsequent training runs. Default values are
+    explicitly stored for options not specified in the input query of the
+    first training run. For subsequent training runs, any option not
+    explicitly specified in the input query will be copied from the previous
+    training run.
+
+    Fields:
+      earlyStop: A boolean attribute.
+      l1Reg: A number attribute.
+      l2Reg: A number attribute.
+      learnRate: A number attribute.
+      learnRateStrategy: A string attribute.
+      lineSearchInitLearnRate: A number attribute.
+      maxIteration: A string attribute.
+      minRelProgress: A number attribute.
+      warmStart: A boolean attribute.
+    """
+
+    earlyStop = _messages.BooleanField(1)
+    l1Reg = _messages.FloatField(2)
+    l2Reg = _messages.FloatField(3)
+    learnRate = _messages.FloatField(4)
+    learnRateStrategy = _messages.StringField(5)
+    lineSearchInitLearnRate = _messages.FloatField(6)
+    maxIteration = _messages.IntegerField(7)
+    minRelProgress = _messages.FloatField(8)
+    warmStart = _messages.BooleanField(9)
+
+  iterationResults = _messages.MessageField('BqmlIterationResult', 1, repeated=True)
+  startTime = _message_types.DateTimeField(2)
+  state = _messages.StringField(3)
+  trainingOptions = _messages.MessageField('TrainingOptionsValue', 4)
+
+
 class Clustering(_messages.Message):
   r"""A Clustering object.
 
@@ -579,7 +669,15 @@ class CsvOptions(_messages.Message):
     skipLeadingRows: [Optional] The number of rows at the top of a CSV file
       that BigQuery will skip when reading the data. The default value is 0.
       This property is useful if you have header rows in the file that should
-      be skipped.
+      be skipped. When autodetect is on, the behavior is the following: *
+      skipLeadingRows unspecified - Autodetect tries to detect headers in the
+      first row. If they are not detected, the row is read as data. Otherwise
+      data is read starting from the second row. * skipLeadingRows is 0 -
+      Instructs autodetect that there are no headers and data should be read
+      starting from the first row. * skipLeadingRows = N > 0 - Autodetect
+      skips N-1 rows and tries to detect headers in row N. If headers are not
+      detected, row N is just skipped. Otherwise row N is used to extract
+      column names for the detected schema.
   """
 
   allowJaggedRows = _messages.BooleanField(1)
@@ -612,6 +710,7 @@ class Dataset(_messages.Message):
     creationTime: [Output-only] The time when this dataset was created, in
       milliseconds since the epoch.
     datasetReference: [Required] A reference that identifies the dataset.
+    defaultEncryptionConfiguration: A EncryptionConfiguration attribute.
     defaultPartitionExpirationMs: [Optional] The default partition expiration
       for all partitioned tables in the dataset, in milliseconds. Once this
       property is set, all newly-created partitioned tables in the dataset
@@ -668,9 +767,13 @@ class Dataset(_messages.Message):
         access to. Maps to IAM policy member "group:GROUP".
       iamMember: [Pick one] Some other type of member that appears in the IAM
         Policy but isn't a user, group, domain, or special group.
-      role: [Required] Describes the rights granted to the user specified by
-        the other member of the access object. The following string values are
-        supported: READER, WRITER, OWNER.
+      role: [Required] An IAM role ID that should be granted to the user,
+        group, or domain specified in this access entry. The following legacy
+        mappings will be applied: OWNER  roles/bigquery.dataOwner WRITER
+        roles/bigquery.dataEditor READER  roles/bigquery.dataViewer This field
+        will accept any of the above formats, but will return only the legacy
+        format. For example, if you set this field to
+        "roles/bigquery.dataOwner", it will be returned back as "OWNER".
       specialGroup: [Pick one] A special group to grant access to. Possible
         values include: projectOwners: Owners of the enclosing project.
         projectReaders: Readers of the enclosing project. projectWriters:
@@ -724,17 +827,18 @@ class Dataset(_messages.Message):
   access = _messages.MessageField('AccessValueListEntry', 1, repeated=True)
   creationTime = _messages.IntegerField(2)
   datasetReference = _messages.MessageField('DatasetReference', 3)
-  defaultPartitionExpirationMs = _messages.IntegerField(4)
-  defaultTableExpirationMs = _messages.IntegerField(5)
-  description = _messages.StringField(6)
-  etag = _messages.StringField(7)
-  friendlyName = _messages.StringField(8)
-  id = _messages.StringField(9)
-  kind = _messages.StringField(10, default=u'bigquery#dataset')
-  labels = _messages.MessageField('LabelsValue', 11)
-  lastModifiedTime = _messages.IntegerField(12)
-  location = _messages.StringField(13)
-  selfLink = _messages.StringField(14)
+  defaultEncryptionConfiguration = _messages.MessageField('EncryptionConfiguration', 4)
+  defaultPartitionExpirationMs = _messages.IntegerField(5)
+  defaultTableExpirationMs = _messages.IntegerField(6)
+  description = _messages.StringField(7)
+  etag = _messages.StringField(8)
+  friendlyName = _messages.StringField(9)
+  id = _messages.StringField(10)
+  kind = _messages.StringField(11, default=u'bigquery#dataset')
+  labels = _messages.MessageField('LabelsValue', 12)
+  lastModifiedTime = _messages.IntegerField(13)
+  location = _messages.StringField(14)
+  selfLink = _messages.StringField(15)
 
 
 class DatasetList(_messages.Message):
@@ -1017,12 +1121,10 @@ class ExternalDataConfiguration(_messages.Message):
     csvOptions: Additional properties to set if sourceFormat is set to CSV.
     googleSheetsOptions: [Optional] Additional options if sourceFormat is set
       to GOOGLE_SHEETS.
-    hivePartitioningMode: [Optional, Experimental] If hive partitioning is
-      enabled, which mode to use. Two modes are supported: - AUTO:
-      automatically infer partition key name(s) and type(s). - STRINGS:
-      automatic infer partition key name(s). All types are strings. Not all
-      storage formats support hive partitioning -- requesting hive
-      partitioning on an unsupported format will lead to an error.
+    hivePartitioningMode: [Optional, Trusted Tester] Deprecated, do not use.
+      Please set hivePartitioningOptions instead.
+    hivePartitioningOptions: [Optional, Trusted Tester] Options to configure
+      hive partitioning support.
     ignoreUnknownValues: [Optional] Indicates if BigQuery should allow extra
       values that are not represented in the table schema. If true, the extra
       values are ignored. If false, records with extra columns are treated as
@@ -1062,11 +1164,12 @@ class ExternalDataConfiguration(_messages.Message):
   csvOptions = _messages.MessageField('CsvOptions', 4)
   googleSheetsOptions = _messages.MessageField('GoogleSheetsOptions', 5)
   hivePartitioningMode = _messages.StringField(6)
-  ignoreUnknownValues = _messages.BooleanField(7)
-  maxBadRecords = _messages.IntegerField(8, variant=_messages.Variant.INT32)
-  schema = _messages.MessageField('TableSchema', 9)
-  sourceFormat = _messages.StringField(10)
-  sourceUris = _messages.StringField(11, repeated=True)
+  hivePartitioningOptions = _messages.MessageField('HivePartitioningOptions', 7)
+  ignoreUnknownValues = _messages.BooleanField(8)
+  maxBadRecords = _messages.IntegerField(9, variant=_messages.Variant.INT32)
+  schema = _messages.MessageField('TableSchema', 10)
+  sourceFormat = _messages.StringField(11)
+  sourceUris = _messages.StringField(12, repeated=True)
 
 
 class GetQueryResultsResponse(_messages.Message):
@@ -1134,10 +1237,9 @@ class GoogleSheetsOptions(_messages.Message):
   r"""A GoogleSheetsOptions object.
 
   Fields:
-    range: [Beta] [Optional] Range of a sheet to query from. Only used when
-      non-empty. Typical format:
-      sheet_name!top_left_cell_id:bottom_right_cell_id For example:
-      sheet1!A1:B20
+    range: [Optional] Range of a sheet to query from. Only used when non-
+      empty. Typical format: sheet_name!top_left_cell_id:bottom_right_cell_id
+      For example: sheet1!A1:B20
     skipLeadingRows: [Optional] The number of rows at the top of a sheet that
       BigQuery will skip when reading the data. The default value is 0. This
       property is useful if you have header rows that should be skipped. When
@@ -1156,31 +1258,30 @@ class GoogleSheetsOptions(_messages.Message):
   skipLeadingRows = _messages.IntegerField(2)
 
 
-class IterationResult(_messages.Message):
-  r"""A IterationResult object.
+class HivePartitioningOptions(_messages.Message):
+  r"""A HivePartitioningOptions object.
 
   Fields:
-    durationMs: [Output-only, Beta] Time taken to run the training iteration
-      in milliseconds.
-    evalLoss: [Output-only, Beta] Eval loss computed on the eval data at the
-      end of the iteration. The eval loss is used for early stopping to avoid
-      overfitting. No eval loss if eval_split_method option is specified as
-      no_split or auto_split with input data size less than 500 rows.
-    index: [Output-only, Beta] Index of the ML training iteration, starting
-      from zero for each training run.
-    learnRate: [Output-only, Beta] Learning rate used for this iteration, it
-      varies for different training iterations if learn_rate_strategy option
-      is not constant.
-    trainingLoss: [Output-only, Beta] Training loss computed on the training
-      data at the end of the iteration. The training loss function is defined
-      by model type.
+    mode: [Optional, Trusted Tester] When set, what mode of hive partitioning
+      to use when reading data. Two modes are supported. (1) AUTO:
+      automatically infer partition key name(s) and type(s). (2) STRINGS:
+      automatically infer partition key name(s). All types are interpreted as
+      strings. Not all storage formats support hive partitioning. Requesting
+      hive partitioning on an unsupported format will lead to an error.
+      Currently supported types include: AVRO, CSV, JSON, ORC and Parquet.
+    sourceUriPrefix: [Optional, Trusted Tester] When hive partition detection
+      is requested, a common prefix for all source uris should be supplied.
+      The prefix must end immediately before the partition key encoding
+      begins. For example, consider files following this data layout.
+      gs://bucket/path_to_table/dt=2019-01-01/country=BR/id=7/file.avro
+      gs://bucket/path_to_table/dt=2018-12-31/country=CA/id=3/file.avro When
+      hive partitioning is requested with either AUTO or STRINGS detection,
+      the common prefix can be either of gs://bucket/path_to_table or
+      gs://bucket/path_to_table/ (trailing slash does not matter).
   """
 
-  durationMs = _messages.IntegerField(1)
-  evalLoss = _messages.FloatField(2)
-  index = _messages.IntegerField(3, variant=_messages.Variant.INT32)
-  learnRate = _messages.FloatField(4)
-  trainingLoss = _messages.FloatField(5)
+  mode = _messages.StringField(1)
+  sourceUriPrefix = _messages.StringField(2)
 
 
 class Job(_messages.Message):
@@ -1315,7 +1416,12 @@ class JobConfigurationExtract(_messages.Message):
       data. Default is ','
     printHeader: [Optional] Whether to print out a header row in the results.
       Default is true.
-    sourceTable: [Required] A reference to the table being exported.
+    sourceModel: A reference to the model being exported.
+    sourceTable: A reference to the table being exported.
+    useAvroLogicalTypes: [Optional] If destinationFormat is set to "AVRO",
+      this flag indicates whether to enable extracting applicable column types
+      (such as TIMESTAMP) to their corresponding AVRO logical types
+      (timestamp-micros), instead of only using their raw types (avro-long).
   """
 
   compression = _messages.StringField(1)
@@ -1324,7 +1430,9 @@ class JobConfigurationExtract(_messages.Message):
   destinationUris = _messages.StringField(4, repeated=True)
   fieldDelimiter = _messages.StringField(5)
   printHeader = _messages.BooleanField(6, default=True)
-  sourceTable = _messages.MessageField('TableReference', 7)
+  sourceModel = _messages.MessageField('ModelReference', 7)
+  sourceTable = _messages.MessageField('TableReference', 8)
+  useAvroLogicalTypes = _messages.BooleanField(9)
 
 
 class JobConfigurationLoad(_messages.Message):
@@ -1368,12 +1476,10 @@ class JobConfigurationLoad(_messages.Message):
       first byte of the encoded string to split the data in its raw, binary
       state. BigQuery also supports the escape sequence "\t" to specify a tab
       separator. The default value is a comma (',').
-    hivePartitioningMode: [Optional, Experimental] If hive partitioning is
-      enabled, which mode to use. Two modes are supported: - AUTO:
-      automatically infer partition key name(s) and type(s). - STRINGS:
-      automatic infer partition key name(s). All types are strings. Not all
-      storage formats support hive partitioning -- requesting hive
-      partitioning on an unsupported format will lead to an error.
+    hivePartitioningMode: [Optional, Trusted Tester] Deprecated, do not use.
+      Please set hivePartitioningOptions instead.
+    hivePartitioningOptions: [Optional, Trusted Tester] Options to configure
+      hive partitioning support.
     ignoreUnknownValues: [Optional] Indicates if BigQuery should allow extra
       values that are not represented in the table schema. If true, the extra
       values are ignored. If false, records with extra columns are treated as
@@ -1472,22 +1578,23 @@ class JobConfigurationLoad(_messages.Message):
   encoding = _messages.StringField(9)
   fieldDelimiter = _messages.StringField(10)
   hivePartitioningMode = _messages.StringField(11)
-  ignoreUnknownValues = _messages.BooleanField(12)
-  maxBadRecords = _messages.IntegerField(13, variant=_messages.Variant.INT32)
-  nullMarker = _messages.StringField(14)
-  projectionFields = _messages.StringField(15, repeated=True)
-  quote = _messages.StringField(16, default=u'"')
-  rangePartitioning = _messages.MessageField('RangePartitioning', 17)
-  schema = _messages.MessageField('TableSchema', 18)
-  schemaInline = _messages.StringField(19)
-  schemaInlineFormat = _messages.StringField(20)
-  schemaUpdateOptions = _messages.StringField(21, repeated=True)
-  skipLeadingRows = _messages.IntegerField(22, variant=_messages.Variant.INT32)
-  sourceFormat = _messages.StringField(23)
-  sourceUris = _messages.StringField(24, repeated=True)
-  timePartitioning = _messages.MessageField('TimePartitioning', 25)
-  useAvroLogicalTypes = _messages.BooleanField(26)
-  writeDisposition = _messages.StringField(27)
+  hivePartitioningOptions = _messages.MessageField('HivePartitioningOptions', 12)
+  ignoreUnknownValues = _messages.BooleanField(13)
+  maxBadRecords = _messages.IntegerField(14, variant=_messages.Variant.INT32)
+  nullMarker = _messages.StringField(15)
+  projectionFields = _messages.StringField(16, repeated=True)
+  quote = _messages.StringField(17, default=u'"')
+  rangePartitioning = _messages.MessageField('RangePartitioning', 18)
+  schema = _messages.MessageField('TableSchema', 19)
+  schemaInline = _messages.StringField(20)
+  schemaInlineFormat = _messages.StringField(21)
+  schemaUpdateOptions = _messages.StringField(22, repeated=True)
+  skipLeadingRows = _messages.IntegerField(23, variant=_messages.Variant.INT32)
+  sourceFormat = _messages.StringField(24)
+  sourceUris = _messages.StringField(25, repeated=True)
+  timePartitioning = _messages.MessageField('TimePartitioning', 26)
+  useAvroLogicalTypes = _messages.BooleanField(27)
+  writeDisposition = _messages.StringField(28)
 
 
 class JobConfigurationQuery(_messages.Message):
@@ -1765,6 +1872,11 @@ class JobStatistics(_messages.Message):
     quotaDeferments: [Output-only] Quotas which delayed this job's start time.
     reservationUsage: [Output-only] Job resource usage breakdown by
       reservation.
+    reservation_id: [Output-only] Name of the primary reservation assigned to
+      this job. Note that this could be different than reservations reported
+      in the reservation usage field if parent reservations were used to
+      execute this job.
+    scriptStatistics: [Output-only] Statistics for a child job of a script.
     startTime: [Output-only] Start time of this job, in milliseconds since the
       epoch. This field will be present when the job transitions from the
       PENDING state to either RUNNING or DONE.
@@ -1796,9 +1908,11 @@ class JobStatistics(_messages.Message):
   query = _messages.MessageField('JobStatistics2', 8)
   quotaDeferments = _messages.StringField(9, repeated=True)
   reservationUsage = _messages.MessageField('ReservationUsageValueListEntry', 10, repeated=True)
-  startTime = _messages.IntegerField(11)
-  totalBytesProcessed = _messages.IntegerField(12)
-  totalSlotMs = _messages.IntegerField(13)
+  reservation_id = _messages.StringField(11)
+  scriptStatistics = _messages.MessageField('ScriptStatistics', 12)
+  startTime = _messages.IntegerField(13)
+  totalBytesProcessed = _messages.IntegerField(14)
+  totalSlotMs = _messages.IntegerField(15)
 
 
 class JobStatistics2(_messages.Message):
@@ -1819,6 +1933,8 @@ class JobStatistics2(_messages.Message):
       while the table does not exist. "REPLACE": The query replaced the DDL
       target. Example case: the query is CREATE OR REPLACE TABLE, and the
       table already exists. "DROP": The query deleted the DDL target.
+    ddlTargetRoutine: The DDL target routine. Present only for CREATE/DROP
+      FUNCTION/PROCEDURE queries.
     ddlTargetTable: The DDL target table. Present only for CREATE/DROP
       TABLE/VIEW queries.
     estimatedBytesProcessed: [Output-only] The original estimate of bytes
@@ -1831,6 +1947,8 @@ class JobStatistics2(_messages.Message):
     numDmlAffectedRows: [Output-only] The number of rows affected by a DML
       statement. Present only for DML statements INSERT, UPDATE or DELETE.
     queryPlan: [Output-only] Describes execution plan for the query.
+    referencedRoutines: [Output-only] Referenced routines (persistent user-
+      defined functions and stored procedures) for the job.
     referencedTables: [Output-only] Referenced tables for the job. Queries
       that reference more than 50 tables will not have a complete list.
     reservationUsage: [Output-only] Job resource usage breakdown by
@@ -1846,11 +1964,15 @@ class JobStatistics2(_messages.Message):
       https://cloud.google.com/bigquery/docs/reference/standard-sql/data-
       manipulation-language. "MERGE": MERGE query; see
       https://cloud.google.com/bigquery/docs/reference/standard-sql/data-
-      manipulation-language. "CREATE_TABLE": CREATE [OR REPLACE] TABLE without
-      AS SELECT. "CREATE_TABLE_AS_SELECT": CREATE [OR REPLACE] TABLE ... AS
-      SELECT ... . "DROP_TABLE": DROP TABLE query. "CREATE_VIEW": CREATE [OR
-      REPLACE] VIEW ... AS SELECT ... . "DROP_VIEW": DROP VIEW query.
-      "ALTER_TABLE": ALTER TABLE query. "ALTER_VIEW": ALTER VIEW query.
+      manipulation-language. "ALTER_TABLE": ALTER TABLE query. "ALTER_VIEW":
+      ALTER VIEW query. "ASSERT": ASSERT condition AS 'description'.
+      "CREATE_FUNCTION": CREATE FUNCTION query. "CREATE_MODEL": CREATE [OR
+      REPLACE] MODEL ... AS SELECT ... . "CREATE_PROCEDURE": CREATE PROCEDURE
+      query. "CREATE_TABLE": CREATE [OR REPLACE] TABLE without AS SELECT.
+      "CREATE_TABLE_AS_SELECT": CREATE [OR REPLACE] TABLE ... AS SELECT ... .
+      "CREATE_VIEW": CREATE [OR REPLACE] VIEW ... AS SELECT ... .
+      "DROP_FUNCTION" : DROP FUNCTION query. "DROP_PROCEDURE": DROP PROCEDURE
+      query. "DROP_TABLE": DROP TABLE query. "DROP_VIEW": DROP VIEW query.
     timeline: [Output-only] [Beta] Describes a timeline of job execution.
     totalBytesBilled: [Output-only] Total bytes billed for the job.
     totalBytesProcessed: [Output-only] Total bytes processed for the job.
@@ -1858,7 +1980,7 @@ class JobStatistics2(_messages.Message):
       totalBytesProcessed is an estimate and this field specifies the accuracy
       of the estimate. Possible values can be: UNKNOWN: accuracy of the
       estimate is unknown. PRECISE: estimate is precise. LOWER_BOUND: estimate
-      is lower bound of what the query would cost. UPPER_BOUND: estiamte is
+      is lower bound of what the query would cost. UPPER_BOUND: estimate is
       upper bound of what the query would cost.
     totalPartitionsProcessed: [Output-only] Total number of partitions
       processed from all partitioned tables referenced in the job.
@@ -1883,24 +2005,26 @@ class JobStatistics2(_messages.Message):
   billingTier = _messages.IntegerField(1, variant=_messages.Variant.INT32)
   cacheHit = _messages.BooleanField(2)
   ddlOperationPerformed = _messages.StringField(3)
-  ddlTargetTable = _messages.MessageField('TableReference', 4)
-  estimatedBytesProcessed = _messages.IntegerField(5)
-  modelTraining = _messages.MessageField('BigQueryModelTraining', 6)
-  modelTrainingCurrentIteration = _messages.IntegerField(7, variant=_messages.Variant.INT32)
-  modelTrainingExpectedTotalIteration = _messages.IntegerField(8)
-  numDmlAffectedRows = _messages.IntegerField(9)
-  queryPlan = _messages.MessageField('ExplainQueryStage', 10, repeated=True)
-  referencedTables = _messages.MessageField('TableReference', 11, repeated=True)
-  reservationUsage = _messages.MessageField('ReservationUsageValueListEntry', 12, repeated=True)
-  schema = _messages.MessageField('TableSchema', 13)
-  statementType = _messages.StringField(14)
-  timeline = _messages.MessageField('QueryTimelineSample', 15, repeated=True)
-  totalBytesBilled = _messages.IntegerField(16)
-  totalBytesProcessed = _messages.IntegerField(17)
-  totalBytesProcessedAccuracy = _messages.StringField(18)
-  totalPartitionsProcessed = _messages.IntegerField(19)
-  totalSlotMs = _messages.IntegerField(20)
-  undeclaredQueryParameters = _messages.MessageField('QueryParameter', 21, repeated=True)
+  ddlTargetRoutine = _messages.MessageField('RoutineReference', 4)
+  ddlTargetTable = _messages.MessageField('TableReference', 5)
+  estimatedBytesProcessed = _messages.IntegerField(6)
+  modelTraining = _messages.MessageField('BigQueryModelTraining', 7)
+  modelTrainingCurrentIteration = _messages.IntegerField(8, variant=_messages.Variant.INT32)
+  modelTrainingExpectedTotalIteration = _messages.IntegerField(9)
+  numDmlAffectedRows = _messages.IntegerField(10)
+  queryPlan = _messages.MessageField('ExplainQueryStage', 11, repeated=True)
+  referencedRoutines = _messages.MessageField('RoutineReference', 12, repeated=True)
+  referencedTables = _messages.MessageField('TableReference', 13, repeated=True)
+  reservationUsage = _messages.MessageField('ReservationUsageValueListEntry', 14, repeated=True)
+  schema = _messages.MessageField('TableSchema', 15)
+  statementType = _messages.StringField(16)
+  timeline = _messages.MessageField('QueryTimelineSample', 17, repeated=True)
+  totalBytesBilled = _messages.IntegerField(18)
+  totalBytesProcessed = _messages.IntegerField(19)
+  totalBytesProcessedAccuracy = _messages.StringField(20)
+  totalPartitionsProcessed = _messages.IntegerField(21)
+  totalSlotMs = _messages.IntegerField(22)
+  undeclaredQueryParameters = _messages.MessageField('QueryParameter', 23, repeated=True)
 
 
 class JobStatistics3(_messages.Message):
@@ -1993,13 +2117,21 @@ class MaterializedViewDefinition(_messages.Message):
   r"""A MaterializedViewDefinition object.
 
   Fields:
+    enableRefresh: [Optional] [TrustedTester] Enable automatic refresh of the
+      materialized view when the base table is updated. The default value is
+      "true".
     lastRefreshTime: [Output-only] [TrustedTester] The time when this
       materialized view was last modified, in milliseconds since the epoch.
     query: [Required] A query whose result is persisted.
+    refreshIntervalMs: [Optional] [TrustedTester] The maximum frequency at
+      which this materialized view will be refreshed. The default value is
+      "1800000" (30 minutes).
   """
 
-  lastRefreshTime = _messages.IntegerField(1)
-  query = _messages.StringField(2)
+  enableRefresh = _messages.BooleanField(1)
+  lastRefreshTime = _messages.IntegerField(2)
+  query = _messages.StringField(3)
+  refreshIntervalMs = _messages.IntegerField(4)
 
 
 class ModelDefinition(_messages.Message):
@@ -2038,7 +2170,23 @@ class ModelDefinition(_messages.Message):
     modelType = _messages.StringField(3)
 
   modelOptions = _messages.MessageField('ModelOptionsValue', 1)
-  trainingRuns = _messages.MessageField('TrainingRun', 2, repeated=True)
+  trainingRuns = _messages.MessageField('BqmlTrainingRun', 2, repeated=True)
+
+
+class ModelReference(_messages.Message):
+  r"""A ModelReference object.
+
+  Fields:
+    datasetId: [Required] The ID of the dataset containing this model.
+    modelId: [Required] The ID of the model. The ID must contain only letters
+      (a-z, A-Z), numbers (0-9), or underscores (_). The maximum length is
+      1,024 characters.
+    projectId: [Required] The ID of the project containing this model.
+  """
+
+  datasetId = _messages.StringField(1)
+  modelId = _messages.StringField(2)
+  projectId = _messages.StringField(3)
 
 
 class ProjectList(_messages.Message):
@@ -2347,6 +2495,58 @@ class RangePartitioning(_messages.Message):
   range = _messages.MessageField('RangeValue', 2)
 
 
+class RoutineReference(_messages.Message):
+  r"""A RoutineReference object.
+
+  Fields:
+    datasetId: [Required] The ID of the dataset containing this routine.
+    projectId: [Required] The ID of the project containing this routine.
+    routineId: [Required] The ID of the routine. The ID must contain only
+      letters (a-z, A-Z), numbers (0-9), or underscores (_). The maximum
+      length is 256 characters.
+  """
+
+  datasetId = _messages.StringField(1)
+  projectId = _messages.StringField(2)
+  routineId = _messages.StringField(3)
+
+
+class ScriptStackFrame(_messages.Message):
+  r"""A ScriptStackFrame object.
+
+  Fields:
+    endColumn: [Output-only] One-based end column.
+    endLine: [Output-only] One-based end line.
+    procedureId: [Output-only] Name of the active procedure, empty if in a
+      top-level script.
+    startColumn: [Output-only] One-based start column.
+    startLine: [Output-only] One-based start line.
+    text: [Output-only] Text of the current statement/expression.
+  """
+
+  endColumn = _messages.IntegerField(1, variant=_messages.Variant.INT32)
+  endLine = _messages.IntegerField(2, variant=_messages.Variant.INT32)
+  procedureId = _messages.StringField(3)
+  startColumn = _messages.IntegerField(4, variant=_messages.Variant.INT32)
+  startLine = _messages.IntegerField(5, variant=_messages.Variant.INT32)
+  text = _messages.StringField(6)
+
+
+class ScriptStatistics(_messages.Message):
+  r"""A ScriptStatistics object.
+
+  Fields:
+    evaluationKind: [Output-only] Whether this child job was a statement or
+      expression.
+    stackFrames: Stack trace showing the line/column/procedure name of each
+      frame on the stack at the point where the current evaluation happened.
+      The leaf frame is first, the primary script is last. Never empty.
+  """
+
+  evaluationKind = _messages.StringField(1)
+  stackFrames = _messages.MessageField('ScriptStackFrame', 2, repeated=True)
+
+
 class StandardQueryParameters(_messages.Message):
   r"""Query parameters accepted by all methods.
 
@@ -2467,9 +2667,9 @@ class Table(_messages.Message):
     rangePartitioning: [TrustedTester] Range partitioning specification for
       this table. Only one of timePartitioning and rangePartitioning should be
       specified.
-    requirePartitionFilter: [Beta] [Optional] If set to true, queries over
-      this table require a partition filter that can be used for partition
-      elimination to be specified.
+    requirePartitionFilter: [Optional] If set to true, queries over this table
+      require a partition filter that can be used for partition elimination to
+      be specified.
     schema: [Optional] Describes the schema of this table.
     selfLink: [Output-only] A URL that can be used to access this resource
       again.
@@ -2654,6 +2854,7 @@ class TableFieldSchema(_messages.Message):
   Messages:
     CategoriesValue: [Optional] The categories attached to this field, used
       for field-level access control.
+    PolicyTagsValue: A PolicyTagsValue object.
 
   Fields:
     categories: [Optional] The categories attached to this field, used for
@@ -2667,6 +2868,7 @@ class TableFieldSchema(_messages.Message):
     name: [Required] The field name. The name must contain only letters (a-z,
       A-Z), numbers (0-9), or underscores (_), and must start with a letter or
       underscore. The maximum length is 128 characters.
+    policyTags: A PolicyTagsValue attribute.
     type: [Required] The field data type. Possible values include STRING,
       BYTES, INTEGER, INT64 (same as INTEGER), FLOAT, FLOAT64 (same as FLOAT),
       BOOLEAN, BOOL (same as BOOLEAN), TIMESTAMP, DATE, TIME, DATETIME, RECORD
@@ -2686,12 +2888,24 @@ class TableFieldSchema(_messages.Message):
 
     names = _messages.StringField(1, repeated=True)
 
+  class PolicyTagsValue(_messages.Message):
+    r"""A PolicyTagsValue object.
+
+    Fields:
+      names: A list of category resource names. For example,
+        "projects/1/location/eu/taxonomies/2/policyTags/3". At most 1 policy
+        tag is allowed.
+    """
+
+    names = _messages.StringField(1, repeated=True)
+
   categories = _messages.MessageField('CategoriesValue', 1)
   description = _messages.StringField(2)
   fields = _messages.MessageField('TableFieldSchema', 3, repeated=True)
   mode = _messages.StringField(4)
   name = _messages.StringField(5)
-  type = _messages.StringField(6)
+  policyTags = _messages.MessageField('PolicyTagsValue', 6)
+  type = _messages.StringField(7)
 
 
 class TableList(_messages.Message):
@@ -2730,6 +2944,8 @@ class TableList(_messages.Message):
       kind: The resource type.
       labels: The labels associated with this table. You can use these to
         organize and group your tables.
+      rangePartitioning: The range partitioning specification for this table,
+        if configured.
       tableReference: A reference uniquely identifying the table.
       timePartitioning: The time-based partitioning specification for this
         table, if configured.
@@ -2779,10 +2995,11 @@ class TableList(_messages.Message):
     id = _messages.StringField(5)
     kind = _messages.StringField(6, default=u'bigquery#table')
     labels = _messages.MessageField('LabelsValue', 7)
-    tableReference = _messages.MessageField('TableReference', 8)
-    timePartitioning = _messages.MessageField('TimePartitioning', 9)
-    type = _messages.StringField(10)
-    view = _messages.MessageField('ViewValue', 11)
+    rangePartitioning = _messages.MessageField('RangePartitioning', 8)
+    tableReference = _messages.MessageField('TableReference', 9)
+    timePartitioning = _messages.MessageField('TimePartitioning', 10)
+    type = _messages.StringField(11)
+    view = _messages.MessageField('ViewValue', 12)
 
   etag = _messages.StringField(1)
   kind = _messages.StringField(2, default=u'bigquery#tableList')
@@ -2849,69 +3066,6 @@ class TimePartitioning(_messages.Message):
   field = _messages.StringField(2)
   requirePartitionFilter = _messages.BooleanField(3)
   type = _messages.StringField(4)
-
-
-class TrainingRun(_messages.Message):
-  r"""A TrainingRun object.
-
-  Messages:
-    TrainingOptionsValue: [Output-only, Beta] Training options used by this
-      training run. These options are mutable for subsequent training runs.
-      Default values are explicitly stored for options not specified in the
-      input query of the first training run. For subsequent training runs, any
-      option not explicitly specified in the input query will be copied from
-      the previous training run.
-
-  Fields:
-    iterationResults: [Output-only, Beta] List of each iteration results.
-    startTime: [Output-only, Beta] Training run start time in milliseconds
-      since the epoch.
-    state: [Output-only, Beta] Different state applicable for a training run.
-      IN PROGRESS: Training run is in progress. FAILED: Training run ended due
-      to a non-retryable failure. SUCCEEDED: Training run successfully
-      completed. CANCELLED: Training run cancelled by the user.
-    trainingOptions: [Output-only, Beta] Training options used by this
-      training run. These options are mutable for subsequent training runs.
-      Default values are explicitly stored for options not specified in the
-      input query of the first training run. For subsequent training runs, any
-      option not explicitly specified in the input query will be copied from
-      the previous training run.
-  """
-
-  class TrainingOptionsValue(_messages.Message):
-    r"""[Output-only, Beta] Training options used by this training run. These
-    options are mutable for subsequent training runs. Default values are
-    explicitly stored for options not specified in the input query of the
-    first training run. For subsequent training runs, any option not
-    explicitly specified in the input query will be copied from the previous
-    training run.
-
-    Fields:
-      earlyStop: A boolean attribute.
-      l1Reg: A number attribute.
-      l2Reg: A number attribute.
-      learnRate: A number attribute.
-      learnRateStrategy: A string attribute.
-      lineSearchInitLearnRate: A number attribute.
-      maxIteration: A string attribute.
-      minRelProgress: A number attribute.
-      warmStart: A boolean attribute.
-    """
-
-    earlyStop = _messages.BooleanField(1)
-    l1Reg = _messages.FloatField(2)
-    l2Reg = _messages.FloatField(3)
-    learnRate = _messages.FloatField(4)
-    learnRateStrategy = _messages.StringField(5)
-    lineSearchInitLearnRate = _messages.FloatField(6)
-    maxIteration = _messages.IntegerField(7)
-    minRelProgress = _messages.FloatField(8)
-    warmStart = _messages.BooleanField(9)
-
-  iterationResults = _messages.MessageField('IterationResult', 1, repeated=True)
-  startTime = _message_types.DateTimeField(2)
-  state = _messages.StringField(3)
-  trainingOptions = _messages.MessageField('TrainingOptionsValue', 4)
 
 
 class UserDefinedFunctionResource(_messages.Message):

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -131,8 +131,13 @@ class Walker(object):
       Returns:
         The return value of the outer Visit() call.
       """
+      if not node.is_group:
+        self._Visit(node, parent, is_group=False)
+        return parent
+
       parent = self._Visit(node, parent, is_group=True)
       commands_and_groups = []
+
       if node.commands:
         for name, command in six.iteritems(node.commands):
           if _Include(command):

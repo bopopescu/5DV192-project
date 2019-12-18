@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,15 +34,15 @@ class List(base.ListCommand, dm_base.DmCommand):
   """
 
   detailed_help = {
-      'EXAMPLES': """\
-          To print out a list of manifests in a deployment, run:
+      'EXAMPLES': """
+To print out a list of manifests in a deployment, run:
 
-            $ {command} --deployment my-deployment
+  $ {command} --deployment=my-deployment
 
-          To print only the name of each manifest, run:
+To print only the name of each manifest, run:
 
-            $ {command} --deployment my-deployment --simple-list
-          """,
+  $ {command} --deployment=my-deployment --simple-list
+""",
   }
 
   @staticmethod

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,7 +21,15 @@ from __future__ import unicode_literals
 from googlecloudsdk.calliope import base
 
 
-@base.ReleaseTracks(base.ReleaseTrack.BETA, base.ReleaseTrack.GA)
+@base.ReleaseTracks(base.ReleaseTrack.ALPHA)
+class DomainsAlpha(base.Group):
+  """Manage domains for your Google Cloud projects."""
+
+  category = base.NETWORKING_CATEGORY
+
+
+@base.ReleaseTracks(base.ReleaseTrack.BETA,
+                    base.ReleaseTrack.GA)
 class Domains(base.Group):
   """Base class for gcloud domains command group."""
 

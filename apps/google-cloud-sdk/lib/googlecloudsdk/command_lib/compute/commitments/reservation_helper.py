@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ from __future__ import division
 from __future__ import unicode_literals
 
 from googlecloudsdk.command_lib.compute import flags as compute_flags
-from googlecloudsdk.command_lib.compute.allocations import resource_args
+from googlecloudsdk.command_lib.compute.reservations import resource_args
 from googlecloudsdk.command_lib.compute.reservations import util
 from googlecloudsdk.core import yaml
 
@@ -65,4 +65,4 @@ def _MakeSingleReservation(args, messages, holder):
           args,
           holder.resources,
           scope_lister=compute_flags.GetDefaultScopeLister(holder.client))
-  return util.MakeAllocationMessageFromArgs(messages, args, reservation_ref)
+  return util.MakeReservationMessageFromArgs(messages, args, reservation_ref)

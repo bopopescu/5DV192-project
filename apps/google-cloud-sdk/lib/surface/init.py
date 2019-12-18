@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -65,6 +65,17 @@ class Init(base.Command):
   project-level default zone in the Cloud Platform Console.
 
   To sync the configuration, re-run {command}
+
+  ## EXAMPLES
+
+  To launch an interactive Getting Started workflow, run:
+
+    $ {command}
+
+  To launch an interactive Getting Started workflow without diagnostics, run:
+
+    $ {command} --skip-diagnostics
+
   """
 
   category = base.SDK_TOOLS_CATEGORY

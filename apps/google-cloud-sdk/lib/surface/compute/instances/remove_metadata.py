@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,10 +29,24 @@ from googlecloudsdk.command_lib.compute.instances import flags
 from googlecloudsdk.core import log
 
 
+DETAILED_HELP = {
+    'DESCRIPTION':
+        """\
+          {command} can be used to remove instance metadata entries.
+        """,
+    'EXAMPLES':
+        """\
+        To remove metadata keys ``{0}'' and ``{1}'' along with their data from
+        an instance named ``{3}'', run:
+
+          $ {2} {3} --keys={0},{1}
+        """.format('important-data', 'useless-data', '{command}',
+                   'test-instance')
+}
+
+
 class InstancesRemoveMetadata(base.UpdateCommand):
   """Remove instance metadata.
-
-  {command} can be used to remove instance metadata entries.
   """
 
   @staticmethod
@@ -107,3 +121,6 @@ class InstancesRemoveMetadata(base.UpdateCommand):
 
     return client.MakeRequests(
         [self.GetSetRequest(client, instance_ref, new_object)])
+
+
+InstancesRemoveMetadata.detailed_help = DETAILED_HELP

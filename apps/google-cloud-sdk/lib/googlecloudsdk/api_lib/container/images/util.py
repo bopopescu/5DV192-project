@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2016 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ from __future__ import unicode_literals
 
 from contextlib import contextmanager
 
-# pytype: disable=import-error
 from containerregistry.client import docker_creds
 from containerregistry.client import docker_name
 # We use distinct versions of the library for v2 and v2.2 because
@@ -32,7 +31,6 @@ from containerregistry.client.v2 import docker_image as v2_image
 from containerregistry.client.v2_2 import docker_http as v2_2_docker_http
 from containerregistry.client.v2_2 import docker_image as v2_2_image
 from containerregistry.client.v2_2 import docker_image_list
-# pytype: enable=import-error
 from googlecloudsdk.api_lib.container.images import container_analysis_data_util
 from googlecloudsdk.api_lib.containeranalysis import util as containeranalysis_util
 from googlecloudsdk.api_lib.util import apis
@@ -145,11 +143,12 @@ def RecoverProjectId(repository):
 
 
 def _UnqualifiedResourceUrl(repo):
-  return 'https://{repo}@'.format(repo=str(repo))
+  return 'https://{repo}@'.format(repo=six.text_type(repo))
 
 
 def _ResourceUrl(repo, digest):
-  return 'https://{repo}@{digest}'.format(repo=str(repo), digest=digest)
+  return 'https://{repo}@{digest}'.format(
+      repo=six.text_type(repo), digest=digest)
 
 
 def _FullyqualifiedDigest(digest):
@@ -190,7 +189,7 @@ def FetchDeploymentsForImage(image, occurrence_filter=None):
   occurrences = list(
       containeranalysis_util.MakeOccurrenceRequest(project_id, occ_filter))
   deployments = []
-  image_string = str(image)
+  image_string = six.text_type(image)
   for occ in occurrences:
     if not occ.deployment:
       continue
@@ -281,7 +280,7 @@ def TransformManifests(manifests,
     for occ in occurrences.get(_ResourceUrl(repository, k), []):
       if occ.kind not in result:
         result[occ.kind] = []
-      result[occ.kind].append(occ)  # pytype: disable=attribute-error
+      result[occ.kind].append(occ)
 
     if show_occurrences and resource_urls:
       result['vuln_counts'] = {}
@@ -295,7 +294,7 @@ def TransformManifests(manifests,
       for severity_count in summary.counts:
         if severity_count.severity:
           result['vuln_counts'][str(severity_count.severity)] = (
-              severity_count.count)  # pytype: disable=attribute-error
+              severity_count.count)
 
     results.append(result)
   return results
@@ -338,7 +337,7 @@ def GetDockerTagsForDigest(digest, http_obj):
   tag_names = GetTagNamesForDigest(digest, http_obj)
   for tag_name in tag_names:  # iterate over digest tags
     try:
-      tag = docker_name.Tag(str(repository) + ':' + tag_name)
+      tag = docker_name.Tag(six.text_type(repository) + ':' + tag_name)
     except docker_name.BadNameException as e:
       raise InvalidImageNameError(six.text_type(e))
     tags.append(tag)
@@ -497,11 +496,11 @@ def WrapExpectedDockerlessErrors(optional_image_name=None):
         six.moves.http_client.UNAUTHORIZED, six.moves.http_client.FORBIDDEN
     ]:
       raise UserRecoverableV2Error('Access denied: {}'.format(
-          optional_image_name or str(err)))
+          optional_image_name or six.text_type(err)))
     elif err.status == six.moves.http_client.NOT_FOUND:
       raise UserRecoverableV2Error('Not found: {}'.format(
-          optional_image_name or str(err)))
+          optional_image_name or six.text_type(err)))
     raise
   except (v2_docker_http.TokenRefreshException,
           v2_2_docker_http.TokenRefreshException) as err:
-    raise TokenRefreshError(str(err))
+    raise TokenRefreshError(six.text_type(err))

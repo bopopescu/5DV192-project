@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,6 +27,16 @@ from googlecloudsdk.core import log
 
 class Delete(base.DeleteCommand):
   """Delete a task from a queue."""
+  detailed_help = {
+      'DESCRIPTION': """\
+          {description}
+          """,
+      'EXAMPLES': """\
+          To delete a task:
+
+              $ {command} --queue=my-queue my-task
+         """,
+  }
 
   @staticmethod
   def Args(parser):

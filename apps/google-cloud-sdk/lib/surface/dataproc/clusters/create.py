@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,43 +22,42 @@ from __future__ import unicode_literals
 from googlecloudsdk.api_lib.dataproc import compute_helpers
 from googlecloudsdk.api_lib.dataproc import constants
 from googlecloudsdk.api_lib.dataproc import dataproc as dp
-from googlecloudsdk.api_lib.dataproc import util
 from googlecloudsdk.calliope import base
 from googlecloudsdk.calliope import exceptions
 from googlecloudsdk.command_lib.dataproc import clusters
+from googlecloudsdk.command_lib.dataproc import flags
 from googlecloudsdk.command_lib.kms import resource_args as kms_resource_args
 from googlecloudsdk.command_lib.util.args import labels_util
-
-
-def _CommonArgs(parser, beta=False):
-  """Register flags common to all tracks."""
-  base.ASYNC_FLAG.AddToParser(parser)
-  parser.add_argument('name', help='The name of this cluster.')
-  clusters.ArgsForClusterRef(parser, beta)
-  # Add gce-pd-kms-key args
-  kms_flag_overrides = {'kms-key': '--gce-pd-kms-key',
-                        'kms-keyring': '--gce-pd-kms-key-keyring',
-                        'kms-location': '--gce-pd-kms-key-location',
-                        'kms-project': '--gce-pd-kms-key-project'}
-  kms_resource_args.AddKmsKeyResourceArg(
-      parser, 'cluster', flag_overrides=kms_flag_overrides)
 
 
 @base.ReleaseTracks(base.ReleaseTrack.GA)
 class Create(base.CreateCommand):
   """Create a cluster."""
+  BETA = False
 
   detailed_help = {
       'EXAMPLES': """\
           To create a cluster, run:
 
-            $ {command} my_cluster
+            $ {command} my_cluster --region=us-central1
       """
   }
 
-  @staticmethod
-  def Args(parser):
-    _CommonArgs(parser, beta=False)
+  @classmethod
+  def Args(cls, parser):
+    dataproc = dp.Dataproc(cls.ReleaseTrack())
+    base.ASYNC_FLAG.AddToParser(parser)
+    flags.AddClusterResourceArg(parser, 'create', dataproc.api_version)
+    clusters.ArgsForClusterRef(parser, cls.BETA, include_ttl_config=True)
+    # Add gce-pd-kms-key args
+    kms_flag_overrides = {
+        'kms-key': '--gce-pd-kms-key',
+        'kms-keyring': '--gce-pd-kms-key-keyring',
+        'kms-location': '--gce-pd-kms-key-location',
+        'kms-project': '--gce-pd-kms-key-project'
+    }
+    kms_resource_args.AddKmsKeyResourceArg(
+        parser, 'cluster', flag_overrides=kms_flag_overrides)
 
   @staticmethod
   def ValidateArgs(args):
@@ -85,14 +84,18 @@ class Create(base.CreateCommand):
 
     dataproc = dp.Dataproc(self.ReleaseTrack())
 
-    cluster_ref = util.ParseCluster(args.name, dataproc)
+    cluster_ref = args.CONCEPTS.cluster.Parse()
 
     compute_resources = compute_helpers.GetComputeResources(
-        self.ReleaseTrack(), args.name)
+        self.ReleaseTrack(), cluster_ref.clusterName, cluster_ref.region)
 
-    beta = self.ReleaseTrack() == base.ReleaseTrack.BETA
     cluster_config = clusters.GetClusterConfig(
-        args, dataproc, cluster_ref.projectId, compute_resources, beta)
+        args,
+        dataproc,
+        cluster_ref.projectId,
+        compute_resources,
+        self.BETA,
+        include_ttl_config=True)
 
     cluster = dataproc.messages.Cluster(
         config=cluster_config,
@@ -101,7 +104,8 @@ class Create(base.CreateCommand):
 
     self.ConfigureCluster(dataproc.messages, args, cluster)
 
-    return clusters.CreateCluster(dataproc, cluster, args.async, args.timeout)
+    return clusters.CreateCluster(dataproc, cluster_ref, cluster, args.async_,
+                                  args.timeout)
 
   @staticmethod
   def ConfigureCluster(messages, args, cluster):
@@ -113,10 +117,11 @@ class Create(base.CreateCommand):
 @base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA)
 class CreateBeta(Create):
   """Create a cluster."""
+  BETA = True
 
-  @staticmethod
-  def Args(parser):
-    _CommonArgs(parser, beta=True)
+  @classmethod
+  def Args(cls, parser):
+    super(CreateBeta, cls).Args(parser)
     clusters.BetaArgsForClusterRef(parser)
 
   @staticmethod

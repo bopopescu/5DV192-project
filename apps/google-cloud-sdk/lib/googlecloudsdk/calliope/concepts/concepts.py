@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -227,7 +227,7 @@ class Attribute(_Attribute):
 
   def __hash__(self):
     return super(Attribute, self).__hash__() + sum(
-        map(hash, [str(self.completion_request_params),
+        map(hash, [six.text_type(self.completion_request_params),
                    self.completion_id_field]))
 
 
@@ -770,7 +770,8 @@ def ParseAttributesFromData(attributes_data, expected_param_names):
 
 DEFAULT_PROJECT_ATTRIBUTE_CONFIG = ResourceParameterAttributeConfig(
     name='project',
-    help_text='The Cloud project for the {resource}.',
+    help_text='Project ID of the Google Cloud Platform project for '
+              'the {resource}.',
     fallthroughs=[
         # Typically argument fallthroughs should be configured at the command
         # level, but the --project flag is currently available in every command.

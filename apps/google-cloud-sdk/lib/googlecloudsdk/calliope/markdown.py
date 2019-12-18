@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ def _GetIndexFromCapsule(capsule):
     The help doc index line for a capsule line.
   """
   # Strip leading tags: <markdown>(TAG)<markdown> or <markdown>[TAG]<markdown>.
-  capsule = re.sub(r'(\*?[[(][A-Z]+[])]\*? +)*', '', capsule)
+  capsule = re.sub(r'(\*?[\[(][A-Z]+[\])]\*? +)*', '', capsule)
   # Lower case first word if not an abbreviation.
   match = re.match(r'([A-Z])([^A-Z].*)', capsule)
   if match:
@@ -202,15 +202,15 @@ class MarkdownGenerator(six.with_metaclass(abc.ABCMeta, object)):
     """
     self._command_path = command_path
     self._command_name = ' '.join(self._command_path)
-    self._subcommands = None  # type: dict
-    self._subgroups = None  # type: dict
+    self._subcommands = None
+    self._subgroups = None
     self._top = self._command_path[0] if self._command_path else ''
     self._buf = io.StringIO()
     self._out = self._buf.write
     self._capsule = ''
     self._docstring = ''
     self._final_sections = ['EXAMPLES', 'SEE ALSO']
-    self._arg_sections = None  # type: list
+    self._arg_sections = None
     self._sections = {}
     self._file_name = '_'.join(self._command_path)
     self._global_flags = set()
@@ -672,6 +672,11 @@ class MarkdownGenerator(six.with_metaclass(abc.ABCMeta, object)):
       doc = rep + doc[pos:]
     return doc
 
+  def _IsNotThisCommand(self, cmd):
+    # We should not include the link if it refers to the current page, per
+    # our research with screen readers. (See b/1723464.)
+    return '.'.join(cmd) != '.'.join(self._command_path)
+
   def _LinkMarkdown(self, doc, pat, with_args=True):
     """Build a representation of a doc, finding all command examples.
 
@@ -695,7 +700,7 @@ class MarkdownGenerator(six.with_metaclass(abc.ABCMeta, object)):
         break
       cmd, args = self._SplitCommandFromArgs(match.group('command').split(' '))
       lnk = self.FormatExample(cmd, args, with_args=with_args)
-      if lnk:
+      if self._IsNotThisCommand(cmd) and lnk:
         rep += doc[pos:match.start('command')] + lnk
       else:
         # Skip invalid commands.

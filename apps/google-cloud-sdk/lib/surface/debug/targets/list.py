@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2016 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,13 +23,35 @@ from googlecloudsdk.api_lib.debug import debug
 from googlecloudsdk.calliope import base
 from googlecloudsdk.core import properties
 
+DETAILED_HELP = {
+    'brief':
+        'List the debug targets (debuggees) registered with the Cloud Debugger.',
+    'DESCRIPTION':
+        """\
+        *{command}* is used to display a list of the debug targets (debuggees)
+        registered with the Cloud Debugger. By default only the active targets
+        are shown, the --include-inactive can be provided to also include the
+        targets that are no longer active.
+    """,
+    'EXAMPLES':
+        """\
+        To list the active debug targets (debuggees) registered with the Cloud
+        Debugger, run:
+
+          $ {command}
+
+        To list all (both active and inactive) debug targets (debuggees)
+        registered with the Cloud Debugger, run:
+
+          $ {command} --include-inactive
+    """
+}
+
 
 class List(base.ListCommand):
-  """List debug targets.
+  """List the debug targets (debuggees) registered with the Cloud Debugger."""
 
-  This command displays a list of the active debug targets registered
-  with the Cloud Debugger.
-  """
+  detailed_help = DETAILED_HELP
 
   @staticmethod
   def Args(parser):

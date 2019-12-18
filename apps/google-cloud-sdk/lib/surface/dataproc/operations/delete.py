@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ from __future__ import division
 from __future__ import unicode_literals
 
 from googlecloudsdk.api_lib.dataproc import dataproc as dp
-from googlecloudsdk.api_lib.dataproc import util
 from googlecloudsdk.calliope import base
 from googlecloudsdk.command_lib.dataproc import flags
 from googlecloudsdk.core import log
@@ -39,14 +38,15 @@ class Delete(base.DeleteCommand):
     $ {command} operation_id
   """
 
-  @staticmethod
-  def Args(parser):
-    flags.AddOperationFlag(parser, 'delete')
+  @classmethod
+  def Args(cls, parser):
+    dataproc = dp.Dataproc(cls.ReleaseTrack())
+    flags.AddOperationResourceArg(parser, 'delete', dataproc.api_version)
 
   def Run(self, args):
     dataproc = dp.Dataproc(self.ReleaseTrack())
 
-    operation_ref = util.ParseOperation(args.operation, dataproc)
+    operation_ref = args.CONCEPTS.operation.Parse()
 
     request = dataproc.messages.DataprocProjectsRegionsOperationsDeleteRequest(
         name=operation_ref.RelativeName())

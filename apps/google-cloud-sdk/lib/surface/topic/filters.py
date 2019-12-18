@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ class Filters(base.TopicCommand):
       'DESCRIPTION':
           textwrap.dedent("""\
           {description}
-
+          +
           Note: Depending on the specific server API, filtering may be done
           entirely by the client, entirely by the server, or by a combination
           of both.
@@ -158,6 +158,9 @@ class Filters(base.TopicCommand):
           True if _key_ does not match the RE (regular expression)
           pattern _value_.
 
+          For more about regular expression syntax, see:
+          https://docs.python.org/3/library/re.html#re-syntax
+
           """)
           .format(description=resource_topics.ResourceDescription('filter')),
       'EXAMPLES':
@@ -171,8 +174,8 @@ class Filters(base.TopicCommand):
 
             $ gcloud compute instances list --filter="machineType:f1-micro"
 
-          List Compute Engine instance resources with zone prefix *us* and not
-          MachineType *f1-micro*:
+          List Compute Engine instance resources using a regular expression for
+          zone prefix *us* and not MachineType *f1-micro*:
 
             $ gcloud compute instances list --filter="zone ~ ^us AND -machineType:f1-micro"
 
@@ -220,11 +223,10 @@ class Filters(base.TopicCommand):
 
             $ gcloud projects list --format="table(projectNumber,projectId,createTime)" --filter="createTime>-P2W"
 
-          For more about ISO8601 durations, see:
-          https://en.wikipedia.org/wiki/ISO_8601
-
-
-          This table shows : operator pattern matching:
+          For more about ISO8601 durations, see: https://en.wikipedia.org/wiki/ISO_8601
+          +
+          The table below shows examples of pattern matching if used with
+          the `:` operator:
 
           PATTERN | VALUE | MATCHES | DEPRECATED_MATCHES
           --- | --- | --- | ---
@@ -235,9 +237,9 @@ class Filters(base.TopicCommand):
           xyz* | abcpdqxyz | False | False
           xyz | abcpdqxyz | False | True
           * | abcpdqxyz | True | True
-          * | <None> | False | False
-          * | <''> | False | False
-          * | <otherwise> | True | True
+          * | (None) | False | False
+          * | ('') | False | False
+          * | (otherwise) | True | True
           abc* | abc.pdq.xyz | True | True
           abc | abc.pdq.xyz | True | True
           abc.pdq | abc.pdq.xyz | True | True

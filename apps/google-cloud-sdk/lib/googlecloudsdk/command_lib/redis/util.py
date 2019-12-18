@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,7 +25,9 @@ from googlecloudsdk.calliope import base
 from googlecloudsdk.command_lib.util.args import labels_util
 import six
 
-VALID_REDIS_CONFIG_KEYS = ('maxmemory-policy', 'notify-keyspace-events')
+VALID_REDIS_CONFIG_KEYS = ('maxmemory-gb', 'maxmemory-policy',
+                           'notify-keyspace-events', 'activedefrag',
+                           'lfu-log-factor', 'lfu-decay-time')
 
 
 def GetClientForResource(resource_ref):
@@ -51,12 +53,15 @@ def InstanceRedisConfigArgType(value):
 def InstanceLabelsArgType(value):
   return arg_parsers.ArgDict(
       key_type=labels_util.KEY_FORMAT_VALIDATOR,
-      value_type=labels_util.VALUE_FORMAT_VALIDATOR)(value)
+      value_type=labels_util.VALUE_FORMAT_VALIDATOR)(
+          value)
 
 
 def AdditionalInstanceUpdateArguments():
-  return InstanceUpdateLabelsFlags() + [InstanceUpdateRedisConfigFlag(),
-                                        InstanceRemoveRedisConfigFlag()]
+  return [
+      InstanceUpdateRedisConfigFlag(),
+      InstanceRemoveRedisConfigFlag()
+  ]
 
 
 def InstanceUpdateLabelsFlags():
@@ -74,7 +79,7 @@ def InstanceUpdateRedisConfigFlag():
       action=arg_parsers.UpdateAction,
       help="""\
       A list of Redis config KEY=VALUE pairs to update according to
-      http://redis.io/topics/config. If a config parameter is already set,
+      http://cloud.google.com/memorystore/docs/reference/redis-configs. If a config parameter is already set,
       its value is modified; otherwise a new Redis config parameter is added.
       Currently, the only supported parameters are: {}.
       """.format(', '.join(VALID_REDIS_CONFIG_KEYS)))

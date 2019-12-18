@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2013 Google Inc. All Rights Reserved.
+# Copyright 2013 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ from functools import wraps
 import os
 import sys
 
-from googlecloudsdk.api_lib.util import exceptions as api_exceptions  # pytype: disable=import-error
+from googlecloudsdk.api_lib.util import exceptions as api_exceptions
 from googlecloudsdk.core import exceptions as core_exceptions
 from googlecloudsdk.core import log
 from googlecloudsdk.core import properties
@@ -65,12 +65,12 @@ def NewErrorFromCurrentException(error, *args):
     file_logger = log.file_only_logger
     file_logger.error('Handling the source of a tool exception, '
                       'original details follow.')
-    file_logger.exception(current_exception)  # pytype: disable=wrong-arg-types
+    file_logger.exception(current_exception)
 
   if args:
     return error(*args)
   elif current_exception:
-    return error(*current_exception.args)  # pytype: disable=attribute-error
+    return error(*current_exception.args)
   return error('An unknown error has occurred')
 
 
@@ -420,6 +420,9 @@ _KNOWN_ERRORS = {
     'oauth2client.client.AccessTokenRefreshError': _GetTokenRefreshError,
     'ssl.SSLError': core_exceptions.NetworkIssueError,
     'socket.error': core_exceptions.NetworkIssueError,
+    'builtins.ConnectionAbortedError': core_exceptions.NetworkIssueError,
+    'builtins.ConnectionRefusedError': core_exceptions.NetworkIssueError,
+    'builtins.ConnectionResetError': core_exceptions.NetworkIssueError,
 }
 
 
@@ -524,10 +527,30 @@ def HandleError(exc, command_path, known_error_handler=None):
     core_exceptions.reraise(exc)
 
 
+def _MessageWhenMissingServiceUsePermission(known_exc):
+  """Generates message when missing 'serviceusage.services.use' permission."""
+  error_message_signature = (
+      'Grant the caller the Owner or Editor role, or a '
+      'custom role with the serviceusage.services.use permission')
+  help_message = ('If you want to invoke the command from a project different '
+                  'from the target resource project, use `--billing-project` '
+                  'or `{}` property.'.format(
+                      properties.VALUES.billing.quota_project))
+
+  if (isinstance(known_exc, api_exceptions.HttpException) and
+      error_message_signature in known_exc.message):
+    return help_message
+  else:
+    return None
+
+
 def _LogKnownError(known_exc, command_path, print_error):
   msg = '({0}) {1}'.format(
       console_attr.SafeText(command_path),
       console_attr.SafeText(known_exc))
+  help_message = _MessageWhenMissingServiceUsePermission(known_exc)
+  if help_message:
+    msg = '{0}\n\n{1}'.format(msg, console_attr.SafeText(help_message))
   log.debug(msg, exc_info=sys.exc_info())
   if print_error:
     log.error(msg)

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -66,6 +66,7 @@ class Delete(base.DeleteCommand):
     # We can't be more specific than "limited period" because the API says
     # "at an unspecified time".
     log.status.Print(
-        '\nYou can undo this operation for a limited period by running:\n'
-        '  $ gcloud projects undelete {0}'.format(args.id))
+        '\nYou can undo this operation for a limited period by running'
+        ' the commands below.\n    $ gcloud projects undelete {1}\n\n{0}'
+        .format(flags.SHUT_DOWN_PROJECTS, args.id))
     return result

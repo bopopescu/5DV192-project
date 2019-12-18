@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2016 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -41,11 +41,11 @@ class Update(base.UpdateCommand, dm_base.DmCommand):
   """Update a composite type."""
 
   detailed_help = {
-      'EXAMPLES': """\
-          To update a composite type, run:
+      'EXAMPLES': """
+To update a composite type, run:
 
-            $ {command} my-composite-type --status EXPERIMENTAL --description "My type."
-          """,
+  $ {command} my-composite-type --status=EXPERIMENTAL --description="My type."
+""",
   }
 
   @staticmethod
@@ -102,7 +102,7 @@ class Update(base.UpdateCommand, dm_base.DmCommand):
                      self.messages,
                      self.resources,
                      update_request,
-                     args.async,
+                     args.async_,
                      self.client.compositeTypes.Update,
                      LogResource)
 

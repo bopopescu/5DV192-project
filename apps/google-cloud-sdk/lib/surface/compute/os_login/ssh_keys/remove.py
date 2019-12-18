@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -47,7 +47,8 @@ class Remove(base.Command):
     """See ssh_utils.BaseSSHCLICommand.Run."""
     key = flags.GetKeyFromArgs(args)
     oslogin_client = client.OsloginClient(self.ReleaseTrack())
-    user_email = properties.VALUES.core.account.Get()
+    user_email = (properties.VALUES.auth.impersonate_service_account.Get()
+                  or properties.VALUES.core.account.Get())
 
     keys = oslogin_utils.GetKeyDictionaryFromProfile(user_email, oslogin_client)
     fingerprint = oslogin_utils.FindKeyInKeyList(key, keys)
@@ -60,10 +61,25 @@ class Remove(base.Command):
 Remove.detailed_help = {
     'brief': 'Remove an SSH public key from an OS Login profile.',
     'DESCRIPTION': """\
-      *{command}* will take either a string containing an SSH public
-      key or a filename for an SSH public key and will remove that key from the
-      user's OS Login profile. The key value passed in can either be the
+      *{command}* accepts either a string containing an SSH public
+      key or a filename for an SSH public key and removes that key from the
+      user's OS Login profile. The key value used can either be the
       full SSH key or the OS Login fingerprint for that key.
-    """
+    """,
+    'EXAMPLES': """
+      To remove the key that is stored in `/home/user/.ssh/id_rsa.pub`, run:
+
+        $ {command} --key-file=/home/user/.ssh/id_rsa.pub
+
+      To remove the key with fingerprint
+      'e0d96d6fad35a61a0577f467940509b5aa08b6dea8d99456ec19a6e47126bc52', run:
+
+        $ {command} --key='e0d96d6fad35a61a0577f467940509b5aa08b6dea8d99456ec19a6e47126bc52'
+
+      To remove the SSH public key
+      'AAAAB3NzaC1yc2EAAAADAQABAAAB...ZrPg+DZJIwPab2wPlveLh+ut1Lxs5QTR/9QfEa7', run:
+
+        $ {command} --key='AAAAB3NzaC1yc2EAAAADAQABAAAB...ZrPg+DZJIwPab2wPlveLh+ut1Lxs5QTR/9QfEa7'
+    """,
 }
 

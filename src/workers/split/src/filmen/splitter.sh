@@ -11,4 +11,3 @@ for file in $PWD/*; do
   echo file "'./"$(basename $file)"'" >> output.txt
 done
 echo temp$n
-return temp$n

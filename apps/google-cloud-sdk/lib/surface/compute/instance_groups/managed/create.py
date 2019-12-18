@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,8 +30,10 @@ from googlecloudsdk.calliope import base
 from googlecloudsdk.command_lib.compute import flags
 from googlecloudsdk.command_lib.compute import scope as compute_scope
 from googlecloudsdk.command_lib.compute.instance_groups import flags as instance_groups_flags
+from googlecloudsdk.command_lib.compute.instance_groups.flags import AutoDeleteFlag
 from googlecloudsdk.command_lib.compute.instance_groups.managed import flags as managed_flags
 from googlecloudsdk.command_lib.compute.managed_instance_groups import auto_healing_utils
+from googlecloudsdk.core import exceptions
 from googlecloudsdk.core import properties
 
 # API allows up to 58 characters but asked us to send only 54 (unless user
@@ -72,7 +74,35 @@ def _IsZonalGroup(ref):
   return ref.Collection() == 'compute.instanceGroupManagers'
 
 
-@base.ReleaseTracks(base.ReleaseTrack.GA, base.ReleaseTrack.BETA)
+def ValidateAndFixUpdatePolicyAgainstStateful(update_policy, group_ref,
+                                              stateful_policy, client):
+  """Validates and fixed update policy for stateful MIG.
+
+  Sets default values in update_policy for stateful IGMs or throws exception
+  if the wrong value is set explicitly.
+
+  Args:
+    update_policy: Update policy to be validated
+    group_ref: Reference of IGM being validated
+    stateful_policy: Stateful policy to check if the group is stateful
+    client: The compute API client
+  """
+  if stateful_policy is None or update_policy is None:
+    return
+  if _IsZonalGroup(group_ref):
+    return
+  redistribution_type_none = (
+      client.messages.InstanceGroupManagerUpdatePolicy
+      .InstanceRedistributionTypeValueValuesEnum.NONE)
+  if update_policy.instanceRedistributionType is None:
+    update_policy.instanceRedistributionType = redistribution_type_none
+  elif update_policy.instanceRedistributionType != redistribution_type_none:
+    raise exceptions.Error(
+        'Stateful regional IGMs cannot use proactive instance redistribution. '
+        'Use --instance-redistribution-type=NONE')
+
+
+@base.ReleaseTracks(base.ReleaseTrack.BETA, base.ReleaseTrack.GA)
 class CreateGA(base.CreateCommand):
   """Create Google Compute Engine managed instance groups."""
 
@@ -84,6 +114,7 @@ class CreateGA(base.CreateCommand):
     igm_arg = instance_groups_flags.GetInstanceGroupManagerArg(zones_flag=True)
     igm_arg.AddArgument(parser, operation_type='create')
     instance_groups_flags.AddZonesFlag(parser)
+    instance_groups_flags.AddMigInstanceRedistributionTypeFlag(parser)
 
   def CreateGroupReference(self, args, client, resources):
     if args.zones:
@@ -109,7 +140,14 @@ class CreateGA(base.CreateCommand):
       zonal_resource_fetcher.WarnForZonalCreation([group_ref])
     return group_ref
 
-  def _CreateDistributionPolicy(self, zones, resources, messages):
+  def _CreateDistributionPolicy(self,
+                                zones,
+                                resources,
+                                messages,
+                                target_distribution_shape=None):
+    if not zones and target_distribution_shape is None:
+      return None
+    distribution_policy = messages.DistributionPolicy()
     if zones:
       policy_zones = []
       for zone in zones:
@@ -120,7 +158,12 @@ class CreateGA(base.CreateCommand):
         policy_zones.append(
             messages.DistributionPolicyZoneConfiguration(
                 zone=zone_ref.SelfLink()))
-      return messages.DistributionPolicy(zones=policy_zones)
+      distribution_policy.zones = policy_zones
+    if target_distribution_shape:
+      distribution_policy.targetShape = (
+          messages.DistributionPolicy.TargetShapeValueValuesEnum)(
+              target_distribution_shape)
+    return distribution_policy
 
   def GetRegionForGroup(self, group_ref):
     if _IsZonalGroup(group_ref):
@@ -186,6 +229,13 @@ class CreateGA(base.CreateCommand):
             client.messages, health_check, args.initial_delay))
     managed_instance_groups_utils.ValidateAutohealingPolicies(
         auto_healing_policies)
+    instance_groups_flags.ValidateMigInstanceRedistributionTypeFlag(
+        args.GetValue('instance_redistribution_type'), group_ref)
+    update_policy = (managed_instance_groups_utils
+                     .ApplyInstanceRedistributionTypeToUpdatePolicy)(
+                         client, args.GetValue('instance_redistribution_type'),
+                         None)
+
     return client.messages.InstanceGroupManager(
         name=group_ref.Name(),
         description=args.description,
@@ -198,6 +248,7 @@ class CreateGA(base.CreateCommand):
         autoHealingPolicies=auto_healing_policies,
         distributionPolicy=self._CreateDistributionPolicy(
             args.zones, holder.resources, client.messages),
+        updatePolicy=update_policy,
     )
 
   def Run(self, args):
@@ -242,42 +293,34 @@ class CreateAlpha(CreateGA):
   def Args(cls, parser):
     CreateGA.Args(parser)
     instance_groups_flags.AddMigCreateStatefulFlags(parser)
-    instance_groups_flags.AddMigInstanceRedistributionTypeFlag(parser)
+    instance_groups_flags.AddMigDistributionPolicyTargetShapeFlag(parser)
 
   @staticmethod
-  def _MakePreservedStateWithDisks(client, device_names):
+  def _MakePreservedStateWithDisks(client, stateful_disks):
     """Create StatefulPolicyPreservedState from a list of device names."""
+    # Add all disk_devices to preserved state
     additional_properties = []
-    # Disk device with AutoDelete NEVER
-    disk_device = client.messages.StatefulPolicyPreservedStateDiskDevice(
-        autoDelete=
-        client.messages.StatefulPolicyPreservedStateDiskDevice \
-          .AutoDeleteValueValuesEnum.NEVER)
-    # Add all disk_devices to map
-    for device_name in device_names:
+    for stateful_disk in stateful_disks:
+      auto_delete = (stateful_disk.get('auto-delete') or
+                     AutoDeleteFlag.NEVER).GetAutoDeleteEnumValue(
+                         client.messages.StatefulPolicyPreservedStateDiskDevice
+                         .AutoDeleteValueValuesEnum)
+      disk_device = client.messages.StatefulPolicyPreservedStateDiskDevice(
+          autoDelete=auto_delete)
       disk_value = client.messages.StatefulPolicyPreservedState.DisksValue \
-        .AdditionalProperty(key=device_name, value=disk_device)
+        .AdditionalProperty(
+            key=stateful_disk.get('device-name'), value=disk_device)
       additional_properties.append(disk_value)
     return client.messages.StatefulPolicyPreservedState(
         disks=client.messages.StatefulPolicyPreservedState.DisksValue(
             additionalProperties=additional_properties))
 
   @staticmethod
-  def _GetStatefulPolicy(args, client):
-    if args.stateful_disks:
-      disks = [
-          client.messages.StatefulPolicyPreservedDisk(deviceName=device)
-          for device in args.stateful_disks
-      ]
-      preserved_resources = client.messages.StatefulPolicyPreservedResources(
-          disks=disks)
-      preserved_state =\
-          CreateAlpha._MakePreservedStateWithDisks(client, args.stateful_disks)
+  def _CreateStatefulPolicy(args, client):
+    if args.stateful_disk:
       return client.messages.StatefulPolicy(
-          preservedResources=preserved_resources,
-          preservedState=preserved_state)
-    if args.stateful_names:
-      return client.messages.StatefulPolicy()
+          preservedState=CreateAlpha._MakePreservedStateWithDisks(
+              client, args.stateful_disk))
     return None
 
   def _CreateInstanceGroupManager(
@@ -293,12 +336,18 @@ class CreateAlpha(CreateGA):
             client.messages, health_check, args.initial_delay))
     managed_instance_groups_utils.ValidateAutohealingPolicies(
         auto_healing_policies)
+    instance_redistribution_type = args.GetValue('instance_redistribution_type')
     instance_groups_flags.ValidateMigInstanceRedistributionTypeFlag(
-        args.GetValue('instance_redistribution_type'), group_ref)
-    update_policy = (managed_instance_groups_utils.
-                     ApplyInstanceRedistributionTypeToUpdatePolicy)(
-                         client, args.GetValue('instance_redistribution_type'),
-                         None)
+        instance_redistribution_type, group_ref)
+    target_distribution_shape = args.GetValue('target_distribution_shape')
+    instance_groups_flags.ValidateMigDistributionPolicyTargetShapeFlag(
+        target_distribution_shape, group_ref)
+    stateful_policy = self._CreateStatefulPolicy(args, client)
+    update_policy = (managed_instance_groups_utils
+                     .ApplyInstanceRedistributionTypeToUpdatePolicy)(
+                         client, instance_redistribution_type, None)
+    ValidateAndFixUpdatePolicyAgainstStateful(update_policy, group_ref,
+                                              stateful_policy, client)
 
     return client.messages.InstanceGroupManager(
         name=group_ref.Name(),
@@ -311,8 +360,11 @@ class CreateAlpha(CreateGA):
         targetSize=int(args.size),
         autoHealingPolicies=auto_healing_policies,
         distributionPolicy=self._CreateDistributionPolicy(
-            args.zones, holder.resources, client.messages),
-        statefulPolicy=self._GetStatefulPolicy(args, client),
+            args.zones,
+            holder.resources,
+            client.messages,
+            target_distribution_shape=target_distribution_shape),
+        statefulPolicy=stateful_policy,
         updatePolicy=update_policy,
     )
 

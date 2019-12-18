@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ class Move(base.SilentCommand):
         params={'project': target_instance.project},
         collection='compute.globalOperations')
 
-    if args.async:
+    if args.async_:
       log.UpdatedResource(
           operation_ref,
           kind='gce instance {0}'.format(target_instance.Name()),
@@ -96,7 +96,7 @@ class Move(base.SilentCommand):
 Move.detailed_help = {
     'brief': ('Move an instance and its attached persistent disks between '
               'zones.'),
-    'DESCRIPTION': """\
+    'DESCRIPTION': """
         *{command}* facilitates moving a Google Compute Engine virtual machine
         from one zone to another. Moving a virtual machine may incur downtime
         if the guest OS must be shutdown in order to quiesce disk volumes
@@ -106,6 +106,17 @@ Move.detailed_help = {
 
            $ gcloud compute instances move example-instance-1 --zone us-central1-b --destination-zone us-central1-f
 
-        will move the instance called example-instance-1 with its all attached
-        persistent disks, currently running in us-central1-b, to us-central1-f.
+        will move the instance called 'example-instance-1' with its all attached
+        persistent disks, currently running in 'us-central1-b', to
+        'us-central1-f'.
+
+        Please note that gcloud compute instances move does not yet support
+        instances which have regional persistent disks attached. Please see
+        https://cloud.google.com/compute/docs/disks/regional-persistent-disk for
+        more details.
+    """,
+    'EXAMPLES': """
+    To move 'instance-1' from 'us-central-a' to 'europe-west1-d', run:
+
+      $ {command} move instance-1 --zone=us-central1-a --destination-zone=europe-west1-d
     """}

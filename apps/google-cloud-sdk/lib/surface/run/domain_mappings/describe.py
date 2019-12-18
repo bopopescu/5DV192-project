@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2019 Google Inc. All Rights Reserved.
+# Copyright 2019 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,7 +27,58 @@ from googlecloudsdk.command_lib.util.concepts import concept_parsers
 from googlecloudsdk.command_lib.util.concepts import presentation_specs
 
 
+@base.ReleaseTracks(base.ReleaseTrack.GA)
 class Describe(base.Command):
+  """Describe domain mappings for Cloud Run for Anthos."""
+
+  detailed_help = {
+      'DESCRIPTION':
+          """\
+          {description}
+
+          For domain mapping support with fully managed Cloud Run, use
+          `gcloud beta run domain-mappings describe`.""",
+      'EXAMPLES':
+          """\
+          To describe a Cloud Run domain mapping, run:
+
+              $ {command} --domain=www.example.com
+          """,
+  }
+
+  @staticmethod
+  def CommonArgs(parser):
+    domain_mapping_presentation = presentation_specs.ResourcePresentationSpec(
+        '--domain',
+        resource_args.GetDomainMappingResourceSpec(),
+        'Domain name is the ID of DomainMapping resource.',
+        required=True,
+        prefixes=False)
+    concept_parsers.ConceptParser([
+        domain_mapping_presentation]).AddToParser(parser)
+
+    parser.display_info.AddFormat('yaml')
+
+  @staticmethod
+  def Args(parser):
+    Describe.CommonArgs(parser)
+
+  def Run(self, args):
+    """Describe a domain mapping."""
+    conn_context = connection_context.GetConnectionContext(
+        args, product=connection_context.Product.RUN)
+    domain_mapping_ref = args.CONCEPTS.domain.Parse()
+    with serverless_operations.Connect(conn_context) as client:
+      domain_mapping = client.GetDomainMapping(domain_mapping_ref)
+      if not domain_mapping:
+        raise flags.ArgumentError(
+            'Cannot find domain mapping for domain name [{}]'.format(
+                domain_mapping_ref.domainmappingsId))
+      return domain_mapping
+
+
+@base.ReleaseTracks(base.ReleaseTrack.BETA)
+class BetaDescribe(Describe):
   """Describe domain mappings."""
 
   detailed_help = {
@@ -37,32 +88,19 @@ class Describe(base.Command):
           """\
           To describe a Cloud Run domain mapping, run:
 
-              $ {command} --domain www.example.com
+              $ {command} --domain=www.example.com
           """,
   }
 
   @staticmethod
   def Args(parser):
-    flags.AddRegionArg(parser)
-    domain_mapping_presentation = presentation_specs.ResourcePresentationSpec(
-        '--domain',
-        resource_args.GetDomainMappingResourceSpec(),
-        'Domain name is the ID of DomainMapping resource.',
-        required=True,
-        prefixes=False)
-    concept_parsers.ConceptParser([
-        resource_args.CLUSTER_PRESENTATION,
-        domain_mapping_presentation]).AddToParser(parser)
-    parser.display_info.AddFormat('yaml')
+    Describe.CommonArgs(parser)
 
-  def Run(self, args):
-    """Describe a domain mapping."""
-    conn_context = connection_context.GetConnectionContext(args)
-    domain_mapping_ref = args.CONCEPTS.domain.Parse()
-    with serverless_operations.Connect(conn_context) as client:
-      domain_mapping = client.GetDomainMapping(domain_mapping_ref)
-      if not domain_mapping:
-        raise flags.ArgumentError(
-            'Cannot find domain mapping for domain name [{}]'.format(
-                domain_mapping_ref.domainmappingsId))
-      return domain_mapping
+
+@base.ReleaseTracks(base.ReleaseTrack.ALPHA)
+class AlphaDescribe(BetaDescribe):
+  """Describe domain mappings."""
+
+  @staticmethod
+  def Args(parser):
+    Describe.CommonArgs(parser)

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -36,15 +36,15 @@ class Describe(base.DescribeCommand, dm_base.DmCommand):
   """
 
   detailed_help = {
-      'EXAMPLES': """\
-          To display information about a manifest, run:
+      'EXAMPLES': """
+To display information about a manifest, run:
 
-            $ {command} --deployment my-deployment manifest-name
+  $ {command} --deployment=my-deployment manifest-name
 
-          To display information about the latest manifest, run:
+To display information about the latest manifest, run:
 
-            $ {command} --deployment my-deployment
-          """,
+  $ {command} --deployment=my-deployment
+""",
   }
 
   @staticmethod

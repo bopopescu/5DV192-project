@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2016 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -45,11 +45,11 @@ class Create(base.CreateCommand, dm_base.DmCommand):
   """
 
   detailed_help = {
-      'EXAMPLES': """\
-          To create a new composite type, run:
+      'EXAMPLES': """
+To create a new composite type, run:
 
-            $ {command} my-composite-type --template=my-template.jinja --status EXPERIMENTAL --description "My type."
-          """,
+  $ {command} my-composite-type --template=my-template.jinja --status=EXPERIMENTAL --description="My type."
+""",
   }
 
   @staticmethod
@@ -101,7 +101,7 @@ class Create(base.CreateCommand, dm_base.DmCommand):
                      self.messages,
                      self.resources,
                      request,
-                     args.async,
+                     args.async_,
                      self.client.compositeTypes.Insert,
                      LogResource)
 

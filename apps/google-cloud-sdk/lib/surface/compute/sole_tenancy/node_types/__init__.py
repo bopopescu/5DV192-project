@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ from googlecloudsdk.calliope import base
 
 
 class SoleTenancyNodeTypes(base.Group):
-  """Read Google Compute Engine sole-tenancy node types.
+  """Read Compute Engine sole-tenancy node types.
 
   Node types are the types of dedicated Compute Engine servers that
   are used for nodes in node groups. Node types will differ in

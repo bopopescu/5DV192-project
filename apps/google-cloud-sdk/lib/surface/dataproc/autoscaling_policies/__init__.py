@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2019 Google Inc. All Rights Reserved.
+# Copyright 2019 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,33 +21,33 @@ from __future__ import unicode_literals
 from googlecloudsdk.calliope import base
 
 
-@base.Hidden  # Hidden until implementation is completed.
-@base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA)
-class AutoscalingPoliciesBeta(base.Group):
-  r"""Create and manage Google Cloud Dataproc autoscaling policies.
+@base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA,
+                    base.ReleaseTrack.GA)
+class AutoscalingPolicies(base.Group):
+  """Create and manage Google Cloud Dataproc autoscaling policies.
 
   Create and manage Google Cloud Dataproc autoscaling policies.
 
   ## EXAMPLES
 
-  To create an autoscaling policy, run:
+  To see the list of all autoscaling policies, run:
 
-    $ {command} create policy-file.yaml
-
-  To update an autoscaling policy, run:
-
-    $ {command} update policy-file.yaml
-
-  To delete an autoscaling policy, run:
-
-    $ {command} delete my_policy
+    $ {command} list
 
   To view the details of an autoscaling policy, run:
 
     $ {command} describe my_policy
 
-  To see the list of all autoscaling policies, run:
+  To view just the non-output only fields of an autoscaling policy, run:
 
-    $ {command} list
+    $ {command} export my_policy --destination policy-file.yaml
+
+  To create or update an autoscaling policy, run:
+
+    $ {command} import my_policy --source policy-file.yaml
+
+  To delete an autoscaling policy, run:
+
+    $ {command} delete my_policy
   """
   pass

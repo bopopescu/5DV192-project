@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,59 +26,7 @@ from googlecloudsdk.calliope import base
 from googlecloudsdk.command_lib.compute.images import flags
 from googlecloudsdk.core import properties
 
-_DEFAULT_WORKFLOW = '../workflows/export/image_export.wf.json'
-_EXTERNAL_WORKFLOW = '../workflows/export/image_export_ext.wf.json'
 _OUTPUT_FILTER = ['[Daisy', '[image-export', '  image', 'ERROR']
-
-
-def _CommonArgs(parser):
-  """Adds common arguments for image export to parser.
-
-  Args:
-    parser: Parser to have common args added
-  """
-  image_group = parser.add_mutually_exclusive_group(required=True)
-
-  image_group.add_argument(
-      '--image',
-      help=('The name of the disk image to export.'),
-  )
-  image_group.add_argument(
-      '--image-family',
-      help=('The family of the disk image to be exported. When a family '
-            'is used instead of an image, the latest non-deprecated image '
-            'associated with that family is used.'),
-  )
-  image_utils.AddImageProjectFlag(parser)
-
-  flags.compute_flags.AddZoneFlag(
-      parser, 'image', 'export',
-      explanation='The zone to use when exporting the image.')
-
-  parser.add_argument(
-      '--destination-uri',
-      required=True,
-      help=('The Google Cloud Storage URI destination for '
-            'the exported virtual disk file.'),
-  )
-
-  # Export format can take more values than what we list here in the help.
-  # However, we don't want to suggest formats that will likely never be used,
-  # so we list common ones here, but don't prevent others from being used.
-  parser.add_argument(
-      '--export-format',
-      help=('Specify the format to export to, such as '
-            '`vmdk`, `vhdx`, `vpc`, or `qcow2`.'),
-  )
-
-  parser.add_argument(
-      '--network',
-      help=('The name of the network in your project to use for the image '
-            'export. The network must have access to Google Cloud Storage. '
-            'If not specified, the network named `default` is used.'),
-  )
-  daisy_utils.AddCommonDaisyArgs(parser)
-  parser.display_info.AddCacheUpdater(flags.ImagesCompleter)
 
 
 @base.ReleaseTracks(base.ReleaseTrack.GA)
@@ -87,61 +35,47 @@ class Export(base.CreateCommand):
 
   @staticmethod
   def Args(parser):
-    _CommonArgs(parser)
+    image_group = parser.add_mutually_exclusive_group(required=True)
 
-  def Run(self, args):
-    holder = base_classes.ComputeApiHolder(self.ReleaseTrack())
-    client = holder.client
-    resources = holder.resources
-    project = properties.VALUES.core.project.GetOrFail()
+    image_group.add_argument(
+        '--image',
+        help='The name of the disk image to export.',
+    )
+    image_group.add_argument(
+        '--image-family',
+        help=('The family of the disk image to be exported. When a family '
+              'is used instead of an image, the latest non-deprecated image '
+              'associated with that family is used.'),
+    )
+    image_utils.AddImageProjectFlag(parser)
 
-    image_expander = image_utils.ImageExpander(client, resources)
-    image = image_expander.ExpandImageFlag(
-        user_project=project,
-        image=args.image,
-        image_family=args.image_family,
-        image_project=args.image_project,
-        return_image_resource=False)
-    image_ref = resources.Parse(image[0], collection='compute.images')
+    flags.compute_flags.AddZoneFlag(
+        parser, 'image', 'export',
+        explanation='The zone to use when exporting the image.')
 
-    variables = """source_image={0},destination={1}""".format(
-        image_ref.RelativeName(), args.destination_uri)
+    parser.add_argument(
+        '--destination-uri',
+        required=True,
+        help=('The Google Cloud Storage URI destination for '
+              'the exported virtual disk file.'),
+    )
 
-    if args.export_format:
-      workflow = _EXTERNAL_WORKFLOW
-      variables += """,format={0}""".format(args.export_format.lower())
-    else:
-      workflow = _DEFAULT_WORKFLOW
+    # Export format can take more values than what we list here in the help.
+    # However, we don't want to suggest formats that will likely never be used,
+    # so we list common ones here, but don't prevent others from being used.
+    parser.add_argument(
+        '--export-format',
+        help=('Specify the format to export to, such as '
+              '`vmdk`, `vhdx`, `vpc`, or `qcow2`.'),
+    )
 
-    variables = self._ProcessNetworkArgs(args, variables)
+    parser.add_argument(
+        '--network',
+        help=('The name of the network in your project to use for the image '
+              'export. The network must have access to Google Cloud Storage. '
+              'If not specified, the network named `default` is used.'),
+    )
 
-    tags = ['gce-daisy-image-export']
-    return daisy_utils.RunDaisyBuild(
-        args, workflow, variables, tags=tags,
-        user_zone=properties.VALUES.compute.zone.Get(),
-        output_filter=_OUTPUT_FILTER, daisy_bucket=self._GetDaisyBucket(args),
-        service_account_roles=self._GetServiceAccountRoles())
-
-  def _GetDaisyBucket(self, args):
-    return None
-
-  def _ProcessNetworkArgs(self, args, variables):
-    if args.network:
-      variables += """,export_network=global/networks/{0}""".format(
-          args.network.lower())
-    return variables
-
-  def _GetServiceAccountRoles(self):
-    return None
-
-
-@base.ReleaseTracks(base.ReleaseTrack.BETA)
-class ExportBeta(Export):
-  """Export a Google Compute Engine image for Beta release track."""
-
-  @staticmethod
-  def Args(parser):
-    _CommonArgs(parser)
     parser.add_argument(
         '--subnet',
         help=('Name of the subnetwork in your project to use for the image '
@@ -151,39 +85,96 @@ class ExportBeta(Export):
               'custom subnet mode, then this field should be specified.'),
     )
 
-  def _GetDaisyBucket(self, args):
-    storage_client = storage_api.StorageClient()
-    return daisy_utils.GetAndCreateDaisyBucket(
-        storage_client=storage_client,
-        bucket_location=storage_client.GetBucketLocationForFile(
-            args.destination_uri))
+    daisy_utils.AddCommonDaisyArgs(parser)
 
-  def _ProcessNetworkArgs(self, args, variables):
-    network_vars = daisy_utils.ExtractNetworkAndSubnetDaisyVariables(
-        args, daisy_utils.ImageOperation.EXPORT)
-    if network_vars:
-      variables += ',' + ','.join(network_vars)
-    return variables
+    parser.display_info.AddCacheUpdater(flags.ImagesCompleter)
+
+  def Run(self, args):
+    tags = ['gce-daisy-image-export']
+    export_args = []
+    daisy_utils.AppendNetworkAndSubnetArgs(args, export_args)
+
+    daisy_utils.AppendArg(export_args, 'zone',
+                          properties.VALUES.compute.zone.Get())
+    daisy_utils.AppendArg(export_args, 'scratch_bucket_gcs_path',
+                          'gs://{0}/'.format(self._GetDaisyBucket(args)))
+    daisy_utils.AppendArg(export_args, 'timeout',
+                          '{}s'.format(daisy_utils.GetDaisyTimeout(args)))
+
+    daisy_utils.AppendArg(export_args, 'client_id', 'gcloud')
+    source_image = self._GetSourceImage(args.image, args.image_family,
+                                        args.image_project)
+    daisy_utils.AppendArg(export_args, 'source_image', source_image)
+    daisy_utils.AppendArg(export_args, 'destination_uri', args.destination_uri)
+    if args.export_format:
+      daisy_utils.AppendArg(export_args, 'format', args.export_format.lower())
+
+    return self._RunImageExport(args, export_args, tags, _OUTPUT_FILTER)
+
+  def _RunImageExport(self, args, export_args, tags, output_filter):
+    return daisy_utils.RunImageExport(args, export_args, tags, _OUTPUT_FILTER)
+
+  def _GetSourceImage(self, image, image_family, image_project):
+    holder = base_classes.ComputeApiHolder(self.ReleaseTrack())
+    client = holder.client
+    resources = holder.resources
+    project = properties.VALUES.core.project.GetOrFail()
+    image_expander = image_utils.ImageExpander(client, resources)
+    image = image_expander.ExpandImageFlag(
+        user_project=project, image=image, image_family=image_family,
+        image_project=image_project, return_image_resource=False)
+    image_ref = resources.Parse(image[0], collection='compute.images')
+    return image_ref.RelativeName()
+
+  @staticmethod
+  def _GetDaisyBucket(args):
+    storage_client = storage_api.StorageClient()
+    bucket_location = storage_client.GetBucketLocationForFile(
+        args.destination_uri)
+    bucket_name = daisy_utils.GetDaisyBucketName(bucket_location)
+    storage_client.CreateBucketIfNotExists(bucket_name,
+                                           location=bucket_location)
+    return bucket_name
+
+
+@base.ReleaseTracks(base.ReleaseTrack.BETA)
+class ExportBeta(Export):
+  """Export a Google Compute Engine image for Beta release track."""
+
+  @classmethod
+  def Args(cls, parser):
+    super(ExportBeta, cls).Args(parser)
+    daisy_utils.AddExtraCommonDaisyArgs(parser)
+
+  def _RunImageExport(self, args, export_args, tags, output_filter):
+    return daisy_utils.RunImageExport(args, export_args, tags, _OUTPUT_FILTER,
+                                      args.docker_image_tag)
 
 
 @base.ReleaseTracks(base.ReleaseTrack.ALPHA)
 class ExportAlpha(ExportBeta):
   """Export a Google Compute Engine image for Alpha release track."""
 
-  def _GetServiceAccountRoles(self):
-    return ['roles/iam.serviceAccountUser',
-            'roles/iam.serviceAccountTokenCreator']
 
 Export.detailed_help = {
-    'brief': 'Export a Google Compute Engine image',
-    'DESCRIPTION': """\
-        *{command}* exports Virtual Disk images from Google Compute Engine.
+    'brief':
+        'Export a Compute Engine image',
+    'DESCRIPTION':
+        """\
+        *{command}* exports virtual disk images from Compute Engine.
 
-        By default, images are exported in the Google Compute Engine format,
-        which is a disk.raw file that has been tarred and gzipped.
+        By default, images are exported in the Compute Engine format,
+        which is a 'disk.raw' file that is tarred and gzipped.
 
-        The `--export-format` flag will export the image to a format supported
-        by QEMU using qemu-img. Valid formats include `vmdk`, `vhdx`, `vpc`,
-        `vdi`, and `qcow2`.
+        The `--export-format` flag exports the image to a format supported
+        by QEMU using qemu-img. Valid formats include 'vmdk', 'vhdx', 'vpc',
+        'vdi', and 'qcow2'.
         """,
+    'EXAMPLES':
+        """\
+        To export a VMDK file 'my-image' from a project 'my-project' to a
+        Cloud Storage bucket 'my-bucket', run:
+
+          $ {command} --image=my-image --destination-uri=gs://my-bucket/my-image.vmdk --image=my-image --format=vmdk --project=my-project
+    """
 }

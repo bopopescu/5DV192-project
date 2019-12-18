@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -57,6 +57,10 @@ class SegmentError(Error):
 
 class VideoUriFormatError(Error):
   """Error if the video input URI is invalid."""
+
+
+class AudioTrackError(Error):
+  """Error if the audio tracks setting is invalid."""
 
 
 def ValidateAndParseSegments(given_segments):
@@ -172,3 +176,13 @@ def UpdateRequestWithInput(unused_ref, args, request):
   else:
     raise VideoUriFormatError(INPUT_ERROR_MESSAGE.format(path))
   return request
+
+
+# Argument Processors
+
+
+def AudioTrackProcessor(tracks):
+  """Verify at most two tracks, convert to [int, int]."""
+  if len(tracks) > 2:
+    raise AudioTrackError('Can not specify more than two audio tracks.')
+  return tracks

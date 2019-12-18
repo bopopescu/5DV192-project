@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,6 +32,16 @@ class Pause(base.Command):
   If a queue is paused then the system will stop executing the tasks in the
   queue until it is resumed. Tasks can still be added when the queue is paused.
   """
+  detailed_help = {
+      'DESCRIPTION': """\
+          {description}
+          """,
+      'EXAMPLES': """\
+          To pause a queue:
+
+              $ {command} my-queue
+         """,
+  }
 
   @staticmethod
   def Args(parser):

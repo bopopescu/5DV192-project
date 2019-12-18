@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,6 +28,19 @@ from googlecloudsdk.core import properties
 
 class Export(base.Command):
   """export Cloud Firestore documents to Google Cloud Storage"""
+
+  detailed_help = {
+      'EXAMPLES':
+          """\
+          To export all collection groups to `mybucket` in objects prefixed with `my/path`, run:
+
+            $ {command} gs://mybucket/my/path
+
+          To export a specific set of collections groups asynchronously, run:
+
+            $ {command} gs://mybucket/my/path --collection-ids='specific collection group1','specific collection group2' --async
+      """
+  }
 
   @staticmethod
   def Args(parser):
@@ -59,8 +72,7 @@ class Export(base.Command):
         object_ref.ToUrl().rstrip('/'),
         collection_ids=args.collection_ids)
 
-    if not args.async:
+    if not args.async_:
       operations.WaitForOperation(response)
 
     return response
-

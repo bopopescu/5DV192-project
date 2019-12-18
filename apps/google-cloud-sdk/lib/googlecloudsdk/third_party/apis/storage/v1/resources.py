@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -71,6 +71,13 @@ class Collections(enum.Enum):
       'projects/{project}',
       {},
       [u'project'],
+      True
+  )
+  PROJECTS_HMACKEYS = (
+      'projects.hmacKeys',
+      'projects/{projectId}/hmacKeys/{accessId}',
+      {},
+      [u'projectId', u'accessId'],
       True
   )
   PROJECTS_SERVICEACCOUNT = (

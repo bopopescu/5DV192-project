@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -261,8 +261,9 @@ def _ValidateListOfStringToStringDicts(arg_internal_name, arg_value):
 # Any arg not appearing in this map is assumed to be a simple string.
 _FILE_ARG_VALIDATORS = {
     'additional_apks': _ValidateAdditionalApksList,
-    'async': _ValidateBool,
+    'async_': _ValidateBool,
     'auto_google_login': _ValidateBool,
+    'client_details': _ValidateKeyValueStringPairs,
     'device': _ValidateListOfStringToStringDicts,
     'device_ids': ValidateStringList,
     'directories_to_pull': ValidateStringList,
@@ -271,6 +272,8 @@ _FILE_ARG_VALIDATORS = {
     'orientations': _ValidateOrientationList,
     'obb_files': _ValidateObbFileList,
     'num_flaky_test_attempts': _ValidateNonNegativeInteger,
+    'num_uniform_shards': _ValidatePositiveInteger,
+    'test_targets_for_shard': ValidateStringList,
     'os_version_ids': ValidateStringList,
     'other_files': _ValidateKeyValueStringPairs,
     'performance_metrics': _ValidateBool,
@@ -287,6 +290,10 @@ _FILE_ARG_VALIDATORS = {
 
 def InternalArgNameFrom(arg_external_name):
   """Converts a user-visible arg name into its corresponding internal name."""
+  if arg_external_name == 'async':
+    # The async flag has a special destination in the argparse namespace since
+    # 'async' is a reserved keyword as of Python 3.7.
+    return 'async_'
   return arg_external_name.replace('-', '_')
 
 
@@ -349,7 +356,8 @@ def ValidateResultsBucket(args):
     bucket_ref = storage_util.BucketReference.FromArgument(args.results_bucket,
                                                            require_prefix=False)
   except Exception as err:
-    raise exceptions.InvalidArgumentException('results-bucket', str(err))
+    raise exceptions.InvalidArgumentException('results-bucket',
+                                              six.text_type(err))
   args.results_bucket = bucket_ref.bucket
 
 
@@ -512,6 +520,30 @@ def NormalizeAndValidateDirectoriesToPullList(dirs):
     if not _DIRECTORIES_TO_PULL_PATH_REGEX.match(file_path):
       raise test_exceptions.InvalidArgException(
           'directories_to_pull', 'Invalid path [{0}]'.format(file_path))
+
+
+_PACKAGE_OR_CLASS_FOLLOWED_BY_COMMA = \
+  re.compile(r'.*,(|\s+)(package |class ).*')
+
+_ANY_SPACE_AFTER_COMMA = re.compile(r'.*,(\s+).*')
+
+
+def ValidateTestTargetsForShard(args):
+  """Validates --test-targets-for-shard uses proper delimiter."""
+  if not getattr(args, 'test_targets_for_shard', {}):
+    return
+  for test_target in args.test_targets_for_shard:
+    if _PACKAGE_OR_CLASS_FOLLOWED_BY_COMMA.match(test_target):
+      raise test_exceptions.InvalidArgException(
+          'test_targets_for_shard',
+          '[{0}] is not a valid test_targets_for_shard argument. Multiple '
+          '"package" and "class" specifications should be separated by '
+          'a semicolon instead of a comma.'.format(test_target))
+    if _ANY_SPACE_AFTER_COMMA.match(test_target):
+      raise test_exceptions.InvalidArgException(
+          'test_targets_for_shard',
+          '[{0}] is not a valid test_targets_for_shard argument. No white '
+          'space is allowed after a comma.'.format(test_target))
 
 
 def ValidateScenarioNumbers(args):

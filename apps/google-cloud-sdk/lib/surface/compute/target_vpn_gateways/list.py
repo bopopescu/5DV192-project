@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ from googlecloudsdk.command_lib.compute.target_vpn_gateways import flags
 
 
 class List(base.ListCommand):
-  """List target VPN gateways."""
+  """List Cloud VPN Classic Target VPN Gateways."""
 
   # Placeholder to indicate that a detailed_help field exists and should
   # be set outside the class definition.
@@ -48,4 +48,5 @@ class List(base.ListCommand):
     return lister.Invoke(request_data, list_implementation)
 
 
-List.detailed_help = base_classes.GetRegionalListerHelp('target VPN gateways')
+List.detailed_help = base_classes.GetRegionalListerHelp(
+    'Cloud VPN Classic Target VPN Gateways')

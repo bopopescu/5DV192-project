@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ from googlecloudsdk.api_lib.util import apis
 
 DEFAULT_DATABASE = '(default)'
 
-_FIRESTORE_API_VERSION = 'v1beta1'
+_FIRESTORE_API_VERSION = 'v1'
 
 
 def GetMessages():
@@ -51,7 +51,7 @@ def GetExportDocumentsRequest(database, output_uri_prefix, collection_ids=None):
     an ExportDocumentsRequest message.
   """
   messages = GetMessages()
-  request_class = messages.GoogleFirestoreAdminV1beta1ExportDocumentsRequest
+  request_class = messages.GoogleFirestoreAdminV1ExportDocumentsRequest
   kwargs = {'outputUriPrefix': output_uri_prefix}
   if collection_ids:
     kwargs['collectionIds'] = collection_ids
@@ -60,7 +60,7 @@ def GetExportDocumentsRequest(database, output_uri_prefix, collection_ids=None):
 
   request = messages.FirestoreProjectsDatabasesExportDocumentsRequest(
       name=database,
-      googleFirestoreAdminV1beta1ExportDocumentsRequest=export_request)
+      googleFirestoreAdminV1ExportDocumentsRequest=export_request)
   return request
 
 
@@ -75,7 +75,7 @@ def GetImportDocumentsRequest(database, input_uri_prefix, collection_ids=None):
     an ImportDocumentsRequest message.
   """
   messages = GetMessages()
-  request_class = messages.GoogleFirestoreAdminV1beta1ImportDocumentsRequest
+  request_class = messages.GoogleFirestoreAdminV1ImportDocumentsRequest
 
   kwargs = {'inputUriPrefix': input_uri_prefix}
   if collection_ids:
@@ -85,7 +85,7 @@ def GetImportDocumentsRequest(database, input_uri_prefix, collection_ids=None):
 
   return messages.FirestoreProjectsDatabasesImportDocumentsRequest(
       name=database,
-      googleFirestoreAdminV1beta1ImportDocumentsRequest=import_request)
+      googleFirestoreAdminV1ImportDocumentsRequest=import_request)
 
 
 def Export(project, output_uri_prefix, collection_ids=None):

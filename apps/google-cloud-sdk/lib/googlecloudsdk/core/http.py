@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2013 Google Inc. All Rights Reserved.
+# Copyright 2013 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,8 +14,6 @@
 # limitations under the License.
 
 """A module to get an unauthenticated http object."""
-# TODO(b/71388306): Unskip pytype on this file.
-# pytype: skip-file
 
 from __future__ import absolute_import
 from __future__ import division
@@ -28,6 +26,7 @@ import uuid
 import enum
 
 from googlecloudsdk.core import config
+from googlecloudsdk.core import context_aware
 from googlecloudsdk.core import http_proxy
 from googlecloudsdk.core import log
 from googlecloudsdk.core import metrics
@@ -46,6 +45,9 @@ from six.moves import zip  # pylint: disable=redefined-builtin
 # Alternative spellings of User-Agent header key that may appear in requests.
 _NORMALIZED_USER_AGENT = b'user-agent'
 _USER_AGENT_HEADER_KEYS = [_NORMALIZED_USER_AGENT, b'User-Agent', b'USER-AGENT']
+
+
+ENCODING = None if six.PY2 else 'utf8'
 
 
 def Http(timeout='unset', response_encoding=None, ca_certs=None):
@@ -109,11 +111,20 @@ def HttpClient(
   else:
     http_class = httplib2.Http
 
-  return http_class(
+  result = http_class(
       timeout=timeout,
       proxy_info=proxy_info,
       ca_certs=ca_certs,
       disable_ssl_certificate_validation=disable_ssl_certificate_validation)
+
+  if properties.VALUES.context_aware.use_client_certificate.Get():
+    ca_config = context_aware.Config()
+    log.debug('Using client certificate %s', ca_config.client_cert_path)
+    result.add_certificate(ca_config.client_cert_path,
+                           ca_config.client_cert_path, '',
+                           password=ca_config.client_cert_password)
+
+  return result
 
 
 def _CreateRawHttpClient(timeout='unset', ca_certs=None):

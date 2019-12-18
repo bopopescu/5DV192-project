@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2013 Google Inc. All Rights Reserved.
+# Copyright 2013 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,6 +31,11 @@ class Reinstall(base.SilentCommand):
   This will replace your existing installation with a fresh one.  The command is
   the equivalent of deleting your current installation, downloading a fresh
   copy of the SDK, and installing in the same location.
+
+  ## EXAMPLES
+  To reinstall all components you have installed, run:
+
+    $ {command}
   """
 
   @staticmethod

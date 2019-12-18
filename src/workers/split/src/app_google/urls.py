@@ -1,30 +1,35 @@
+
 from . import app_google
 from app import app
+import os
 from flask import request
 from werkzeug.utils import secure_filename
-
 from .views import GoogleBucket
 from app_main.utils import json_response
-import os
 import subprocess
+
 
 @app_google.route('/google-bucket/upload', methods=['POST', 'GET'])
 def form_example():
-
-    print("isrunning?")
-
-    bashscript =  os.path.join(app.root_path, 'filmen/', 'splitter.sh')
-    filename = os.path.join(app.root_path, 'filmen/', 'film.mkv')
+    #appGooglepath = os.path.join(app.root_path, "app_google")
+    #credentials = os.path.join(appGooglepath, "credentials.json")
 
 
-    output = subprocess.check_output([bashscript, filename])
+    #subprocess.check_call([path_script, credentials, foldername_to_upload])
 
+    path = os.path.join(app.root_path, "filmen")
+    path_script = os.path.join(path, "splitter.sh")
+    path_file = os.path.join(path, "film.mkv")
+
+    foldername_to_upload = subprocess.check_output([path_script, path_file])
 
     google_storage = GoogleBucket('umu-5dv192-project-eka')
-    print(google_storage.list_buckets_names())
+    #print(google_storage.list_buckets_names())
+    #print(foldername_to_upload)
 
-    if request.method == 'POST':
 
+        #
+        #
         # file = request.files['file']
         # form = request.form
         #
@@ -52,9 +57,12 @@ def form_example():
         # )
         #
         # print(url)
+        path_script = os.path.join(app.root_path, "uploadToBucket.sh")
+        path = os.path.join(app.root_path, "app_google")
+        credentials = os.path.join(path, "credentials.json")
+        print(credentials)
+        #print(path)
+        subprocess.check_call([path_script, credentials, foldername_to_upload])
+
 
         return json_response({"status": "success"}, 200)
-
-    else:
-
-        return json_response({"error": "invalid method"}, 201)

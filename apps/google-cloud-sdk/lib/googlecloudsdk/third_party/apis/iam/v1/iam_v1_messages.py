@@ -14,6 +14,19 @@ from apitools.base.py import extra_types
 package = 'iam'
 
 
+class AdminAuditData(_messages.Message):
+  r"""Audit log information specific to Cloud IAM admin APIs. This message is
+  serialized as an `Any` type in the `ServiceData` message of an `AuditLog`
+  message.
+
+  Fields:
+    permissionDelta: The permission_delta when when creating or updating a
+      Role.
+  """
+
+  permissionDelta = _messages.MessageField('PermissionDelta', 1)
+
+
 class AttributeTranslatorCEL(_messages.Message):
   r"""Specifies a list of output attribute names and the corresponding input
   attribute to use for that output attribute. Each defined output attribute is
@@ -91,16 +104,16 @@ class AuditConfig(_messages.Message):
   multiple AuditConfigs:      {       "audit_configs": [         {
   "service": "allServices"           "audit_log_configs": [             {
   "log_type": "DATA_READ",               "exempted_members": [
-  "user:foo@gmail.com"               ]             },             {
+  "user:jose@example.com"               ]             },             {
   "log_type": "DATA_WRITE",             },             {
   "log_type": "ADMIN_READ",             }           ]         },         {
-  "service": "fooservice.googleapis.com"           "audit_log_configs": [
+  "service": "sampleservice.googleapis.com"           "audit_log_configs": [
   {               "log_type": "DATA_READ",             },             {
   "log_type": "DATA_WRITE",               "exempted_members": [
-  "user:bar@gmail.com"               ]             }           ]         }
-  ]     }  For fooservice, this policy enables DATA_READ, DATA_WRITE and
-  ADMIN_READ logging. It also exempts foo@gmail.com from DATA_READ logging,
-  and bar@gmail.com from DATA_WRITE logging.
+  "user:aliya@example.com"               ]             }           ]         }
+  ]     }  For sampleservice, this policy enables DATA_READ, DATA_WRITE and
+  ADMIN_READ logging. It also exempts jose@example.com from DATA_READ logging,
+  and aliya@example.com from DATA_WRITE logging.
 
   Fields:
     auditLogConfigs: The configuration for logging of each type of permission.
@@ -128,10 +141,10 @@ class AuditData(_messages.Message):
 class AuditLogConfig(_messages.Message):
   r"""Provides the configuration for logging a type of permissions. Example:
   {       "audit_log_configs": [         {           "log_type": "DATA_READ",
-  "exempted_members": [             "user:foo@gmail.com"           ]
+  "exempted_members": [             "user:jose@example.com"           ]
   },         {           "log_type": "DATA_WRITE",         }       ]     }
   This enables 'DATA_READ' and 'DATA_WRITE' logging, while exempting
-  foo@gmail.com from DATA_READ logging.
+  jose@example.com from DATA_READ logging.
 
   Enums:
     LogTypeValueValuesEnum: The log type that this config enables.
@@ -175,23 +188,40 @@ class Binding(_messages.Message):
   r"""Associates `members` with a `role`.
 
   Fields:
-    condition: Unimplemented. The condition that is associated with this
-      binding. NOTE: an unsatisfied condition will not allow user access via
-      current binding. Different bindings, including their conditions, are
-      examined independently.
+    condition: The condition that is associated with this binding. NOTE: An
+      unsatisfied condition will not allow user access via current binding.
+      Different bindings, including their conditions, are examined
+      independently.
     members: Specifies the identities requesting access for a Cloud Platform
       resource. `members` can have the following values:  * `allUsers`: A
       special identifier that represents anyone who is    on the internet;
       with or without a Google account.  * `allAuthenticatedUsers`: A special
       identifier that represents anyone    who is authenticated with a Google
       account or a service account.  * `user:{emailid}`: An email address that
-      represents a specific Google    account. For example, `alice@gmail.com`
-      .   * `serviceAccount:{emailid}`: An email address that represents a
-      service    account. For example, `my-other-
+      represents a specific Google    account. For example,
+      `alice@example.com` .   * `serviceAccount:{emailid}`: An email address
+      that represents a service    account. For example, `my-other-
       app@appspot.gserviceaccount.com`.  * `group:{emailid}`: An email address
-      that represents a Google group.    For example, `admins@example.com`.
-      * `domain:{domain}`: A Google Apps domain name that represents all the
-      users of that domain. For example, `google.com` or `example.com`.
+      that represents a Google group.    For example, `admins@example.com`.  *
+      `deleted:user:{emailid}?uid={uniqueid}`: An email address (plus unique
+      identifier) representing a user that has been recently deleted. For
+      example, `alice@example.com?uid=123456789012345678901`. If the user is
+      recovered, this value reverts to `user:{emailid}` and the recovered user
+      retains the role in the binding.  *
+      `deleted:serviceAccount:{emailid}?uid={uniqueid}`: An email address
+      (plus    unique identifier) representing a service account that has been
+      recently    deleted. For example,    `my-other-
+      app@appspot.gserviceaccount.com?uid=123456789012345678901`.    If the
+      service account is undeleted, this value reverts to
+      `serviceAccount:{emailid}` and the undeleted service account retains the
+      role in the binding.  * `deleted:group:{emailid}?uid={uniqueid}`: An
+      email address (plus unique    identifier) representing a Google group
+      that has been recently    deleted. For example,
+      `admins@example.com?uid=123456789012345678901`. If    the group is
+      recovered, this value reverts to `group:{emailid}` and the    recovered
+      group retains the role in the binding.   * `domain:{domain}`: The G
+      Suite domain (primary) that represents all the    users of that domain.
+      For example, `google.com` or `example.com`.
     role: Role that is assigned to `members`. For example, `roles/viewer`,
       `roles/editor`, or `roles/owner`.
   """
@@ -211,8 +241,7 @@ class BindingDelta(_messages.Message):
 
   Fields:
     action: The action that was performed on a Binding. Required
-    condition: Unimplemented. The condition that is associated with this
-      binding. This field is logged only for Cloud Audit Logging.
+    condition: The condition that is associated with this binding.
     member: A single identity requesting access for a Cloud Platform resource.
       Follows the same format of Binding.members. Required
     role: Role that is assigned to `members`. For example, `roles/viewer`,
@@ -242,7 +271,7 @@ class CreateRoleRequest(_messages.Message):
 
   Fields:
     role: The Role resource to create.
-    roleId: The role id to use for this role.
+    roleId: The role ID to use for this role.
   """
 
   role = _messages.MessageField('Role', 1)
@@ -331,11 +360,15 @@ class CreateServiceAccountRequest(_messages.Message):
       project, must be 6-30 characters long, and match the regular expression
       `[a-z]([-a-z0-9]*[a-z0-9])` to comply with RFC1035.
     serviceAccount: The ServiceAccount resource to create. Currently, only the
-      following values are user assignable: `display_name` .
+      following values are user assignable: `display_name` and `description`.
   """
 
   accountId = _messages.StringField(1)
   serviceAccount = _messages.MessageField('ServiceAccount', 2)
+
+
+class DisableServiceAccountRequest(_messages.Message):
+  r"""The service account disable request."""
 
 
 class Empty(_messages.Message):
@@ -346,6 +379,10 @@ class Empty(_messages.Message):
   JSON representation for `Empty` is empty JSON object `{}`.
   """
 
+
+
+class EnableServiceAccountRequest(_messages.Message):
+  r"""The service account enable request."""
 
 
 class Expr(_messages.Message):
@@ -405,8 +442,21 @@ class IamOrganizationsRolesCreateRequest(_messages.Message):
   Fields:
     createRoleRequest: A CreateRoleRequest resource to be passed as the
       request body.
-    parent: The resource name of the parent resource in one of the following
-      formats: `organizations/{ORGANIZATION_ID}` `projects/{PROJECT_ID}`
+    parent: The `parent` parameter's value depends on the target resource for
+      the request, namely [`projects`](/iam/reference/rest/v1/projects.roles)
+      or [`organizations`](/iam/reference/rest/v1/organizations.roles). Each
+      resource type's `parent` value format is described below:  * [`projects.
+      roles.create()`](/iam/reference/rest/v1/projects.roles/create):
+      `projects/{PROJECT_ID}`. This method creates project-level   [custom
+      roles](/iam/docs/understanding-custom-roles).   Example request URL:
+      `https://iam.googleapis.com/v1/projects/{PROJECT_ID}/roles`  * [`organiz
+      ations.roles.create()`](/iam/reference/rest/v1/organizations.roles/creat
+      e):   `organizations/{ORGANIZATION_ID}`. This method creates
+      organization-level   [custom roles](/iam/docs/understanding-custom-
+      roles). Example request   URL:
+      `https://iam.googleapis.com/v1/organizations/{ORGANIZATION_ID}/roles`
+      Note: Wildcard (*) values are invalid; you must specify a complete
+      project ID or organization ID.
   """
 
   createRoleRequest = _messages.MessageField('CreateRoleRequest', 1)
@@ -418,9 +468,22 @@ class IamOrganizationsRolesDeleteRequest(_messages.Message):
 
   Fields:
     etag: Used to perform a consistent read-modify-write.
-    name: The resource name of the role in one of the following formats:
-      `organizations/{ORGANIZATION_ID}/roles/{ROLE_NAME}`
-      `projects/{PROJECT_ID}/roles/{ROLE_NAME}`
+    name: The `name` parameter's value depends on the target resource for the
+      request, namely [`projects`](/iam/reference/rest/v1/projects.roles) or
+      [`organizations`](/iam/reference/rest/v1/organizations.roles). Each
+      resource type's `name` value format is described below:  * [`projects.ro
+      les.delete()`](/iam/reference/rest/v1/projects.roles/delete):
+      `projects/{PROJECT_ID}/roles/{CUSTOM_ROLE_ID}`. This method deletes only
+      [custom roles](/iam/docs/understanding-custom-roles) that have been
+      created at the project level. Example request URL:   `https://iam.google
+      apis.com/v1/projects/{PROJECT_ID}/roles/{CUSTOM_ROLE_ID}`  * [`organizat
+      ions.roles.delete()`](/iam/reference/rest/v1/organizations.roles/delete)
+      :   `organizations/{ORGANIZATION_ID}/roles/{CUSTOM_ROLE_ID}`. This
+      method   deletes only [custom roles](/iam/docs/understanding-custom-
+      roles) that   have been created at the organization level. Example
+      request URL:   `https://iam.googleapis.com/v1/organizations/{ORGANIZATIO
+      N_ID}/roles/{CUSTOM_ROLE_ID}`  Note: Wildcard (*) values are invalid;
+      you must specify a complete project ID or organization ID.
   """
 
   etag = _messages.BytesField(1)
@@ -431,9 +494,27 @@ class IamOrganizationsRolesGetRequest(_messages.Message):
   r"""A IamOrganizationsRolesGetRequest object.
 
   Fields:
-    name: The resource name of the role in one of the following formats:
-      `roles/{ROLE_NAME}` `organizations/{ORGANIZATION_ID}/roles/{ROLE_NAME}`
-      `projects/{PROJECT_ID}/roles/{ROLE_NAME}`
+    name: The `name` parameter's value depends on the target resource for the
+      request, namely [`roles`](/iam/reference/rest/v1/roles),
+      [`projects`](/iam/reference/rest/v1/projects.roles), or
+      [`organizations`](/iam/reference/rest/v1/organizations.roles). Each
+      resource type's `name` value format is described below:  *
+      [`roles.get()`](/iam/reference/rest/v1/roles/get): `roles/{ROLE_NAME}`.
+      This method returns results from all   [predefined roles](/iam/docs
+      /understanding-roles#predefined_roles) in   Cloud IAM. Example request
+      URL:   `https://iam.googleapis.com/v1/roles/{ROLE_NAME}`  *
+      [`projects.roles.get()`](/iam/reference/rest/v1/projects.roles/get):
+      `projects/{PROJECT_ID}/roles/{CUSTOM_ROLE_ID}`. This method returns only
+      [custom roles](/iam/docs/understanding-custom-roles) that have been
+      created at the project level. Example request URL:   `https://iam.google
+      apis.com/v1/projects/{PROJECT_ID}/roles/{CUSTOM_ROLE_ID}`  * [`organizat
+      ions.roles.get()`](/iam/reference/rest/v1/organizations.roles/get):
+      `organizations/{ORGANIZATION_ID}/roles/{CUSTOM_ROLE_ID}`. This method
+      returns only [custom roles](/iam/docs/understanding-custom-roles) that
+      have been created at the organization level. Example request URL:   `htt
+      ps://iam.googleapis.com/v1/organizations/{ORGANIZATION_ID}/roles/{CUSTOM
+      _ROLE_ID}`  Note: Wildcard (*) values are invalid; you must specify a
+      complete project ID or organization ID.
   """
 
   name = _messages.StringField(1, required=True)
@@ -443,22 +524,48 @@ class IamOrganizationsRolesListRequest(_messages.Message):
   r"""A IamOrganizationsRolesListRequest object.
 
   Enums:
-    ViewValueValuesEnum: Optional view for the returned Role objects.
+    ViewValueValuesEnum: Optional view for the returned Role objects. When
+      `FULL` is specified, the `includedPermissions` field is returned, which
+      includes a list of all permissions in the role. The default value is
+      `BASIC`, which does not return the `includedPermissions` field.
 
   Fields:
     pageSize: Optional limit on the number of roles to include in the
       response.
     pageToken: Optional pagination token returned in an earlier
       ListRolesResponse.
-    parent: The resource name of the parent resource in one of the following
-      formats: `` (empty string) -- this refers to curated roles.
-      `organizations/{ORGANIZATION_ID}` `projects/{PROJECT_ID}`
+    parent: The `parent` parameter's value depends on the target resource for
+      the request, namely [`roles`](/iam/reference/rest/v1/roles),
+      [`projects`](/iam/reference/rest/v1/projects.roles), or
+      [`organizations`](/iam/reference/rest/v1/organizations.roles). Each
+      resource type's `parent` value format is described below:  *
+      [`roles.list()`](/iam/reference/rest/v1/roles/list): An empty string.
+      This method doesn't require a resource; it simply returns all
+      [predefined roles](/iam/docs/understanding-roles#predefined_roles) in
+      Cloud IAM. Example request URL:   `https://iam.googleapis.com/v1/roles`
+      * [`projects.roles.list()`](/iam/reference/rest/v1/projects.roles/list):
+      `projects/{PROJECT_ID}`. This method lists all project-level   [custom
+      roles](/iam/docs/understanding-custom-roles).   Example request URL:
+      `https://iam.googleapis.com/v1/projects/{PROJECT_ID}/roles`  * [`organiz
+      ations.roles.list()`](/iam/reference/rest/v1/organizations.roles/list):
+      `organizations/{ORGANIZATION_ID}`. This method lists all   organization-
+      level [custom roles](/iam/docs/understanding-custom-roles).   Example
+      request URL:
+      `https://iam.googleapis.com/v1/organizations/{ORGANIZATION_ID}/roles`
+      Note: Wildcard (*) values are invalid; you must specify a complete
+      project ID or organization ID.
     showDeleted: Include Roles that have been deleted.
-    view: Optional view for the returned Role objects.
+    view: Optional view for the returned Role objects. When `FULL` is
+      specified, the `includedPermissions` field is returned, which includes a
+      list of all permissions in the role. The default value is `BASIC`, which
+      does not return the `includedPermissions` field.
   """
 
   class ViewValueValuesEnum(_messages.Enum):
-    r"""Optional view for the returned Role objects.
+    r"""Optional view for the returned Role objects. When `FULL` is specified,
+    the `includedPermissions` field is returned, which includes a list of all
+    permissions in the role. The default value is `BASIC`, which does not
+    return the `includedPermissions` field.
 
     Values:
       BASIC: <no description>
@@ -478,9 +585,22 @@ class IamOrganizationsRolesPatchRequest(_messages.Message):
   r"""A IamOrganizationsRolesPatchRequest object.
 
   Fields:
-    name: The resource name of the role in one of the following formats:
-      `roles/{ROLE_NAME}` `organizations/{ORGANIZATION_ID}/roles/{ROLE_NAME}`
-      `projects/{PROJECT_ID}/roles/{ROLE_NAME}`
+    name: The `name` parameter's value depends on the target resource for the
+      request, namely [`projects`](/iam/reference/rest/v1/projects.roles) or
+      [`organizations`](/iam/reference/rest/v1/organizations.roles). Each
+      resource type's `name` value format is described below:  *
+      [`projects.roles.patch()`](/iam/reference/rest/v1/projects.roles/patch):
+      `projects/{PROJECT_ID}/roles/{CUSTOM_ROLE_ID}`. This method updates only
+      [custom roles](/iam/docs/understanding-custom-roles) that have been
+      created at the project level. Example request URL:   `https://iam.google
+      apis.com/v1/projects/{PROJECT_ID}/roles/{CUSTOM_ROLE_ID}`  * [`organizat
+      ions.roles.patch()`](/iam/reference/rest/v1/organizations.roles/patch):
+      `organizations/{ORGANIZATION_ID}/roles/{CUSTOM_ROLE_ID}`. This method
+      updates only [custom roles](/iam/docs/understanding-custom-roles) that
+      have been created at the organization level. Example request URL:   `htt
+      ps://iam.googleapis.com/v1/organizations/{ORGANIZATION_ID}/roles/{CUSTOM
+      _ROLE_ID}`  Note: Wildcard (*) values are invalid; you must specify a
+      complete project ID or organization ID.
     role: A Role resource to be passed as the request body.
     updateMask: A mask describing which fields in the Role have changed.
   """
@@ -494,9 +614,22 @@ class IamOrganizationsRolesUndeleteRequest(_messages.Message):
   r"""A IamOrganizationsRolesUndeleteRequest object.
 
   Fields:
-    name: The resource name of the role in one of the following formats:
-      `organizations/{ORGANIZATION_ID}/roles/{ROLE_NAME}`
-      `projects/{PROJECT_ID}/roles/{ROLE_NAME}`
+    name: The `name` parameter's value depends on the target resource for the
+      request, namely [`projects`](/iam/reference/rest/v1/projects.roles) or
+      [`organizations`](/iam/reference/rest/v1/organizations.roles). Each
+      resource type's `name` value format is described below:  * [`projects.ro
+      les.undelete()`](/iam/reference/rest/v1/projects.roles/undelete):
+      `projects/{PROJECT_ID}/roles/{CUSTOM_ROLE_ID}`. This method undeletes
+      only [custom roles](/iam/docs/understanding-custom-roles) that have been
+      created at the project level. Example request URL:   `https://iam.google
+      apis.com/v1/projects/{PROJECT_ID}/roles/{CUSTOM_ROLE_ID}`  * [`organizat
+      ions.roles.undelete()`](/iam/reference/rest/v1/organizations.roles/undel
+      ete):   `organizations/{ORGANIZATION_ID}/roles/{CUSTOM_ROLE_ID}`. This
+      method   undeletes only [custom roles](/iam/docs/understanding-custom-
+      roles) that   have been created at the organization level. Example
+      request URL:   `https://iam.googleapis.com/v1/organizations/{ORGANIZATIO
+      N_ID}/roles/{CUSTOM_ROLE_ID}`  Note: Wildcard (*) values are invalid;
+      you must specify a complete project ID or organization ID.
     undeleteRoleRequest: A UndeleteRoleRequest resource to be passed as the
       request body.
   """
@@ -511,8 +644,21 @@ class IamProjectsRolesCreateRequest(_messages.Message):
   Fields:
     createRoleRequest: A CreateRoleRequest resource to be passed as the
       request body.
-    parent: The resource name of the parent resource in one of the following
-      formats: `organizations/{ORGANIZATION_ID}` `projects/{PROJECT_ID}`
+    parent: The `parent` parameter's value depends on the target resource for
+      the request, namely [`projects`](/iam/reference/rest/v1/projects.roles)
+      or [`organizations`](/iam/reference/rest/v1/organizations.roles). Each
+      resource type's `parent` value format is described below:  * [`projects.
+      roles.create()`](/iam/reference/rest/v1/projects.roles/create):
+      `projects/{PROJECT_ID}`. This method creates project-level   [custom
+      roles](/iam/docs/understanding-custom-roles).   Example request URL:
+      `https://iam.googleapis.com/v1/projects/{PROJECT_ID}/roles`  * [`organiz
+      ations.roles.create()`](/iam/reference/rest/v1/organizations.roles/creat
+      e):   `organizations/{ORGANIZATION_ID}`. This method creates
+      organization-level   [custom roles](/iam/docs/understanding-custom-
+      roles). Example request   URL:
+      `https://iam.googleapis.com/v1/organizations/{ORGANIZATION_ID}/roles`
+      Note: Wildcard (*) values are invalid; you must specify a complete
+      project ID or organization ID.
   """
 
   createRoleRequest = _messages.MessageField('CreateRoleRequest', 1)
@@ -524,9 +670,22 @@ class IamProjectsRolesDeleteRequest(_messages.Message):
 
   Fields:
     etag: Used to perform a consistent read-modify-write.
-    name: The resource name of the role in one of the following formats:
-      `organizations/{ORGANIZATION_ID}/roles/{ROLE_NAME}`
-      `projects/{PROJECT_ID}/roles/{ROLE_NAME}`
+    name: The `name` parameter's value depends on the target resource for the
+      request, namely [`projects`](/iam/reference/rest/v1/projects.roles) or
+      [`organizations`](/iam/reference/rest/v1/organizations.roles). Each
+      resource type's `name` value format is described below:  * [`projects.ro
+      les.delete()`](/iam/reference/rest/v1/projects.roles/delete):
+      `projects/{PROJECT_ID}/roles/{CUSTOM_ROLE_ID}`. This method deletes only
+      [custom roles](/iam/docs/understanding-custom-roles) that have been
+      created at the project level. Example request URL:   `https://iam.google
+      apis.com/v1/projects/{PROJECT_ID}/roles/{CUSTOM_ROLE_ID}`  * [`organizat
+      ions.roles.delete()`](/iam/reference/rest/v1/organizations.roles/delete)
+      :   `organizations/{ORGANIZATION_ID}/roles/{CUSTOM_ROLE_ID}`. This
+      method   deletes only [custom roles](/iam/docs/understanding-custom-
+      roles) that   have been created at the organization level. Example
+      request URL:   `https://iam.googleapis.com/v1/organizations/{ORGANIZATIO
+      N_ID}/roles/{CUSTOM_ROLE_ID}`  Note: Wildcard (*) values are invalid;
+      you must specify a complete project ID or organization ID.
   """
 
   etag = _messages.BytesField(1)
@@ -537,9 +696,27 @@ class IamProjectsRolesGetRequest(_messages.Message):
   r"""A IamProjectsRolesGetRequest object.
 
   Fields:
-    name: The resource name of the role in one of the following formats:
-      `roles/{ROLE_NAME}` `organizations/{ORGANIZATION_ID}/roles/{ROLE_NAME}`
-      `projects/{PROJECT_ID}/roles/{ROLE_NAME}`
+    name: The `name` parameter's value depends on the target resource for the
+      request, namely [`roles`](/iam/reference/rest/v1/roles),
+      [`projects`](/iam/reference/rest/v1/projects.roles), or
+      [`organizations`](/iam/reference/rest/v1/organizations.roles). Each
+      resource type's `name` value format is described below:  *
+      [`roles.get()`](/iam/reference/rest/v1/roles/get): `roles/{ROLE_NAME}`.
+      This method returns results from all   [predefined roles](/iam/docs
+      /understanding-roles#predefined_roles) in   Cloud IAM. Example request
+      URL:   `https://iam.googleapis.com/v1/roles/{ROLE_NAME}`  *
+      [`projects.roles.get()`](/iam/reference/rest/v1/projects.roles/get):
+      `projects/{PROJECT_ID}/roles/{CUSTOM_ROLE_ID}`. This method returns only
+      [custom roles](/iam/docs/understanding-custom-roles) that have been
+      created at the project level. Example request URL:   `https://iam.google
+      apis.com/v1/projects/{PROJECT_ID}/roles/{CUSTOM_ROLE_ID}`  * [`organizat
+      ions.roles.get()`](/iam/reference/rest/v1/organizations.roles/get):
+      `organizations/{ORGANIZATION_ID}/roles/{CUSTOM_ROLE_ID}`. This method
+      returns only [custom roles](/iam/docs/understanding-custom-roles) that
+      have been created at the organization level. Example request URL:   `htt
+      ps://iam.googleapis.com/v1/organizations/{ORGANIZATION_ID}/roles/{CUSTOM
+      _ROLE_ID}`  Note: Wildcard (*) values are invalid; you must specify a
+      complete project ID or organization ID.
   """
 
   name = _messages.StringField(1, required=True)
@@ -549,22 +726,48 @@ class IamProjectsRolesListRequest(_messages.Message):
   r"""A IamProjectsRolesListRequest object.
 
   Enums:
-    ViewValueValuesEnum: Optional view for the returned Role objects.
+    ViewValueValuesEnum: Optional view for the returned Role objects. When
+      `FULL` is specified, the `includedPermissions` field is returned, which
+      includes a list of all permissions in the role. The default value is
+      `BASIC`, which does not return the `includedPermissions` field.
 
   Fields:
     pageSize: Optional limit on the number of roles to include in the
       response.
     pageToken: Optional pagination token returned in an earlier
       ListRolesResponse.
-    parent: The resource name of the parent resource in one of the following
-      formats: `` (empty string) -- this refers to curated roles.
-      `organizations/{ORGANIZATION_ID}` `projects/{PROJECT_ID}`
+    parent: The `parent` parameter's value depends on the target resource for
+      the request, namely [`roles`](/iam/reference/rest/v1/roles),
+      [`projects`](/iam/reference/rest/v1/projects.roles), or
+      [`organizations`](/iam/reference/rest/v1/organizations.roles). Each
+      resource type's `parent` value format is described below:  *
+      [`roles.list()`](/iam/reference/rest/v1/roles/list): An empty string.
+      This method doesn't require a resource; it simply returns all
+      [predefined roles](/iam/docs/understanding-roles#predefined_roles) in
+      Cloud IAM. Example request URL:   `https://iam.googleapis.com/v1/roles`
+      * [`projects.roles.list()`](/iam/reference/rest/v1/projects.roles/list):
+      `projects/{PROJECT_ID}`. This method lists all project-level   [custom
+      roles](/iam/docs/understanding-custom-roles).   Example request URL:
+      `https://iam.googleapis.com/v1/projects/{PROJECT_ID}/roles`  * [`organiz
+      ations.roles.list()`](/iam/reference/rest/v1/organizations.roles/list):
+      `organizations/{ORGANIZATION_ID}`. This method lists all   organization-
+      level [custom roles](/iam/docs/understanding-custom-roles).   Example
+      request URL:
+      `https://iam.googleapis.com/v1/organizations/{ORGANIZATION_ID}/roles`
+      Note: Wildcard (*) values are invalid; you must specify a complete
+      project ID or organization ID.
     showDeleted: Include Roles that have been deleted.
-    view: Optional view for the returned Role objects.
+    view: Optional view for the returned Role objects. When `FULL` is
+      specified, the `includedPermissions` field is returned, which includes a
+      list of all permissions in the role. The default value is `BASIC`, which
+      does not return the `includedPermissions` field.
   """
 
   class ViewValueValuesEnum(_messages.Enum):
-    r"""Optional view for the returned Role objects.
+    r"""Optional view for the returned Role objects. When `FULL` is specified,
+    the `includedPermissions` field is returned, which includes a list of all
+    permissions in the role. The default value is `BASIC`, which does not
+    return the `includedPermissions` field.
 
     Values:
       BASIC: <no description>
@@ -584,9 +787,22 @@ class IamProjectsRolesPatchRequest(_messages.Message):
   r"""A IamProjectsRolesPatchRequest object.
 
   Fields:
-    name: The resource name of the role in one of the following formats:
-      `roles/{ROLE_NAME}` `organizations/{ORGANIZATION_ID}/roles/{ROLE_NAME}`
-      `projects/{PROJECT_ID}/roles/{ROLE_NAME}`
+    name: The `name` parameter's value depends on the target resource for the
+      request, namely [`projects`](/iam/reference/rest/v1/projects.roles) or
+      [`organizations`](/iam/reference/rest/v1/organizations.roles). Each
+      resource type's `name` value format is described below:  *
+      [`projects.roles.patch()`](/iam/reference/rest/v1/projects.roles/patch):
+      `projects/{PROJECT_ID}/roles/{CUSTOM_ROLE_ID}`. This method updates only
+      [custom roles](/iam/docs/understanding-custom-roles) that have been
+      created at the project level. Example request URL:   `https://iam.google
+      apis.com/v1/projects/{PROJECT_ID}/roles/{CUSTOM_ROLE_ID}`  * [`organizat
+      ions.roles.patch()`](/iam/reference/rest/v1/organizations.roles/patch):
+      `organizations/{ORGANIZATION_ID}/roles/{CUSTOM_ROLE_ID}`. This method
+      updates only [custom roles](/iam/docs/understanding-custom-roles) that
+      have been created at the organization level. Example request URL:   `htt
+      ps://iam.googleapis.com/v1/organizations/{ORGANIZATION_ID}/roles/{CUSTOM
+      _ROLE_ID}`  Note: Wildcard (*) values are invalid; you must specify a
+      complete project ID or organization ID.
     role: A Role resource to be passed as the request body.
     updateMask: A mask describing which fields in the Role have changed.
   """
@@ -600,9 +816,22 @@ class IamProjectsRolesUndeleteRequest(_messages.Message):
   r"""A IamProjectsRolesUndeleteRequest object.
 
   Fields:
-    name: The resource name of the role in one of the following formats:
-      `organizations/{ORGANIZATION_ID}/roles/{ROLE_NAME}`
-      `projects/{PROJECT_ID}/roles/{ROLE_NAME}`
+    name: The `name` parameter's value depends on the target resource for the
+      request, namely [`projects`](/iam/reference/rest/v1/projects.roles) or
+      [`organizations`](/iam/reference/rest/v1/organizations.roles). Each
+      resource type's `name` value format is described below:  * [`projects.ro
+      les.undelete()`](/iam/reference/rest/v1/projects.roles/undelete):
+      `projects/{PROJECT_ID}/roles/{CUSTOM_ROLE_ID}`. This method undeletes
+      only [custom roles](/iam/docs/understanding-custom-roles) that have been
+      created at the project level. Example request URL:   `https://iam.google
+      apis.com/v1/projects/{PROJECT_ID}/roles/{CUSTOM_ROLE_ID}`  * [`organizat
+      ions.roles.undelete()`](/iam/reference/rest/v1/organizations.roles/undel
+      ete):   `organizations/{ORGANIZATION_ID}/roles/{CUSTOM_ROLE_ID}`. This
+      method   undeletes only [custom roles](/iam/docs/understanding-custom-
+      roles) that   have been created at the organization level. Example
+      request URL:   `https://iam.googleapis.com/v1/organizations/{ORGANIZATIO
+      N_ID}/roles/{CUSTOM_ROLE_ID}`  Note: Wildcard (*) values are invalid;
+      you must specify a complete project ID or organization ID.
     undeleteRoleRequest: A UndeleteRoleRequest resource to be passed as the
       request body.
   """
@@ -629,9 +858,9 @@ class IamProjectsServiceAccountsDeleteRequest(_messages.Message):
   r"""A IamProjectsServiceAccountsDeleteRequest object.
 
   Fields:
-    name: The resource name of the service account in the following format:
-      `projects/{PROJECT_ID}/serviceAccounts/{ACCOUNT}`. Using `-` as a
-      wildcard for the `PROJECT_ID` will infer the project from the account.
+    name: Required. The resource name of the service account in the following
+      format: `projects/{PROJECT_ID}/serviceAccounts/{ACCOUNT}`. Using `-` as
+      a wildcard for the `PROJECT_ID` will infer the project from the account.
       The `ACCOUNT` value can be the `email` address or the `unique_id` of the
       service account.
   """
@@ -639,25 +868,65 @@ class IamProjectsServiceAccountsDeleteRequest(_messages.Message):
   name = _messages.StringField(1, required=True)
 
 
+class IamProjectsServiceAccountsDisableRequest(_messages.Message):
+  r"""A IamProjectsServiceAccountsDisableRequest object.
+
+  Fields:
+    disableServiceAccountRequest: A DisableServiceAccountRequest resource to
+      be passed as the request body.
+    name: The resource name of the service account in the following format:
+      `projects/{PROJECT_ID}/serviceAccounts/{ACCOUNT}`. Using `-` as a
+      wildcard for the `PROJECT_ID` will infer the project from the account.
+      The `ACCOUNT` value can be the `email` address or the `unique_id` of the
+      service account.
+  """
+
+  disableServiceAccountRequest = _messages.MessageField('DisableServiceAccountRequest', 1)
+  name = _messages.StringField(2, required=True)
+
+
+class IamProjectsServiceAccountsEnableRequest(_messages.Message):
+  r"""A IamProjectsServiceAccountsEnableRequest object.
+
+  Fields:
+    enableServiceAccountRequest: A EnableServiceAccountRequest resource to be
+      passed as the request body.
+    name: The resource name of the service account in the following format:
+      `projects/{PROJECT_ID}/serviceAccounts/{ACCOUNT}`. Using `-` as a
+      wildcard for the `PROJECT_ID` will infer the project from the account.
+      The `ACCOUNT` value can be the `email` address or the `unique_id` of the
+      service account.
+  """
+
+  enableServiceAccountRequest = _messages.MessageField('EnableServiceAccountRequest', 1)
+  name = _messages.StringField(2, required=True)
+
+
 class IamProjectsServiceAccountsGetIamPolicyRequest(_messages.Message):
   r"""A IamProjectsServiceAccountsGetIamPolicyRequest object.
 
   Fields:
+    options_requestedPolicyVersion: Optional. The policy format version to be
+      returned.  Valid values are 0, 1, and 3. Requests specifying an invalid
+      value will be rejected.  Requests for policies with any conditional
+      bindings must specify version 3. Policies without any conditional
+      bindings may specify any valid value or leave the field unset.
     resource: REQUIRED: The resource for which the policy is being requested.
       See the operation documentation for the appropriate value for this
       field.
   """
 
-  resource = _messages.StringField(1, required=True)
+  options_requestedPolicyVersion = _messages.IntegerField(1, variant=_messages.Variant.INT32)
+  resource = _messages.StringField(2, required=True)
 
 
 class IamProjectsServiceAccountsGetRequest(_messages.Message):
   r"""A IamProjectsServiceAccountsGetRequest object.
 
   Fields:
-    name: The resource name of the service account in the following format:
-      `projects/{PROJECT_ID}/serviceAccounts/{ACCOUNT}`. Using `-` as a
-      wildcard for the `PROJECT_ID` will infer the project from the account.
+    name: Required. The resource name of the service account in the following
+      format: `projects/{PROJECT_ID}/serviceAccounts/{ACCOUNT}`. Using `-` as
+      a wildcard for the `PROJECT_ID` will infer the project from the account.
       The `ACCOUNT` value can be the `email` address or the `unique_id` of the
       service account.
   """
@@ -731,9 +1000,9 @@ class IamProjectsServiceAccountsKeysCreateRequest(_messages.Message):
   Fields:
     createServiceAccountKeyRequest: A CreateServiceAccountKeyRequest resource
       to be passed as the request body.
-    name: The resource name of the service account in the following format:
-      `projects/{PROJECT_ID}/serviceAccounts/{ACCOUNT}`. Using `-` as a
-      wildcard for the `PROJECT_ID` will infer the project from the account.
+    name: Required. The resource name of the service account in the following
+      format: `projects/{PROJECT_ID}/serviceAccounts/{ACCOUNT}`. Using `-` as
+      a wildcard for the `PROJECT_ID` will infer the project from the account.
       The `ACCOUNT` value can be the `email` address or the `unique_id` of the
       service account.
   """
@@ -746,10 +1015,11 @@ class IamProjectsServiceAccountsKeysDeleteRequest(_messages.Message):
   r"""A IamProjectsServiceAccountsKeysDeleteRequest object.
 
   Fields:
-    name: The resource name of the service account key in the following
-      format: `projects/{PROJECT_ID}/serviceAccounts/{ACCOUNT}/keys/{key}`.
-      Using `-` as a wildcard for the `PROJECT_ID` will infer the project from
-      the account. The `ACCOUNT` value can be the `email` address or the
+    name: Required. The resource name of the service account key in the
+      following format:
+      `projects/{PROJECT_ID}/serviceAccounts/{ACCOUNT}/keys/{key}`. Using `-`
+      as a wildcard for the `PROJECT_ID` will infer the project from the
+      account. The `ACCOUNT` value can be the `email` address or the
       `unique_id` of the service account.
   """
 
@@ -764,10 +1034,11 @@ class IamProjectsServiceAccountsKeysGetRequest(_messages.Message):
       requested. X509_PEM is the default output format.
 
   Fields:
-    name: The resource name of the service account key in the following
-      format: `projects/{PROJECT_ID}/serviceAccounts/{ACCOUNT}/keys/{key}`.
-      Using `-` as a wildcard for the `PROJECT_ID` will infer the project from
-      the account. The `ACCOUNT` value can be the `email` address or the
+    name: Required. The resource name of the service account key in the
+      following format:
+      `projects/{PROJECT_ID}/serviceAccounts/{ACCOUNT}/keys/{key}`.  Using `-`
+      as a wildcard for the `PROJECT_ID` will infer the project from the
+      account. The `ACCOUNT` value can be the `email` address or the
       `unique_id` of the service account.
     publicKeyType: The output format of the public key requested. X509_PEM is
       the default output format.
@@ -802,11 +1073,11 @@ class IamProjectsServiceAccountsKeysListRequest(_messages.Message):
     keyTypes: Filters the types of keys the user wants to include in the list
       response. Duplicate key types are not allowed. If no key type is
       provided, all keys are returned.
-    name: The resource name of the service account in the following format:
-      `projects/{PROJECT_ID}/serviceAccounts/{ACCOUNT}`.  Using `-` as a
-      wildcard for the `PROJECT_ID`, will infer the project from the account.
-      The `ACCOUNT` value can be the `email` address or the `unique_id` of the
-      service account.
+    name: Required. The resource name of the service account in the following
+      format: `projects/{PROJECT_ID}/serviceAccounts/{ACCOUNT}`.  Using `-` as
+      a wildcard for the `PROJECT_ID`, will infer the project from the
+      account. The `ACCOUNT` value can be the `email` address or the
+      `unique_id` of the service account.
   """
 
   class KeyTypesValueValuesEnum(_messages.Enum):
@@ -825,6 +1096,23 @@ class IamProjectsServiceAccountsKeysListRequest(_messages.Message):
 
   keyTypes = _messages.EnumField('KeyTypesValueValuesEnum', 1, repeated=True)
   name = _messages.StringField(2, required=True)
+
+
+class IamProjectsServiceAccountsKeysUploadRequest(_messages.Message):
+  r"""A IamProjectsServiceAccountsKeysUploadRequest object.
+
+  Fields:
+    name: The resource name of the service account in the following format:
+      `projects/{PROJECT_ID}/serviceAccounts/{ACCOUNT}`. Using `-` as a
+      wildcard for the `PROJECT_ID` will infer the project from the account.
+      The `ACCOUNT` value can be the `email` address or the `unique_id` of the
+      service account.
+    uploadServiceAccountKeyRequest: A UploadServiceAccountKeyRequest resource
+      to be passed as the request body.
+  """
+
+  name = _messages.StringField(1, required=True)
+  uploadServiceAccountKeyRequest = _messages.MessageField('UploadServiceAccountKeyRequest', 2)
 
 
 class IamProjectsServiceAccountsListRequest(_messages.Message):
@@ -883,9 +1171,9 @@ class IamProjectsServiceAccountsSignBlobRequest(_messages.Message):
   r"""A IamProjectsServiceAccountsSignBlobRequest object.
 
   Fields:
-    name: The resource name of the service account in the following format:
-      `projects/{PROJECT_ID}/serviceAccounts/{ACCOUNT}`. Using `-` as a
-      wildcard for the `PROJECT_ID` will infer the project from the account.
+    name: Required. The resource name of the service account in the following
+      format: `projects/{PROJECT_ID}/serviceAccounts/{ACCOUNT}`. Using `-` as
+      a wildcard for the `PROJECT_ID` will infer the project from the account.
       The `ACCOUNT` value can be the `email` address or the `unique_id` of the
       service account.
     signBlobRequest: A SignBlobRequest resource to be passed as the request
@@ -900,9 +1188,9 @@ class IamProjectsServiceAccountsSignJwtRequest(_messages.Message):
   r"""A IamProjectsServiceAccountsSignJwtRequest object.
 
   Fields:
-    name: The resource name of the service account in the following format:
-      `projects/{PROJECT_ID}/serviceAccounts/{ACCOUNT}`. Using `-` as a
-      wildcard for the `PROJECT_ID` will infer the project from the account.
+    name: Required. The resource name of the service account in the following
+      format: `projects/{PROJECT_ID}/serviceAccounts/{ACCOUNT}`. Using `-` as
+      a wildcard for the `PROJECT_ID` will infer the project from the account.
       The `ACCOUNT` value can be the `email` address or the `unique_id` of the
       service account.
     signJwtRequest: A SignJwtRequest resource to be passed as the request
@@ -928,13 +1216,47 @@ class IamProjectsServiceAccountsTestIamPermissionsRequest(_messages.Message):
   testIamPermissionsRequest = _messages.MessageField('TestIamPermissionsRequest', 2)
 
 
+class IamProjectsServiceAccountsUndeleteRequest(_messages.Message):
+  r"""A IamProjectsServiceAccountsUndeleteRequest object.
+
+  Fields:
+    name: The resource name of the service account in the following format:
+      `projects/{PROJECT_ID}/serviceAccounts/{ACCOUNT_UNIQUE_ID}`. Using `-`
+      as a wildcard for the `PROJECT_ID` will infer the project from the
+      account.
+    undeleteServiceAccountRequest: A UndeleteServiceAccountRequest resource to
+      be passed as the request body.
+  """
+
+  name = _messages.StringField(1, required=True)
+  undeleteServiceAccountRequest = _messages.MessageField('UndeleteServiceAccountRequest', 2)
+
+
 class IamRolesGetRequest(_messages.Message):
   r"""A IamRolesGetRequest object.
 
   Fields:
-    name: The resource name of the role in one of the following formats:
-      `roles/{ROLE_NAME}` `organizations/{ORGANIZATION_ID}/roles/{ROLE_NAME}`
-      `projects/{PROJECT_ID}/roles/{ROLE_NAME}`
+    name: The `name` parameter's value depends on the target resource for the
+      request, namely [`roles`](/iam/reference/rest/v1/roles),
+      [`projects`](/iam/reference/rest/v1/projects.roles), or
+      [`organizations`](/iam/reference/rest/v1/organizations.roles). Each
+      resource type's `name` value format is described below:  *
+      [`roles.get()`](/iam/reference/rest/v1/roles/get): `roles/{ROLE_NAME}`.
+      This method returns results from all   [predefined roles](/iam/docs
+      /understanding-roles#predefined_roles) in   Cloud IAM. Example request
+      URL:   `https://iam.googleapis.com/v1/roles/{ROLE_NAME}`  *
+      [`projects.roles.get()`](/iam/reference/rest/v1/projects.roles/get):
+      `projects/{PROJECT_ID}/roles/{CUSTOM_ROLE_ID}`. This method returns only
+      [custom roles](/iam/docs/understanding-custom-roles) that have been
+      created at the project level. Example request URL:   `https://iam.google
+      apis.com/v1/projects/{PROJECT_ID}/roles/{CUSTOM_ROLE_ID}`  * [`organizat
+      ions.roles.get()`](/iam/reference/rest/v1/organizations.roles/get):
+      `organizations/{ORGANIZATION_ID}/roles/{CUSTOM_ROLE_ID}`. This method
+      returns only [custom roles](/iam/docs/understanding-custom-roles) that
+      have been created at the organization level. Example request URL:   `htt
+      ps://iam.googleapis.com/v1/organizations/{ORGANIZATION_ID}/roles/{CUSTOM
+      _ROLE_ID}`  Note: Wildcard (*) values are invalid; you must specify a
+      complete project ID or organization ID.
   """
 
   name = _messages.StringField(1, required=True)
@@ -944,22 +1266,48 @@ class IamRolesListRequest(_messages.Message):
   r"""A IamRolesListRequest object.
 
   Enums:
-    ViewValueValuesEnum: Optional view for the returned Role objects.
+    ViewValueValuesEnum: Optional view for the returned Role objects. When
+      `FULL` is specified, the `includedPermissions` field is returned, which
+      includes a list of all permissions in the role. The default value is
+      `BASIC`, which does not return the `includedPermissions` field.
 
   Fields:
     pageSize: Optional limit on the number of roles to include in the
       response.
     pageToken: Optional pagination token returned in an earlier
       ListRolesResponse.
-    parent: The resource name of the parent resource in one of the following
-      formats: `` (empty string) -- this refers to curated roles.
-      `organizations/{ORGANIZATION_ID}` `projects/{PROJECT_ID}`
+    parent: The `parent` parameter's value depends on the target resource for
+      the request, namely [`roles`](/iam/reference/rest/v1/roles),
+      [`projects`](/iam/reference/rest/v1/projects.roles), or
+      [`organizations`](/iam/reference/rest/v1/organizations.roles). Each
+      resource type's `parent` value format is described below:  *
+      [`roles.list()`](/iam/reference/rest/v1/roles/list): An empty string.
+      This method doesn't require a resource; it simply returns all
+      [predefined roles](/iam/docs/understanding-roles#predefined_roles) in
+      Cloud IAM. Example request URL:   `https://iam.googleapis.com/v1/roles`
+      * [`projects.roles.list()`](/iam/reference/rest/v1/projects.roles/list):
+      `projects/{PROJECT_ID}`. This method lists all project-level   [custom
+      roles](/iam/docs/understanding-custom-roles).   Example request URL:
+      `https://iam.googleapis.com/v1/projects/{PROJECT_ID}/roles`  * [`organiz
+      ations.roles.list()`](/iam/reference/rest/v1/organizations.roles/list):
+      `organizations/{ORGANIZATION_ID}`. This method lists all   organization-
+      level [custom roles](/iam/docs/understanding-custom-roles).   Example
+      request URL:
+      `https://iam.googleapis.com/v1/organizations/{ORGANIZATION_ID}/roles`
+      Note: Wildcard (*) values are invalid; you must specify a complete
+      project ID or organization ID.
     showDeleted: Include Roles that have been deleted.
-    view: Optional view for the returned Role objects.
+    view: Optional view for the returned Role objects. When `FULL` is
+      specified, the `includedPermissions` field is returned, which includes a
+      list of all permissions in the role. The default value is `BASIC`, which
+      does not return the `includedPermissions` field.
   """
 
   class ViewValueValuesEnum(_messages.Enum):
-    r"""Optional view for the returned Role objects.
+    r"""Optional view for the returned Role objects. When `FULL` is specified,
+    the `includedPermissions` field is returned, which includes a list of all
+    permissions in the role. The default value is `BASIC`, which does not
+    return the `includedPermissions` field.
 
     Values:
       BASIC: <no description>
@@ -1222,10 +1570,13 @@ class Permission(_messages.Message):
     apiDisabled: The service API associated with the permission is not
       enabled.
     customRolesSupportLevel: The current custom role support level.
-    description: A brief description of what this Permission is used for.
+    description: A brief description of what this Permission is used for. This
+      permission can ONLY be used in predefined roles.
     name: The name of this Permission.
-    onlyInPredefinedRoles: This permission can ONLY be used in predefined
-      roles.
+    onlyInPredefinedRoles: A boolean attribute.
+    primaryPermission: The preferred name for this permission. If present,
+      then this permission is an alias of, and equivalent to, the listed
+      primary_permission.
     stage: The current launch stage of the permission.
     title: The title of this Permission.
   """
@@ -1261,34 +1612,61 @@ class Permission(_messages.Message):
   description = _messages.StringField(3)
   name = _messages.StringField(4)
   onlyInPredefinedRoles = _messages.BooleanField(5)
-  stage = _messages.EnumField('StageValueValuesEnum', 6)
-  title = _messages.StringField(7)
+  primaryPermission = _messages.StringField(6)
+  stage = _messages.EnumField('StageValueValuesEnum', 7)
+  title = _messages.StringField(8)
+
+
+class PermissionDelta(_messages.Message):
+  r"""A PermissionDelta message to record the added_permissions and
+  removed_permissions inside a role.
+
+  Fields:
+    addedPermissions: Added permissions.
+    removedPermissions: Removed permissions.
+  """
+
+  addedPermissions = _messages.StringField(1, repeated=True)
+  removedPermissions = _messages.StringField(2, repeated=True)
 
 
 class Policy(_messages.Message):
-  r"""Defines an Identity and Access Management (IAM) policy. It is used to
-  specify access control policies for Cloud Platform resources.   A `Policy`
-  consists of a list of `bindings`. A `binding` binds a list of `members` to a
-  `role`, where the members can be user accounts, Google groups, Google
-  domains, and service accounts. A `role` is a named list of permissions
-  defined by IAM.  **JSON Example**      {       "bindings": [         {
-  "role": "roles/owner",           "members": [
+  r"""An Identity and Access Management (IAM) policy, which specifies access
+  controls for Google Cloud resources.   A `Policy` is a collection of
+  `bindings`. A `binding` binds one or more `members` to a single `role`.
+  Members can be user accounts, service accounts, Google groups, and domains
+  (such as G Suite). A `role` is a named list of permissions; each `role` can
+  be an IAM predefined role or a user-created custom role.  Optionally, a
+  `binding` can specify a `condition`, which is a logical expression that
+  allows access to a resource only if the expression evaluates to `true`. A
+  condition can add constraints based on attributes of the request, the
+  resource, or both.  **JSON example:**      {       "bindings": [         {
+  "role": "roles/resourcemanager.organizationAdmin",           "members": [
   "user:mike@example.com",             "group:admins@example.com",
-  "domain:google.com",             "serviceAccount:my-other-
-  app@appspot.gserviceaccount.com"           ]         },         {
-  "role": "roles/viewer",           "members": ["user:sean@example.com"]
-  }       ]     }  **YAML Example**      bindings:     - members:       -
-  user:mike@example.com       - group:admins@example.com       -
-  domain:google.com       - serviceAccount:my-other-
-  app@appspot.gserviceaccount.com       role: roles/owner     - members:
-  - user:sean@example.com       role: roles/viewer   For a description of IAM
-  and its features, see the [IAM developer's
-  guide](https://cloud.google.com/iam/docs).
+  "domain:google.com",             "serviceAccount:my-project-
+  id@appspot.gserviceaccount.com"           ]         },         {
+  "role": "roles/resourcemanager.organizationViewer",           "members":
+  ["user:eve@example.com"],           "condition": {             "title":
+  "expirable access",             "description": "Does not grant access after
+  Sep 2020",             "expression": "request.time <
+  timestamp('2020-10-01T00:00:00.000Z')",           }         }       ],
+  "etag": "BwWWja0YfJA=",       "version": 3     }  **YAML example:**
+  bindings:     - members:       - user:mike@example.com       -
+  group:admins@example.com       - domain:google.com       - serviceAccount
+  :my-project-id@appspot.gserviceaccount.com       role:
+  roles/resourcemanager.organizationAdmin     - members:       -
+  user:eve@example.com       role: roles/resourcemanager.organizationViewer
+  condition:         title: expirable access         description: Does not
+  grant access after Sep 2020         expression: request.time <
+  timestamp('2020-10-01T00:00:00.000Z')     - etag: BwWWja0YfJA=     -
+  version: 3  For a description of IAM and its features, see the [IAM
+  documentation](https://cloud.google.com/iam/docs/).
 
   Fields:
     auditConfigs: Specifies cloud audit logging configuration for this policy.
-    bindings: Associates a list of `members` to a `role`. `bindings` with no
-      members will result in an error.
+    bindings: Associates a list of `members` to a `role`. Optionally, may
+      specify a `condition` that determines how and when the `bindings` are
+      applied. Each of the `bindings` must contain at least one member.
     etag: `etag` is used for optimistic concurrency control as a way to help
       prevent simultaneous updates of a policy from overwriting each other. It
       is strongly suggested that systems make use of the `etag` in the read-
@@ -1296,9 +1674,24 @@ class Policy(_messages.Message):
       conditions: An `etag` is returned in the response to `getIamPolicy`, and
       systems are expected to put that etag in the request to `setIamPolicy`
       to ensure that their change will be applied to the same version of the
-      policy.  If no `etag` is provided in the call to `setIamPolicy`, then
-      the existing policy is overwritten blindly.
-    version: Deprecated.
+      policy.  **Important:** If you use IAM Conditions, you must include the
+      `etag` field whenever you call `setIamPolicy`. If you omit this field,
+      then IAM allows you to overwrite a version `3` policy with a version `1`
+      policy, and all of the conditions in the version `3` policy are lost.
+    version: Specifies the format of the policy.  Valid values are `0`, `1`,
+      and `3`. Requests that specify an invalid value are rejected.  Any
+      operation that affects conditional role bindings must specify version
+      `3`. This requirement applies to the following operations:  * Getting a
+      policy that includes a conditional role binding * Adding a conditional
+      role binding to a policy * Changing a conditional role binding in a
+      policy * Removing any role binding, with or without a condition, from a
+      policy   that includes conditions  **Important:** If you use IAM
+      Conditions, you must include the `etag` field whenever you call
+      `setIamPolicy`. If you omit this field, then IAM allows you to overwrite
+      a version `3` policy with a version `1` policy, and all of the
+      conditions in the version `3` policy are lost.  If a policy does not
+      include any conditions, operations on that policy may specify any valid
+      version or leave the field unset.
   """
 
   auditConfigs = _messages.MessageField('AuditConfig', 1, repeated=True)
@@ -1433,19 +1826,19 @@ class Role(_messages.Message):
   Fields:
     deleted: The current deleted state of the role. This field is read only.
       It will be ignored in calls to CreateRole and UpdateRole.
-    description: Optional.  A human-readable description for the role.
+    description: Optional. A human-readable description for the role.
     etag: Used to perform a consistent read-modify-write.
     includedPermissions: The names of the permissions this role grants when
       bound in an IAM policy.
     name: The name of the role.  When Role is used in CreateRole, the role
       name must not be set.  When Role is used in output and other input such
       as UpdateRole, the role name is the complete path, e.g.,
-      roles/logging.viewer for curated roles and
+      roles/logging.viewer for predefined roles and
       organizations/{ORGANIZATION_ID}/roles/logging.viewer for custom roles.
     stage: The current launch stage of the role. If the `ALPHA` launch stage
       has been selected for a role, the `stage` field will not be included in
       the returned definition for the role.
-    title: Optional.  A human-readable title for the role.  Typically this is
+    title: Optional. A human-readable title for the role.  Typically this is
       limited to 100 UTF-8 bytes.
   """
 
@@ -1497,6 +1890,8 @@ class ServiceAccount(_messages.Message):
   Fields:
     description: Optional. A user-specified opaque description of the service
       account. Must be less than or equal to 256 UTF-8 bytes.
+    disabled: @OutputOnly A bool indicate if the service account is disabled.
+      The field is currently in alpha phase.
     displayName: Optional. A user-specified name for the service account. Must
       be less than or equal to 100 UTF-8 bytes.
     email: @OutputOnly The email address of the service account.
@@ -1518,13 +1913,14 @@ class ServiceAccount(_messages.Message):
   """
 
   description = _messages.StringField(1)
-  displayName = _messages.StringField(2)
-  email = _messages.StringField(3)
-  etag = _messages.BytesField(4)
-  name = _messages.StringField(5)
-  oauth2ClientId = _messages.StringField(6)
-  projectId = _messages.StringField(7)
-  uniqueId = _messages.StringField(8)
+  disabled = _messages.BooleanField(2)
+  displayName = _messages.StringField(3)
+  email = _messages.StringField(4)
+  etag = _messages.BytesField(5)
+  name = _messages.StringField(6)
+  oauth2ClientId = _messages.StringField(7)
+  projectId = _messages.StringField(8)
+  uniqueId = _messages.StringField(9)
 
 
 class ServiceAccountIdentityBinding(_messages.Message):
@@ -1574,6 +1970,8 @@ class ServiceAccountKey(_messages.Message):
   Enums:
     KeyAlgorithmValueValuesEnum: Specifies the algorithm (and possibly key
       size) for the key.
+    KeyOriginValueValuesEnum: The key origin.
+    KeyTypeValueValuesEnum: The key type.
     PrivateKeyTypeValueValuesEnum: The output format for the private key. Only
       provided in `CreateServiceAccountKey` responses, not in
       `GetServiceAccountKey` or `ListServiceAccountKey` responses.  Google
@@ -1582,6 +1980,8 @@ class ServiceAccountKey(_messages.Message):
 
   Fields:
     keyAlgorithm: Specifies the algorithm (and possibly key size) for the key.
+    keyOrigin: The key origin.
+    keyType: The key type.
     name: The resource name of the service account key in the following format
       `projects/{PROJECT_ID}/serviceAccounts/{ACCOUNT}/keys/{key}`.
     privateKeyData: The private key data. Only provided in
@@ -1598,7 +1998,10 @@ class ServiceAccountKey(_messages.Message):
     publicKeyData: The public key data. Only provided in
       `GetServiceAccountKey` responses.
     validAfterTime: The key can be used after this timestamp.
-    validBeforeTime: The key can be used before this timestamp.
+    validBeforeTime: The key can be used before this timestamp. For system-
+      managed key pairs, this timestamp is the end time for the private key
+      signing operation. The public key could still be used for verification
+      for a few hours after this time.
   """
 
   class KeyAlgorithmValueValuesEnum(_messages.Enum):
@@ -1612,6 +2015,31 @@ class ServiceAccountKey(_messages.Message):
     KEY_ALG_UNSPECIFIED = 0
     KEY_ALG_RSA_1024 = 1
     KEY_ALG_RSA_2048 = 2
+
+  class KeyOriginValueValuesEnum(_messages.Enum):
+    r"""The key origin.
+
+    Values:
+      ORIGIN_UNSPECIFIED: Unspecified key origin.
+      USER_PROVIDED: Key is provided by user.
+      GOOGLE_PROVIDED: Key is provided by Google.
+    """
+    ORIGIN_UNSPECIFIED = 0
+    USER_PROVIDED = 1
+    GOOGLE_PROVIDED = 2
+
+  class KeyTypeValueValuesEnum(_messages.Enum):
+    r"""The key type.
+
+    Values:
+      KEY_TYPE_UNSPECIFIED: Unspecified key type. The presence of this in the
+        message will immediately result in an error.
+      USER_MANAGED: User-managed keys (managed and rotated by the user).
+      SYSTEM_MANAGED: System-managed keys (managed and rotated by Google).
+    """
+    KEY_TYPE_UNSPECIFIED = 0
+    USER_MANAGED = 1
+    SYSTEM_MANAGED = 2
 
   class PrivateKeyTypeValueValuesEnum(_messages.Enum):
     r"""The output format for the private key. Only provided in
@@ -1632,12 +2060,14 @@ class ServiceAccountKey(_messages.Message):
     TYPE_GOOGLE_CREDENTIALS_FILE = 2
 
   keyAlgorithm = _messages.EnumField('KeyAlgorithmValueValuesEnum', 1)
-  name = _messages.StringField(2)
-  privateKeyData = _messages.BytesField(3)
-  privateKeyType = _messages.EnumField('PrivateKeyTypeValueValuesEnum', 4)
-  publicKeyData = _messages.BytesField(5)
-  validAfterTime = _messages.StringField(6)
-  validBeforeTime = _messages.StringField(7)
+  keyOrigin = _messages.EnumField('KeyOriginValueValuesEnum', 2)
+  keyType = _messages.EnumField('KeyTypeValueValuesEnum', 3)
+  name = _messages.StringField(4)
+  privateKeyData = _messages.BytesField(5)
+  privateKeyType = _messages.EnumField('PrivateKeyTypeValueValuesEnum', 6)
+  publicKeyData = _messages.BytesField(7)
+  validAfterTime = _messages.StringField(8)
+  validBeforeTime = _messages.StringField(9)
 
 
 class SetIamPolicyRequest(_messages.Message):
@@ -1662,7 +2092,7 @@ class SignBlobRequest(_messages.Message):
   r"""The service account sign blob request.
 
   Fields:
-    bytesToSign: The bytes to sign.
+    bytesToSign: Required. The bytes to sign.
   """
 
   bytesToSign = _messages.BytesField(1)
@@ -1684,7 +2114,7 @@ class SignJwtRequest(_messages.Message):
   r"""The service account sign JWT request.
 
   Fields:
-    payload: The JWT payload to sign, a JSON JWT Claim set.
+    payload: Required. The JWT payload to sign, a JSON JWT Claim set.
   """
 
   payload = _messages.StringField(1)
@@ -1797,6 +2227,33 @@ class UndeleteRoleRequest(_messages.Message):
   """
 
   etag = _messages.BytesField(1)
+
+
+class UndeleteServiceAccountRequest(_messages.Message):
+  r"""The service account undelete request."""
+
+
+class UndeleteServiceAccountResponse(_messages.Message):
+  r"""A UndeleteServiceAccountResponse object.
+
+  Fields:
+    restoredAccount: Metadata for the restored service account.
+  """
+
+  restoredAccount = _messages.MessageField('ServiceAccount', 1)
+
+
+class UploadServiceAccountKeyRequest(_messages.Message):
+  r"""The service account key upload request.
+
+  Fields:
+    publicKeyData: A field that allows clients to upload their own public key.
+      If set, use this public key data to create a service account key for
+      given service account. Please note, the expected format for this field
+      is X509_PEM.
+  """
+
+  publicKeyData = _messages.BytesField(1)
 
 
 encoding.AddCustomJsonFieldMapping(

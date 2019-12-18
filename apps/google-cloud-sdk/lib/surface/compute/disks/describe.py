@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ class DescribeBeta(Describe):
 
   @staticmethod
   def Args(parser):
-    Describe.disk_arg = disks_flags.MakeDiskArgZonalOrRegional(plural=False)
+    Describe.disk_arg = disks_flags.MakeDiskArg(plural=False)
     _CommonArgs(parser)
 
 
@@ -73,14 +73,21 @@ class DescribeAlpha(Describe):
 
   @staticmethod
   def Args(parser):
-    Describe.disk_arg = disks_flags.MakeDiskArgZonalOrRegional(plural=False)
+    Describe.disk_arg = disks_flags.MakeDiskArg(plural=False)
     _CommonArgs(parser)
 
 
 Describe.detailed_help = {
     'brief': 'Describe a Google Compute Engine disk',
-    'DESCRIPTION': """\
+    'DESCRIPTION':
+        """\
         *{command}* displays all data associated with a Google Compute
         Engine disk in a project.
+        """,
+    'EXAMPLES':
+        """\
+        To describe the disk 'my-disk' in zone 'us-east1-a', run:
+
+            $ {command} my-disk --zone=us-east1-a
         """,
 }

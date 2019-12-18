@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -58,3 +58,12 @@ def IsGlobalUrlMapRef(url_map_ref):
   """Returns True if the URL Map reference is global."""
 
   return url_map_ref.Collection() == 'compute.urlMaps'
+
+
+def SendGetRequest(client, url_map_ref):
+  """Send Url Maps get request."""
+  if url_map_ref.Collection() == 'compute.regionUrlMaps':
+    return client.apitools_client.regionUrlMaps.Get(
+        client.messages.ComputeRegionUrlMapsGetRequest(**url_map_ref.AsDict()))
+  return client.apitools_client.urlMaps.Get(
+      client.messages.ComputeUrlMapsGetRequest(**url_map_ref.AsDict()))

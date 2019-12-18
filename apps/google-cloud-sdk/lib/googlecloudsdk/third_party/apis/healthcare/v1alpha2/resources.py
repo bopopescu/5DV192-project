@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -63,18 +63,6 @@ class Collections(enum.Enum):
       [u'name'],
       True
   )
-  PROJECTS_LOCATIONS_DATASETS_ANNOTATIONSTORES_ANNOTATIONS = (
-      'projects.locations.datasets.annotationStores.annotations',
-      '{+name}',
-      {
-          '':
-              'projects/{projectsId}/locations/{locationsId}/datasets/'
-              '{datasetsId}/annotationStores/{annotationStoresId}/'
-              'annotations/{annotationsId}',
-      },
-      [u'name'],
-      True
-  )
   PROJECTS_LOCATIONS_DATASETS_DICOMSTORES = (
       'projects.locations.datasets.dicomStores',
       '{+name}',
@@ -97,29 +85,6 @@ class Collections(enum.Enum):
       [u'name'],
       True
   )
-  PROJECTS_LOCATIONS_DATASETS_FHIRSTORES_FHIR = (
-      'projects.locations.datasets.fhirStores.fhir',
-      '{+name}',
-      {
-          '':
-              'projects/{projectsId}/locations/{locationsId}/datasets/'
-              '{datasetsId}/fhirStores/{fhirStoresId}/fhir/{fhirId}/{fhirId1}',
-      },
-      [u'name'],
-      True
-  )
-  PROJECTS_LOCATIONS_DATASETS_FHIRSTORES_FHIR__HISTORY = (
-      'projects.locations.datasets.fhirStores.fhir._history',
-      '{+name}',
-      {
-          '':
-              'projects/{projectsId}/locations/{locationsId}/datasets/'
-              '{datasetsId}/fhirStores/{fhirStoresId}/fhir/{fhirId}/'
-              '{fhirId1}/_history/{_historyId}',
-      },
-      [u'name'],
-      True
-  )
   PROJECTS_LOCATIONS_DATASETS_HL7V2STORES = (
       'projects.locations.datasets.hl7V2Stores',
       '{+name}',
@@ -127,17 +92,6 @@ class Collections(enum.Enum):
           '':
               'projects/{projectsId}/locations/{locationsId}/datasets/'
               '{datasetsId}/hl7V2Stores/{hl7V2StoresId}',
-      },
-      [u'name'],
-      True
-  )
-  PROJECTS_LOCATIONS_DATASETS_HL7V2STORES_MESSAGES = (
-      'projects.locations.datasets.hl7V2Stores.messages',
-      '{+name}',
-      {
-          '':
-              'projects/{projectsId}/locations/{locationsId}/datasets/'
-              '{datasetsId}/hl7V2Stores/{hl7V2StoresId}/messages/{messagesId}',
       },
       [u'name'],
       True

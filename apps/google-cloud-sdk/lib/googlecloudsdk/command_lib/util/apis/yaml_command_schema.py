@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ class CommandData(object):
   """A general holder object for yaml command schema."""
 
   def __init__(self, name, data):
-    self.is_hidden = data.get('is_hidden', False)
+    self.hidden = data.get('hidden', False)
     self.release_tracks = [
         base.ReleaseTrack.FromId(i) for i in data.get('release_tracks', [])]
     self.command_type = CommandType.ForName(data.get('command_type', name))
@@ -50,7 +50,7 @@ class CommandData(object):
     if self.command_type == CommandType.WAIT and not async_data:
       raise util.InvalidSchemaError(
           'Wait commands must include an async section.')
-    self.async = Async(async_data) if async_data else None
+    self.async_ = Async(async_data) if async_data else None
     self.iam = IamData(iam_data) if iam_data else None
     self.arguments = Arguments(data['arguments'])
     self.input = Input(self.command_type, data.get('input', {}))
@@ -91,7 +91,7 @@ class CommandType(Enum):
   @classmethod
   def ForName(cls, name):
     try:
-      return CommandType[name.upper()]  # pytype: disable=not-indexable
+      return CommandType[name.upper()]
     except KeyError:
       return CommandType.GENERIC
 
@@ -101,6 +101,8 @@ class Request(object):
 
   def __init__(self, command_type, data):
     self.collection = data['collection']
+    self.disable_resource_check = data.get('disable_resource_check')
+    self.display_resource_type = data.get('display_resource_type')
     self.api_version = data.get('api_version')
     self.method = data.get('method', command_type.default_method)
     if not self.method:
@@ -114,6 +116,7 @@ class Request(object):
     self.modify_request_hooks = [
         util.Hook.FromPath(p) for p in data.get('modify_request_hooks', [])]
     self.create_request_hook = util.Hook.FromData(data, 'create_request_hook')
+    self.modify_method_hook = util.Hook.FromData(data, 'modify_method_hook')
     self.issue_request_hook = util.Hook.FromData(data, 'issue_request_hook')
     self.use_relative_name = data.get('use_relative_name', True)
 
@@ -144,6 +147,7 @@ class Async(object):
     self.collection = data['collection']
     self.api_version = data.get('api_version')
     self.method = data.get('method', 'get')
+    self.request_issued_message = data.get('request_issued_message')
     self.response_name_field = data.get('response_name_field', 'name')
     self.extract_resource_result = data.get('extract_resource_result', True)
     resource_get_method = data.get('resource_get_method')
@@ -157,6 +161,8 @@ class Async(object):
     self.result_attribute = data.get('result_attribute')
     self.state = AsyncStateField(data.get('state', {}))
     self.error = AsyncErrorField(data.get('error', {}))
+    self.modify_request_hooks = [
+        util.Hook.FromPath(p) for p in data.get('modify_request_hooks', [])]
 
 
 class IamData(object):
@@ -166,6 +172,10 @@ class IamData(object):
     self.message_type_overrides = data.get('message_type_overrides', {})
     self.set_iam_policy_request_path = data.get('set_iam_policy_request_path')
     self.enable_condition = data.get('enable_condition', False)
+    self.policy_version = data.get('policy_version', None)
+    self.get_iam_policy_version_path = data.get(
+        'get_iam_policy_version_path',
+        'options.requestedPolicyVersion')
 
 
 class AsyncStateField(object):
@@ -192,6 +202,14 @@ class Arguments(object):
         data, 'additional_arguments_hook')
     self.params = [
         Argument.FromData(param_data) for param_data in data.get('params', [])]
+    self.labels = Labels(data.get('labels')) if data.get('labels') else None
+
+
+class Labels(object):
+  """Everything about labels of GCP resources."""
+
+  def __init__(self, data):
+    self.api_field = data['api_field']
 
 
 class Argument(object):
@@ -421,6 +439,7 @@ class Output(object):
 
   def __init__(self, data):
     self.format = data.get('format')
+    self.flatten = data.get('flatten')
 
 
 class UpdateData(object):

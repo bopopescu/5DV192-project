@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -111,7 +111,7 @@ def PersistProperty(file_path, section, name, value):
   if value is None:
     parsed_config.remove_option(section, name)
   else:
-    parsed_config.set(section, name, str(value))
+    parsed_config.set(section, name, six.text_type(value))
 
   properties_dir, unused_name = os.path.split(file_path)
   files.MakeDir(properties_dir)

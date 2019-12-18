@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,6 +30,15 @@ from googlecloudsdk.core.console import console_io
 
 class Delete(base.DeleteCommand):
   """Delete a credential from a registry."""
+
+  detailed_help = {
+      'EXAMPLES':
+          """\
+          To delete the first credential from a registry, run:
+
+            $ {command} --region=us-central1 --registry=my-registry 0
+          """,
+  }
 
   @staticmethod
   def Args(parser):

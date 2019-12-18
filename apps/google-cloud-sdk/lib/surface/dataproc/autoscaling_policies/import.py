@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2019 Google Inc. All Rights Reserved.
+# Copyright 2019 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -37,15 +37,23 @@ class Import(base.Command):
   This command does not allow output only fields, such as policy id and resource
   name. It populates the id field based on the resource name specified as the
   first command line argument.
+
+  ## EXAMPLES
+
+  The following command creates or updates the contents of autoscaling policy
+  `example-autoscaling-policy` based on a yaml file:
+
+    $ {command} example-autoscaling-policy --source=saved-policy.yaml
   """
 
-  @staticmethod
-  def Args(parser):
-    flags.AddImportArgs(parser, 'import', 'v1beta2', 'AutoscalingPolicy')
+  @classmethod
+  def Args(cls, parser):
+    dataproc = dp.Dataproc(cls.ReleaseTrack())
+    flags.AddImportArgs(parser, 'import', dataproc.api_version,
+                        'AutoscalingPolicy')
 
   def Run(self, args):
     dataproc = dp.Dataproc(self.ReleaseTrack())
-
     policy_ref = args.CONCEPTS.autoscaling_policy.Parse()
     policy = util.ReadAutoscalingPolicy(
         dataproc=dataproc,

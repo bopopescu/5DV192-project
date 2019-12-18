@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,14 +19,18 @@ from __future__ import division
 from __future__ import unicode_literals
 
 from googlecloudsdk.calliope import exceptions as gcloud_exceptions
+from googlecloudsdk.command_lib.projects import util as project_util
 
 
-def VerifyParent(organization, project, folder, attribute='root cloud asset'):
+def VerifyParentForExport(organization,
+                          project,
+                          folder,
+                          attribute='root cloud asset'):
   """Verify the parent name."""
   if organization is None and project is None and folder is None:
     raise gcloud_exceptions.RequiredArgumentException(
         '--organization or --project or --folder',
-        'Should specify the project, or organization name, or the folder for '
+        'Should specify the organization, or project, or the folder for '
         '{0}.'.format(attribute))
   if organization and project:
     raise gcloud_exceptions.ConflictingArgumentsException(
@@ -38,11 +42,62 @@ def VerifyParent(organization, project, folder, attribute='root cloud asset'):
     raise gcloud_exceptions.ConflictingArgumentsException('project', 'folder')
 
 
-def GetParentName(organization, project, folder, attribute='root cloud asset'):
+def GetParentNameForExport(organization,
+                           project,
+                           folder,
+                           attribute='root cloud asset'):
   """Gets the parent name from organization Id, project Id, or folder Id."""
-  VerifyParent(organization, project, folder, attribute)
+  VerifyParentForExport(organization, project, folder, attribute)
   if organization:
     return 'organizations/{0}'.format(organization)
   if folder:
     return 'folders/{0}'.format(folder)
   return 'projects/{0}'.format(project)
+
+
+def GetFeedParent(organization, project, folder):
+  """Get the parent name from organization Number, project Id, or folder Number."""
+  if organization:
+    return 'organizations/{0}'.format(organization)
+  if folder:
+    return 'folders/{0}'.format(folder)
+  return 'projects/{0}'.format(project_util.GetProjectNumber(project))
+
+
+def VerifyParentForGetHistory(organization,
+                              project,
+                              attribute='root cloud asset'):
+  """Verify the parent name."""
+  if organization is None and project is None:
+    raise gcloud_exceptions.RequiredArgumentException(
+        '--organization or --project',
+        'Should specify the organization, or project for {0}.'.format(
+            attribute))
+  if organization and project:
+    raise gcloud_exceptions.ConflictingArgumentsException(
+        'organization', 'project')
+
+
+def GetParentNameForGetHistory(organization,
+                               project,
+                               attribute='root cloud asset'):
+  """Gets the parent name from organization Id, project Id."""
+  VerifyParentForGetHistory(organization, project, attribute)
+  if organization:
+    return 'organizations/{0}'.format(organization)
+  return 'projects/{0}'.format(project)
+
+
+def VerifyParentForAnalyzeIamPolicy(organization, attribute='root cloud asset'):
+  """Verify the parent name."""
+  if organization is None:
+    raise gcloud_exceptions.RequiredArgumentException(
+        '--organization',
+        'Should specify the organization for {0}.'.format(attribute))
+
+
+def GetParentNameForAnalyzeIamPolicy(organization,
+                                     attribute='root cloud asset'):
+  """Gets the parent name from organization Id."""
+  VerifyParentForAnalyzeIamPolicy(organization, attribute)
+  return 'organizations/{0}'.format(organization)

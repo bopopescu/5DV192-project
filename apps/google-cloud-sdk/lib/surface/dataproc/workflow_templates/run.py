@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,6 +26,16 @@ from googlecloudsdk.calliope import base
 from googlecloudsdk.command_lib.dataproc import flags
 from googlecloudsdk.core import log
 
+DETAILED_HELP = {
+    'EXAMPLES':
+        """\
+      To run a workflow template 'my-workflow-template' in region 'us-central1'
+      , run:
+
+        $ {command} my-workflow-template --region=us-central1
+      """,
+}
+
 
 @base.Deprecate(is_removed=False,
                 warning='Workflow template run command is deprecated, please '
@@ -34,6 +44,8 @@ from googlecloudsdk.core import log
 @base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA)
 class Run(base.CreateCommand):
   """Run a workflow template."""
+
+  detailed_help = DETAILED_HELP
 
   @staticmethod
   def Args(parser):
@@ -56,7 +68,7 @@ class Run(base.CreateCommand):
 
     operation = dataproc.client.projects_regions_workflowTemplates.Instantiate(
         request)
-    if args.async:
+    if args.async_:
       log.status.Print('Running [{0}].'.format(template_ref.Name()))
       return
 

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ from googlecloudsdk.command_lib.util.concepts import concept_parsers
 from googlecloudsdk.command_lib.util.concepts import presentation_specs
 
 
+@base.ReleaseTracks(base.ReleaseTrack.BETA, base.ReleaseTrack.GA)
 class Describe(base.DescribeCommand):
   """Obtain details about revisions."""
 
@@ -37,13 +38,12 @@ class Describe(base.DescribeCommand):
       'EXAMPLES': """\
           To describe all revisions of service default in us-central1:
 
-              $ {command} --region us-central1 default
+              $ {command} --region=us-central1 default
           """,
   }
 
   @staticmethod
-  def Args(parser):
-    flags.AddRegionArg(parser)
+  def CommonArgs(parser):
     revision_presentation = presentation_specs.ResourcePresentationSpec(
         'REVISION',
         resource_args.GetRevisionResourceSpec(),
@@ -51,14 +51,19 @@ class Describe(base.DescribeCommand):
         required=True,
         prefixes=False)
     concept_parsers.ConceptParser([
-        resource_args.CLUSTER_PRESENTATION,
         revision_presentation]).AddToParser(parser)
+
     parser.display_info.AddFormat(
         'yaml(apiVersion, kind, metadata, spec, status)')
 
+  @staticmethod
+  def Args(parser):
+    Describe.CommonArgs(parser)
+
   def Run(self, args):
     """Show details about a revision."""
-    conn_context = connection_context.GetConnectionContext(args)
+    conn_context = connection_context.GetConnectionContext(
+        args, product=connection_context.Product.RUN)
     revision_ref = args.CONCEPTS.revision.Parse()
 
     with serverless_operations.Connect(conn_context) as client:
@@ -68,3 +73,14 @@ class Describe(base.DescribeCommand):
       raise flags.ArgumentError(
           'Cannot find revision [{}]'.format(revision_ref.revisionsId))
     return wrapped_revision
+
+
+@base.ReleaseTracks(base.ReleaseTrack.ALPHA)
+class AlphaDescribe(Describe):
+  """Obtain details about revisions."""
+
+  @staticmethod
+  def Args(parser):
+    Describe.CommonArgs(parser)
+
+AlphaDescribe.__doc__ = Describe.__doc__

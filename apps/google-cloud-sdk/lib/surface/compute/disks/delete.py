@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,7 +27,8 @@ from googlecloudsdk.command_lib.compute import scope as compute_scope
 from googlecloudsdk.command_lib.compute.disks import flags as disks_flags
 
 
-@base.ReleaseTracks(base.ReleaseTrack.GA)
+@base.ReleaseTracks(
+    base.ReleaseTrack.GA, base.ReleaseTrack.BETA, base.ReleaseTrack.ALPHA)
 class Delete(base.DeleteCommand):
   """Delete Google Compute Engine persistent disks.
 
@@ -97,32 +98,17 @@ class Delete(base.DeleteCommand):
 
     return holder.client.MakeRequests(requests)
 
+Delete.detailed_help = {
+    'brief': 'Delete a Google Compute Engine disk',
+    'DESCRIPTION':
+        """\
+        *{command}* deletes a Google Compute Engine disk. A disk can be
+        deleted only if it is not attached to any virtual machine instances.
+        """,
+    'EXAMPLES':
+        """\
+        To delete the disk 'my-disk' in zone 'us-east1-a', run:
 
-@base.ReleaseTracks(base.ReleaseTrack.BETA)
-class BetaDelete(Delete):
-  """Delete Google Compute Engine persistent disks.
-
-  *{command}* deletes one or more Google Compute Engine
-  persistent disks. Disks can be deleted only if they are not
-  being used by any virtual machine instances.
-  """
-
-  @staticmethod
-  def Args(parser):
-    Delete.disks_arg = disks_flags.MakeDiskArgZonalOrRegional(plural=True)
-    Delete.disks_arg.AddArgument(parser, operation_type='delete')
-
-
-@base.ReleaseTracks(base.ReleaseTrack.ALPHA)
-class AlphaDelete(Delete):
-  """Delete Google Compute Engine persistent disks.
-
-  *{command}* deletes one or more Google Compute Engine
-  persistent disks. Disks can be deleted only if they are not
-  being used by any virtual machine instances.
-  """
-
-  @staticmethod
-  def Args(parser):
-    Delete.disks_arg = disks_flags.MakeDiskArgZonalOrRegional(plural=True)
-    Delete.disks_arg.AddArgument(parser, operation_type='delete')
+            $ {command} my-disk --zone=us-east1-a
+        """,
+}

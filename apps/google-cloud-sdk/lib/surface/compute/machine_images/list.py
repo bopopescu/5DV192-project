@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,8 +25,9 @@ from googlecloudsdk.calliope import base
 from googlecloudsdk.command_lib.compute.machine_images import flags
 
 
+@base.ReleaseTracks(base.ReleaseTrack.BETA, base.ReleaseTrack.ALPHA)
 class List(base.ListCommand):
-  """List Google Compute Engine machine images."""
+  """List Compute Engine machine images."""
 
   @staticmethod
   def Args(parser):
@@ -45,4 +46,4 @@ class List(base.ListCommand):
     return lister.Invoke(request_data, list_implementation)
 
 
-List.detailed_help = base_classes.GetGlobalListerHelp('machine_images')
+List.detailed_help = base_classes.GetGlobalListerHelp('machine images')

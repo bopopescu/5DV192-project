@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,18 +26,18 @@ from googlecloudsdk.command_lib.asset import flags
 class Describe(base.DescribeCommand):
   """Describe a Cloud Asset Inventory operation."""
 
+  detailed_help = {
+      'EXAMPLES': """\
+      To describe the operation 'projects/19306908007/operations/ExportAssets/RESOURCE/78689643348272423423', run:
+
+        $ {command} projects/19306908007/operations/ExportAssets/RESOURCE/78689643348272423423
+      """
+  }
+
   @staticmethod
   def Args(parser):
     flags.AddOperationArgs(parser)
 
   def Run(self, args):
-    client = client_util.GetClient()
-    message_module = client_util.GetMessages()
-    operation_name = args.id
-    if operation_name.startswith('projects'):
-      service = client.projects_operations
-      message = message_module.CloudassetProjectsOperationsGetRequest
-    else:
-      service = client.organizations_operations
-      message = message_module.CloudassetOrganizationsOperationsGetRequest
-    return service.Get(message(name=args.id))
+    service = client_util.AssetOperationClient()
+    return service.Get(name=args.id)

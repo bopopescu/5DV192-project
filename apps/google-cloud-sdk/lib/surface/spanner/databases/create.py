@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2016 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
+import textwrap
+
 from googlecloudsdk.api_lib.spanner import database_operations
 from googlecloudsdk.api_lib.spanner import databases
 from googlecloudsdk.calliope import base
@@ -27,6 +29,20 @@ from googlecloudsdk.command_lib.spanner import resource_args
 
 class Create(base.CreateCommand):
   """Create a Cloud Spanner database."""
+
+  detailed_help = {
+      'EXAMPLES':
+          textwrap.dedent("""\
+        To create an empty Cloud Spanner database, run:
+
+          $ {command} testdb --instance=my-instance-id
+
+        To create a Cloud Spanner database with populated schema, run:
+
+          $ {command} testdb --instance=my-instance-id
+              --ddl='CREATE TABLE mytable (a INT64, b INT64) PRIMARY KEY(a)'
+        """),
+  }
 
   @staticmethod
   def Args(parser):
@@ -55,6 +71,6 @@ class Create(base.CreateCommand):
     instance_ref = database_ref.Parent()
     op = databases.Create(instance_ref, args.database,
                           flags.SplitDdlIntoStatements(args.ddl or []))
-    if args.async:
+    if args.async_:
       return op
     return database_operations.Await(op, 'Creating database')

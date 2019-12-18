@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2013 Google Inc. All Rights Reserved.
+# Copyright 2013 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,12 +26,14 @@ import datetime
 import json
 import os
 import textwrap
+import time
 
 from googlecloudsdk.core import config
 from googlecloudsdk.core import exceptions
 from googlecloudsdk.core import http
 from googlecloudsdk.core import log
 from googlecloudsdk.core import properties
+from googlecloudsdk.core.configurations import named_configs
 from googlecloudsdk.core.credentials import creds
 from googlecloudsdk.core.credentials import devshell as c_devshell
 from googlecloudsdk.core.credentials import gce as c_gce
@@ -39,9 +41,12 @@ from googlecloudsdk.core.util import files
 
 import httplib2
 from oauth2client import client
+from oauth2client import crypt
+from oauth2client import service_account
 from oauth2client.contrib import gce as oauth2client_gce
 from oauth2client.contrib import reauth_errors
 import six
+from six.moves import urllib
 
 
 GOOGLE_OAUTH2_PROVIDER_AUTHORIZATION_URI = (
@@ -50,6 +55,7 @@ GOOGLE_OAUTH2_PROVIDER_REVOKE_URI = (
     'https://accounts.google.com/o/oauth2/revoke')
 GOOGLE_OAUTH2_PROVIDER_TOKEN_URI = (
     'https://accounts.google.com/o/oauth2/token')
+_GRANT_TYPE = 'urn:ietf:params:oauth:grant-type:jwt-bearer'
 
 
 class Error(exceptions.Error):
@@ -75,7 +81,25 @@ class AuthenticationException(Error):
             message=message)))
 
 
-class NoCredentialsForAccountException(AuthenticationException):
+class PrintTokenAuthenticationException(Error):
+  """Exceptions that tell the users to run auth login."""
+
+  def __init__(self, message):
+    super(PrintTokenAuthenticationException, self).__init__(textwrap.dedent("""\
+        {message}
+        Please run:
+
+          $ gcloud auth login
+
+        to obtain new credentials.
+
+        For service account, please activate it first:
+
+          $ gcloud auth activate-service-account ACCOUNT""".format(
+              message=message)))
+
+
+class NoCredentialsForAccountException(PrintTokenAuthenticationException):
   """Exception for when no credentials are found for an account."""
 
   def __init__(self, account):
@@ -87,7 +111,11 @@ class NoCredentialsForAccountException(AuthenticationException):
 class NoActiveAccountException(AuthenticationException):
   """Exception for when there are no valid active credentials."""
 
-  def __init__(self):
+  def __init__(self, active_config_path=None):
+    if active_config_path:
+      if not os.path.exists(active_config_path):
+        log.warning('Could not open the configuration file: [%s].',
+                    active_config_path)
     super(NoActiveAccountException, self).__init__(
         'You do not currently have an active account selected.')
 
@@ -130,7 +158,7 @@ class InvalidCredentialFileException(Error):
   def __init__(self, f, e):
     super(InvalidCredentialFileException, self).__init__(
         'Failed to load credential file: [{f}].  {message}'
-        .format(f=f, message=str(e)))
+        .format(f=f, message=six.text_type(e)))
 
 
 class AccountImpersonationError(Error):
@@ -149,6 +177,10 @@ class FlowError(Error):
 
 class RevokeError(Error):
   """Exception for when there was a problem revoking."""
+
+
+class InvalidCodeVerifierError(Error):
+  """Exception for invalid code verifier for pkce."""
 
 
 IMPERSONATION_TOKEN_PROVIDER = None
@@ -304,6 +336,12 @@ def Load(account=None, scopes=None, prevent_refresh=False,
   requires credentials (like printing out a token) vs logically requiring
   credentials (like for an http request).
 
+  Credential information may come from the stored credential file (representing
+  the last gcloud auth command), or the credential cache (representing the last
+  time the credentials were refreshed). If they come from the cache, the
+  token_response field will be None, as the full server response from the cached
+  request was not stored.
+
   Args:
     account: str, The account address for the credentials being fetched. If
         None, the account stored in the core.account property is used.
@@ -384,7 +422,7 @@ def _Load(account, scopes, prevent_refresh):
     account = properties.VALUES.core.account.Get()
 
   if not account:
-    raise NoActiveAccountException()
+    raise NoActiveAccountException(named_configs.ActiveConfig(False).file_path)
 
   cred = STATIC_CREDENTIAL_PROVIDERS.GetCredentials(account)
   if cred is not None:
@@ -404,27 +442,124 @@ def _Load(account, scopes, prevent_refresh):
   return cred
 
 
-def Refresh(credentials, http_client=None):
+def Refresh(credentials,
+            http_client=None,
+            is_impersonated_credential=False,
+            include_email=False,
+            gce_token_format='standard',
+            gce_include_license=False):
   """Refresh credentials.
 
   Calls credentials.refresh(), unless they're SignedJwtAssertionCredentials.
+  If the credentials correspond to a service account or impersonated credentials
+  issue an additional request to generate a fresh id_token.
 
   Args:
     credentials: oauth2client.client.Credentials, The credentials to refresh.
     http_client: httplib2.Http, The http transport to refresh with.
+    is_impersonated_credential: bool, True treat provided credential as an
+      impersonated service account credential. If False, treat as service
+      account or user credential. Needed to avoid circular dependency on
+      IMPERSONATION_TOKEN_PROVIDER.
+    include_email: bool, Specifies whether or not the service account email is
+      included in the identity token. Only applicable to impersonated service
+      account.
+    gce_token_format: str, Specifies whether or not the project and instance
+      details are included in the identity token. Choices are "standard",
+      "full".
+    gce_include_license: bool, Specifies whether or not license codes for images
+      associated with GCE instance are included in their identity tokens.
 
   Raises:
     TokenRefreshError: If the credentials fail to refresh.
     TokenRefreshReauthError: If the credentials fail to refresh due to reauth.
   """
   response_encoding = None if six.PY2 else 'utf-8'
+  request_client = http_client or http.Http(response_encoding=response_encoding)
   try:
-    credentials.refresh(http_client or
-                        http.Http(response_encoding=response_encoding))
+    credentials.refresh(request_client)
+
+    id_token = None
+    # Service accounts require an additional request to receive a fresh id_token
+    if is_impersonated_credential:
+      if not IMPERSONATION_TOKEN_PROVIDER:
+        raise AccountImpersonationError(
+            'gcloud is configured to impersonate a service account but '
+            'impersonation support is not available.')
+      if not IMPERSONATION_TOKEN_PROVIDER.IsImpersonationCredential(
+          credentials):
+        raise AccountImpersonationError(
+            'Invalid impersonation account for refresh {}'.format(credentials))
+      id_token = _RefreshImpersonatedAccountIdToken(
+          credentials, include_email=include_email)
+    # Service accounts require an additional request to receive a fresh id_token
+    elif isinstance(credentials, service_account.ServiceAccountCredentials):
+      id_token = _RefreshServiceAccountIdToken(credentials, request_client)
+    elif isinstance(credentials, oauth2client_gce.AppAssertionCredentials):
+      id_token = c_gce.Metadata().GetIdToken(
+          config.CLOUDSDK_CLIENT_ID,
+          token_format=gce_token_format,
+          include_license=gce_include_license)
+
+    if id_token:
+      if credentials.token_response:
+        credentials.token_response['id_token'] = id_token
+      credentials.id_tokenb64 = id_token
+
   except (client.AccessTokenRefreshError, httplib2.ServerNotFoundError) as e:
     raise TokenRefreshError(six.text_type(e))
   except reauth_errors.ReauthError as e:
-    raise TokenRefreshReauthError(e.message)
+    raise TokenRefreshReauthError(str(e))
+
+
+def _RefreshImpersonatedAccountIdToken(cred, include_email):
+  """Get a fresh id_token for the given impersonated service account."""
+  # pylint: disable=protected-access
+  service_account_email = cred._service_account_id
+  return IMPERSONATION_TOKEN_PROVIDER.GetElevationIdToken(
+      service_account_email, config.CLOUDSDK_CLIENT_ID, include_email)
+  # pylint: enable=protected-access
+
+
+def _RefreshServiceAccountIdToken(cred, http_client):
+  """Get a fresh id_token for the given service account.
+
+  Args:
+    cred: ServiceAccountCredentials, service account for which to refresh the
+        id_token.
+    http_client: httplib2.Http, the http transport to refresh with.
+
+  Returns:
+    str, The id_token if refresh was successful. Otherwise None.
+  """
+  http_request = http_client.request
+
+  now = int(time.time())
+  # pylint: disable=protected-access
+  payload = {
+      'aud': cred.token_uri,
+      'iat': now,
+      'exp': now + cred.MAX_TOKEN_LIFETIME_SECS,
+      'iss': cred._service_account_email,
+      'target_audience': config.CLOUDSDK_CLIENT_ID,
+  }
+  assertion = crypt.make_signed_jwt(
+      cred._signer, payload, key_id=cred._private_key_id)
+
+  body = urllib.parse.urlencode({
+      'assertion': assertion,
+      'grant_type': _GRANT_TYPE,
+  })
+
+  resp, content = http_request(
+      cred.token_uri.encode('idna'), method='POST', body=body,
+      headers=cred._generate_refresh_request_headers())
+  # pylint: enable=protected-access
+  if resp.status == 200:
+    d = json.loads(content)
+    return d.get('id_token', None)
+  else:
+    return None
 
 
 def Store(credentials, account=None, scopes=None):
@@ -561,6 +696,15 @@ def AcquireFromWebFlow(launch_browser=True,
   if client_secret is None:
     client_secret = properties.VALUES.auth.client_secret.Get(required=True)
 
+  code_verifier = properties.VALUES.auth.pkce_code_verifier.Get()
+  if code_verifier and not isinstance(code_verifier, six.binary_type):
+    # code_verifier should be a base64 encoded byte string,
+    # so ascii encoding should be enough.
+    try:
+      code_verifier = code_verifier.encode('ascii')
+    except UnicodeEncodeError:
+      raise InvalidCodeVerifierError('code verifier in auth/pkce_code_verifier '
+                                     'is invalid.')
   webflow = client.OAuth2WebServerFlow(
       client_id=client_id,
       client_secret=client_secret,
@@ -568,6 +712,8 @@ def AcquireFromWebFlow(launch_browser=True,
       user_agent=config.CLOUDSDK_USER_AGENT,
       auth_uri=auth_uri,
       token_uri=token_uri,
+      pkce=True,
+      code_verifier=code_verifier,
       prompt='select_account')
   return RunWebFlow(webflow, launch_browser=launch_browser)
 
@@ -674,12 +820,12 @@ def SaveCredentialsAsADC(credentials, file_path):
         credentials.revoke_uri)
   try:
     contents = json.dumps(credentials.serialization_data, sort_keys=True,
-                          indent=2, separators=(',', ': '))  # pytype: disable=wrong-arg-types
+                          indent=2, separators=(',', ': '))
     files.WriteFileContents(file_path, contents, private=True)
   except files.Error as e:
     log.debug(e, exc_info=True)
     raise CredentialFileSaveError(
-        'Error saving Application Default Credentials: ' + str(e))
+        'Error saving Application Default Credentials: ' + six.text_type(e))
 
 
 class _LegacyGenerator(object):

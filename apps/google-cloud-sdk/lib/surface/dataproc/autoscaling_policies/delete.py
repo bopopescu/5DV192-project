@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2019 Google Inc. All Rights Reserved.
+# Copyright 2019 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,12 +25,21 @@ from googlecloudsdk.core.console import console_io
 
 
 class Delete(base.DeleteCommand):
-  """Delete an autoscaling policy."""
+  """Delete an autoscaling policy.
 
-  @staticmethod
-  def Args(parser):
-    flags.AddAutoscalingPolicyResourceArg(
-        parser, 'delete', api_version='v1beta2')
+  ## EXAMPLES
+
+  The following command deletes the autoscaling policy
+  `example-autoscaling-policy`:
+
+    $ {command} example-autoscaling-policy
+  """
+
+  @classmethod
+  def Args(cls, parser):
+    dataproc = dp.Dataproc(cls.ReleaseTrack())
+    flags.AddAutoscalingPolicyResourceArg(parser, 'delete',
+                                          dataproc.api_version)
 
   def Run(self, args):
     dataproc = dp.Dataproc(self.ReleaseTrack())

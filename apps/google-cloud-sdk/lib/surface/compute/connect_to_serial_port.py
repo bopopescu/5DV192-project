@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2016 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ from googlecloudsdk.command_lib.compute.instances import flags as instance_flags
 from googlecloudsdk.command_lib.util.ssh import ssh
 from googlecloudsdk.core import http
 from googlecloudsdk.core import log
+from googlecloudsdk.core.util import encoding
 
 SERIAL_PORT_GATEWAY = 'ssh-serialport.googleapis.com'
 CONNECTION_PORT = '9600'
@@ -64,6 +65,12 @@ class ConnectToSerialPort(base.Command):
   command and also ensures that the user's public SSH key is present in
   the project's metadata. If the user does not have a public SSH key,
   one is generated using ssh-keygen.
+
+  ## EXAMPLES
+  To connect to the serial port of the instance 'my-instance' in zone
+  'us-central1-f', run:
+
+    $ {command} my-instance --zone=us-central1-f
   """
 
   category = base.TOOLS_CATEGORY
@@ -127,6 +134,8 @@ class ConnectToSerialPort(base.Command):
         resource_type='instance',
         operation_type='connect to')
 
+    ssh_utils.AddSSHKeyExpirationArgs(parser)
+
   def Run(self, args):
     """See ssh_utils.BaseSSHCommand.Run."""
     holder = base_classes.ComputeApiHolder(self.ReleaseTrack())
@@ -153,7 +162,7 @@ class ConnectToSerialPort(base.Command):
       http_response = http_client.request(HOST_KEY_URL)
       known_hosts = ssh.KnownHosts.FromDefaultFile()
       if http_response[0]['status'] == '200':
-        host_key = http_response[1].strip()
+        host_key = encoding.Decode(http_response[1]).strip()
         known_hosts.Add(hostname, host_key, overwrite=True)
         known_hosts.Write()
       elif known_hosts.ContainsAlias(hostname):
@@ -181,9 +190,11 @@ class ConnectToSerialPort(base.Command):
         scope_lister=instance_flags.GetInstanceZoneScopeLister(client))[0]
     instance = ssh_helper.GetInstance(client, instance_ref)
     project = ssh_helper.GetProject(client, instance_ref.project)
+    expiration, expiration_micros = ssh_utils.GetSSHKeyExpirationFromArgs(args)
 
     remote.user, use_os_login = ssh.CheckForOsloginAndGetUser(
-        instance, project, remote.user, public_key, self.ReleaseTrack())
+        instance, project, remote.user, public_key, expiration_micros,
+        self.ReleaseTrack())
 
     # Determine the serial user, host tuple (remote)
     port = 'port={0}'.format(args.port)
@@ -206,7 +217,8 @@ class ConnectToSerialPort(base.Command):
       log.out.Print(' '.join(cmd.Build(ssh_helper.env)))
       return
     if not use_os_login:
-      ssh_helper.EnsureSSHKeyExists(client, remote.user, instance, project)
+      ssh_helper.EnsureSSHKeyExists(
+          client, remote.user, instance, project, expiration)
 
     # Don't wait for the instance to become SSHable. We are not connecting to
     # the instance itself through SSH, so the instance doesn't need to have

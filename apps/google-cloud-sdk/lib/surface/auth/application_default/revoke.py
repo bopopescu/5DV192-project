@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2016 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -52,9 +52,9 @@ class Revoke(base.SilentCommand):
 
     cred_file = auth_util.ADCFilePath()
     if not os.path.isfile(cred_file):
-      raise c_exc.BadFileException(
-          'Application Default Credentials have not been set up, nothing was '
-          'revoked.')
+      log.status.Print('Application Default Credentials have not been set up, '
+                       'nothing to revoke.')
+      return
 
     creds = client.GoogleCredentials.from_stream(cred_file)
     if creds.serialization_data['type'] != 'authorized_user':

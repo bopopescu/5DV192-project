@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -49,9 +49,17 @@ class Describe(base.DescribeCommand):
 
 
 Describe.detailed_help = {
-    'brief': 'Describe a virtual machine instance template',
-    'DESCRIPTION': """\
+    'brief':
+        'Describe a virtual machine instance template',
+    'DESCRIPTION':
+        """\
         *{command}* displays all data associated with a Google Compute
         Engine virtual machine instance template.
         """,
+    'EXAMPLES':
+        """\
+        To describe the instance template named 'INSTANCE-TEMPLATE', run:
+
+          $ {command} INSTANCE-TEMPLATE
+        """
 }

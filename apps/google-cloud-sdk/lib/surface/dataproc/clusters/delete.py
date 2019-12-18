@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,20 +34,21 @@ class Delete(base.DeleteCommand):
       'EXAMPLES': """\
           To delete a cluster, run:
 
-            $ {command} my_cluster
+            $ {command} my_cluster --region=us-central1
           """,
   }
 
-  @staticmethod
-  def Args(parser):
-    parser.add_argument('name', help='The name of the cluster to delete.')
+  @classmethod
+  def Args(cls, parser):
     base.ASYNC_FLAG.AddToParser(parser)
     flags.AddTimeoutFlag(parser)
+    dataproc = dp.Dataproc(cls.ReleaseTrack())
+    flags.AddClusterResourceArg(parser, 'delete', dataproc.api_version)
 
   def Run(self, args):
     dataproc = dp.Dataproc(self.ReleaseTrack())
 
-    cluster_ref = util.ParseCluster(args.name, dataproc)
+    cluster_ref = args.CONCEPTS.cluster.Parse()
 
     request = dataproc.messages.DataprocProjectsRegionsClustersDeleteRequest(
         clusterName=cluster_ref.clusterName,
@@ -57,16 +58,15 @@ class Delete(base.DeleteCommand):
 
     console_io.PromptContinue(
         message="The cluster '{0}' and all attached disks will be "
-        'deleted.'.format(args.name),
+        'deleted.'.format(cluster_ref.clusterName),
         cancel_on_no=True,
         cancel_string='Deletion aborted by user.')
 
     operation = dataproc.client.projects_regions_clusters.Delete(request)
 
-    if args.async:
-      log.status.write(
-          'Deleting [{0}] with operation [{1}].'.format(
-              cluster_ref, operation.name))
+    if args.async_:
+      log.status.write('Deleting [{0}] with operation [{1}].'.format(
+          cluster_ref, operation.name))
       return operation
 
     operation = util.WaitForOperation(

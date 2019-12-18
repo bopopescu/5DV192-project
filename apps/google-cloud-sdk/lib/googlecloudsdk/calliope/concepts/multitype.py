@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -259,7 +259,7 @@ class MultitypeResourceSpec(MultitypeConceptSpec, concepts.ResourceSpec):
                        parsed_args=parsed_args)
           return True, []
         except deps_lib.AttributeNotFoundError as e:
-          errors.append(str(e))
+          errors.append(six.text_type(e))
     return False, errors
 
   def Initialize(self, fallthroughs_map, parsed_args=None, type_filter=None):

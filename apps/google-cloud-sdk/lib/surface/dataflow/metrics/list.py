@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -39,31 +39,31 @@ class List(base.ListCommand):
 
   Filter metrics with the given name:
 
-    $ {command} --filter="name=ElementCount"
+    $ {command} JOB --filter="name=ElementCount"
 
   Filter child metrics with matching transforms:
 
-    $ {command} --transform=WordCount
+    $ {command} JOB --transform=WordCount
 
   Filter child output metrics:
 
-    $ {command} --transform=WordCount/Write.*out
+    $ {command} JOB --transform=WordCount/Write.*out
 
   Filter all output metrics:
 
-    $ {command} --transform=.*out
+    $ {command} JOB --transform=.*out
 
   Filter all custom-defined user metrics
 
-    $ {command} --source=user
+    $ {command} JOB --source=user
 
   Filter metrics with a scalar value greater than a threshold.
 
-    $ {command} --filter="scalar > 50"
+    $ {command} JOB --filter="scalar > 50"
 
   List metrics that have changed in the last 2 weeks:
 
-    $ {command} --after=-P2W
+    $ {command} JOB --changed-after=-P2W
   """
 
   USER_SOURCE = 'user'

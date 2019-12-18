@@ -294,9 +294,8 @@ class BuildOptions(_messages.Message):
       build step.  Using a global volume in a build with only one step is not
       valid as it is indicative of a build request with an incorrect
       configuration.
-    workerPool: Option to specify a `WorkerPool` for the build. User specifies
-      the pool with the format "[WORKERPOOL_PROJECT_ID]/[WORKERPOOL_NAME]".
-      This is an experimental field.
+    workerPool: Option to specify a `WorkerPool` for the build. Format:
+      projects/{project}/workerPools/{workerPool}  This field is experimental.
   """
 
   class LogStreamingOptionValueValuesEnum(_messages.Enum):
@@ -647,25 +646,61 @@ class Network(_messages.Message):
 class RepoSource(_messages.Message):
   r"""Location of the source in a Google Cloud Source Repository.
 
+  Messages:
+    SubstitutionsValue: Substitutions to use in a triggered build. Should only
+      be used with RunBuildTrigger
+
   Fields:
-    branchName: Name of the branch to build.
+    branchName: Regex matching branches to build.  The syntax of the regular
+      expressions accepted is the syntax accepted by RE2 and described at
+      https://github.com/google/re2/wiki/Syntax
     commitSha: Explicit commit SHA to build.
     dir: Directory, relative to the source root, in which to run the build.
       This must be a relative path. If a step's `dir` is specified and is an
       absolute path, this value is ignored for that step's execution.
     projectId: ID of the project that owns the Cloud Source Repository. If
       omitted, the project ID requesting the build is assumed.
-    repoName: Name of the Cloud Source Repository. If omitted, the name
-      "default" is assumed.
-    tagName: Name of the tag to build.
+    repoName: Required. Name of the Cloud Source Repository.
+    substitutions: Substitutions to use in a triggered build. Should only be
+      used with RunBuildTrigger
+    tagName: Regex matching tags to build.  The syntax of the regular
+      expressions accepted is the syntax accepted by RE2 and described at
+      https://github.com/google/re2/wiki/Syntax
   """
+
+  @encoding.MapUnrecognizedFields('additionalProperties')
+  class SubstitutionsValue(_messages.Message):
+    r"""Substitutions to use in a triggered build. Should only be used with
+    RunBuildTrigger
+
+    Messages:
+      AdditionalProperty: An additional property for a SubstitutionsValue
+        object.
+
+    Fields:
+      additionalProperties: Additional properties of type SubstitutionsValue
+    """
+
+    class AdditionalProperty(_messages.Message):
+      r"""An additional property for a SubstitutionsValue object.
+
+      Fields:
+        key: Name of the additional property.
+        value: A string attribute.
+      """
+
+      key = _messages.StringField(1)
+      value = _messages.StringField(2)
+
+    additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
 
   branchName = _messages.StringField(1)
   commitSha = _messages.StringField(2)
   dir = _messages.StringField(3)
   projectId = _messages.StringField(4)
   repoName = _messages.StringField(5)
-  tagName = _messages.StringField(6)
+  substitutions = _messages.MessageField('SubstitutionsValue', 6)
+  tagName = _messages.StringField(7)
 
 
 class Results(_messages.Message):
@@ -674,6 +709,7 @@ class Results(_messages.Message):
   Fields:
     artifactManifest: Path to the artifact manifest. Only populated when
       artifacts are uploaded.
+    artifactTiming: Time to push all non-container artifacts.
     buildStepImages: List of build step digests, in the order corresponding to
       build step indices.
     buildStepOutputs: List of build step outputs, produced by builder images,
@@ -687,10 +723,11 @@ class Results(_messages.Message):
   """
 
   artifactManifest = _messages.StringField(1)
-  buildStepImages = _messages.StringField(2, repeated=True)
-  buildStepOutputs = _messages.BytesField(3, repeated=True)
-  images = _messages.MessageField('BuiltImage', 4, repeated=True)
-  numArtifacts = _messages.IntegerField(5)
+  artifactTiming = _messages.MessageField('TimeSpan', 2)
+  buildStepImages = _messages.StringField(3, repeated=True)
+  buildStepOutputs = _messages.BytesField(4, repeated=True)
+  images = _messages.MessageField('BuiltImage', 5, repeated=True)
+  numArtifacts = _messages.IntegerField(6)
 
 
 class Secret(_messages.Message):
@@ -985,7 +1022,7 @@ class WorkerPool(_messages.Message):
     deleteTime: Output only. Time at which the request to delete the
       `WorkerPool` was received.
     name: User-defined name of the `WorkerPool`.
-    projectId: The project ID of the GCP project in which the `WorkerPool` is
+    projectId: The project ID of the GCP project for which the `WorkerPool` is
       created.
     regions: List of regions to create the `WorkerPool`. Regions can't be
       empty. If Cloud Build adds a new GCP region in the future, the existing
@@ -1027,7 +1064,7 @@ class WorkerPool(_messages.Message):
       STATUS_UNSPECIFIED: Status of the `WorkerPool` is unknown.
       CREATING: `WorkerPool` is being created.
       RUNNING: `WorkerPool` is running.
-      DELETING: `WorkerPool` is being deleting: cancelling builds and draining
+      DELETING: `WorkerPool` is being deleted: cancelling builds and draining
         workers.
       DELETED: `WorkerPool` is deleted.
     """

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,19 +22,26 @@ from googlecloudsdk.api_lib.dataproc import dataproc as dp
 from googlecloudsdk.calliope import base
 from googlecloudsdk.command_lib.dataproc import flags
 
+DETAILED_HELP = {
+    'EXAMPLES':
+        """\
+      To describe a workflow template 'my-template' in region 'us-central1', run:
 
-def _CommonArgs(parser):
-  flags.AddVersionFlag(parser)
+        $ {command} workflow-template --region=us-central1
+      """,
+}
 
 
-@base.ReleaseTracks(base.ReleaseTrack.GA)
 class Describe(base.DescribeCommand):
   """Describe a workflow template."""
 
-  @staticmethod
-  def Args(parser):
-    _CommonArgs(parser)
-    flags.AddTemplateResourceArg(parser, 'describe', api_version='v1')
+  detailed_help = DETAILED_HELP
+
+  @classmethod
+  def Args(cls, parser):
+    dataproc = dp.Dataproc(cls.ReleaseTrack())
+    flags.AddTemplateResourceArg(parser, 'describe', dataproc.api_version)
+    flags.AddVersionFlag(parser)
 
   def Run(self, args):
     dataproc = dp.Dataproc(self.ReleaseTrack())
@@ -45,13 +52,3 @@ class Describe(base.DescribeCommand):
         template_ref, args.version)
 
     return workflow_template
-
-
-@base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA)
-class DescribeBeta(Describe):
-  """Describe a workflow template."""
-
-  @staticmethod
-  def Args(parser):
-    _CommonArgs(parser)
-    flags.AddTemplateResourceArg(parser, 'describe', api_version='v1beta2')

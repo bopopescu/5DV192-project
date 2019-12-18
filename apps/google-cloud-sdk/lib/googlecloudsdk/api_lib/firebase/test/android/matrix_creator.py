@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,10 +24,10 @@ import uuid
 
 from apitools.base.py import exceptions as apitools_exceptions
 
+from googlecloudsdk.api_lib.firebase.test import matrix_creator_common
 from googlecloudsdk.api_lib.firebase.test import matrix_ops
 from googlecloudsdk.api_lib.firebase.test import util
 from googlecloudsdk.calliope import exceptions
-from googlecloudsdk.core import config
 from googlecloudsdk.core import log
 import six
 
@@ -130,7 +130,8 @@ class MatrixCreator(object):
         testPackageId=self._args.test_package,
         testRunnerClass=self._args.test_runner_class,
         testTargets=(self._args.test_targets or []),
-        orchestratorOption=self._GetOrchestratorOption())
+        orchestratorOption=self._GetOrchestratorOption(),
+        shardingOption=self._BuildShardingOption())
     return spec
 
   def _BuildAndroidRoboTestSpec(self):
@@ -208,8 +209,33 @@ class MatrixCreator(object):
         disableVideoRecording=not self._args.record_video,
         disablePerformanceMetrics=not self._args.performance_metrics)
 
+  def _BuildShardingOption(self):
+    """Build a ShardingOption for an AndroidInstrumentationTest."""
+    if getattr(self._args, 'num_uniform_shards', {}):
+      return self._messages.ShardingOption(
+          uniformSharding=self._messages.UniformSharding(
+              numShards=self._args.num_uniform_shards))
+    elif getattr(self._args, 'test_targets_for_shard', {}):
+      return self._messages.ShardingOption(
+          manualSharding=self._BuildManualShard(
+              self._args.test_targets_for_shard))
+
+  def _BuildManualShard(self, test_targets_for_shard):
+    """Build a ManualShard for a ShardingOption."""
+    test_targets = [
+        self._BuildTestTargetsForShard(test_target)
+        for test_target in test_targets_for_shard
+    ]
+    return self._messages.ManualSharding(testTargetsForShard=test_targets)
+
+  def _BuildTestTargetsForShard(self, test_targets_for_each_shard):
+    return self._messages.TestTargetsForShard(testTargets=[
+        target for target in test_targets_for_each_shard.split(';')
+        if target is not None
+    ])
+
   def _TestSpecFromType(self, test_type):
-    """Map a test type into its corresponding TestSpecification message ."""
+    """Map a test type into its corresponding TestSpecification message."""
     if test_type == 'instrumentation':
       return self._BuildAndroidInstrumentationTestSpec()
     elif test_type == 'robo':
@@ -248,17 +274,14 @@ class MatrixCreator(object):
     results = self._messages.ResultStorage(googleCloudStorage=gcs,
                                            toolResultsHistory=hist)
 
+    client_info = matrix_creator_common.BuildClientInfo(
+        self._messages,
+        getattr(self._args, 'client_details', {}) or {}, self._release_track)
+
     return self._messages.TestMatrix(
         testSpecification=spec,
         environmentMatrix=environment_matrix,
-        clientInfo=self._messages.ClientInfo(
-            name='gcloud',
-            clientInfoDetails=[
-                self._messages.ClientInfoDetail(
-                    key='Cloud SDK Version', value=config.CLOUD_SDK_VERSION),
-                self._messages.ClientInfoDetail(
-                    key='Release Track', value=self._release_track)
-            ]),
+        clientInfo=client_info,
         resultStorage=results,
         flakyTestAttempts=self._args.num_flaky_test_attempts or 0)
 

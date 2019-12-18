@@ -232,7 +232,7 @@ class CloudschedulerProjectsLocationsJobsCreateRequest(_messages.Message):
 
   Fields:
     job: A Job resource to be passed as the request body.
-    parent: Required.  The location name. For example:
+    parent: Required. The location name. For example:
       `projects/PROJECT_ID/locations/LOCATION_ID`.
   """
 
@@ -244,7 +244,7 @@ class CloudschedulerProjectsLocationsJobsDeleteRequest(_messages.Message):
   r"""A CloudschedulerProjectsLocationsJobsDeleteRequest object.
 
   Fields:
-    name: Required.  The job name. For example:
+    name: Required. The job name. For example:
       `projects/PROJECT_ID/locations/LOCATION_ID/jobs/JOB_ID`.
   """
 
@@ -255,7 +255,7 @@ class CloudschedulerProjectsLocationsJobsGetRequest(_messages.Message):
   r"""A CloudschedulerProjectsLocationsJobsGetRequest object.
 
   Fields:
-    name: The job name. For example:
+    name: Required. The job name. For example:
       `projects/PROJECT_ID/locations/LOCATION_ID/jobs/JOB_ID`.
   """
 
@@ -277,7 +277,7 @@ class CloudschedulerProjectsLocationsJobsListRequest(_messages.Message):
       CloudScheduler.ListJobs. It is an error to switch the value of
       ListJobsRequest.filter or ListJobsRequest.order_by while iterating
       through pages.
-    parent: Required.  The location name. For example:
+    parent: Required. The location name. For example:
       `projects/PROJECT_ID/locations/LOCATION_ID`.
   """
 
@@ -291,10 +291,10 @@ class CloudschedulerProjectsLocationsJobsPatchRequest(_messages.Message):
 
   Fields:
     job: A Job resource to be passed as the request body.
-    name: The job name. For example:
+    name: Optionally caller-specified in CreateJob, after which it becomes
+      output only.  The job name. For example:
       `projects/PROJECT_ID/locations/LOCATION_ID/jobs/JOB_ID`.  The maximum
-      allowed length for `JOB_ID` is 500 characters. Caller-specified in
-      CreateJobRequest, after which it becomes output only.
+      allowed length for `JOB_ID` is 500 characters.
     updateMask: A  mask used to specify which fields of the job are being
       updated.
   """
@@ -308,7 +308,7 @@ class CloudschedulerProjectsLocationsJobsPauseRequest(_messages.Message):
   r"""A CloudschedulerProjectsLocationsJobsPauseRequest object.
 
   Fields:
-    name: Required.  The job name. For example:
+    name: Required. The job name. For example:
       `projects/PROJECT_ID/locations/LOCATION_ID/jobs/JOB_ID`.
     pauseJobRequest: A PauseJobRequest resource to be passed as the request
       body.
@@ -322,7 +322,7 @@ class CloudschedulerProjectsLocationsJobsResumeRequest(_messages.Message):
   r"""A CloudschedulerProjectsLocationsJobsResumeRequest object.
 
   Fields:
-    name: Required.  The job name. For example:
+    name: Required. The job name. For example:
       `projects/PROJECT_ID/locations/LOCATION_ID/jobs/JOB_ID`.
     resumeJobRequest: A ResumeJobRequest resource to be passed as the request
       body.
@@ -336,7 +336,7 @@ class CloudschedulerProjectsLocationsJobsRunRequest(_messages.Message):
   r"""A CloudschedulerProjectsLocationsJobsRunRequest object.
 
   Fields:
-    name: Required.  The job name. For example:
+    name: Required. The job name. For example:
       `projects/PROJECT_ID/locations/LOCATION_ID/jobs/JOB_ID`.
     runJobRequest: A RunJobRequest resource to be passed as the request body.
   """
@@ -413,7 +413,18 @@ class HttpTarget(_messages.Message):
       Google internal use only.  The total size of headers must be less than
       80KB.
     httpMethod: Which HTTP method to use for the request.
-    url: Required.  The full url path that the request will be sent to. This
+    oauthToken: If specified, an [OAuth
+      token](https://developers.google.com/identity/protocols/OAuth2) will be
+      generated and attached as an `Authorization` header in the HTTP request.
+      This type of authorization should generally only be used when calling
+      Google APIs hosted on *.googleapis.com.
+    oidcToken: If specified, an
+      [OIDC](https://developers.google.com/identity/protocols/OpenIDConnect)
+      token will be generated and attached as an `Authorization` header in the
+      HTTP request.  This type of authorization can be used for many
+      scenarios, including calling Cloud Run, or endpoints where you intend to
+      validate the token yourself.
+    url: Required. The full url path that the request will be sent to. This
       string must begin with either "http://" or "https://". Some examples of
       valid values for HttpTarget.url are: `http://acme.com` and
       `https://acme.com/sales:8080`. Cloud Scheduler will encode some
@@ -480,7 +491,9 @@ class HttpTarget(_messages.Message):
   body = _messages.BytesField(1)
   headers = _messages.MessageField('HeadersValue', 2)
   httpMethod = _messages.EnumField('HttpMethodValueValuesEnum', 3)
-  url = _messages.StringField(4)
+  oauthToken = _messages.MessageField('OAuthToken', 4)
+  oidcToken = _messages.MessageField('OidcToken', 5)
+  url = _messages.StringField(6)
 
 
 class Job(_messages.Message):
@@ -492,14 +505,23 @@ class Job(_messages.Message):
 
   Fields:
     appEngineHttpTarget: App Engine Http target.
-    description: A human-readable description for the job. This string must
-      not contain more than 500 characters.
+    attemptDeadline: The deadline for job attempts. If the request handler
+      does not respond by this deadline then the request is cancelled and the
+      attempt is marked as a `DEADLINE_EXCEEDED` failure. The failed attempt
+      can be viewed in execution logs. Cloud Scheduler will retry the job
+      according to the RetryConfig.  The allowed duration for this deadline
+      is:  * For HTTP targets, between 15 seconds and 30 minutes. * For App
+      Engine HTTP targets, between 15   seconds and 24 hours. * For PubSub
+      targets, this field is ignored.
+    description: Optionally caller-specified in CreateJob or UpdateJob.  A
+      human-readable description for the job. This string must not contain
+      more than 500 characters.
     httpTarget: Http target.
     lastAttemptTime: Output only. The time the last job attempt started.
-    name: The job name. For example:
+    name: Optionally caller-specified in CreateJob, after which it becomes
+      output only.  The job name. For example:
       `projects/PROJECT_ID/locations/LOCATION_ID/jobs/JOB_ID`.  The maximum
-      allowed length for `JOB_ID` is 500 characters. Caller-specified in
-      CreateJobRequest, after which it becomes output only.
+      allowed length for `JOB_ID` is 500 characters.
     nextScheduleTime: Output only. The next time the job is scheduled. Note
       that this may be a retry of a previously failed attempt or the next
       execution time according to the schedule.
@@ -542,17 +564,18 @@ class Job(_messages.Message):
     UPDATE_FAILED = 4
 
   appEngineHttpTarget = _messages.MessageField('AppEngineHttpTarget', 1)
-  description = _messages.StringField(2)
-  httpTarget = _messages.MessageField('HttpTarget', 3)
-  lastAttemptTime = _messages.StringField(4)
-  name = _messages.StringField(5)
-  nextScheduleTime = _messages.StringField(6)
-  pubsubTarget = _messages.MessageField('PubsubTarget', 7)
-  retryConfig = _messages.MessageField('RetryConfig', 8)
-  schedule = _messages.MessageField('Schedule', 9)
-  state = _messages.EnumField('StateValueValuesEnum', 10)
-  status = _messages.MessageField('Status', 11)
-  userUpdateTime = _messages.StringField(12)
+  attemptDeadline = _messages.StringField(2)
+  description = _messages.StringField(3)
+  httpTarget = _messages.MessageField('HttpTarget', 4)
+  lastAttemptTime = _messages.StringField(5)
+  name = _messages.StringField(6)
+  nextScheduleTime = _messages.StringField(7)
+  pubsubTarget = _messages.MessageField('PubsubTarget', 8)
+  retryConfig = _messages.MessageField('RetryConfig', 9)
+  schedule = _messages.MessageField('Schedule', 10)
+  state = _messages.EnumField('StateValueValuesEnum', 11)
+  status = _messages.MessageField('Status', 12)
+  userUpdateTime = _messages.StringField(13)
 
 
 class ListJobsResponse(_messages.Message):
@@ -664,6 +687,47 @@ class Location(_messages.Message):
   name = _messages.StringField(5)
 
 
+class OAuthToken(_messages.Message):
+  r"""Contains information needed for generating an [OAuth
+  token](https://developers.google.com/identity/protocols/OAuth2). This type
+  of authorization should generally only be used when calling Google APIs
+  hosted on *.googleapis.com.
+
+  Fields:
+    scope: OAuth scope to be used for generating OAuth access token. If not
+      specified, "https://www.googleapis.com/auth/cloud-platform" will be
+      used.
+    serviceAccountEmail: [Service account
+      email](https://cloud.google.com/iam/docs/service-accounts) to be used
+      for generating OAuth token. The service account must be within the same
+      project as the job. The caller must have iam.serviceAccounts.actAs
+      permission for the service account.
+  """
+
+  scope = _messages.StringField(1)
+  serviceAccountEmail = _messages.StringField(2)
+
+
+class OidcToken(_messages.Message):
+  r"""Contains information needed for generating an [OpenID Connect
+  token](https://developers.google.com/identity/protocols/OpenIDConnect). This
+  type of authorization can be used for many scenarios, including calling
+  Cloud Run, or endpoints where you intend to validate the token yourself.
+
+  Fields:
+    audience: Audience to be used when generating OIDC token. If not
+      specified, the URI specified in target will be used.
+    serviceAccountEmail: [Service account
+      email](https://cloud.google.com/iam/docs/service-accounts) to be used
+      for generating OIDC token. The service account must be within the same
+      project as the job. The caller must have iam.serviceAccounts.actAs
+      permission for the service account.
+  """
+
+  audience = _messages.StringField(1)
+  serviceAccountEmail = _messages.StringField(2)
+
+
 class PauseJobRequest(_messages.Message):
   r"""Request message for CloudScheduler.PauseJob."""
 
@@ -679,10 +743,12 @@ class PubsubMessage(_messages.Message):
   information about message limits.
 
   Messages:
-    AttributesValue: Optional attributes for this message.
+    AttributesValue: Attributes for this message. If this field is empty, the
+      message must contain non-empty data.
 
   Fields:
-    attributes: Optional attributes for this message.
+    attributes: Attributes for this message. If this field is empty, the
+      message must contain non-empty data.
     data: The message data field. If this field is empty, the message must
       contain at least one attribute.
     messageId: ID of this message, assigned by the server when the message is
@@ -697,7 +763,8 @@ class PubsubMessage(_messages.Message):
 
   @encoding.MapUnrecognizedFields('additionalProperties')
   class AttributesValue(_messages.Message):
-    r"""Optional attributes for this message.
+    r"""Attributes for this message. If this field is empty, the message must
+    contain non-empty data.
 
     Messages:
       AdditionalProperty: An additional property for a AttributesValue object.
@@ -730,23 +797,23 @@ class PubsubTarget(_messages.Message):
   given Pub/Sub topic.
 
   Messages:
-    PubsubMessageValue: Required.  This pubsub message is sent when the job is
+    PubsubMessageValue: Required. This pubsub message is sent when the job is
       attempted.  `pubsub_message` should be a google.pubsub.v1.PubsubMessage.
 
   Fields:
-    pubsubMessage: Required.  This pubsub message is sent when the job is
+    pubsubMessage: Required. This pubsub message is sent when the job is
       attempted.  `pubsub_message` should be a google.pubsub.v1.PubsubMessage.
-    topicName: Required.  The name of the Cloud Pub/Sub topic to which
-      messages will be published when a job is delivered. The topic name must
-      be in the same format as required by PubSub's [PublishRequest.name](http
-      s://cloud.google.com/pubsub/docs/reference/rpc/google.pubsub.v1#publishr
-      equest), for example `projects/PROJECT_ID/topics/TOPIC_ID`.  The topic
-      must be in the same project as the Cloud Scheduler job.
+    topicName: Required. The name of the Cloud Pub/Sub topic to which messages
+      will be published when a job is delivered. The topic name must be in the
+      same format as required by PubSub's [PublishRequest.name](https://cloud.
+      google.com/pubsub/docs/reference/rpc/google.pubsub.v1#publishrequest),
+      for example `projects/PROJECT_ID/topics/TOPIC_ID`.  The topic must be in
+      the same project as the Cloud Scheduler job.
   """
 
   @encoding.MapUnrecognizedFields('additionalProperties')
   class PubsubMessageValue(_messages.Message):
-    r"""Required.  This pubsub message is sent when the job is attempted.
+    r"""Required. This pubsub message is sent when the job is attempted.
     `pubsub_message` should be a google.pubsub.v1.PubsubMessage.
 
     Messages:
@@ -835,7 +902,7 @@ class Schedule(_messages.Message):
   r"""Scheduler schedule in an English-like format.
 
   Fields:
-    schedule: Required.  Scheduler schedules are specified using an English-
+    schedule: Required. Scheduler schedules are specified using an English-
       like format. See https://cloud.google.com/cloud-scheduler/docs/running-
       cron-jobs-with-cloud-scheduler#defining_the_job_schedule
     timeZone: Specifies the time zone to be used in interpreting
@@ -917,37 +984,10 @@ class StandardQueryParameters(_messages.Message):
 class Status(_messages.Message):
   r"""The `Status` type defines a logical error model that is suitable for
   different programming environments, including REST APIs and RPC APIs. It is
-  used by [gRPC](https://github.com/grpc). The error model is designed to be:
-  - Simple to use and understand for most users - Flexible enough to meet
-  unexpected needs  # Overview  The `Status` message contains three pieces of
-  data: error code, error message, and error details. The error code should be
-  an enum value of google.rpc.Code, but it may accept additional error codes
-  if needed.  The error message should be a developer-facing English message
-  that helps developers *understand* and *resolve* the error. If a localized
-  user-facing error message is needed, put the localized message in the error
-  details or localize it in the client. The optional error details may contain
-  arbitrary information about the error. There is a predefined set of error
-  detail types in the package `google.rpc` that can be used for common error
-  conditions.  # Language mapping  The `Status` message is the logical
-  representation of the error model, but it is not necessarily the actual wire
-  format. When the `Status` message is exposed in different client libraries
-  and different wire protocols, it can be mapped differently. For example, it
-  will likely be mapped to some exceptions in Java, but more likely mapped to
-  some error codes in C.  # Other uses  The error model and the `Status`
-  message can be used in a variety of environments, either with or without
-  APIs, to provide a consistent developer experience across different
-  environments.  Example uses of this error model include:  - Partial errors.
-  If a service needs to return partial errors to the client,     it may embed
-  the `Status` in the normal response to indicate the partial     errors.  -
-  Workflow errors. A typical workflow has multiple steps. Each step may
-  have a `Status` message for error reporting.  - Batch operations. If a
-  client uses batch request and batch response, the     `Status` message
-  should be used directly inside batch response, one for     each error sub-
-  response.  - Asynchronous operations. If an API call embeds asynchronous
-  operation     results in its response, the status of those operations should
-  be     represented directly using the `Status` message.  - Logging. If some
-  API errors are stored in logs, the message `Status` could     be used
-  directly after any stripping needed for security/privacy reasons.
+  used by [gRPC](https://github.com/grpc). Each `Status` message contains
+  three pieces of data: error code, error message, and error details.  You can
+  find out more about this error model and how to work with it in the [API
+  Design Guide](https://cloud.google.com/apis/design/errors).
 
   Messages:
     DetailsValueListEntry: A DetailsValueListEntry object.

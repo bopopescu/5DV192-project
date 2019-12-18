@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,6 +30,13 @@ from googlecloudsdk.command_lib.compute.instances import flags
 @base.ReleaseTracks(base.ReleaseTrack.GA)
 class SetServiceAccount(base.SilentCommand):
   """Set service account and scopes for a Google Compute Engine instance."""
+
+  detailed_help = {
+      'EXAMPLES': """
+  To set a service account with `pubsub` and `trace` scopes, run:
+
+    $ {command} example-instance --scopes=pubsub,trace --zone=us-central1-b --service-account=example-account
+  """}
 
   def __init__(self, *args, **kwargs):
     super(self.__class__, self).__init__(*args, **kwargs)

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ def _Run(args, legacy_output=False):
   client = subscriptions.SubscriptionsClient()
 
   subscription_ref = args.CONCEPTS.subscription.Parse()
-  push_config = util.ParsePushConfig(args.push_endpoint)
+  push_config = util.ParsePushConfig(args)
   result = client.ModifyPushConfig(subscription_ref, push_config)
 
   log.UpdatedResource(subscription_ref.RelativeName(), kind='subscription')
@@ -48,10 +48,10 @@ def _Run(args, legacy_output=False):
 class ModifyPushConfig(base.Command):
   """Modifies the push configuration of a Cloud Pub/Sub subscription."""
 
-  @staticmethod
-  def Args(parser):
+  @classmethod
+  def Args(cls, parser):
     resource_args.AddSubscriptionResourceArg(parser, 'to modify.')
-    flags.AddPushEndpointFlag(parser, required=True)
+    flags.AddPushConfigFlags(parser, required=True)
 
   def Run(self, args):
     return _Run(args)

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ from googlecloudsdk.calliope import walker
 from googlecloudsdk.core.document_renderers import render_document
 from googlecloudsdk.core.util import files
 from googlecloudsdk.core.util import pkg_resources
+import six
 
 
 _HELP_HTML_DATA_FILES = [
@@ -84,7 +85,7 @@ class DevSiteGenerator(walker.Walker):
     self._toc_root.write('- title: "gcloud Reference"\n')
     self._toc_root.write('  path: %s\n' % self._REFERENCE)
     self._toc_root.write('  section:\n')
-    self._toc_main = None  # type: file
+    self._toc_main = None
 
   def Visit(self, node, parent, is_group):
     """Updates the TOC and Renders a DevSite doc for each node in the CLI tree.
@@ -205,12 +206,13 @@ class HelpTextGenerator(walker.Walker):
     """
     # Set up the destination dir for this level.
     command = node.GetPath()
+
     if is_group:
       directory = os.path.join(self._directory, *command[1:])
-      files.MakeDir(directory, mode=0o755)
     else:
       directory = os.path.join(self._directory, *command[1:-1])
 
+    files.MakeDir(directory, mode=0o755)
     # Render the help text document.
     path = os.path.join(directory, 'GROUP' if is_group else command[-1])
     with files.FileWriter(path) as f:
@@ -408,7 +410,7 @@ class ManPageGenerator(DocumentGenerator):
 
 
 class LinterGenerator(DocumentGenerator):
-  """Generates linter files with suffix .txt in an output directory."""
+  """Generates linter files with suffix .json in an output directory."""
 
   def __init__(self, cli, directory, hidden=False, progress_callback=None,
                restrict=None):
@@ -428,7 +430,7 @@ class LinterGenerator(DocumentGenerator):
     """
 
     super(LinterGenerator, self).__init__(
-        cli, directory=directory, style='linter', suffix='.txt')
+        cli, directory=directory, style='linter', suffix='.json')
 
 
 class CommandTreeGenerator(walker.Walker):
@@ -477,7 +479,7 @@ class CommandTreeGenerator(walker.Walker):
           if arg.choices:
             choices = sorted(arg.choices)
             if choices != ['false', 'true']:
-              value = ','.join([str(choice) for choice in choices])
+              value = ','.join([six.text_type(choice) for choice in choices])
           elif isinstance(arg.type, int):
             value = ':int:'
           elif isinstance(arg.type, float):

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ DETAILED_HELP = {
         """\
         To create an interconnect of type DEDICATED, run:
 
-          $ {command} example-interconnect --customer-name "Example Customer Name" --interconnect-type DEDICATED --link-type LINK_TYPE_ETHERNET_10G_LR --location example-zone1-1 --requested-link-count 1 --noc-contact-email noc@example.com --description "Example interconnect"
+          $ {command} example-interconnect --customer-name="Example Customer Name" --interconnect-type=DEDICATED --link-type=LINK_TYPE_ETHERNET_10G_LR --location=example-zone1-1 --requested-link-count=1 --noc-contact-email=noc@example.com --description="Example interconnect"
         """,
     # pylint: enable=line-too-long
 }
@@ -104,7 +104,7 @@ class Create(base.CreateCommand):
     log.status.Print(message)
 
 
-@base.ReleaseTracks(base.ReleaseTrack.BETA)
+@base.ReleaseTracks(base.ReleaseTrack.BETA, base.ReleaseTrack.ALPHA)
 class CreateBeta(Create):
   """Create a Google Compute Engine interconnect.
 
@@ -115,8 +115,6 @@ class CreateBeta(Create):
   INTERCONNECT_ARG = None
   LOCATION_ARG = None
 
-  supports_100g = False
-
   @classmethod
   def Args(cls, parser):
     cls.LOCATION_ARG = (
@@ -125,18 +123,7 @@ class CreateBeta(Create):
     cls.LOCATION_ARG.AddArgument(parser)
     cls.INTERCONNECT_ARG = flags.InterconnectArgument()
     cls.INTERCONNECT_ARG.AddArgument(parser, operation_type='create')
-    flags.AddCreateBetaArgs(parser, cls.supports_100g)
-
-
-@base.ReleaseTracks(base.ReleaseTrack.ALPHA)
-class CreateAlpha(CreateBeta):
-  """Create a Google Compute Engine interconnect.
-
-  *{command}* is used to create interconnects. An interconnect represents a
-  single specific connection between Google and the customer.
-  """
-
-  supports_100g = True
+    flags.AddCreateBetaArgs(parser)
 
 
 Create.detailed_help = DETAILED_HELP

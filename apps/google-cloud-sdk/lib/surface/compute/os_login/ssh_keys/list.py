@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -59,12 +59,28 @@ class List(base.ListCommand):
     """See ssh_utils.BaseSSHCLICommand.Run."""
 
     oslogin_client = client.OsloginClient(self.ReleaseTrack())
-    user_email = properties.VALUES.core.account.Get()
+    user_email = (properties.VALUES.auth.impersonate_service_account.Get()
+                  or properties.VALUES.core.account.Get())
 
     keys = oslogin_utils.GetKeysFromProfile(user_email, oslogin_client)
     return keys
 
 List.detailed_help = {
     'brief': 'List SSH public keys from an OS Login profile.',
+    'DESCRIPTION': """
+      *{command}* lists the SSH public keys in an OS Login profile. By
+      default, the command only displays the fingerprints and experation
+      time for the keys. Additional data can be displayed using the `--format`
+      flag.
+    """,
+    'EXAMPLES': """
+      To list the keys in your OS Login profile, run:
+
+        $ {command}
+
+      To show all of the SSH public key information, in YAML format, run:
+
+        $ {command} --format=yaml
+    """,
 }
 

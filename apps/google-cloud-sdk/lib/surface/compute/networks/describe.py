@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,10 +27,17 @@ from googlecloudsdk.core.resource import resource_projector
 
 
 class Describe(base.DescribeCommand):
-  """Describe a Google Compute Engine network.
+  r"""Describe a Google Compute Engine network.
 
-    *{command}* displays all data associated with Google Compute
+  *{command}* displays all data associated with Google Compute
   Engine network in a project.
+
+  ## EXAMPLES
+
+  To describe a network with the name 'network-name', run:
+
+    $ {command} network-name
+
   """
 
   NETWORK_ARG = None

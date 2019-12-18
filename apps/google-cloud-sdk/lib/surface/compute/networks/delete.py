@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,11 +26,23 @@ from googlecloudsdk.command_lib.compute.networks import flags
 
 
 class Delete(base.DeleteCommand):
-  """Delete Google Compute Engine networks.
+  r"""Delete Google Compute Engine networks.
 
   *{command}* deletes one or more Google Compute Engine
   networks. Networks can only be deleted when no other resources
   (e.g., virtual machine instances) refer to them.
+
+  ## EXAMPLES
+
+  To delete a network with the name 'network-name', run:
+
+    $ {command} network-name
+
+  To delete two networks with the names 'network-name1' and 'network-name2',
+  run:
+
+    $ {command} network-name1 network-name2
+
   """
 
   NETWORK_ARG = None

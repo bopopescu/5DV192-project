@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2016 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Flags and helpers for the compute subnetworks commands."""
 
 from __future__ import absolute_import
@@ -22,7 +21,6 @@ from __future__ import unicode_literals
 from googlecloudsdk.api_lib.compute import utils as compute_api
 from googlecloudsdk.api_lib.util import apis
 from googlecloudsdk.calliope import arg_parsers
-from googlecloudsdk.calliope import base
 from googlecloudsdk.command_lib.compute import completers as compute_completers
 from googlecloudsdk.command_lib.compute import flags as compute_flags
 from googlecloudsdk.command_lib.compute import scope as compute_scope
@@ -62,13 +60,22 @@ def SubnetworkResolver():
       'subnetwork', {compute_scope.ScopeEnum.REGION: 'compute.subnetworks'})
 
 
-def AddUpdateArgs(parser, include_alpha=False):
+def AddUpdateArgs(parser, include_alpha_logging,
+                  include_l7_internal_load_balancing,
+                  include_private_ipv6_access_alpha,
+                  include_private_ipv6_access_beta):
   """Add args to the parser for subnet update.
 
   Args:
     parser: The argparse parser.
-    include_alpha: Include alpha functionality.
+    include_alpha_logging: Include alpha-specific logging args.
+    include_l7_internal_load_balancing: Include Internal HTTP(S) LB args.
+    include_private_ipv6_access_alpha: Include alpha Private Ipv6 Access args.
+    include_private_ipv6_access_beta: Include beta Private Ipv6 Access args.
   """
+  messages = apis.GetMessagesModule('compute',
+                                    compute_api.COMPUTE_GA_API_VERSION)
+
   updated_field = parser.add_mutually_exclusive_group()
 
   updated_field.add_argument(
@@ -111,7 +118,55 @@ def AddUpdateArgs(parser, include_alpha=False):
             'for VPC flow logs can be found at '
             'https://cloud.google.com/vpc/docs/using-flow-logs.'))
 
-  if include_alpha:
+  AddLoggingAggregationInterval(parser, messages)
+  parser.add_argument(
+      '--logging-flow-sampling',
+      type=arg_parsers.BoundedFloat(lower_bound=0.0, upper_bound=1.0),
+      help="""\
+      Can only be specified if VPC flow logging for this subnetwork is
+      enabled. The value of the field must be in [0, 1]. Set the sampling rate
+      of VPC flow logs within the subnetwork where 1.0 means all collected
+      logs are reported and 0.0 means no logs are reported. Default is 0.5
+      which means half of all collected logs are reported.
+      """)
+
+  if include_alpha_logging:
+    messages = apis.GetMessagesModule('compute',
+                                      compute_api.COMPUTE_ALPHA_API_VERSION)
+    AddLoggingAggregationIntervalDeprecated(parser, messages)
+    parser.add_argument(
+        '--flow-sampling',
+        type=arg_parsers.BoundedFloat(lower_bound=0.0, upper_bound=1.0),
+        help="""\
+        Can only be specified if VPC flow logging for this subnetwork is
+        enabled. The value of the field must be in [0, 1]. Set the sampling rate
+        of VPC flow logs within the subnetwork where 1.0 means all collected
+        logs are reported and 0.0 means no logs are reported. Default is 0.5
+        which means half of all collected logs are reported.
+        """)
+    AddLoggingMetadataDeprecated(parser, messages)
+
+    parser.add_argument(
+        '--logging-filter-expr',
+        help="""\
+        Can only be specified if VPC flow logs for this subnetwork is enabled.
+        Export filter used to define which VPC flow logs should be logged.
+        """)
+    AddLoggingMetadataAlpha(parser, messages)
+    parser.add_argument(
+        '--logging-metadata-fields',
+        type=arg_parsers.ArgList(),
+        metavar='METADATA_FIELD',
+        default=None,
+        help="""\
+        Can only be specified if VPC flow logs for this subnetwork is enabled
+        and "metadata" is set to CUSTOM_METADATA. The custom list of metadata
+        fields that should be added to reported VPC flow logs.
+        """)
+  else:
+    AddLoggingMetadata(parser, messages)
+
+  if include_l7_internal_load_balancing:
     updated_field.add_argument(
         '--role',
         choices={'ACTIVE': 'The ACTIVE subnet that is currently used.'},
@@ -123,7 +178,6 @@ def AddUpdateArgs(parser, include_alpha=False):
               '\n\nThis field is only valid when updating a reserved IP '
               'address range used\nfor the purpose of Internal HTTP(S) Load '
               'Balancer.'))
-
     parser.add_argument(
         '--drain-timeout',
         type=arg_parsers.Duration(lower_bound='0s'),
@@ -138,54 +192,60 @@ def AddUpdateArgs(parser, include_alpha=False):
         only applicable when the [--role=ACTIVE] flag is being used.
         """)
 
-    aggregation_interval_argument = base.ChoiceArgument(
-        '--aggregation-interval',
-        choices=[
-            'interval-5-sec', 'interval-30-sec', 'interval-1-min',
-            'interval-5-min', 'interval-10-min', 'interval-15-min'
-        ],
-        help_str="""\
-        Can only be specified if VPC flow logging for this subnetwork is
-        enabled. Toggles the aggregation interval for collecting flow logs.
-        Increasing the interval time will reduce the amount of generated flow
-        logs for long lasting connections. Default is an interval of 5 seconds
-        per connection.
-        """)
-    aggregation_interval_argument.AddToParser(parser)
-
-    parser.add_argument(
-        '--flow-sampling',
-        type=arg_parsers.BoundedFloat(lower_bound=0.0, upper_bound=1.0),
-        help="""\
-        Can only be specified if VPC flow logging for this subnetwork is
-        enabled. The value of the field must be in [0, 1]. Set the sampling rate
-        of VPC flow logs within the subnetwork where 1.0 means all collected
-        logs are reported and 0.0 means no logs are reported. Default is 0.5
-        which means half of all collected logs are reported.
-        """)
-
-    metadata_argument = base.ChoiceArgument(
-        '--metadata',
-        choices=['include-all-metadata', 'exclude-all-metadata'],
-        help_str="""\
-        Can only be specified if VPC flow logging for this subnetwork is
-        enabled. Configures whether metadata fields should be added to the
-        reported VPC flow logs. Default is to include all metadata.
-        """)
-    metadata_argument.AddToParser(parser)
-
+  if include_private_ipv6_access_alpha:
+    messages = apis.GetMessagesModule('compute',
+                                      compute_api.COMPUTE_ALPHA_API_VERSION)
     updated_field.add_argument(
         '--enable-private-ipv6-access',
         action=arg_parsers.StoreTrueFalseAction,
         help=('Enable/disable private IPv6 access for the subnet.'))
+    update_private_ipv6_access_field = updated_field.add_argument_group()
+    GetPrivateIpv6GoogleAccessTypeFlagMapperAlpha(
+        messages).choice_arg.AddToParser(update_private_ipv6_access_field)
+    update_private_ipv6_access_field.add_argument(
+        '--private-ipv6-google-access-service-accounts',
+        default=None,
+        metavar='EMAIL',
+        type=arg_parsers.ArgList(min_length=0),
+        help="""\
+        The service accounts can be used to selectively turn on Private IPv6
+        Google Access only on the VMs primary service account matching the
+        value.
 
+        Setting this will override the existing Private IPv6 Google Access
+        service accounts for the subnetwork.
+        The following will clear the existing Private IPv6 Google Access service
+        accounts:
+
+        $ {command} MY-SUBNET --private-ipv6-google-access-service-accounts ''
+        """)
+  elif include_private_ipv6_access_beta:
     messages = apis.GetMessagesModule('compute',
-                                      compute_api.COMPUTE_ALPHA_API_VERSION)
-    GetPrivateIpv6GoogleAccessTypeFlagMapper(messages).choice_arg.AddToParser(
-        updated_field)
+                                      compute_api.COMPUTE_BETA_API_VERSION)
+    update_private_ipv6_access_field = updated_field.add_argument_group()
+    GetPrivateIpv6GoogleAccessTypeFlagMapperBeta(
+        messages).choice_arg.AddToParser(update_private_ipv6_access_field)
 
 
-def GetPrivateIpv6GoogleAccessTypeFlagMapper(messages):
+def GetPrivateIpv6GoogleAccessTypeFlagMapperAlpha(messages):
+  return arg_utils.ChoiceEnumMapper(
+      '--private-ipv6-google-access-type',
+      messages.Subnetwork.PrivateIpv6GoogleAccessValueValuesEnum,
+      custom_mappings={
+          'DISABLE_GOOGLE_ACCESS':
+              'disable',
+          'ENABLE_BIDIRECTIONAL_ACCESS_TO_GOOGLE':
+              'enable-bidirectional-access',
+          'ENABLE_OUTBOUND_VM_ACCESS_TO_GOOGLE':
+              'enable-outbound-vm-access',
+          'ENABLE_OUTBOUND_VM_ACCESS_TO_GOOGLE_FOR_SERVICE_ACCOUNTS':
+              'enable-outbound-vm-access-for-service-accounts'
+      },
+      help_str='The private IPv6 google access type for the VMs in this subnet.'
+  )
+
+
+def GetPrivateIpv6GoogleAccessTypeFlagMapperBeta(messages):
   return arg_utils.ChoiceEnumMapper(
       '--private-ipv6-google-access-type',
       messages.Subnetwork.PrivateIpv6GoogleAccessValueValuesEnum,
@@ -199,3 +259,112 @@ def GetPrivateIpv6GoogleAccessTypeFlagMapper(messages):
       },
       help_str='The private IPv6 google access type for the VMs in this subnet.'
   )
+
+
+def GetLoggingAggregationIntervalArg(messages):
+  return arg_utils.ChoiceEnumMapper(
+      '--logging-aggregation-interval',
+      messages.SubnetworkLogConfig.AggregationIntervalValueValuesEnum,
+      custom_mappings={
+          'INTERVAL_5_SEC': 'interval-5-sec',
+          'INTERVAL_30_SEC': 'interval-30-sec',
+          'INTERVAL_1_MIN': 'interval-1-min',
+          'INTERVAL_5_MIN': 'interval-5-min',
+          'INTERVAL_10_MIN': 'interval-10-min',
+          'INTERVAL_15_MIN': 'interval-15-min'
+      },
+      help_str="""\
+        Can only be specified if VPC flow logging for this subnetwork is
+        enabled. Toggles the aggregation interval for collecting flow logs.
+        Increasing the interval time will reduce the amount of generated flow
+        logs for long lasting connections. Default is an interval of 5 seconds
+        per connection.
+        """)
+
+
+def AddLoggingAggregationInterval(parser, messages):
+  GetLoggingAggregationIntervalArg(messages).choice_arg.AddToParser(parser)
+
+
+def GetLoggingAggregationIntervalArgDeprecated(messages):
+  return arg_utils.ChoiceEnumMapper(
+      '--aggregation-interval',
+      messages.SubnetworkLogConfig.AggregationIntervalValueValuesEnum,
+      custom_mappings={
+          'INTERVAL_5_SEC': 'interval-5-sec',
+          'INTERVAL_30_SEC': 'interval-30-sec',
+          'INTERVAL_1_MIN': 'interval-1-min',
+          'INTERVAL_5_MIN': 'interval-5-min',
+          'INTERVAL_10_MIN': 'interval-10-min',
+          'INTERVAL_15_MIN': 'interval-15-min'
+      },
+      help_str="""\
+        Can only be specified if VPC flow logging for this subnetwork is
+        enabled. Toggles the aggregation interval for collecting flow logs.
+        Increasing the interval time will reduce the amount of generated flow
+        logs for long lasting connections. Default is an interval of 5 seconds
+        per connection.
+        """)
+
+
+def AddLoggingAggregationIntervalDeprecated(parser, messages):
+  GetLoggingAggregationIntervalArgDeprecated(messages).choice_arg.AddToParser(
+      parser)
+
+
+def GetLoggingMetadataArg(messages):
+  return arg_utils.ChoiceEnumMapper(
+      '--logging-metadata',
+      messages.SubnetworkLogConfig.MetadataValueValuesEnum,
+      custom_mappings={
+          'INCLUDE_ALL_METADATA': 'include-all',
+          'EXCLUDE_ALL_METADATA': 'exclude-all'
+      },
+      help_str="""\
+        Can only be specified if VPC flow logging for this subnetwork is
+        enabled. Configures whether metadata fields should be added to the
+        reported VPC flow logs. Default is to include all metadata.
+        """)
+
+
+def AddLoggingMetadata(parser, messages):
+  GetLoggingMetadataArg(messages).choice_arg.AddToParser(parser)
+
+
+def GetLoggingMetadataArgDeprecated(messages):
+  return arg_utils.ChoiceEnumMapper(
+      '--metadata',
+      messages.SubnetworkLogConfig.MetadataValueValuesEnum,
+      custom_mappings={
+          'INCLUDE_ALL_METADATA': 'include-all-metadata',
+          'EXCLUDE_ALL_METADATA': 'exclude-all-metadata'
+      },
+      help_str="""\
+        Can only be specified if VPC flow logging for this subnetwork is
+        enabled. Configures whether metadata fields should be added to the
+        reported VPC flow logs. Default is to include all metadata.
+        """)
+
+
+def AddLoggingMetadataDeprecated(parser, messages):
+  GetLoggingMetadataArgDeprecated(messages).choice_arg.AddToParser(parser)
+
+
+def GetLoggingMetadataArgAlpha(messages):
+  return arg_utils.ChoiceEnumMapper(
+      '--logging-metadata',
+      messages.SubnetworkLogConfig.MetadataValueValuesEnum,
+      custom_mappings={
+          'INCLUDE_ALL_METADATA': 'include-all',
+          'EXCLUDE_ALL_METADATA': 'exclude-all',
+          'CUSTOM_METADATA': 'custom'
+      },
+      help_str="""\
+        Can only be specified if VPC flow logging for this subnetwork is
+        enabled. Configures whether metadata fields should be added to the
+        reported VPC flow logs. Default is to include all metadata.
+        """)
+
+
+def AddLoggingMetadataAlpha(parser, messages):
+  GetLoggingMetadataArgAlpha(messages).choice_arg.AddToParser(parser)

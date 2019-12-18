@@ -1,4 +1,4 @@
-# Copyright 2007 Google Inc. All Rights Reserved.
+# Copyright 2007 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -51,9 +51,12 @@ else:
   from googlecloudsdk.third_party.appengine.api import yaml_listener
   from googlecloudsdk.third_party.appengine.api import yaml_object
 
+from googlecloudsdk.core.util import encoding
 from googlecloudsdk.third_party.appengine.api import appinfo_errors
 from googlecloudsdk.third_party.appengine.api import backendinfo
 from googlecloudsdk.third_party.appengine._internal import six_subset
+
+import six
 
 
 # pylint: enable=g-import-not-at-top
@@ -175,9 +178,6 @@ RUNTIME_RE_STRING = r'((gs://[a-z0-9\-\._/]+)|([a-z][a-z0-9\-\.]{0,29}))'
 
 API_VERSION_RE_STRING = r'[\w.]{1,32}'
 ENV_RE_STRING = r'(1|2|standard|flex|flexible)'
-
-# MAIN should match any file path or class path (eg with dots).
-MAIN_RE_STRING = r'[\w.\\\/:]+'
 
 SOURCE_LANGUAGE_RE_STRING = r'[\w.\-]{1,32}'
 
@@ -603,7 +603,7 @@ _SUPPORTED_LIBRARIES = [
         ),
     _VersionedLibrary(
         'protorpc',
-        'https://code.google.com/p/google-protorpc/',
+        'https://github.com/google/protorpc',
         'A framework for implementing HTTP-based remote procedure call (RPC) '
         'services.',
         ['1.0'],
@@ -923,7 +923,7 @@ class HttpHeadersDict(validation.ValidatedDict):
             'HTTP header values must not contain non-ASCII data'))
 
       # HTTP headers are case-insensitive.
-      name = name.lower()
+      name = encoding.Decode(name.lower(),encoding='utf8')
 
       if not _HTTP_TOKEN_RE.match(name):
         raise appinfo_errors.InvalidHttpHeaderName(
@@ -1001,7 +1001,7 @@ class HttpHeadersDict(validation.ValidatedDict):
 
       HttpHeadersDict.ValueValidator.AssertHeaderNotTooLong(key, value)
 
-      return value
+      return six.ensure_text(value)
 
     @staticmethod
     def AssertHeaderNotTooLong(name, value):
@@ -2087,10 +2087,20 @@ class AppInclude(validation.Validated):
 
     # We only want to mutate a param if at least one of the given
     # arguments has manual_scaling.instances set.
-    if _Instances(appinclude_one) or _Instances(appinclude_two):
-      instances = max(_Instances(appinclude_one), _Instances(appinclude_two))
-      if instances is not None:
-        appinclude_one.manual_scaling = ManualScaling(instances=str(instances))
+    instances_one = _Instances(appinclude_one)
+    instances_two = _Instances(appinclude_two)
+
+    if instances_one is not None and instances_two is not None:
+      instances = max(instances_one, instances_two)
+    elif instances_one is not None:
+      instances = instances_one
+    elif instances_two is not None:
+      instances = instances_two
+    else:
+      instances = None
+
+    if instances is not None:
+      appinclude_one.manual_scaling = ManualScaling(instances=str(instances))
     return appinclude_one
 
   @classmethod
@@ -2275,7 +2285,7 @@ class AppInfoExternal(validation.Validated):
       # A new `api_version` requires a release of the `dev_appserver`, so it
       # is ok to hardcode the version names here.
       API_VERSION: validation.Optional(API_VERSION_RE_STRING),
-      MAIN: validation.Optional(MAIN_RE_STRING),
+      MAIN: validation.Optional(_FILES_REGEX),
       # The App Engine environment to run this version in. (VM vs. non-VM, etc.)
       ENV: validation.Optional(ENV_RE_STRING),
       ENDPOINTS_API_SERVICE: validation.Optional(EndpointsApiService),

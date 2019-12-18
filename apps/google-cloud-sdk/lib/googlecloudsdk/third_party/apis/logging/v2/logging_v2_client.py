@@ -35,33 +35,38 @@ class LoggingV2(base_api.BaseApiClient):
         default_global_params=default_global_params,
         additional_http_headers=additional_http_headers,
         response_encoding=response_encoding)
+    self.billingAccounts_buckets_views = self.BillingAccountsBucketsViewsService(self)
     self.billingAccounts_buckets = self.BillingAccountsBucketsService(self)
     self.billingAccounts_exclusions = self.BillingAccountsExclusionsService(self)
+    self.billingAccounts_locations_buckets_views = self.BillingAccountsLocationsBucketsViewsService(self)
     self.billingAccounts_locations_buckets = self.BillingAccountsLocationsBucketsService(self)
     self.billingAccounts_locations = self.BillingAccountsLocationsService(self)
     self.billingAccounts_logs = self.BillingAccountsLogsService(self)
     self.billingAccounts_sinks = self.BillingAccountsSinksService(self)
     self.billingAccounts = self.BillingAccountsService(self)
-    self.buckets = self.BucketsService(self)
     self.entries = self.EntriesService(self)
     self.exclusions = self.ExclusionsService(self)
     self.folders_exclusions = self.FoldersExclusionsService(self)
+    self.folders_locations_buckets_views = self.FoldersLocationsBucketsViewsService(self)
     self.folders_locations_buckets = self.FoldersLocationsBucketsService(self)
     self.folders_locations = self.FoldersLocationsService(self)
     self.folders_logs = self.FoldersLogsService(self)
     self.folders_sinks = self.FoldersSinksService(self)
     self.folders = self.FoldersService(self)
+    self.locations_buckets_views = self.LocationsBucketsViewsService(self)
     self.locations_buckets = self.LocationsBucketsService(self)
     self.locations = self.LocationsService(self)
     self.logs = self.LogsService(self)
     self.monitoredResourceDescriptors = self.MonitoredResourceDescriptorsService(self)
     self.organizations_exclusions = self.OrganizationsExclusionsService(self)
+    self.organizations_locations_buckets_views = self.OrganizationsLocationsBucketsViewsService(self)
     self.organizations_locations_buckets = self.OrganizationsLocationsBucketsService(self)
     self.organizations_locations = self.OrganizationsLocationsService(self)
     self.organizations_logs = self.OrganizationsLogsService(self)
     self.organizations_sinks = self.OrganizationsSinksService(self)
     self.organizations = self.OrganizationsService(self)
     self.projects_exclusions = self.ProjectsExclusionsService(self)
+    self.projects_locations_buckets_views = self.ProjectsLocationsBucketsViewsService(self)
     self.projects_locations_buckets = self.ProjectsLocationsBucketsService(self)
     self.projects_locations = self.ProjectsLocationsService(self)
     self.projects_logs = self.ProjectsLogsService(self)
@@ -69,6 +74,44 @@ class LoggingV2(base_api.BaseApiClient):
     self.projects_sinks = self.ProjectsSinksService(self)
     self.projects = self.ProjectsService(self)
     self.sinks = self.SinksService(self)
+    self.v2 = self.V2Service(self)
+
+  class BillingAccountsBucketsViewsService(base_api.BaseApiService):
+    """Service class for the billingAccounts_buckets_views resource."""
+
+    _NAME = u'billingAccounts_buckets_views'
+
+    def __init__(self, client):
+      super(LoggingV2.BillingAccountsBucketsViewsService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Get(self, request, global_params=None):
+      r"""Gets a view.
+
+      Args:
+        request: (LoggingBillingAccountsBucketsViewsGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (LogView) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v2/billingAccounts/{billingAccountsId}/buckets/{bucketsId}/views/{viewsId}',
+        http_method=u'GET',
+        method_id=u'logging.billingAccounts.buckets.views.get',
+        ordered_params=[u'name'],
+        path_params=[u'name'],
+        query_params=[],
+        relative_path=u'v2/{+name}',
+        request_field='',
+        request_type_name=u'LoggingBillingAccountsBucketsViewsGetRequest',
+        response_type_name=u'LogView',
+        supports_download=False,
+    )
 
   class BillingAccountsBucketsService(base_api.BaseApiService):
     """Service class for the billingAccounts_buckets resource."""
@@ -252,6 +295,124 @@ class LoggingV2(base_api.BaseApiClient):
         supports_download=False,
     )
 
+  class BillingAccountsLocationsBucketsViewsService(base_api.BaseApiService):
+    """Service class for the billingAccounts_locations_buckets_views resource."""
+
+    _NAME = u'billingAccounts_locations_buckets_views'
+
+    def __init__(self, client):
+      super(LoggingV2.BillingAccountsLocationsBucketsViewsService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Create(self, request, global_params=None):
+      r"""Creates a view over logs in a bucket. A bucket may contain a maximum of 50 views.
+
+      Args:
+        request: (LoggingBillingAccountsLocationsBucketsViewsCreateRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (LogView) The response message.
+      """
+      config = self.GetMethodConfig('Create')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Create.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v2/billingAccounts/{billingAccountsId}/locations/{locationsId}/buckets/{bucketsId}/views',
+        http_method=u'POST',
+        method_id=u'logging.billingAccounts.locations.buckets.views.create',
+        ordered_params=[u'parent'],
+        path_params=[u'parent'],
+        query_params=[u'viewId'],
+        relative_path=u'v2/{+parent}/views',
+        request_field=u'logView',
+        request_type_name=u'LoggingBillingAccountsLocationsBucketsViewsCreateRequest',
+        response_type_name=u'LogView',
+        supports_download=False,
+    )
+
+    def Delete(self, request, global_params=None):
+      r"""Deletes a view from a bucket.
+
+      Args:
+        request: (LoggingBillingAccountsLocationsBucketsViewsDeleteRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Empty) The response message.
+      """
+      config = self.GetMethodConfig('Delete')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Delete.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v2/billingAccounts/{billingAccountsId}/locations/{locationsId}/buckets/{bucketsId}/views/{viewsId}',
+        http_method=u'DELETE',
+        method_id=u'logging.billingAccounts.locations.buckets.views.delete',
+        ordered_params=[u'name'],
+        path_params=[u'name'],
+        query_params=[],
+        relative_path=u'v2/{+name}',
+        request_field='',
+        request_type_name=u'LoggingBillingAccountsLocationsBucketsViewsDeleteRequest',
+        response_type_name=u'Empty',
+        supports_download=False,
+    )
+
+    def List(self, request, global_params=None):
+      r"""Lists views on a bucket..
+
+      Args:
+        request: (LoggingBillingAccountsLocationsBucketsViewsListRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (ListViewsResponse) The response message.
+      """
+      config = self.GetMethodConfig('List')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v2/billingAccounts/{billingAccountsId}/locations/{locationsId}/buckets/{bucketsId}/views',
+        http_method=u'GET',
+        method_id=u'logging.billingAccounts.locations.buckets.views.list',
+        ordered_params=[u'parent'],
+        path_params=[u'parent'],
+        query_params=[u'pageSize', u'pageToken'],
+        relative_path=u'v2/{+parent}/views',
+        request_field='',
+        request_type_name=u'LoggingBillingAccountsLocationsBucketsViewsListRequest',
+        response_type_name=u'ListViewsResponse',
+        supports_download=False,
+    )
+
+    def Patch(self, request, global_params=None):
+      r"""Updates a view. This method replaces the following fields in the existing view with values from the new view: filter.
+
+      Args:
+        request: (LoggingBillingAccountsLocationsBucketsViewsPatchRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (LogView) The response message.
+      """
+      config = self.GetMethodConfig('Patch')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Patch.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v2/billingAccounts/{billingAccountsId}/locations/{locationsId}/buckets/{bucketsId}/views/{viewsId}',
+        http_method=u'PATCH',
+        method_id=u'logging.billingAccounts.locations.buckets.views.patch',
+        ordered_params=[u'name'],
+        path_params=[u'name'],
+        query_params=[u'updateMask'],
+        relative_path=u'v2/{+name}',
+        request_field=u'logView',
+        request_type_name=u'LoggingBillingAccountsLocationsBucketsViewsPatchRequest',
+        response_type_name=u'LogView',
+        supports_download=False,
+    )
+
   class BillingAccountsLocationsBucketsService(base_api.BaseApiService):
     """Service class for the billingAccounts_locations_buckets resource."""
 
@@ -290,7 +451,7 @@ class LoggingV2(base_api.BaseApiClient):
     )
 
     def Delete(self, request, global_params=None):
-      r"""Deletes a bucket. All views and logs in the bucket are deleted. If the bucket is non-empty, FAILED_PRECONDITION will be returned. If the bucket has a sink in the same project pointing to it, FAILED_PRECONDITION will be returned.
+      r"""Deletes a bucket. All views and logs in the bucket are deleted. If the bucket is non-empty and locked, FAILED_PRECONDITION will be returned. If the bucket has a sink in the same project pointing to it, FAILED_PRECONDITION will be returned.
 
       Args:
         request: (LoggingBillingAccountsLocationsBucketsDeleteRequest) input message
@@ -344,7 +505,7 @@ class LoggingV2(base_api.BaseApiClient):
     )
 
     def Patch(self, request, global_params=None):
-      r"""Updates a bucket. This method replaces the following fields in the existing bucket with values from the new bucket: retention_periodIf the retention period is decreased and the bucket is locked, FAILED_PRECONDITION will be returned.A buckets region may not be modified after it is created.
+      r"""Updates a bucket. This method replaces the following fields in the existing bucket with values from the new bucket: retention_periodIf the retention period is decreased and the bucket is locked, FAILED_PRECONDITION will be returned.If the bucket has a LifecycleState of DELETE_REQUESTED, FAILED_PRECONDITION will be returned.A buckets region may not be modified after it is created.
 
       Args:
         request: (LoggingBillingAccountsLocationsBucketsPatchRequest) input message
@@ -370,6 +531,33 @@ class LoggingV2(base_api.BaseApiClient):
         supports_download=False,
     )
 
+    def Undelete(self, request, global_params=None):
+      r"""Undeletes a bucket. A bucket that has been deleted may be undeleted within the grace period of 7 days.
+
+      Args:
+        request: (LoggingBillingAccountsLocationsBucketsUndeleteRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Empty) The response message.
+      """
+      config = self.GetMethodConfig('Undelete')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Undelete.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v2/billingAccounts/{billingAccountsId}/locations/{locationsId}/buckets/{bucketsId}:undelete',
+        http_method=u'POST',
+        method_id=u'logging.billingAccounts.locations.buckets.undelete',
+        ordered_params=[u'name'],
+        path_params=[u'name'],
+        query_params=[],
+        relative_path=u'v2/{+name}:undelete',
+        request_field=u'undeleteBucketRequest',
+        request_type_name=u'LoggingBillingAccountsLocationsBucketsUndeleteRequest',
+        response_type_name=u'Empty',
+        supports_download=False,
+    )
+
   class BillingAccountsLocationsService(base_api.BaseApiService):
     """Service class for the billingAccounts_locations resource."""
 
@@ -391,7 +579,7 @@ class LoggingV2(base_api.BaseApiClient):
           }
 
     def Delete(self, request, global_params=None):
-      r"""Deletes all the log entries in a log. The log reappears if it receives new entries. Log entries written shortly before the delete operation might not be deleted.
+      r"""Deletes all the log entries in a log. The log reappears if it receives new entries. Log entries written shortly before the delete operation might not be deleted. Entries received after the delete operation with a timestamp before the operation will be deleted.
 
       Args:
         request: (LoggingBillingAccountsLogsDeleteRequest) input message
@@ -436,7 +624,7 @@ class LoggingV2(base_api.BaseApiClient):
         method_id=u'logging.billingAccounts.logs.list',
         ordered_params=[u'parent'],
         path_params=[u'parent'],
-        query_params=[u'pageSize', u'pageToken'],
+        query_params=[u'pageSize', u'pageToken', u'resourceNames'],
         relative_path=u'v2/{+parent}/logs',
         request_field='',
         request_type_name=u'LoggingBillingAccountsLogsListRequest',
@@ -625,97 +813,6 @@ class LoggingV2(base_api.BaseApiClient):
       super(LoggingV2.BillingAccountsService, self).__init__(client)
       self._upload_configs = {
           }
-
-  class BucketsService(base_api.BaseApiService):
-    """Service class for the buckets resource."""
-
-    _NAME = u'buckets'
-
-    def __init__(self, client):
-      super(LoggingV2.BucketsService, self).__init__(client)
-      self._upload_configs = {
-          }
-
-    def Get(self, request, global_params=None):
-      r"""Gets a bucket.
-
-      Args:
-        request: (LoggingBucketsGetRequest) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-      Returns:
-        (LogBucket) The response message.
-      """
-      config = self.GetMethodConfig('Get')
-      return self._RunMethod(
-          config, request, global_params=global_params)
-
-    Get.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path=u'v2/{v2Id}/{v2Id1}/buckets/{bucketsId}',
-        http_method=u'GET',
-        method_id=u'logging.buckets.get',
-        ordered_params=[u'name'],
-        path_params=[u'name'],
-        query_params=[],
-        relative_path=u'v2/{+name}',
-        request_field='',
-        request_type_name=u'LoggingBucketsGetRequest',
-        response_type_name=u'LogBucket',
-        supports_download=False,
-    )
-
-    def List(self, request, global_params=None):
-      r"""Lists buckets.
-
-      Args:
-        request: (LoggingBucketsListRequest) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-      Returns:
-        (ListBucketsResponse) The response message.
-      """
-      config = self.GetMethodConfig('List')
-      return self._RunMethod(
-          config, request, global_params=global_params)
-
-    List.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path=u'v2/{v2Id}/{v2Id1}/buckets',
-        http_method=u'GET',
-        method_id=u'logging.buckets.list',
-        ordered_params=[u'parent'],
-        path_params=[u'parent'],
-        query_params=[u'pageSize', u'pageToken'],
-        relative_path=u'v2/{+parent}/buckets',
-        request_field='',
-        request_type_name=u'LoggingBucketsListRequest',
-        response_type_name=u'ListBucketsResponse',
-        supports_download=False,
-    )
-
-    def Patch(self, request, global_params=None):
-      r"""Updates a bucket. This method replaces the following fields in the existing bucket with values from the new bucket: retention_periodIf the retention period is decreased and the bucket is locked, FAILED_PRECONDITION will be returned.A buckets region may not be modified after it is created.
-
-      Args:
-        request: (LoggingBucketsPatchRequest) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-      Returns:
-        (LogBucket) The response message.
-      """
-      config = self.GetMethodConfig('Patch')
-      return self._RunMethod(
-          config, request, global_params=global_params)
-
-    Patch.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path=u'v2/{v2Id}/{v2Id1}/buckets/{bucketsId}',
-        http_method=u'PATCH',
-        method_id=u'logging.buckets.patch',
-        ordered_params=[u'name'],
-        path_params=[u'name'],
-        query_params=[u'updateMask'],
-        relative_path=u'v2/{+name}',
-        request_field=u'logBucket',
-        request_type_name=u'LoggingBucketsPatchRequest',
-        response_type_name=u'LogBucket',
-        supports_download=False,
-    )
 
   class EntriesService(base_api.BaseApiService):
     """Service class for the entries resource."""
@@ -1069,6 +1166,151 @@ class LoggingV2(base_api.BaseApiClient):
         supports_download=False,
     )
 
+  class FoldersLocationsBucketsViewsService(base_api.BaseApiService):
+    """Service class for the folders_locations_buckets_views resource."""
+
+    _NAME = u'folders_locations_buckets_views'
+
+    def __init__(self, client):
+      super(LoggingV2.FoldersLocationsBucketsViewsService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Create(self, request, global_params=None):
+      r"""Creates a view over logs in a bucket. A bucket may contain a maximum of 50 views.
+
+      Args:
+        request: (LoggingFoldersLocationsBucketsViewsCreateRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (LogView) The response message.
+      """
+      config = self.GetMethodConfig('Create')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Create.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v2/folders/{foldersId}/locations/{locationsId}/buckets/{bucketsId}/views',
+        http_method=u'POST',
+        method_id=u'logging.folders.locations.buckets.views.create',
+        ordered_params=[u'parent'],
+        path_params=[u'parent'],
+        query_params=[u'viewId'],
+        relative_path=u'v2/{+parent}/views',
+        request_field=u'logView',
+        request_type_name=u'LoggingFoldersLocationsBucketsViewsCreateRequest',
+        response_type_name=u'LogView',
+        supports_download=False,
+    )
+
+    def Delete(self, request, global_params=None):
+      r"""Deletes a view from a bucket.
+
+      Args:
+        request: (LoggingFoldersLocationsBucketsViewsDeleteRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Empty) The response message.
+      """
+      config = self.GetMethodConfig('Delete')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Delete.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v2/folders/{foldersId}/locations/{locationsId}/buckets/{bucketsId}/views/{viewsId}',
+        http_method=u'DELETE',
+        method_id=u'logging.folders.locations.buckets.views.delete',
+        ordered_params=[u'name'],
+        path_params=[u'name'],
+        query_params=[],
+        relative_path=u'v2/{+name}',
+        request_field='',
+        request_type_name=u'LoggingFoldersLocationsBucketsViewsDeleteRequest',
+        response_type_name=u'Empty',
+        supports_download=False,
+    )
+
+    def Get(self, request, global_params=None):
+      r"""Gets a view.
+
+      Args:
+        request: (LoggingFoldersLocationsBucketsViewsGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (LogView) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v2/folders/{foldersId}/locations/{locationsId}/buckets/{bucketsId}/views/{viewsId}',
+        http_method=u'GET',
+        method_id=u'logging.folders.locations.buckets.views.get',
+        ordered_params=[u'name'],
+        path_params=[u'name'],
+        query_params=[],
+        relative_path=u'v2/{+name}',
+        request_field='',
+        request_type_name=u'LoggingFoldersLocationsBucketsViewsGetRequest',
+        response_type_name=u'LogView',
+        supports_download=False,
+    )
+
+    def List(self, request, global_params=None):
+      r"""Lists views on a bucket..
+
+      Args:
+        request: (LoggingFoldersLocationsBucketsViewsListRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (ListViewsResponse) The response message.
+      """
+      config = self.GetMethodConfig('List')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v2/folders/{foldersId}/locations/{locationsId}/buckets/{bucketsId}/views',
+        http_method=u'GET',
+        method_id=u'logging.folders.locations.buckets.views.list',
+        ordered_params=[u'parent'],
+        path_params=[u'parent'],
+        query_params=[u'pageSize', u'pageToken'],
+        relative_path=u'v2/{+parent}/views',
+        request_field='',
+        request_type_name=u'LoggingFoldersLocationsBucketsViewsListRequest',
+        response_type_name=u'ListViewsResponse',
+        supports_download=False,
+    )
+
+    def Patch(self, request, global_params=None):
+      r"""Updates a view. This method replaces the following fields in the existing view with values from the new view: filter.
+
+      Args:
+        request: (LoggingFoldersLocationsBucketsViewsPatchRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (LogView) The response message.
+      """
+      config = self.GetMethodConfig('Patch')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Patch.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v2/folders/{foldersId}/locations/{locationsId}/buckets/{bucketsId}/views/{viewsId}',
+        http_method=u'PATCH',
+        method_id=u'logging.folders.locations.buckets.views.patch',
+        ordered_params=[u'name'],
+        path_params=[u'name'],
+        query_params=[u'updateMask'],
+        relative_path=u'v2/{+name}',
+        request_field=u'logView',
+        request_type_name=u'LoggingFoldersLocationsBucketsViewsPatchRequest',
+        response_type_name=u'LogView',
+        supports_download=False,
+    )
+
   class FoldersLocationsBucketsService(base_api.BaseApiService):
     """Service class for the folders_locations_buckets resource."""
 
@@ -1107,7 +1349,7 @@ class LoggingV2(base_api.BaseApiClient):
     )
 
     def Delete(self, request, global_params=None):
-      r"""Deletes a bucket. All views and logs in the bucket are deleted. If the bucket is non-empty, FAILED_PRECONDITION will be returned. If the bucket has a sink in the same project pointing to it, FAILED_PRECONDITION will be returned.
+      r"""Deletes a bucket. All views and logs in the bucket are deleted. If the bucket is non-empty and locked, FAILED_PRECONDITION will be returned. If the bucket has a sink in the same project pointing to it, FAILED_PRECONDITION will be returned.
 
       Args:
         request: (LoggingFoldersLocationsBucketsDeleteRequest) input message
@@ -1188,7 +1430,7 @@ class LoggingV2(base_api.BaseApiClient):
     )
 
     def Patch(self, request, global_params=None):
-      r"""Updates a bucket. This method replaces the following fields in the existing bucket with values from the new bucket: retention_periodIf the retention period is decreased and the bucket is locked, FAILED_PRECONDITION will be returned.A buckets region may not be modified after it is created.
+      r"""Updates a bucket. This method replaces the following fields in the existing bucket with values from the new bucket: retention_periodIf the retention period is decreased and the bucket is locked, FAILED_PRECONDITION will be returned.If the bucket has a LifecycleState of DELETE_REQUESTED, FAILED_PRECONDITION will be returned.A buckets region may not be modified after it is created.
 
       Args:
         request: (LoggingFoldersLocationsBucketsPatchRequest) input message
@@ -1214,6 +1456,33 @@ class LoggingV2(base_api.BaseApiClient):
         supports_download=False,
     )
 
+    def Undelete(self, request, global_params=None):
+      r"""Undeletes a bucket. A bucket that has been deleted may be undeleted within the grace period of 7 days.
+
+      Args:
+        request: (LoggingFoldersLocationsBucketsUndeleteRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Empty) The response message.
+      """
+      config = self.GetMethodConfig('Undelete')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Undelete.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v2/folders/{foldersId}/locations/{locationsId}/buckets/{bucketsId}:undelete',
+        http_method=u'POST',
+        method_id=u'logging.folders.locations.buckets.undelete',
+        ordered_params=[u'name'],
+        path_params=[u'name'],
+        query_params=[],
+        relative_path=u'v2/{+name}:undelete',
+        request_field=u'undeleteBucketRequest',
+        request_type_name=u'LoggingFoldersLocationsBucketsUndeleteRequest',
+        response_type_name=u'Empty',
+        supports_download=False,
+    )
+
   class FoldersLocationsService(base_api.BaseApiService):
     """Service class for the folders_locations resource."""
 
@@ -1235,7 +1504,7 @@ class LoggingV2(base_api.BaseApiClient):
           }
 
     def Delete(self, request, global_params=None):
-      r"""Deletes all the log entries in a log. The log reappears if it receives new entries. Log entries written shortly before the delete operation might not be deleted.
+      r"""Deletes all the log entries in a log. The log reappears if it receives new entries. Log entries written shortly before the delete operation might not be deleted. Entries received after the delete operation with a timestamp before the operation will be deleted.
 
       Args:
         request: (LoggingFoldersLogsDeleteRequest) input message
@@ -1280,7 +1549,7 @@ class LoggingV2(base_api.BaseApiClient):
         method_id=u'logging.folders.logs.list',
         ordered_params=[u'parent'],
         path_params=[u'parent'],
-        query_params=[u'pageSize', u'pageToken'],
+        query_params=[u'pageSize', u'pageToken', u'resourceNames'],
         relative_path=u'v2/{+parent}/logs',
         request_field='',
         request_type_name=u'LoggingFoldersLogsListRequest',
@@ -1470,6 +1739,151 @@ class LoggingV2(base_api.BaseApiClient):
       self._upload_configs = {
           }
 
+  class LocationsBucketsViewsService(base_api.BaseApiService):
+    """Service class for the locations_buckets_views resource."""
+
+    _NAME = u'locations_buckets_views'
+
+    def __init__(self, client):
+      super(LoggingV2.LocationsBucketsViewsService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Create(self, request, global_params=None):
+      r"""Creates a view over logs in a bucket. A bucket may contain a maximum of 50 views.
+
+      Args:
+        request: (LoggingLocationsBucketsViewsCreateRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (LogView) The response message.
+      """
+      config = self.GetMethodConfig('Create')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Create.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v2/{v2Id}/{v2Id1}/locations/{locationsId}/buckets/{bucketsId}/views',
+        http_method=u'POST',
+        method_id=u'logging.locations.buckets.views.create',
+        ordered_params=[u'parent'],
+        path_params=[u'parent'],
+        query_params=[u'viewId'],
+        relative_path=u'v2/{+parent}/views',
+        request_field=u'logView',
+        request_type_name=u'LoggingLocationsBucketsViewsCreateRequest',
+        response_type_name=u'LogView',
+        supports_download=False,
+    )
+
+    def Delete(self, request, global_params=None):
+      r"""Deletes a view from a bucket.
+
+      Args:
+        request: (LoggingLocationsBucketsViewsDeleteRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Empty) The response message.
+      """
+      config = self.GetMethodConfig('Delete')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Delete.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v2/{v2Id}/{v2Id1}/locations/{locationsId}/buckets/{bucketsId}/views/{viewsId}',
+        http_method=u'DELETE',
+        method_id=u'logging.locations.buckets.views.delete',
+        ordered_params=[u'name'],
+        path_params=[u'name'],
+        query_params=[],
+        relative_path=u'v2/{+name}',
+        request_field='',
+        request_type_name=u'LoggingLocationsBucketsViewsDeleteRequest',
+        response_type_name=u'Empty',
+        supports_download=False,
+    )
+
+    def Get(self, request, global_params=None):
+      r"""Gets a view.
+
+      Args:
+        request: (LoggingLocationsBucketsViewsGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (LogView) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v2/{v2Id}/{v2Id1}/locations/{locationsId}/buckets/{bucketsId}/views/{viewsId}',
+        http_method=u'GET',
+        method_id=u'logging.locations.buckets.views.get',
+        ordered_params=[u'name'],
+        path_params=[u'name'],
+        query_params=[],
+        relative_path=u'v2/{+name}',
+        request_field='',
+        request_type_name=u'LoggingLocationsBucketsViewsGetRequest',
+        response_type_name=u'LogView',
+        supports_download=False,
+    )
+
+    def List(self, request, global_params=None):
+      r"""Lists views on a bucket..
+
+      Args:
+        request: (LoggingLocationsBucketsViewsListRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (ListViewsResponse) The response message.
+      """
+      config = self.GetMethodConfig('List')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v2/{v2Id}/{v2Id1}/locations/{locationsId}/buckets/{bucketsId}/views',
+        http_method=u'GET',
+        method_id=u'logging.locations.buckets.views.list',
+        ordered_params=[u'parent'],
+        path_params=[u'parent'],
+        query_params=[u'pageSize', u'pageToken'],
+        relative_path=u'v2/{+parent}/views',
+        request_field='',
+        request_type_name=u'LoggingLocationsBucketsViewsListRequest',
+        response_type_name=u'ListViewsResponse',
+        supports_download=False,
+    )
+
+    def Patch(self, request, global_params=None):
+      r"""Updates a view. This method replaces the following fields in the existing view with values from the new view: filter.
+
+      Args:
+        request: (LoggingLocationsBucketsViewsPatchRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (LogView) The response message.
+      """
+      config = self.GetMethodConfig('Patch')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Patch.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v2/{v2Id}/{v2Id1}/locations/{locationsId}/buckets/{bucketsId}/views/{viewsId}',
+        http_method=u'PATCH',
+        method_id=u'logging.locations.buckets.views.patch',
+        ordered_params=[u'name'],
+        path_params=[u'name'],
+        query_params=[u'updateMask'],
+        relative_path=u'v2/{+name}',
+        request_field=u'logView',
+        request_type_name=u'LoggingLocationsBucketsViewsPatchRequest',
+        response_type_name=u'LogView',
+        supports_download=False,
+    )
+
   class LocationsBucketsService(base_api.BaseApiService):
     """Service class for the locations_buckets resource."""
 
@@ -1508,7 +1922,7 @@ class LoggingV2(base_api.BaseApiClient):
     )
 
     def Delete(self, request, global_params=None):
-      r"""Deletes a bucket. All views and logs in the bucket are deleted. If the bucket is non-empty, FAILED_PRECONDITION will be returned. If the bucket has a sink in the same project pointing to it, FAILED_PRECONDITION will be returned.
+      r"""Deletes a bucket. All views and logs in the bucket are deleted. If the bucket is non-empty and locked, FAILED_PRECONDITION will be returned. If the bucket has a sink in the same project pointing to it, FAILED_PRECONDITION will be returned.
 
       Args:
         request: (LoggingLocationsBucketsDeleteRequest) input message
@@ -1534,6 +1948,114 @@ class LoggingV2(base_api.BaseApiClient):
         supports_download=False,
     )
 
+    def Get(self, request, global_params=None):
+      r"""Gets a bucket.
+
+      Args:
+        request: (LoggingLocationsBucketsGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (LogBucket) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v2/{v2Id}/{v2Id1}/locations/{locationsId}/buckets/{bucketsId}',
+        http_method=u'GET',
+        method_id=u'logging.locations.buckets.get',
+        ordered_params=[u'name'],
+        path_params=[u'name'],
+        query_params=[],
+        relative_path=u'v2/{+name}',
+        request_field='',
+        request_type_name=u'LoggingLocationsBucketsGetRequest',
+        response_type_name=u'LogBucket',
+        supports_download=False,
+    )
+
+    def List(self, request, global_params=None):
+      r"""Lists buckets.
+
+      Args:
+        request: (LoggingLocationsBucketsListRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (ListBucketsResponse) The response message.
+      """
+      config = self.GetMethodConfig('List')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v2/{v2Id}/{v2Id1}/locations/{locationsId}/buckets',
+        http_method=u'GET',
+        method_id=u'logging.locations.buckets.list',
+        ordered_params=[u'parent'],
+        path_params=[u'parent'],
+        query_params=[u'pageSize', u'pageToken'],
+        relative_path=u'v2/{+parent}/buckets',
+        request_field='',
+        request_type_name=u'LoggingLocationsBucketsListRequest',
+        response_type_name=u'ListBucketsResponse',
+        supports_download=False,
+    )
+
+    def Patch(self, request, global_params=None):
+      r"""Updates a bucket. This method replaces the following fields in the existing bucket with values from the new bucket: retention_periodIf the retention period is decreased and the bucket is locked, FAILED_PRECONDITION will be returned.If the bucket has a LifecycleState of DELETE_REQUESTED, FAILED_PRECONDITION will be returned.A buckets region may not be modified after it is created.
+
+      Args:
+        request: (LoggingLocationsBucketsPatchRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (LogBucket) The response message.
+      """
+      config = self.GetMethodConfig('Patch')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Patch.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v2/{v2Id}/{v2Id1}/locations/{locationsId}/buckets/{bucketsId}',
+        http_method=u'PATCH',
+        method_id=u'logging.locations.buckets.patch',
+        ordered_params=[u'name'],
+        path_params=[u'name'],
+        query_params=[u'updateMask'],
+        relative_path=u'v2/{+name}',
+        request_field=u'logBucket',
+        request_type_name=u'LoggingLocationsBucketsPatchRequest',
+        response_type_name=u'LogBucket',
+        supports_download=False,
+    )
+
+    def Undelete(self, request, global_params=None):
+      r"""Undeletes a bucket. A bucket that has been deleted may be undeleted within the grace period of 7 days.
+
+      Args:
+        request: (LoggingLocationsBucketsUndeleteRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Empty) The response message.
+      """
+      config = self.GetMethodConfig('Undelete')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Undelete.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v2/{v2Id}/{v2Id1}/locations/{locationsId}/buckets/{bucketsId}:undelete',
+        http_method=u'POST',
+        method_id=u'logging.locations.buckets.undelete',
+        ordered_params=[u'name'],
+        path_params=[u'name'],
+        query_params=[],
+        relative_path=u'v2/{+name}:undelete',
+        request_field=u'undeleteBucketRequest',
+        request_type_name=u'LoggingLocationsBucketsUndeleteRequest',
+        response_type_name=u'Empty',
+        supports_download=False,
+    )
+
   class LocationsService(base_api.BaseApiService):
     """Service class for the locations resource."""
 
@@ -1555,7 +2077,7 @@ class LoggingV2(base_api.BaseApiClient):
           }
 
     def Delete(self, request, global_params=None):
-      r"""Deletes all the log entries in a log. The log reappears if it receives new entries. Log entries written shortly before the delete operation might not be deleted.
+      r"""Deletes all the log entries in a log. The log reappears if it receives new entries. Log entries written shortly before the delete operation might not be deleted. Entries received after the delete operation with a timestamp before the operation will be deleted.
 
       Args:
         request: (LoggingLogsDeleteRequest) input message
@@ -1600,7 +2122,7 @@ class LoggingV2(base_api.BaseApiClient):
         method_id=u'logging.logs.list',
         ordered_params=[u'parent'],
         path_params=[u'parent'],
-        query_params=[u'pageSize', u'pageToken'],
+        query_params=[u'pageSize', u'pageToken', u'resourceNames'],
         relative_path=u'v2/{+parent}/logs',
         request_field='',
         request_type_name=u'LoggingLogsListRequest',
@@ -1789,6 +2311,151 @@ class LoggingV2(base_api.BaseApiClient):
         supports_download=False,
     )
 
+  class OrganizationsLocationsBucketsViewsService(base_api.BaseApiService):
+    """Service class for the organizations_locations_buckets_views resource."""
+
+    _NAME = u'organizations_locations_buckets_views'
+
+    def __init__(self, client):
+      super(LoggingV2.OrganizationsLocationsBucketsViewsService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Create(self, request, global_params=None):
+      r"""Creates a view over logs in a bucket. A bucket may contain a maximum of 50 views.
+
+      Args:
+        request: (LoggingOrganizationsLocationsBucketsViewsCreateRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (LogView) The response message.
+      """
+      config = self.GetMethodConfig('Create')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Create.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v2/organizations/{organizationsId}/locations/{locationsId}/buckets/{bucketsId}/views',
+        http_method=u'POST',
+        method_id=u'logging.organizations.locations.buckets.views.create',
+        ordered_params=[u'parent'],
+        path_params=[u'parent'],
+        query_params=[u'viewId'],
+        relative_path=u'v2/{+parent}/views',
+        request_field=u'logView',
+        request_type_name=u'LoggingOrganizationsLocationsBucketsViewsCreateRequest',
+        response_type_name=u'LogView',
+        supports_download=False,
+    )
+
+    def Delete(self, request, global_params=None):
+      r"""Deletes a view from a bucket.
+
+      Args:
+        request: (LoggingOrganizationsLocationsBucketsViewsDeleteRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Empty) The response message.
+      """
+      config = self.GetMethodConfig('Delete')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Delete.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v2/organizations/{organizationsId}/locations/{locationsId}/buckets/{bucketsId}/views/{viewsId}',
+        http_method=u'DELETE',
+        method_id=u'logging.organizations.locations.buckets.views.delete',
+        ordered_params=[u'name'],
+        path_params=[u'name'],
+        query_params=[],
+        relative_path=u'v2/{+name}',
+        request_field='',
+        request_type_name=u'LoggingOrganizationsLocationsBucketsViewsDeleteRequest',
+        response_type_name=u'Empty',
+        supports_download=False,
+    )
+
+    def Get(self, request, global_params=None):
+      r"""Gets a view.
+
+      Args:
+        request: (LoggingOrganizationsLocationsBucketsViewsGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (LogView) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v2/organizations/{organizationsId}/locations/{locationsId}/buckets/{bucketsId}/views/{viewsId}',
+        http_method=u'GET',
+        method_id=u'logging.organizations.locations.buckets.views.get',
+        ordered_params=[u'name'],
+        path_params=[u'name'],
+        query_params=[],
+        relative_path=u'v2/{+name}',
+        request_field='',
+        request_type_name=u'LoggingOrganizationsLocationsBucketsViewsGetRequest',
+        response_type_name=u'LogView',
+        supports_download=False,
+    )
+
+    def List(self, request, global_params=None):
+      r"""Lists views on a bucket..
+
+      Args:
+        request: (LoggingOrganizationsLocationsBucketsViewsListRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (ListViewsResponse) The response message.
+      """
+      config = self.GetMethodConfig('List')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v2/organizations/{organizationsId}/locations/{locationsId}/buckets/{bucketsId}/views',
+        http_method=u'GET',
+        method_id=u'logging.organizations.locations.buckets.views.list',
+        ordered_params=[u'parent'],
+        path_params=[u'parent'],
+        query_params=[u'pageSize', u'pageToken'],
+        relative_path=u'v2/{+parent}/views',
+        request_field='',
+        request_type_name=u'LoggingOrganizationsLocationsBucketsViewsListRequest',
+        response_type_name=u'ListViewsResponse',
+        supports_download=False,
+    )
+
+    def Patch(self, request, global_params=None):
+      r"""Updates a view. This method replaces the following fields in the existing view with values from the new view: filter.
+
+      Args:
+        request: (LoggingOrganizationsLocationsBucketsViewsPatchRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (LogView) The response message.
+      """
+      config = self.GetMethodConfig('Patch')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Patch.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v2/organizations/{organizationsId}/locations/{locationsId}/buckets/{bucketsId}/views/{viewsId}',
+        http_method=u'PATCH',
+        method_id=u'logging.organizations.locations.buckets.views.patch',
+        ordered_params=[u'name'],
+        path_params=[u'name'],
+        query_params=[u'updateMask'],
+        relative_path=u'v2/{+name}',
+        request_field=u'logView',
+        request_type_name=u'LoggingOrganizationsLocationsBucketsViewsPatchRequest',
+        response_type_name=u'LogView',
+        supports_download=False,
+    )
+
   class OrganizationsLocationsBucketsService(base_api.BaseApiService):
     """Service class for the organizations_locations_buckets resource."""
 
@@ -1827,7 +2494,7 @@ class LoggingV2(base_api.BaseApiClient):
     )
 
     def Delete(self, request, global_params=None):
-      r"""Deletes a bucket. All views and logs in the bucket are deleted. If the bucket is non-empty, FAILED_PRECONDITION will be returned. If the bucket has a sink in the same project pointing to it, FAILED_PRECONDITION will be returned.
+      r"""Deletes a bucket. All views and logs in the bucket are deleted. If the bucket is non-empty and locked, FAILED_PRECONDITION will be returned. If the bucket has a sink in the same project pointing to it, FAILED_PRECONDITION will be returned.
 
       Args:
         request: (LoggingOrganizationsLocationsBucketsDeleteRequest) input message
@@ -1908,7 +2575,7 @@ class LoggingV2(base_api.BaseApiClient):
     )
 
     def Patch(self, request, global_params=None):
-      r"""Updates a bucket. This method replaces the following fields in the existing bucket with values from the new bucket: retention_periodIf the retention period is decreased and the bucket is locked, FAILED_PRECONDITION will be returned.A buckets region may not be modified after it is created.
+      r"""Updates a bucket. This method replaces the following fields in the existing bucket with values from the new bucket: retention_periodIf the retention period is decreased and the bucket is locked, FAILED_PRECONDITION will be returned.If the bucket has a LifecycleState of DELETE_REQUESTED, FAILED_PRECONDITION will be returned.A buckets region may not be modified after it is created.
 
       Args:
         request: (LoggingOrganizationsLocationsBucketsPatchRequest) input message
@@ -1934,6 +2601,33 @@ class LoggingV2(base_api.BaseApiClient):
         supports_download=False,
     )
 
+    def Undelete(self, request, global_params=None):
+      r"""Undeletes a bucket. A bucket that has been deleted may be undeleted within the grace period of 7 days.
+
+      Args:
+        request: (LoggingOrganizationsLocationsBucketsUndeleteRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Empty) The response message.
+      """
+      config = self.GetMethodConfig('Undelete')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Undelete.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v2/organizations/{organizationsId}/locations/{locationsId}/buckets/{bucketsId}:undelete',
+        http_method=u'POST',
+        method_id=u'logging.organizations.locations.buckets.undelete',
+        ordered_params=[u'name'],
+        path_params=[u'name'],
+        query_params=[],
+        relative_path=u'v2/{+name}:undelete',
+        request_field=u'undeleteBucketRequest',
+        request_type_name=u'LoggingOrganizationsLocationsBucketsUndeleteRequest',
+        response_type_name=u'Empty',
+        supports_download=False,
+    )
+
   class OrganizationsLocationsService(base_api.BaseApiService):
     """Service class for the organizations_locations resource."""
 
@@ -1955,7 +2649,7 @@ class LoggingV2(base_api.BaseApiClient):
           }
 
     def Delete(self, request, global_params=None):
-      r"""Deletes all the log entries in a log. The log reappears if it receives new entries. Log entries written shortly before the delete operation might not be deleted.
+      r"""Deletes all the log entries in a log. The log reappears if it receives new entries. Log entries written shortly before the delete operation might not be deleted. Entries received after the delete operation with a timestamp before the operation will be deleted.
 
       Args:
         request: (LoggingOrganizationsLogsDeleteRequest) input message
@@ -2000,7 +2694,7 @@ class LoggingV2(base_api.BaseApiClient):
         method_id=u'logging.organizations.logs.list',
         ordered_params=[u'parent'],
         path_params=[u'parent'],
-        query_params=[u'pageSize', u'pageToken'],
+        query_params=[u'pageSize', u'pageToken', u'resourceNames'],
         relative_path=u'v2/{+parent}/logs',
         request_field='',
         request_type_name=u'LoggingOrganizationsLogsListRequest',
@@ -2190,6 +2884,60 @@ class LoggingV2(base_api.BaseApiClient):
       self._upload_configs = {
           }
 
+    def GetCmekSettings(self, request, global_params=None):
+      r"""Gets the Logs Router CMEK settings for the given resource.Note: CMEK for the Logs Router can currently only be configured for GCP organizations. Once configured, it applies to all projects and folders in the GCP organization.See Enabling CMEK for Logs Router for more information.
+
+      Args:
+        request: (LoggingOrganizationsGetCmekSettingsRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (CmekSettings) The response message.
+      """
+      config = self.GetMethodConfig('GetCmekSettings')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    GetCmekSettings.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v2/organizations/{organizationsId}/cmekSettings',
+        http_method=u'GET',
+        method_id=u'logging.organizations.getCmekSettings',
+        ordered_params=[u'name'],
+        path_params=[u'name'],
+        query_params=[],
+        relative_path=u'v2/{+name}/cmekSettings',
+        request_field='',
+        request_type_name=u'LoggingOrganizationsGetCmekSettingsRequest',
+        response_type_name=u'CmekSettings',
+        supports_download=False,
+    )
+
+    def UpdateCmekSettings(self, request, global_params=None):
+      r"""Updates the Logs Router CMEK settings for the given resource.Note: CMEK for the Logs Router can currently only be configured for GCP organizations. Once configured, it applies to all projects and folders in the GCP organization.UpdateCmekSettings will fail if 1) kms_key_name is invalid, or 2) the associated service account does not have the required roles/cloudkms.cryptoKeyEncrypterDecrypter role assigned for the key, or 3) access to the key is disabled.See Enabling CMEK for Logs Router for more information.
+
+      Args:
+        request: (LoggingOrganizationsUpdateCmekSettingsRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (CmekSettings) The response message.
+      """
+      config = self.GetMethodConfig('UpdateCmekSettings')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    UpdateCmekSettings.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v2/organizations/{organizationsId}/cmekSettings',
+        http_method=u'PATCH',
+        method_id=u'logging.organizations.updateCmekSettings',
+        ordered_params=[u'name'],
+        path_params=[u'name'],
+        query_params=[u'updateMask'],
+        relative_path=u'v2/{+name}/cmekSettings',
+        request_field=u'cmekSettings',
+        request_type_name=u'LoggingOrganizationsUpdateCmekSettingsRequest',
+        response_type_name=u'CmekSettings',
+        supports_download=False,
+    )
+
   class ProjectsExclusionsService(base_api.BaseApiService):
     """Service class for the projects_exclusions resource."""
 
@@ -2335,6 +3083,151 @@ class LoggingV2(base_api.BaseApiClient):
         supports_download=False,
     )
 
+  class ProjectsLocationsBucketsViewsService(base_api.BaseApiService):
+    """Service class for the projects_locations_buckets_views resource."""
+
+    _NAME = u'projects_locations_buckets_views'
+
+    def __init__(self, client):
+      super(LoggingV2.ProjectsLocationsBucketsViewsService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Create(self, request, global_params=None):
+      r"""Creates a view over logs in a bucket. A bucket may contain a maximum of 50 views.
+
+      Args:
+        request: (LoggingProjectsLocationsBucketsViewsCreateRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (LogView) The response message.
+      """
+      config = self.GetMethodConfig('Create')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Create.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v2/projects/{projectsId}/locations/{locationsId}/buckets/{bucketsId}/views',
+        http_method=u'POST',
+        method_id=u'logging.projects.locations.buckets.views.create',
+        ordered_params=[u'parent'],
+        path_params=[u'parent'],
+        query_params=[u'viewId'],
+        relative_path=u'v2/{+parent}/views',
+        request_field=u'logView',
+        request_type_name=u'LoggingProjectsLocationsBucketsViewsCreateRequest',
+        response_type_name=u'LogView',
+        supports_download=False,
+    )
+
+    def Delete(self, request, global_params=None):
+      r"""Deletes a view from a bucket.
+
+      Args:
+        request: (LoggingProjectsLocationsBucketsViewsDeleteRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Empty) The response message.
+      """
+      config = self.GetMethodConfig('Delete')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Delete.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v2/projects/{projectsId}/locations/{locationsId}/buckets/{bucketsId}/views/{viewsId}',
+        http_method=u'DELETE',
+        method_id=u'logging.projects.locations.buckets.views.delete',
+        ordered_params=[u'name'],
+        path_params=[u'name'],
+        query_params=[],
+        relative_path=u'v2/{+name}',
+        request_field='',
+        request_type_name=u'LoggingProjectsLocationsBucketsViewsDeleteRequest',
+        response_type_name=u'Empty',
+        supports_download=False,
+    )
+
+    def Get(self, request, global_params=None):
+      r"""Gets a view.
+
+      Args:
+        request: (LoggingProjectsLocationsBucketsViewsGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (LogView) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v2/projects/{projectsId}/locations/{locationsId}/buckets/{bucketsId}/views/{viewsId}',
+        http_method=u'GET',
+        method_id=u'logging.projects.locations.buckets.views.get',
+        ordered_params=[u'name'],
+        path_params=[u'name'],
+        query_params=[],
+        relative_path=u'v2/{+name}',
+        request_field='',
+        request_type_name=u'LoggingProjectsLocationsBucketsViewsGetRequest',
+        response_type_name=u'LogView',
+        supports_download=False,
+    )
+
+    def List(self, request, global_params=None):
+      r"""Lists views on a bucket..
+
+      Args:
+        request: (LoggingProjectsLocationsBucketsViewsListRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (ListViewsResponse) The response message.
+      """
+      config = self.GetMethodConfig('List')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v2/projects/{projectsId}/locations/{locationsId}/buckets/{bucketsId}/views',
+        http_method=u'GET',
+        method_id=u'logging.projects.locations.buckets.views.list',
+        ordered_params=[u'parent'],
+        path_params=[u'parent'],
+        query_params=[u'pageSize', u'pageToken'],
+        relative_path=u'v2/{+parent}/views',
+        request_field='',
+        request_type_name=u'LoggingProjectsLocationsBucketsViewsListRequest',
+        response_type_name=u'ListViewsResponse',
+        supports_download=False,
+    )
+
+    def Patch(self, request, global_params=None):
+      r"""Updates a view. This method replaces the following fields in the existing view with values from the new view: filter.
+
+      Args:
+        request: (LoggingProjectsLocationsBucketsViewsPatchRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (LogView) The response message.
+      """
+      config = self.GetMethodConfig('Patch')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Patch.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v2/projects/{projectsId}/locations/{locationsId}/buckets/{bucketsId}/views/{viewsId}',
+        http_method=u'PATCH',
+        method_id=u'logging.projects.locations.buckets.views.patch',
+        ordered_params=[u'name'],
+        path_params=[u'name'],
+        query_params=[u'updateMask'],
+        relative_path=u'v2/{+name}',
+        request_field=u'logView',
+        request_type_name=u'LoggingProjectsLocationsBucketsViewsPatchRequest',
+        response_type_name=u'LogView',
+        supports_download=False,
+    )
+
   class ProjectsLocationsBucketsService(base_api.BaseApiService):
     """Service class for the projects_locations_buckets resource."""
 
@@ -2373,7 +3266,7 @@ class LoggingV2(base_api.BaseApiClient):
     )
 
     def Delete(self, request, global_params=None):
-      r"""Deletes a bucket. All views and logs in the bucket are deleted. If the bucket is non-empty, FAILED_PRECONDITION will be returned. If the bucket has a sink in the same project pointing to it, FAILED_PRECONDITION will be returned.
+      r"""Deletes a bucket. All views and logs in the bucket are deleted. If the bucket is non-empty and locked, FAILED_PRECONDITION will be returned. If the bucket has a sink in the same project pointing to it, FAILED_PRECONDITION will be returned.
 
       Args:
         request: (LoggingProjectsLocationsBucketsDeleteRequest) input message
@@ -2454,7 +3347,7 @@ class LoggingV2(base_api.BaseApiClient):
     )
 
     def Patch(self, request, global_params=None):
-      r"""Updates a bucket. This method replaces the following fields in the existing bucket with values from the new bucket: retention_periodIf the retention period is decreased and the bucket is locked, FAILED_PRECONDITION will be returned.A buckets region may not be modified after it is created.
+      r"""Updates a bucket. This method replaces the following fields in the existing bucket with values from the new bucket: retention_periodIf the retention period is decreased and the bucket is locked, FAILED_PRECONDITION will be returned.If the bucket has a LifecycleState of DELETE_REQUESTED, FAILED_PRECONDITION will be returned.A buckets region may not be modified after it is created.
 
       Args:
         request: (LoggingProjectsLocationsBucketsPatchRequest) input message
@@ -2480,6 +3373,33 @@ class LoggingV2(base_api.BaseApiClient):
         supports_download=False,
     )
 
+    def Undelete(self, request, global_params=None):
+      r"""Undeletes a bucket. A bucket that has been deleted may be undeleted within the grace period of 7 days.
+
+      Args:
+        request: (LoggingProjectsLocationsBucketsUndeleteRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Empty) The response message.
+      """
+      config = self.GetMethodConfig('Undelete')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Undelete.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v2/projects/{projectsId}/locations/{locationsId}/buckets/{bucketsId}:undelete',
+        http_method=u'POST',
+        method_id=u'logging.projects.locations.buckets.undelete',
+        ordered_params=[u'name'],
+        path_params=[u'name'],
+        query_params=[],
+        relative_path=u'v2/{+name}:undelete',
+        request_field=u'undeleteBucketRequest',
+        request_type_name=u'LoggingProjectsLocationsBucketsUndeleteRequest',
+        response_type_name=u'Empty',
+        supports_download=False,
+    )
+
   class ProjectsLocationsService(base_api.BaseApiService):
     """Service class for the projects_locations resource."""
 
@@ -2501,7 +3421,7 @@ class LoggingV2(base_api.BaseApiClient):
           }
 
     def Delete(self, request, global_params=None):
-      r"""Deletes all the log entries in a log. The log reappears if it receives new entries. Log entries written shortly before the delete operation might not be deleted.
+      r"""Deletes all the log entries in a log. The log reappears if it receives new entries. Log entries written shortly before the delete operation might not be deleted. Entries received after the delete operation with a timestamp before the operation will be deleted.
 
       Args:
         request: (LoggingProjectsLogsDeleteRequest) input message
@@ -2546,7 +3466,7 @@ class LoggingV2(base_api.BaseApiClient):
         method_id=u'logging.projects.logs.list',
         ordered_params=[u'parent'],
         path_params=[u'parent'],
-        query_params=[u'pageSize', u'pageToken'],
+        query_params=[u'pageSize', u'pageToken', u'resourceNames'],
         relative_path=u'v2/{+parent}/logs',
         request_field='',
         request_type_name=u'LoggingProjectsLogsListRequest',
@@ -3023,5 +3943,69 @@ class LoggingV2(base_api.BaseApiClient):
         request_field=u'logSink',
         request_type_name=u'LoggingSinksUpdateRequest',
         response_type_name=u'LogSink',
+        supports_download=False,
+    )
+
+  class V2Service(base_api.BaseApiService):
+    """Service class for the v2 resource."""
+
+    _NAME = u'v2'
+
+    def __init__(self, client):
+      super(LoggingV2.V2Service, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def GetCmekSettings(self, request, global_params=None):
+      r"""Gets the Logs Router CMEK settings for the given resource.Note: CMEK for the Logs Router can currently only be configured for GCP organizations. Once configured, it applies to all projects and folders in the GCP organization.See Enabling CMEK for Logs Router for more information.
+
+      Args:
+        request: (LoggingGetCmekSettingsRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (CmekSettings) The response message.
+      """
+      config = self.GetMethodConfig('GetCmekSettings')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    GetCmekSettings.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v2/{v2Id}/{v2Id1}/cmekSettings',
+        http_method=u'GET',
+        method_id=u'logging.getCmekSettings',
+        ordered_params=[u'name'],
+        path_params=[u'name'],
+        query_params=[],
+        relative_path=u'v2/{+name}/cmekSettings',
+        request_field='',
+        request_type_name=u'LoggingGetCmekSettingsRequest',
+        response_type_name=u'CmekSettings',
+        supports_download=False,
+    )
+
+    def UpdateCmekSettings(self, request, global_params=None):
+      r"""Updates the Logs Router CMEK settings for the given resource.Note: CMEK for the Logs Router can currently only be configured for GCP organizations. Once configured, it applies to all projects and folders in the GCP organization.UpdateCmekSettings will fail if 1) kms_key_name is invalid, or 2) the associated service account does not have the required roles/cloudkms.cryptoKeyEncrypterDecrypter role assigned for the key, or 3) access to the key is disabled.See Enabling CMEK for Logs Router for more information.
+
+      Args:
+        request: (LoggingUpdateCmekSettingsRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (CmekSettings) The response message.
+      """
+      config = self.GetMethodConfig('UpdateCmekSettings')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    UpdateCmekSettings.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v2/{v2Id}/{v2Id1}/cmekSettings',
+        http_method=u'PATCH',
+        method_id=u'logging.updateCmekSettings',
+        ordered_params=[u'name'],
+        path_params=[u'name'],
+        query_params=[u'updateMask'],
+        relative_path=u'v2/{+name}/cmekSettings',
+        request_field=u'cmekSettings',
+        request_type_name=u'LoggingUpdateCmekSettingsRequest',
+        response_type_name=u'CmekSettings',
         supports_download=False,
     )

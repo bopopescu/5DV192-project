@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,6 +28,17 @@ from googlecloudsdk.core import properties
 @base.ReleaseTracks(base.ReleaseTrack.GA)
 class GetServerConfig(base.Command):
   """Get Kubernetes Engine server config."""
+
+  detailed_help = {
+      'DESCRIPTION':
+          '{description}',
+      'EXAMPLES':
+          """\
+          To get the Kubernetes Engine server configuration, run:
+
+            $ {command}
+          """,
+  }
 
   def __init__(self, *args, **kwargs):
     super(GetServerConfig, self).__init__(*args, **kwargs)

@@ -15,6 +15,9 @@
 """Additional help about CRC32C and installing crcmod."""
 
 from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import division
+from __future__ import unicode_literals
 
 from gslib.help_provider import HelpProvider
 
@@ -114,12 +117,12 @@ _DETAILED_HELP_TEXT = ("""
   gsutil. For example:
 
   - Windows filenames are case-insensitive, while Google Cloud Storage, Linux,
-    and MacOS are not. Thus, for example, if you have two filenames on Linux
+    and macOS are not. Thus, for example, if you have two filenames on Linux
     differing only in case and upload both to Google Cloud Storage and then
     subsequently download them to Windows, you will end up with just one file
     whose contents came from the last of these files to be written to the
     filesystem.
-  - Mac OS performs character encoding decomposition based on tables stored in
+  - macOS performs character encoding decomposition based on tables stored in
     the OS, and the tables change between Unicode versions. Thus the encoding
     used by an external library may not match that performed by the OS. It is
     possible that two object names may translate to a single local filename.
@@ -130,7 +133,7 @@ _DETAILED_HELP_TEXT = ("""
 
   These problems mostly arise when sharing data across platforms (e.g.,
   uploading data from a Windows machine to Google Cloud Storage, and then
-  downloading from Google Cloud Storage to a machine running MacOS).
+  downloading from Google Cloud Storage to a machine running macOS).
   Unfortunately these problems are a consequence of the lack of a filename
   encoding standard, and users need to be aware of the kinds of problems that
   can arise when copying filenames across platforms.
@@ -156,8 +159,14 @@ class CommandOptions(HelpProvider):
   # Help specification. See help_provider.py for documentation.
   help_spec = HelpProvider.HelpSpec(
       help_name='encoding',
-      help_name_aliases=['encodings', 'utf8', 'utf-8', 'latin1', 'unicode',
-                         'interoperability'],
+      help_name_aliases=[
+          'encodings',
+          'utf8',
+          'utf-8',
+          'latin1',
+          'unicode',
+          'interoperability',
+      ],
       help_type='additional_help',
       help_one_line_summary='Filename encoding and interoperability problems',
       help_text=_DETAILED_HELP_TEXT,

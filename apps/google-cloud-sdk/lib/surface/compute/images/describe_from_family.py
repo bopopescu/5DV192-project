@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -56,3 +56,22 @@ class DescribeFromFamily(base.DescribeCommand):
 
     return client.MakeRequests([(client.apitools_client.images, 'GetFromFamily',
                                  request)])[0]
+
+
+DescribeFromFamily.detailed_help = {
+    'brief':
+        'Describe the latest image from an image family.',
+    'DESCRIPTION':
+        """\
+        *{command}* looks up the latest image from an image family and runs a
+        describe on it. If the image is not in the default project, you need to
+        specify a value for `--project`.
+        """,
+    'EXAMPLES':
+        """\
+        To view the description for the latest ``debian-9'' image from the
+        ``debian-cloud'' project, run:
+
+          $ {command} debian-9 --project=debian-cloud
+        """,
+}

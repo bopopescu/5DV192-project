@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,10 +26,7 @@ from googlecloudsdk.command_lib.compute.images import flags
 
 
 class Delete(base.DeleteCommand):
-  """Delete Google Compute Engine images.
-
-  *{command}* deletes one or more Google Compute Engine images.
-  """
+  """Delete Google Compute Engine images."""
 
   @staticmethod
   def Args(parser):
@@ -55,3 +52,15 @@ class Delete(base.DeleteCommand):
                            **image_ref.AsDict())))
 
     return client.MakeRequests(requests)
+
+
+Delete.detailed_help = {
+    'DESCRIPTION':
+        '*{command}* deletes one or more Google Compute Engine images.',
+    'EXAMPLES':
+        """
+        To delete images 'my-image1' and 'my-image2', run:
+
+            $ {command} my-image1 my-image2
+        """,
+}

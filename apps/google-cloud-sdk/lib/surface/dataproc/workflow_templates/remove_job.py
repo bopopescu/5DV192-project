@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,23 +24,32 @@ from googlecloudsdk.command_lib.dataproc import flags
 from googlecloudsdk.core import log
 from googlecloudsdk.core.console import console_io
 
+DETAILED_HELP = {
+    'EXAMPLES':
+        """\
+      To remove a job with step ID 'step-id' from a workflow template
+      'workflow-template' in region 'us-central1', run:
 
-def _CommonArgs(parser):
-  parser.add_argument(
-      '--step-id',
-      metavar='STEP_ID',
-      type=str,
-      help='The step ID of the job in the workflow template to remove.')
+        $ {command} workflow-template --region=us-central1 --step-id=step-id
+      """,
+}
 
 
-@base.ReleaseTracks(base.ReleaseTrack.GA)
 class RemoveJob(base.UpdateCommand):
   """Remove a job from workflow template."""
 
-  @staticmethod
-  def Args(parser):
-    _CommonArgs(parser)
-    flags.AddTemplateResourceArg(parser, 'remove job', api_version='v1')
+  detailed_help = DETAILED_HELP
+
+  @classmethod
+  def Args(cls, parser):
+    dataproc = dp.Dataproc(cls.ReleaseTrack())
+    parser.add_argument(
+        '--step-id',
+        metavar='STEP_ID',
+        type=str,
+        help='The step ID of the job in the workflow template to remove.')
+    flags.AddTemplateResourceArg(
+        parser, 'remove job', api_version=dataproc.api_version)
 
   def Run(self, args):
     dataproc = dp.Dataproc(self.ReleaseTrack())
@@ -73,13 +82,3 @@ class RemoveJob(base.UpdateCommand):
     response = dataproc.client.projects_regions_workflowTemplates.Update(
         workflow_template)
     return response
-
-
-@base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA)
-class RemoveJobBeta(RemoveJob):
-  """Remove a job from workflow template."""
-
-  @staticmethod
-  def Args(parser):
-    _CommonArgs(parser)
-    flags.AddTemplateResourceArg(parser, 'remove job', api_version='v1beta2')

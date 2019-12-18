@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -59,9 +59,9 @@ class GetCredentials(base.Command):
   detailed_help = {
       'EXAMPLES':
           """\
-          To switch to working on your cluster 'testcluster1', run:
+          To switch to working on your cluster 'sample-cluster', run:
 
-            $ {command} testcluster1 --zone=us-central1-f
+            $ {command} sample-cluster --zone=us-central1-f
       """,
   }
 

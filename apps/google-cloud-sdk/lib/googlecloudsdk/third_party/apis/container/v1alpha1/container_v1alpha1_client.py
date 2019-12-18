@@ -59,7 +59,7 @@ class ContainerV1alpha1(base_api.BaseApiClient):
           }
 
     def List(self, request, global_params=None):
-      r"""Lists subnetworks that are usable for creating clusters in a project.
+      r"""Lists subnetworks that can be used for creating clusters in a project.
 
       Args:
         request: (ContainerProjectsAggregatedUsableSubnetworksListRequest) input message
@@ -160,7 +160,7 @@ class ContainerV1alpha1(base_api.BaseApiClient):
     )
 
     def Get(self, request, global_params=None):
-      r"""Retrieves the node pool requested.
+      r"""Retrieves the requested node pool.
 
       Args:
         request: (ContainerProjectsLocationsClustersNodePoolsGetRequest) input message
@@ -214,8 +214,8 @@ class ContainerV1alpha1(base_api.BaseApiClient):
     )
 
     def Rollback(self, request, global_params=None):
-      r"""Roll back the previously Aborted or Failed NodePool upgrade.
-This will be an no-op if the last upgrade successfully completed.
+      r"""Rolls back a previously Aborted or Failed NodePool upgrade.
+This makes no changes if the last upgrade successfully completed.
 
       Args:
         request: (RollbackNodePoolUpgradeRequest) input message
@@ -242,7 +242,7 @@ This will be an no-op if the last upgrade successfully completed.
     )
 
     def SetAutoscaling(self, request, global_params=None):
-      r"""Sets the autoscaling settings of a specific node pool.
+      r"""Sets the autoscaling settings of the specified node pool.
 
       Args:
         request: (SetNodePoolAutoscalingRequest) input message
@@ -323,7 +323,7 @@ This will be an no-op if the last upgrade successfully completed.
     )
 
     def Update(self, request, global_params=None):
-      r"""Updates the version and/or iamge type of a specific node pool.
+      r"""Updates the version and/or iamge type of the specified node pool.
 
       Args:
         request: (UpdateNodePoolRequest) input message
@@ -360,9 +360,11 @@ This will be an no-op if the last upgrade successfully completed.
           }
 
     def GetOpenid_configuration(self, request, global_params=None):
-      r"""GetOpenIDConfig gets the OIDC discovery document for the cluster.
-See the OpenID Connect Discovery 1.0 specification for details.
-https://openid.net/specs/openid-connect-discovery-1_0.html
+      r"""Gets the OIDC discovery document for the cluster.
+See the
+[OpenID Connect Discovery 1.0
+specification](https://openid.net/specs/openid-connect-discovery-1_0.html)
+for details.
 This API is not yet intended for general use, and is not available for all
 clusters.
 
@@ -435,12 +437,12 @@ By default, the cluster is created in the project's
 [default network](/compute/docs/networks-and-firewalls#networks).
 
 One firewall is added for the cluster. After cluster creation,
-the cluster creates routes for each node to allow the containers
+the kubelet creates routes for each node to allow the containers
 on that node to communicate with all other instances in the
 cluster.
 
 Finally, an entry is added to the project's global metadata indicating
-which CIDR range is being used by the cluster.
+which CIDR range the cluster is using.
 
       Args:
         request: (CreateClusterRequest) input message
@@ -473,9 +475,9 @@ nodes.
 Firewalls and routes that were configured during cluster creation
 are also deleted.
 
-Other Google Compute Engine resources that might be in use by the cluster
-(e.g. load balancer resources) will not be deleted if they weren't present
-at the initial create time.
+Other Google Compute Engine resources that might be in use by the cluster,
+such as load balancer resources, are not deleted if they weren't present
+when the cluster was initially created.
 
       Args:
         request: (ContainerProjectsLocationsClustersDeleteRequest) input message
@@ -529,7 +531,7 @@ at the initial create time.
     )
 
     def GetJwks(self, request, global_params=None):
-      r"""GetJSONWebKeys gets the public component of the cluster signing keys in.
+      r"""Gets the public component of the cluster signing keys in.
 JSON Web Key format.
 This API is not yet intended for general use, and is not available for all
 clusters.
@@ -722,9 +724,9 @@ zones.
     )
 
     def SetMasterAuth(self, request, global_params=None):
-      r"""Used to set master auth materials. Currently supports :-.
-Changing the admin password for a specific cluster.
-This can be either via password generation or explicitly set.
+      r"""Sets master auth materials. Currently supports changing the admin password.
+or a specific cluster, either via password generation or explicitly setting
+the password.
 Modify basic_auth.csv and reset the K8S API server.
 
       Args:
@@ -779,7 +781,7 @@ Modify basic_auth.csv and reset the K8S API server.
     )
 
     def SetNetworkPolicy(self, request, global_params=None):
-      r"""Enables/Disables Network Policy for a cluster.
+      r"""Enables or disables Network Policy for a cluster.
 
       Args:
         request: (SetNetworkPolicyRequest) input message
@@ -833,7 +835,7 @@ Modify basic_auth.csv and reset the K8S API server.
     )
 
     def StartIpRotation(self, request, global_params=None):
-      r"""Start master IP rotation.
+      r"""Starts master IP rotation.
 
       Args:
         request: (StartIPRotationRequest) input message
@@ -1015,7 +1017,7 @@ Modify basic_auth.csv and reset the K8S API server.
           }
 
     def GetServerConfig(self, request, global_params=None):
-      r"""Returns configuration info about the Kubernetes Engine service.
+      r"""Returns configuration info about the Google Kubernetes Engine service.
 
       Args:
         request: (ContainerProjectsLocationsGetServerConfigRequest) input message
@@ -1041,6 +1043,33 @@ Modify basic_auth.csv and reset the K8S API server.
         supports_download=False,
     )
 
+    def List(self, request, global_params=None):
+      r"""Fetches locations that offer Google Kubernetes Engine.
+
+      Args:
+        request: (ContainerProjectsLocationsListRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (ListLocationsResponse) The response message.
+      """
+      config = self.GetMethodConfig('List')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    List.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1alpha1/projects/{projectsId}/locations',
+        http_method=u'GET',
+        method_id=u'container.projects.locations.list',
+        ordered_params=[u'parent'],
+        path_params=[u'parent'],
+        query_params=[],
+        relative_path=u'v1alpha1/{+parent}/locations',
+        request_field='',
+        request_type_name=u'ContainerProjectsLocationsListRequest',
+        response_type_name=u'ListLocationsResponse',
+        supports_download=False,
+    )
+
   class ProjectsZonesClustersNodePoolsService(base_api.BaseApiService):
     """Service class for the projects_zones_clusters_nodePools resource."""
 
@@ -1052,7 +1081,7 @@ Modify basic_auth.csv and reset the K8S API server.
           }
 
     def Autoscaling(self, request, global_params=None):
-      r"""Sets the autoscaling settings of a specific node pool.
+      r"""Sets the autoscaling settings of the specified node pool.
 
       Args:
         request: (SetNodePoolAutoscalingRequest) input message
@@ -1130,7 +1159,7 @@ Modify basic_auth.csv and reset the K8S API server.
     )
 
     def Get(self, request, global_params=None):
-      r"""Retrieves the node pool requested.
+      r"""Retrieves the requested node pool.
 
       Args:
         request: (ContainerProjectsZonesClustersNodePoolsGetRequest) input message
@@ -1182,8 +1211,8 @@ Modify basic_auth.csv and reset the K8S API server.
     )
 
     def Rollback(self, request, global_params=None):
-      r"""Roll back the previously Aborted or Failed NodePool upgrade.
-This will be an no-op if the last upgrade successfully completed.
+      r"""Rolls back a previously Aborted or Failed NodePool upgrade.
+This makes no changes if the last upgrade successfully completed.
 
       Args:
         request: (RollbackNodePoolUpgradeRequest) input message
@@ -1261,7 +1290,7 @@ This will be an no-op if the last upgrade successfully completed.
     )
 
     def Update(self, request, global_params=None):
-      r"""Updates the version and/or iamge type of a specific node pool.
+      r"""Updates the version and/or iamge type of the specified node pool.
 
       Args:
         request: (UpdateNodePoolRequest) input message
@@ -1356,12 +1385,12 @@ By default, the cluster is created in the project's
 [default network](/compute/docs/networks-and-firewalls#networks).
 
 One firewall is added for the cluster. After cluster creation,
-the cluster creates routes for each node to allow the containers
+the kubelet creates routes for each node to allow the containers
 on that node to communicate with all other instances in the
 cluster.
 
 Finally, an entry is added to the project's global metadata indicating
-which CIDR range is being used by the cluster.
+which CIDR range the cluster is using.
 
       Args:
         request: (CreateClusterRequest) input message
@@ -1393,9 +1422,9 @@ nodes.
 Firewalls and routes that were configured during cluster creation
 are also deleted.
 
-Other Google Compute Engine resources that might be in use by the cluster
-(e.g. load balancer resources) will not be deleted if they weren't present
-at the initial create time.
+Other Google Compute Engine resources that might be in use by the cluster,
+such as load balancer resources, are not deleted if they weren't present
+when the cluster was initially created.
 
       Args:
         request: (ContainerProjectsZonesClustersDeleteRequest) input message
@@ -1656,9 +1685,9 @@ zones.
     )
 
     def SetMasterAuth(self, request, global_params=None):
-      r"""Used to set master auth materials. Currently supports :-.
-Changing the admin password for a specific cluster.
-This can be either via password generation or explicitly set.
+      r"""Sets master auth materials. Currently supports changing the admin password.
+or a specific cluster, either via password generation or explicitly setting
+the password.
 Modify basic_auth.csv and reset the K8S API server.
 
       Args:
@@ -1685,7 +1714,7 @@ Modify basic_auth.csv and reset the K8S API server.
     )
 
     def SetNetworkPolicy(self, request, global_params=None):
-      r"""Enables/Disables Network Policy for a cluster.
+      r"""Enables or disables Network Policy for a cluster.
 
       Args:
         request: (SetNetworkPolicyRequest) input message
@@ -1711,7 +1740,7 @@ Modify basic_auth.csv and reset the K8S API server.
     )
 
     def StartIpRotation(self, request, global_params=None):
-      r"""Start master IP rotation.
+      r"""Starts master IP rotation.
 
       Args:
         request: (StartIPRotationRequest) input message
@@ -1861,7 +1890,7 @@ Modify basic_auth.csv and reset the K8S API server.
           }
 
     def GetServerconfig(self, request, global_params=None):
-      r"""Returns configuration info about the Kubernetes Engine service.
+      r"""Returns configuration info about the Google Kubernetes Engine service.
 
       Args:
         request: (ContainerProjectsZonesGetServerconfigRequest) input message
@@ -1895,97 +1924,3 @@ Modify basic_auth.csv and reset the K8S API server.
       super(ContainerV1alpha1.ProjectsService, self).__init__(client)
       self._upload_configs = {
           }
-
-    def GetIamPolicy(self, request, global_params=None):
-      r"""Gets the access control policy for a resource. Returns NOT_FOUND error if.
-the resource does not exist. Returns an empty policy if the resource exists
-but does not have a policy set.
-
-Authorization requires the Google IAM permission
-`container.clusters.getIamPolicy` on the specified resource.
-
-      Args:
-        request: (ContainerProjectsGetIamPolicyRequest) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-      Returns:
-        (GoogleIamV1Policy) The response message.
-      """
-      config = self.GetMethodConfig('GetIamPolicy')
-      return self._RunMethod(
-          config, request, global_params=global_params)
-
-    GetIamPolicy.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path=u'v1alpha1/projects/{projectsId}:getIamPolicy',
-        http_method=u'POST',
-        method_id=u'container.projects.getIamPolicy',
-        ordered_params=[u'resource'],
-        path_params=[u'resource'],
-        query_params=[],
-        relative_path=u'v1alpha1/{+resource}:getIamPolicy',
-        request_field=u'googleIamV1GetIamPolicyRequest',
-        request_type_name=u'ContainerProjectsGetIamPolicyRequest',
-        response_type_name=u'GoogleIamV1Policy',
-        supports_download=False,
-    )
-
-    def SetIamPolicy(self, request, global_params=None):
-      r"""Sets the access control policy for a resource. Replaces any existing.
-policy.
-
-Authorization requires the Google IAM permission
-'container.clusters.setIamPolicy' on the specified resource.
-
-      Args:
-        request: (ContainerProjectsSetIamPolicyRequest) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-      Returns:
-        (GoogleIamV1Policy) The response message.
-      """
-      config = self.GetMethodConfig('SetIamPolicy')
-      return self._RunMethod(
-          config, request, global_params=global_params)
-
-    SetIamPolicy.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path=u'v1alpha1/projects/{projectsId}:setIamPolicy',
-        http_method=u'POST',
-        method_id=u'container.projects.setIamPolicy',
-        ordered_params=[u'resource'],
-        path_params=[u'resource'],
-        query_params=[],
-        relative_path=u'v1alpha1/{+resource}:setIamPolicy',
-        request_field=u'googleIamV1SetIamPolicyRequest',
-        request_type_name=u'ContainerProjectsSetIamPolicyRequest',
-        response_type_name=u'GoogleIamV1Policy',
-        supports_download=False,
-    )
-
-    def TestIamPermissions(self, request, global_params=None):
-      r"""Returns permissions that a caller has on the specified resource.
-If the resource does not exist, this will return an empty set of
-permissions, not a NOT_FOUND error.
-
-There is no permission required to make this API call.
-
-      Args:
-        request: (ContainerProjectsTestIamPermissionsRequest) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-      Returns:
-        (GoogleIamV1TestIamPermissionsResponse) The response message.
-      """
-      config = self.GetMethodConfig('TestIamPermissions')
-      return self._RunMethod(
-          config, request, global_params=global_params)
-
-    TestIamPermissions.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path=u'v1alpha1/projects/{projectsId}:testIamPermissions',
-        http_method=u'POST',
-        method_id=u'container.projects.testIamPermissions',
-        ordered_params=[u'resource'],
-        path_params=[u'resource'],
-        query_params=[],
-        relative_path=u'v1alpha1/{+resource}:testIamPermissions',
-        request_field=u'googleIamV1TestIamPermissionsRequest',
-        request_type_name=u'ContainerProjectsTestIamPermissionsRequest',
-        response_type_name=u'GoogleIamV1TestIamPermissionsResponse',
-        supports_download=False,
-    )

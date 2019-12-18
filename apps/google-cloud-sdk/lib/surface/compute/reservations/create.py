@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2019 Google Inc. All Rights Reserved.
+# Copyright 2019 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@ from __future__ import unicode_literals
 from googlecloudsdk.api_lib.compute import base_classes
 from googlecloudsdk.calliope import base
 from googlecloudsdk.command_lib.compute import flags as compute_flags
-from googlecloudsdk.command_lib.compute.allocations import resource_args
 from googlecloudsdk.command_lib.compute.reservations import flags
+from googlecloudsdk.command_lib.compute.reservations import resource_args
 from googlecloudsdk.command_lib.compute.reservations import util
 
 
@@ -49,12 +49,24 @@ class Create(base.CreateCommand):
     create_request = self._MakeCreateRequest(args, messages, project,
                                              reservation_ref)
 
-    service = holder.client.apitools_client.allocations
+    service = holder.client.apitools_client.reservations
     return holder.client.MakeRequests([(service, 'Insert', create_request)])
 
   def _MakeCreateRequest(self, args, messages, project, reservation_ref):
-    allocation = util.MakeAllocationMessageFromArgs(messages, args,
-                                                    reservation_ref)
-    allocation.description = args.description
-    return messages.ComputeAllocationsInsertRequest(
-        allocation=allocation, project=project, zone=reservation_ref.zone)
+    reservation = util.MakeReservationMessageFromArgs(messages, args,
+                                                      reservation_ref)
+    reservation.description = args.description
+    return messages.ComputeReservationsInsertRequest(
+        reservation=reservation, project=project, zone=reservation_ref.zone)
+
+
+Create.detailed_help = {
+    'brief':
+        'Create a Compute Engine reservation.',
+    'EXAMPLES':
+        """
+        To create a Compute Engine reservation, run:
+
+            $ {command} my-reservation --zone=fake-zone --vm-count=1 --machine-type=n1-standard-1 --min-cpu-platform="Intel Haswell"
+        """
+}

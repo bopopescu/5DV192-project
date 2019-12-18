@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2013 Google Inc. All Rights Reserved.
+# Copyright 2013 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import subprocess
 import sys
 import time
 
+from googlecloudsdk.core import argv_utils
 from googlecloudsdk.core import config
 from googlecloudsdk.core import exceptions
 from googlecloudsdk.core import log
@@ -138,6 +139,7 @@ def _GetToolEnv(env=None):
   """
   if env is None:
     env = dict(os.environ)
+  env = encoding.EncodeEnv(env)
   encoding.SetEncodedValue(env, 'CLOUDSDK_WRAPPER', '1')
 
   # Flags can set properties which override the properties file and the existing
@@ -220,7 +222,7 @@ def ArgsForGcloud():
   if not sys.executable:
     # In hermetic par/stub files sys.executable is None. In regular installs,
     # and in classic par/stub files it is a non-empty string.
-    return _GetToolArgs(None, None, sys.argv[0])
+    return _GetToolArgs(None, None, argv_utils.GetDecodedArgv()[0])
   return ArgsForPythonTool(config.GcloudPath())
 
 
@@ -300,7 +302,7 @@ def Exec(args,
   # started and the original is killed.  When running in a shell, the prompt
   # returns as soon as the parent is killed even though the child is still
   # running.  subprocess waits for the new process to finish before returning.
-  env = encoding.EncodeEnv(_GetToolEnv(env=env))
+  env = _GetToolEnv(env=env)
 
   process_holder = _ProcessHolder()
   with _ReplaceSignal(signal.SIGTERM, process_holder.Handler):
@@ -416,7 +418,7 @@ def KillSubprocess(p):
   if platforms.OperatingSystem.Current() == platforms.OperatingSystem.WINDOWS:
     # Consume stdout so it doesn't show in the shell
     taskkill_process = subprocess.Popen(
-        ['taskkill', '/F', '/T', '/PID', str(p.pid)],
+        ['taskkill', '/F', '/T', '/PID', six.text_type(p.pid)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
     (stdout, stderr) = taskkill_process.communicate()
@@ -433,7 +435,7 @@ def KillSubprocess(p):
     # subprocesses from the main process down
 
     # set env LANG for subprocess.Popen to be 'en_US.UTF-8'
-    new_env = dict(os.environ)
+    new_env = encoding.EncodeEnv(dict(os.environ))
     new_env['LANG'] = 'en_US.UTF-8'
     get_pids_process = subprocess.Popen(['ps', '-e',
                                          '-o', 'ppid=', '-o', 'pid='],
@@ -449,7 +451,7 @@ def KillSubprocess(p):
     # Create the process map
     pid_map = {}
     for line in stdout.strip().split('\n'):
-      (ppid, pid) = re.match(r'\s*(\d+)\s+(\d+)', line).groups()  # pytype: disable=attribute-error
+      (ppid, pid) = re.match(r'\s*(\d+)\s+(\d+)', line).groups()
       ppid = int(ppid)
       pid = int(pid)
       children = pid_map.get(ppid)

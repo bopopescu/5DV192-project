@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2013 Google Inc. All Rights Reserved.
+# Copyright 2013 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ from __future__ import unicode_literals
 
 from googlecloudsdk.core import log
 from googlecloudsdk.core.util import pkg_resources
-from googlecloudsdk.core.util import platforms
 
 from oauth2client import client
 from oauth2client import tools
@@ -33,7 +32,7 @@ from six.moves.http_client import ResponseNotReady
 
 try:
   # pylint:disable=g-import-not-at-top
-  from urlparse import parse_qsl
+  from six.moves.urllib.parse import parse_qsl
 except ImportError:
   # pylint:disable=g-import-not-at-top
   from cgi import parse_qsl
@@ -67,7 +66,7 @@ class ClientRedirectHandler(tools.ClientRedirectHandler):
     if an error occurred.
     """
     self.send_response(200)
-    self.send_header('Content-type', 'text/html')  # pytype: disable=wrong-arg-types
+    self.send_header('Content-type', 'text/html')
     self.end_headers()
     query = self.path.split('?', 1)[-1]
     query = dict(parse_qsl(query))
@@ -130,18 +129,6 @@ def Run(flow, launch_browser=True, http=None,
       flow.redirect_uri = ('http://%s:%s/' % (auth_host_name, port_number))
 
       authorize_url = flow.step1_get_authorize_url()
-      # Without this, Chrome on MacOS will not launch unless Chrome
-      # is already open. This is due to an bug in webbbrowser.py that tries to
-      # open web browsers by app name using i.e. 'Chrome' but the actual app
-      # name is 'Google Chrome' on Mac.
-      if platforms.OperatingSystem.MACOSX == platforms.OperatingSystem.Current(
-      ):
-        try:
-          webbrowser.register('Google Chrome', None,
-                              webbrowser.MacOSXOSAScript('Google Chrome'), -1)
-        except AttributeError:  # If MacOSXOSAScript not defined on module,
-          pass                  # proceed with default behavior
-
       webbrowser.open(authorize_url, new=1, autoraise=True)
       message = 'Your browser has been opened to visit:'
       log.err.Print('{message}\n\n    {url}\n\n'.format(

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,12 +24,15 @@ import time
 import uuid
 from apitools.base.py import encoding
 from apitools.base.py import exceptions as apitools_exceptions
+
 from googlecloudsdk.api_lib.dataproc import exceptions
 from googlecloudsdk.api_lib.dataproc import storage_helpers
 from googlecloudsdk.calliope import arg_parsers
+from googlecloudsdk.calliope import base
 from googlecloudsdk.command_lib.export import util as export_util
 from googlecloudsdk.core import log
 from googlecloudsdk.core import properties
+from googlecloudsdk.core import yaml_validator
 from googlecloudsdk.core.console import console_attr
 from googlecloudsdk.core.console import console_io
 from googlecloudsdk.core.console import progress_tracker
@@ -322,8 +325,10 @@ class NoOpProgressDisplay(object):
 
 def WaitForJobTermination(dataproc,
                           job,
+                          job_ref,
                           message,
                           goal_state,
+                          error_state=None,
                           stream_driver_log=False,
                           log_poll_period_s=1,
                           dataproc_poll_period_s=10,
@@ -331,10 +336,13 @@ def WaitForJobTermination(dataproc,
   """Poll dataproc Job until its status is terminal or timeout reached.
 
   Args:
-    dataproc: wrapper for datarpoc resources, client and messages
+    dataproc: wrapper for dataproc resources, client and messages
     job: The job to wait to finish.
+    job_ref: Parsed dataproc.projects.regions.jobs resource containing a
+        projectId, region, and jobId.
     message: str, message to display to user while polling.
     goal_state: JobStatus.StateValueValuesEnum, the state to define success
+    error_state: JobStatus.StateValueValuesEnum, the state to define failure
     stream_driver_log: bool, Whether to show the Job's driver's output.
     log_poll_period_s: number, delay in seconds between checking on the log.
     dataproc_poll_period_s: number, delay in seconds between requests to
@@ -342,13 +350,11 @@ def WaitForJobTermination(dataproc,
     timeout_s: number, time out for job completion. None means no timeout.
 
   Returns:
-    Operation: the return value of the last successful operations.get
-    request.
+    Job: the return value of the last successful jobs.get request.
 
   Raises:
-    OperationError: if the operation times out or finishes with an error.
+    JobError: if the job finishes with an error.
   """
-  job_ref = ParseJob(job.reference.jobId, dataproc)
   request = dataproc.messages.DataprocProjectsRegionsJobsGetRequest(
       projectId=job_ref.projectId, region=job_ref.region, jobId=job_ref.jobId)
   driver_log_stream = None
@@ -400,7 +406,7 @@ def WaitForJobTermination(dataproc,
         try:
           job = dataproc.client.projects_regions_jobs.Get(request)
         except apitools_exceptions.HttpError as error:
-          log.warning('GetJob failed:\n{}'.format(str(error)))
+          log.warning('GetJob failed:\n{}'.format(six.text_type(error)))
           # Do not retry on 4xx errors.
           if IsClientHttpException(error):
             raise
@@ -418,10 +424,8 @@ def WaitForJobTermination(dataproc,
 
   # TODO(b/34836493): Get better test coverage of the next 20 lines.
   state = job.status.state
-  if state is not goal_state and job.status.details:
-    # Just log details, because the state will be in the error message.
-    log.info(job.status.details)
 
+  # goal_state and error_state will always be terminal
   if state in dataproc.terminal_job_states:
     if stream_driver_log:
       if not driver_log_stream:
@@ -430,6 +434,14 @@ def WaitForJobTermination(dataproc,
         log.warning('Job terminated, but output did not finish streaming.')
     if state is goal_state:
       return job
+    if error_state and state is error_state:
+      if job.status.details:
+        raise exceptions.JobError(
+            'Job [{0}] failed with error:\n{1}'.format(
+                job_ref.jobId, job.status.details))
+      raise exceptions.JobError('Job [{0}] failed.'.format(job_ref.jobId))
+    if job.status.details:
+      log.info('Details:\n' + job.status.details)
     raise exceptions.JobError(
         'Job [{0}] entered state [{1}] while waiting for [{2}].'.format(
             job_ref.jobId, state, goal_state))
@@ -437,40 +449,57 @@ def WaitForJobTermination(dataproc,
       'Job [{0}] timed out while in state [{1}].'.format(job_ref.jobId, state))
 
 
+# TODO(b/137899555): Remove and hard fail
+def ReturnDefaultRegionAndWarn():
+  log.warning('Dataproc --region flag will become required in January 2020. '
+              'Please either specify this flag, or set default by running '
+              "'gcloud config set dataproc/region <your-default-region>'")
+  return 'global'
+
+
+# This replicates the fallthrough logic of flags._RegionAttributeConfig.
+# It is necessary in cases like the --region flag where we are not parsing
+# ResourceSpecs
+def ResolveRegion(release_track):
+  region_prop = properties.VALUES.dataproc.region
+  if (release_track == base.ReleaseTrack.GA and
+      not region_prop.IsExplicitlySet()):
+    return ReturnDefaultRegionAndWarn()
+  else:
+    # Enforce flag or default value is required.
+    return region_prop.GetOrFail()
+
+
+# You probably want to use flags.AddClusterResourceArgument instead.
+# If calling this method, you *must* have called flags.AddRegionFlag first to
+# ensure a --region flag is stored into properties, which ResolveRegion
+# depends on. This is also mutually incompatible with any usage of args.CONCEPTS
+# which use --region as a resource attribute.
 def ParseCluster(name, dataproc):
-  """Parse Cluster name, ID, or URL into Cloud SDK reference."""
   ref = dataproc.resources.Parse(
       name,
       params={
-          'region': properties.VALUES.dataproc.region.GetOrFail,
+          'region': lambda: ResolveRegion(dataproc.release_track),
           'projectId': properties.VALUES.core.project.GetOrFail
       },
       collection='dataproc.projects.regions.clusters')
   return ref
 
 
+# You probably want to use flags.AddJobResourceArgument instead.
+# If calling this method, you *must* have called flags.AddRegionFlag first to
+# ensure a --region flag is stored into properties, which ResolveRegion
+# depends on. This is also mutually incompatible with any usage of args.CONCEPTS
+# which use --region as a resource attribute.
 def ParseJob(job_id, dataproc):
-  """Parse Job name, ID, or URL into Cloud SDK reference."""
   ref = dataproc.resources.Parse(
       job_id,
       params={
-          'region': properties.VALUES.dataproc.region.GetOrFail,
+          'region': lambda: ResolveRegion(dataproc.release_track),
           'projectId': properties.VALUES.core.project.GetOrFail
       },
       collection='dataproc.projects.regions.jobs')
   return ref
-
-
-def ParseOperation(operation, dataproc):
-  """Parse Operation name, ID, or URL into Cloud SDK reference."""
-  collection = 'dataproc.projects.regions.operations'
-  return dataproc.resources.Parse(
-      operation,
-      params={
-          'regionsId': properties.VALUES.dataproc.region.GetOrFail,
-          'projectsId': properties.VALUES.core.project.GetOrFail
-      },
-      collection=collection)
 
 
 def ParseOperationJsonMetadata(metadata_value, metadata_type):
@@ -481,27 +510,13 @@ def ParseOperationJsonMetadata(metadata_value, metadata_type):
                                 encoding.MessageToJson(metadata_value))
 
 
-def ParseWorkflowTemplates(template,
-                           dataproc,
-                           region=properties.VALUES.dataproc.region.GetOrFail):
-  """Returns a workflow template reference given name, ID or URL."""
-  # TODO(b/65845794): make caller to pass in region explicitly
-  ref = dataproc.resources.Parse(
-      template,
-      params={
-          'regionsId': region,
-          'projectsId': properties.VALUES.core.project.GetOrFail
-      },
-      collection='dataproc.projects.regions.workflowTemplates')
-  return ref
-
-
+# Used in bizarre scenarios where we want a qualified region rather than a
+# short name
 def ParseRegion(dataproc):
-  """Returns a region reference given name, ID or URL."""
   ref = dataproc.resources.Parse(
       None,
       params={
-          'regionId': properties.VALUES.dataproc.region.GetOrFail,
+          'regionId': lambda: ResolveRegion(dataproc.release_track),
           'projectId': properties.VALUES.core.project.GetOrFail
       },
       collection='dataproc.projects.regions')
@@ -528,10 +543,14 @@ def ReadAutoscalingPolicy(dataproc, policy_id, policy_file_name=None):
   data = console_io.ReadFromFileOrStdin(policy_file_name or '-', binary=False)
   schema_path = export_util.GetSchemaPath(
       'dataproc', dataproc.api_version, 'AutoscalingPolicy', for_help=False)
-  policy = export_util.Import(
-      message_type=dataproc.messages.AutoscalingPolicy,
-      stream=data,
-      schema_path=schema_path)
+
+  try:
+    policy = export_util.Import(
+        message_type=dataproc.messages.AutoscalingPolicy,
+        stream=data,
+        schema_path=schema_path)
+  except yaml_validator.ValidationError as e:
+    raise exceptions.ValidationError(e.message)
 
   # Ignore user set id in the file (if any), and overwrite with the policy_ref
   # provided with this command
@@ -542,12 +561,14 @@ def ReadAutoscalingPolicy(dataproc, policy_id, policy_file_name=None):
   policy.name = None
 
   # Set duration fields to their seconds values
-  policy.basicAlgorithm.cooldownPeriod = str(
-      arg_parsers.Duration(lower_bound='2m', upper_bound='1d')(
-          policy.basicAlgorithm.cooldownPeriod)) + 's'
-  policy.basicAlgorithm.yarnConfig.gracefulDecommissionTimeout = str(
-      arg_parsers.Duration(lower_bound='0s', upper_bound='1d')(
-          policy.basicAlgorithm.yarnConfig.gracefulDecommissionTimeout)) + 's'
+  if policy.basicAlgorithm.cooldownPeriod is not None:
+    policy.basicAlgorithm.cooldownPeriod = str(
+        arg_parsers.Duration(lower_bound='2m', upper_bound='1d')(
+            policy.basicAlgorithm.cooldownPeriod)) + 's'
+  if policy.basicAlgorithm.yarnConfig.gracefulDecommissionTimeout is not None:
+    policy.basicAlgorithm.yarnConfig.gracefulDecommissionTimeout = str(
+        arg_parsers.Duration(lower_bound='0s', upper_bound='1d')(
+            policy.basicAlgorithm.yarnConfig.gracefulDecommissionTimeout)) + 's'
 
   return policy
 

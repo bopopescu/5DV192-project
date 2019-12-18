@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2016 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -48,14 +48,13 @@ def GetIndexArg():
   def _OrderToEnum(order):
     return arg_utils.ChoiceToEnum(
         order,
-        messages.GoogleFirestoreAdminV1beta2IndexField.OrderValueValuesEnum,
+        messages.GoogleFirestoreAdminV1IndexField.OrderValueValuesEnum,
         valid_choices=['ascending', 'descending'])
 
   def _ArrayConfigToEnum(array_config):
     return arg_utils.ChoiceToEnum(
         array_config,
-        (messages.GoogleFirestoreAdminV1beta2IndexField.
-         ArrayConfigValueValuesEnum),
+        (messages.GoogleFirestoreAdminV1IndexField.ArrayConfigValueValuesEnum),
         valid_choices=['contains'])
 
   spec = {'order': _OrderToEnum,
@@ -65,12 +64,7 @@ An index for the field.
 
 This flag can be repeated to provide multiple indexes. Any existing indexes will
 be overwritten with the ones provided. Any omitted indexes will be deleted if
-they currently exist. For example, to explicitly set the list of indexes for the
-*tags* field in the *Events* collection group to *[ascending, contains]*, run:
-
-  $ {command} tags \\
-      --collection-group=Events \\
-      --index order=ascending --index array-config=contains
+they currently exist.
 
 The following keys are allowed:
 

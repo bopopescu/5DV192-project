@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2016 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -142,8 +142,13 @@ def AddIpVersionGroup(parser):
       choices=['IPV4', 'IPV6'],
       type=lambda x: x.upper(),
       help="""\
-      The version of the IP address to be allocated and reserved if
-      --addresses is not used.  The default is IPv4.
+      Version of the IP address to be allocated and reserved.
+      The default is IPV4.
+
+      IP version can only be specified for global addresses that are generated
+      automatically (i.e., along with
+      the `--global` flag, given `--addresses` is not specified) and if the
+      `--network-tier` is `PREMIUM`.
       """)
 
 
@@ -171,14 +176,23 @@ def AddNetworkTier(parser):
       help="""\
       The network tier to assign to the reserved IP addresses. ``NETWORK_TIER''
       must be one of: `PREMIUM`, `STANDARD`. The default value is `PREMIUM`.
+
+      While regional external addresses (`--region` specified, `--subnet`
+      omitted) can use either `PREMIUM` or `STANDARD`, global external
+      addresses (`--global` specified, `--subnet` omitted) can only use
+      `PREMIUM`. Internal addresses can only use `PREMIUM`.
       """)
 
 
-def AddPurpose(parser):
+def AddPurpose(parser, support_shared_loadbalancer_vip):
   """Adds purpose flag."""
+  if support_shared_loadbalancer_vip:
+    choices = ['VPC_PEERING', 'SHARED_LOADBALANCER_VIP', 'GCE_ENDPOINT']
+  else:
+    choices = ['VPC_PEERING', 'GCE_ENDPOINT']
   parser.add_argument(
       '--purpose',
-      choices=['VPC_PEERING', 'GCE_ENDPOINT'],
+      choices=choices,
       type=lambda x: x.upper(),
       help="""\
       The purpose of the address resource. This field is not applicable to

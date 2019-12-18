@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,6 +26,17 @@ from surface.container.clusters.upgrade import VersionVerifier
 
 class Describe(base.DescribeCommand):
   """Describe an existing cluster for running containers."""
+
+  detailed_help = {
+      'DESCRIPTION':
+          '{description}',
+      'EXAMPLES':
+          """\
+          To describe an existing cluster, run:
+
+            $ {command} sample-cluster
+          """,
+  }
 
   @staticmethod
   def Args(parser):

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ from googlecloudsdk.core import resources
 @base.ReleaseTracks(base.ReleaseTrack.GA)
 class Update(base.UpdateCommand):
   """Update a NAT on a Google Compute Engine router."""
-  with_logging = False
 
   @classmethod
   def Args(cls, parser):
@@ -46,7 +45,8 @@ class Update(base.UpdateCommand):
 
     nats_flags.AddNatNameArg(parser, operation_type='create')
     nats_flags.AddCommonNatArgs(
-        parser, for_create=False, with_logging=cls.with_logging)
+        parser,
+        for_create=False)
 
   def Run(self, args):
     holder = base_classes.ComputeApiHolder(self.ReleaseTrack())
@@ -60,8 +60,7 @@ class Update(base.UpdateCommand):
 
     # Retrieve specified NAT and update base fields.
     existing_nat = nats_utils.FindNatOrRaise(replacement, args.name)
-    nat = nats_utils.UpdateNatMessage(
-        existing_nat, args, holder, with_logging=self.with_logging)
+    nat = nats_utils.UpdateNatMessage(existing_nat, args, holder)
 
     cleared_fields = []
     if args.clear_min_ports_per_vm:
@@ -92,7 +91,7 @@ class Update(base.UpdateCommand):
             'region': router_ref.region,
         })
 
-    if args.async:
+    if args.async_:
       log.UpdatedResource(
           operation_ref,
           kind='nat [{0}] in router [{1}]'.format(nat.name, router_ref.Name()),
@@ -116,11 +115,9 @@ class Update(base.UpdateCommand):
             nat.name, router_ref.Name()))
 
 
-@base.ReleaseTracks(base.ReleaseTrack.BETA, base.ReleaseTrack.ALPHA)
-class UpdateBeta(Update):
+@base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA)
+class UpdateAlpha(Update):
   """Update a NAT on a Google Compute Engine router."""
-
-  with_logging = True
 
 
 Update.detailed_help = {
@@ -138,7 +135,7 @@ Update.detailed_help = {
 
         Change minimum default ports allocated per VM associated with NAT:
 
-          $ {command} nat1 --router=my-router --min-default-ports-per-vm=128
+          $ {command} nat1 --router=my-router --min-ports-per-vm=128
 
         Change connection timeouts associated with NAT:
 

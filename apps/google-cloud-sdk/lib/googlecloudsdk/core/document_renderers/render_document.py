@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import argparse
 import re
 import sys
 
+from googlecloudsdk.core import argv_utils
 from googlecloudsdk.core import exceptions
 from googlecloudsdk.core.document_renderers import devsite_renderer
 from googlecloudsdk.core.document_renderers import html_renderer
@@ -942,4 +943,4 @@ def main(argv):
 
 
 if __name__ == '__main__':
-  main(sys.argv)
+  main(argv_utils.GetDecodedArgv())

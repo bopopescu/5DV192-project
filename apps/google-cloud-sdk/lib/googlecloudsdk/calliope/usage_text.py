@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2013 Google Inc. All Rights Reserved.
+# Copyright 2013 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -282,7 +282,7 @@ def GetArgDetails(arg, depth=0):
   if hasattr(arg, 'store_property'):
     prop, _, _ = arg.store_property
     # Don't add help if there's already explicit help.
-    if str(prop) not in help_message:
+    if six.text_type(prop) not in help_message:
       extra_help.append('Overrides the default *{0}* property value'
                         ' for this command invocation.'.format(prop))
       # '?' in Boolean flag check to cover legacy choices={'true', 'false'}
@@ -291,34 +291,6 @@ def GetArgDetails(arg, depth=0):
       if prop.default and arg.nargs in (0, '?'):
         extra_help.append('Use *{}* to disable.'.format(
             _GetInvertedFlagName(arg)))
-  elif choices:
-    metavar = arg.metavar or arg.dest.upper()
-    choices = getattr(arg, 'choices_help', choices)
-    if len(choices) > 1:
-      one_of = 'one of'
-    else:
-      # TBD I guess?
-      one_of = '(currently only one value is supported)'
-    if isinstance(choices, dict):
-      choices_iteritems = six.iteritems(choices)
-      if not isinstance(choices, collections.OrderedDict):
-        choices_iteritems = sorted(choices_iteritems)
-      choices = [
-          '*{name}*{depth} {desc}'.format(
-              name=name, desc=desc, depth=':' * (depth + _CHOICE_OFFSET))
-          for name, desc in choices_iteritems]
-      # Append marker to indicate end of list.
-      choices.append(':' * (depth + _CHOICE_OFFSET))
-      extra_help.append(
-          '_{metavar}_ must be {one_of}:\n\n{choices}\n\n'.format(
-              metavar=metavar,
-              one_of=one_of,
-              choices='\n'.join(choices)))
-    else:
-      extra_help.append('_{metavar}_ must be {one_of}: {choices}.'.format(
-          metavar=metavar,
-          one_of=one_of,
-          choices=', '.join(['*{0}*'.format(x) for x in choices])))
   elif arg.is_group or arg.is_positional or arg.nargs:
     # Not a Boolean flag.
     pass
@@ -331,6 +303,35 @@ def GetArgDetails(arg, depth=0):
     extra_help.append(
         'Use *{0}* to enable and *{1}* to disable.'.format(
             arg.option_strings[0], _GetInvertedFlagName(arg)))
+  if choices:
+    metavar = arg.metavar or arg.dest.upper()
+    if metavar != ' ':
+      choices = getattr(arg, 'choices_help', choices)
+      if len(choices) > 1:
+        one_of = 'one of'
+      else:
+        # TBD I guess?
+        one_of = '(currently only one value is supported)'
+      if isinstance(choices, dict):
+        choices_iteritems = six.iteritems(choices)
+        if not isinstance(choices, collections.OrderedDict):
+          choices_iteritems = sorted(choices_iteritems)
+        choices = [
+            '*{name}*{depth} {desc}'.format(
+                name=name, desc=desc, depth=':' * (depth + _CHOICE_OFFSET))
+            for name, desc in choices_iteritems]
+        # Append marker to indicate end of list.
+        choices.append(':' * (depth + _CHOICE_OFFSET))
+        extra_help.append(
+            '_{metavar}_ must be {one_of}:\n\n{choices}\n\n'.format(
+                metavar=metavar,
+                one_of=one_of,
+                choices='\n'.join(choices)))
+      else:
+        extra_help.append('_{metavar}_ must be {one_of}: {choices}.'.format(
+            metavar=metavar,
+            one_of=one_of,
+            choices=', '.join(['*{0}*'.format(x) for x in choices])))
 
   if extra_help:
     help_message = help_message.rstrip()
@@ -664,7 +665,7 @@ def GetArgSections(arguments, is_root):
       dests.add(arg.dest)
     if category not in categories:
       categories[category] = set()
-    categories[category].add(arg)  # pytype: disable=attribute-error
+    categories[category].add(arg)
 
   # Collect the priority sections first in order:
   #   POSITIONAL ARGUMENTS, REQUIRED, COMMON, OTHER, and categorized.
@@ -812,10 +813,14 @@ def GetUsage(command, argument_interceptor):
 def GetCategoricalUsage(command, categories):
   """Constructs an alternative Usage markdown string organized into categories.
 
-  The string is formatted as a series of tables, one for each category. Each
-  subcommand and subgroup of the parent command is printed in its corresponding
-  table together with a short summary describing its functionality. If there are
-  no categories to display, then an empty string is returned.
+  The string is formatted as a series of tables; first, there's a table for
+  each category of subgroups, next, there's a table for each category of
+  subcommands. Each table element is printed under the category defined in the
+  surface definition of the command or group with a short summary describing its
+  functionality. In either set of tables (groups or commands), if there are no
+  categories to display, there will be only be one table listing elements
+  lexicographically. If both the sets of tables (groups and commands) have no
+  categories to display, then an empty string is returned.
 
   Args:
     command: calliope._CommandCommon, The command object that we're helping.
@@ -825,24 +830,54 @@ def GetCategoricalUsage(command, categories):
   Returns:
     str, The command usage markdown string organized into categories.
   """
-  if not categories:
+
+  command_key = 'command'
+  command_group_key = 'command_group'
+
+  def _WriteTypeUsageTextToBuffer(buf, categories, key_name):
+    """Writes the markdown string to the buffer passed by reference."""
+    single_category_is_other = False
+    if len(categories[key_name]
+          ) == 1 and base.UNCATEGORIZED_CATEGORY in categories[key_name]:
+      single_category_is_other = True
+    buf.write('\n\n')
+    buf.write('# Available {type}s for {group}:\n'.format(
+        type=' '.join(key_name.split('_')), group=' '.join(command.GetPath())))
+    for category, elements in sorted(six.iteritems(categories[key_name])):
+      if not single_category_is_other:
+        buf.write('\n### {category}\n\n'.format(category=category))
+      buf.write('---------------------- | ---\n')
+      for element in sorted(elements, key=lambda e: e.name):
+        short_help = None
+        if element.name == 'alpha':
+          short_help = element.short_help[10:]
+        elif element.name == 'beta':
+          short_help = element.short_help[9:]
+        else:
+          short_help = element.short_help
+        buf.write('{name} | {description}\n'.format(
+            name=element.name.replace('_', '-'), description=short_help))
+
+  def _ShouldCategorize(categories):
+    """Ensures the categorization has real categories and is not just all Uncategorized."""
+    if not categories[command_key].keys(
+    ) and not categories[command_group_key].keys():
+      return False
+    if set(
+        list(categories[command_key].keys()) +
+        list(categories[command_group_key].keys())) == set(
+            [base.UNCATEGORIZED_CATEGORY]):
+      return False
+    return True
+
+  if not _ShouldCategorize(categories):
     return ''
+
   buf = io.StringIO()
-  buf.write('# Available commands for {group}:\n'.format(
-      group=' '.join(command.GetPath())))
-  for category, elements in sorted(six.iteritems(categories)):
-    buf.write('\n### {category}\n\n'.format(category=category))
-    buf.write('---------------------- | ---\n')
-    for element in sorted(elements, key=lambda e: e.name):
-      short_help = None
-      if element.name == 'alpha':
-        short_help = element.short_help[10:]
-      elif element.name == 'beta':
-        short_help = element.short_help[9:]
-      else:
-        short_help = element.short_help
-      buf.write('{name} | {description}\n'.format(
-          name=element.name.replace('_', '-'), description=short_help))
+  if command_group_key in categories:
+    _WriteTypeUsageTextToBuffer(buf, categories, command_group_key)
+  if command_key in categories:
+    _WriteTypeUsageTextToBuffer(buf, categories, command_key)
   return buf.getvalue()
 
 

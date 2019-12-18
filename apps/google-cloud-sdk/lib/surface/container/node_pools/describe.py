@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,6 +32,17 @@ class Describe(base.DescribeCommand):
   *{command}* displays all data associated with the node pool in the
   Google Kubernetes Engine cluster.
   """
+
+  detailed_help = {
+      'DESCRIPTION':
+          '{description}',
+      'EXAMPLES':
+          """\
+          To describe a node pool of an existing cluster, run:
+
+            $ {command} node-pool-1 --cluster=sample-cluster
+          """,
+  }
 
   @staticmethod
   def Args(parser):

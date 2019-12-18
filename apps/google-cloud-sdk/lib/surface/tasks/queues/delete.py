@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,6 +29,16 @@ from googlecloudsdk.core.console import console_io
 
 class Delete(base.DeleteCommand):
   """Delete a queue."""
+  detailed_help = {
+      'DESCRIPTION': """\
+          {description}
+          """,
+      'EXAMPLES': """\
+          To delete a queue:
+
+              $ {command} my-queue
+         """,
+  }
 
   @staticmethod
   def Args(parser):

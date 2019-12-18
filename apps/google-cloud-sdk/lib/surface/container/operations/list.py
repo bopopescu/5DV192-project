@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,6 +28,17 @@ from googlecloudsdk.core import properties
 
 class List(base.ListCommand):
   """List operations for container clusters."""
+
+  detailed_help = {
+      'DESCRIPTION':
+          '{description}',
+      'EXAMPLES':
+          """\
+          To list operations, run:
+
+            $ {command}
+          """,
+  }
 
   @staticmethod
   def Args(parser):

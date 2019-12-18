@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import re
 import sys
 import enum
 
+from googlecloudsdk.core import argv_utils
 from googlecloudsdk.core import config
 from googlecloudsdk.core import exceptions
 from googlecloudsdk.core.configurations import named_configs
@@ -39,7 +40,7 @@ import six
 # the --configuration flag.  If they did, this could affect the value of the
 # properties defined in that configuration.  Since some libraries (like logging)
 # use properties at startup, we want to use the correct configuration for that.
-named_configs.FLAG_OVERRIDE_STACK.PushFromArgs(sys.argv)
+named_configs.FLAG_OVERRIDE_STACK.PushFromArgs(argv_utils.GetDecodedArgv())
 
 _SET_PROJECT_HELP = """\
 To set your project, run:
@@ -104,6 +105,16 @@ def Stringize(value):
   if isinstance(value, six.string_types):
     return value
   return str(value)
+
+
+def ExistingAbsoluteFilepathValidator(file_path):
+  """Checks to see if the file path exists and is an absolute path."""
+  if file_path is None:
+    return
+  if not os.path.isfile(file_path):
+    raise InvalidValueError('The provided path must exist.')
+  if not os.path.isabs(file_path):
+    raise InvalidValueError('The provided path must be absolute.')
 
 
 def _LooksLikeAProjectName(project):
@@ -242,6 +253,10 @@ class _Sections(object):
     billing: Section, The section containing billing properties for the Cloud
       SDK.
     builds: Section, The section containing builds properties for the Cloud SDK.
+    build_artifacts: Section, The section containing build artifacts properties
+      for the Cloud SDK.
+    artifacts: Section, The section containing artifacts properties for the
+      Cloud SDK.
     component_manager: Section, The section containing properties for the
       component_manager.
     composer: Section, The section containing composer properties for the Cloud
@@ -250,9 +265,16 @@ class _Sections(object):
       SDK.
     container: Section, The section containing container properties for the
       Cloud SDK.
+    context_aware: Section, The section containing context aware access
+      configurations for the Cloud SDK.
     core: Section, The section containing core properties for the Cloud SDK.
+    scc: Section, The section containing scc properties for the Cloud SDK.
     dataproc: Section, The section containing dataproc properties for the Cloud
       SDK.
+    dataflow: Section, The section containing dataflow properties for the Cloud
+      SDK.
+    datafusion: Section, The section containing datafusion properties for the
+      Cloud SDK.
     default_section: Section, The main section of the properties file (core).
     deployment_manager: Section, The section containing deployment_manager
       properties for the Cloud SDK.
@@ -268,11 +290,15 @@ class _Sections(object):
       Cloud SDK.
     functions: Section, The section containing functions properties for the
       Cloud SDK.
+    game_services: Section, The section containing gameservices properties for
+      the Cloud SDK.
     gcloudignore: Section, The section containing gcloudignore properties for
       the Cloud SDK.
     healthcare: Section, The section containing healthcare properties for the
       Cloud SDK.
     interactive: Section, The section containing interactive properties for the
+      Cloud SDK.
+    lifesciences: Section, The section containing lifesciencs properties for the
       Cloud SDK.
     metrics: Section, The section containing metrics properties for the Cloud
       SDK.
@@ -282,10 +308,13 @@ class _Sections(object):
     pubsub: Section, The section containing pubsub properties for the Cloud SDK.
     redis: Section, The section containing redis properties for the Cloud SDK.
     run: Section, The section containing run properties for the Cloud SDK.
+    secrets: Section, The section containing secretmanager properties for the
+      Cloud SDK.
     spanner: Section, The section containing spanner properties for the Cloud
       SDK.
     storage: Section, The section containing storage properties for the Cloud
       SDK.
+    survey: Section, The section containing survey properties for the Cloud SDK.
     test: Section, The section containing test properties for the Cloud SDK.
   """
 
@@ -301,15 +330,21 @@ class _Sections(object):
     self.api_client_overrides = _SectionApiClientOverrides()
     self.api_endpoint_overrides = _SectionApiEndpointOverrides()
     self.app = _SectionApp()
+    self.artifacts = _SectionArtifacts()
     self.auth = _SectionAuth()
     self.billing = _SectionBilling()
     self.builds = _SectionBuilds()
+    self.build_artifacts = _SectionBuildArtifacts()
     self.component_manager = _SectionComponentManager()
     self.composer = _SectionComposer()
     self.compute = _SectionCompute()
     self.container = _SectionContainer()
+    self.context_aware = _SectionContextAware()
     self.core = _SectionCore()
+    self.scc = _SectionScc()
     self.dataproc = _SectionDataproc()
+    self.dataflow = _SectionDataflow()
+    self.datafusion = _SectionDatafusion()
     self.deployment_manager = _SectionDeploymentManager()
     self.devshell = _SectionDevshell()
     self.diagnostics = _SectionDiagnostics()
@@ -317,17 +352,21 @@ class _Sections(object):
     self.experimental = _SectionExperimental()
     self.filestore = _SectionFilestore()
     self.functions = _SectionFunctions()
+    self.game_services = _SectionGameServices()
     self.gcloudignore = _SectionGcloudignore()
     self.healthcare = _SectionHealthcare()
     self.interactive = _SectionInteractive()
+    self.lifesciences = _SectionLifeSciences()
     self.metrics = _SectionMetrics()
     self.ml_engine = _SectionMlEngine()
     self.proxy = _SectionProxy()
     self.pubsub = _SectionPubsub()
     self.redis = _SectionRedis()
     self.run = _SectionRun()
+    self.secrets = _SectionSecrets()
     self.spanner = _SectionSpanner()
     self.storage = _SectionStorage()
+    self.survey = _SectionSurvey()
     self.test = _SectionTest()
 
     sections = [
@@ -339,12 +378,18 @@ class _Sections(object):
         self.auth,
         self.billing,
         self.builds,
+        self.artifacts,
+        self.build_artifacts,
         self.component_manager,
         self.composer,
         self.compute,
         self.container,
+        self.context_aware,
         self.core,
+        self.scc,
         self.dataproc,
+        self.dataflow,
+        self.datafusion,
         self.deployment_manager,
         self.devshell,
         self.diagnostics,
@@ -352,15 +397,19 @@ class _Sections(object):
         self.experimental,
         self.filestore,
         self.functions,
+        self.game_services,
         self.gcloudignore,
         self.healthcare,
         self.interactive,
+        self.lifesciences,
         self.metrics,
         self.ml_engine,
         self.proxy,
         self.redis,
         self.run,
+        self.secrets,
         self.spanner,
+        self.survey,
         self.test,
     ]
     self.__sections = {section.name: section for section in sections}
@@ -674,28 +723,51 @@ class _SectionRun(_Section):
   """Contains the properties for the 'run' section."""
 
   def __init__(self):
-    super(_SectionRun, self).__init__('run', hidden=True)
+    super(_SectionRun, self).__init__('run')
     self.region = self._Add(
         'region',
-        default='us-central1',
-        help_text='The default region to use when working with Google '
+        help_text='Default region to use when working with Cloud '
         'Run resources. When a `--region` flag is required '
-        'but not provided, the command will fall back to this value, if set. '
-        'To see valid choices, run `gcloud run regions list`.')
+        'but not provided, the command will fall back to this value, if set.')
 
     self.namespace = self._Add(
         'namespace',
-        help_text='Kubernetes namespace to create Run resources in.',
+        help_text='Specific to working with Cloud on GKE or '
+        'a Kubernetes cluster: Kubernetes namespace for the resource.',
         hidden=True)
 
     self.cluster = self._Add(
         'cluster',
-        help_text='GKE cluster to use. '
-        'Knative must be installed in this cluster.')
+        help_text='ID of the cluster or fully qualified identifier '
+        'for the cluster')
 
     self.cluster_location = self._Add(
         'cluster_location',
-        help_text='Zone or region of the GKE cluster to use.')
+        help_text='Zone or region in which the cluster is located.')
+
+    self.platform = self._Add(
+        'platform',
+        choices=['gke', 'managed', 'kubernetes'],
+        help_text='Target platform for running commands.')
+
+
+class _SectionSecrets(_Section):
+  """Contains the properties for the 'secrets' section."""
+
+  def __init__(self):
+    super(_SectionSecrets, self).__init__('secrets')
+    self.replication_policy = self._Add(
+        'replication-policy',
+        choices=['automatic', 'user-managed'],
+        help_text='The type of replication policy to apply to secrets. Allowed '
+        'values are "automatic" and "user-managed". If user-managed then '
+        'locations must also be provided.',
+        )
+    self.locations = self._Add(
+        'locations',
+        help_text='A comma separated list of the locations to replicate '
+        'secrets to. Only applies to secrets with a user-managed policy.'
+        )
 
 
 class _SectionSpanner(_Section):
@@ -733,7 +805,7 @@ class _SectionCompute(_Section):
         completer=('googlecloudsdk.command_lib.compute.completers:'
                    'RegionsCompleter'))
     self.gce_metadata_read_timeout_sec = self._Add(
-        'gce_metadata_read_timeout_sec', default=1, hidden=True)
+        'gce_metadata_read_timeout_sec', default=3, hidden=True)
     self.use_new_list_usable_subnets_api = self._AddBool(
         'use_new_list_usable_subnets_api',
         default=False,
@@ -788,6 +860,32 @@ class _SectionHealthcare(_Section):
         help_text='Default dataset to use when working with Cloud Healthcare '
         'resources. When a `--dataset` flag is required but not provided, the '
         'command will fall back to this value, if set.')
+
+
+class _SectionLifeSciences(_Section):
+  """Contains the properties for the 'lifesciences' section."""
+
+  def __init__(self):
+    super(_SectionLifeSciences, self).__init__('lifesciences')
+    self.location = self._Add(
+        'location',
+        default='us-central1',
+        help_text='Default location to use when working with Cloud Life Sciences  '
+        'resources. When a `--location` flag is required but not provided, the  '
+        'command will fall back to this value.')
+
+
+class _SectionGameServices(_Section):
+  """Contains the properties for the 'game_services' section."""
+
+  def __init__(self):
+    super(_SectionGameServices, self).__init__('game_services')
+    self.location = self._Add(
+        'location',
+        default='global',
+        help_text='Default location to use when working with Cloud Game '
+        'Services resources. When a `--location` flag is required but not '
+        'provided, the command will fall back to this value.')
 
 
 class _SectionAccessibility(_Section):
@@ -881,7 +979,8 @@ class _SectionBuilds(_Section):
     self.timeout = self._Add(
         'timeout',
         validator=_BuildTimeoutValidator,
-        help_text='Timeout, in seconds, to wait for builds to complete.')
+        help_text='Timeout, in seconds, to wait for builds to complete. If '
+        'unset, defaults to 10 minutes.')
     self.check_tag = self._AddBool(
         'check_tag',
         default=True,
@@ -907,6 +1006,39 @@ class _SectionBuilds(_Section):
         'to gcr.io/kaniko-project/executor:latest')
 
 
+class _SectionBuildArtifacts(_Section):
+  """Contains the properties for the 'build_artifacts' section."""
+
+  def __init__(self):
+    super(_SectionBuildArtifacts, self).__init__('build_artifacts')
+
+    self.repository = self._Add(
+        'repository',
+        help_text='Default repository to use when working with Cloud '
+        'Build Artifacts resources. When a `repository` is required but not '
+        'provided by a flag, the command will fall back to this value, if set.')
+
+
+class _SectionArtifacts(_Section):
+  """Contains the properties for the 'artifacts' section."""
+
+  def __init__(self):
+    super(_SectionArtifacts, self).__init__('artifacts')
+
+    self.repository = self._Add(
+        'repository',
+        help_text='Default repository to use when working with Artifact '
+        'Registry resources. When a `repository` value is required but not '
+        'provided, the command will fall back to this value, if set.')
+
+    self.location = self._Add(
+        'location',
+        help_text='Default location to use when working with Artifact Registry '
+        'resources. When a `location` value is required but not provided, the '
+        'command will fall back to this value, if set. If this value is unset, '
+        'the default location is `global` when `location` value is optional.')
+
+
 class _SectionContainer(_Section):
   """Contains the properties for the 'container' section."""
 
@@ -926,20 +1058,6 @@ class _SectionContainer(_Section):
         default=False,
         help_text='If True, use application default credentials to authenticate'
         ' to the cluster API server.')
-    self.new_scopes_behavior = self._AddBool(
-        'new_scopes_behavior',
-        default=False,
-        help_text='If True, use new scopes behavior and do not add `compute-rw`'
-        ', `storage-ro`, `service-control`, or `service-management` scopes. The'
-        ' former two (`compute-rw` and `storage-ro`) only apply to clusters '
-        'at Kubernetes v1.9 and below; starting v1.10, `compute-rw` and '
-        '`storage-ro` are not added by default. Any of these scopes '
-        'may be added explicitly using `--scopes`. Using new scopes behavior '
-        'will be the default in a future release. Additionally, if '
-        'this property is set to True, using `--[no-]enable-cloud-endpoints` '
-        'is not allowed. This property is ignored in alpha and beta, since '
-        'these tracks always use the new behavior. See `--scopes` help for '
-        'more info.')
 
     self.build_timeout = self._Add(
         'build_timeout',
@@ -995,7 +1113,7 @@ class _SectionCore(_Section):
     self.disable_usage_reporting = self._AddBool(
         'disable_usage_reporting',
         help_text='If True, anonymous statistics on SDK usage will not be '
-        'collected.  This value is set by default based on your choices during '
+        'collected. This value is set by default based on your choices during '
         'installation, but can be changed at any time.  For more information, '
         'see: https://cloud.google.com/sdk/usage-statistics')
     self.enable_gri = self._AddBool(
@@ -1100,11 +1218,6 @@ class _SectionCore(_Section):
         hidden=True,
         help_text='If true, will prompt to enable an API if a command fails due'
         ' to the API not being enabled.')
-    self.allow_py3 = self._AddBool(
-        'allow_py3',
-        default=True,
-        hidden=True,
-        help_text='If true, allow a Python 3 interpreter to run gcloud.')
     self.color_theme = self._Add(
         'color_theme',
         help_text='Color palette for output.',
@@ -1155,14 +1268,11 @@ class _SectionCore(_Section):
         ' files. If unset, the default is 30 days.',
         default='30')
 
-    def ExistingAbsoluteFilepathValidator(file_path):
-      """Checks to see if the file path exists and is an absolute path."""
-      if file_path is None:
-        return
-      if not os.path.isfile(file_path):
-        raise InvalidValueError('The provided path must exist.')
-      if not os.path.isabs(file_path):
-        raise InvalidValueError('The provided path must be absolute.')
+    self.disable_file_logging = self._AddBool(
+        'disable_file_logging',
+        default=False,
+        help_text='If True, `gcloud` will not store logs to a file. This may '
+        'be useful if disk space is limited.')
 
     self.custom_ca_certs_file = self._Add(
         'custom_ca_certs_file',
@@ -1208,6 +1318,16 @@ class _SectionCore(_Section):
         'credentialed_hosted_repo_domains', hidden=True)
 
 
+class _SectionScc(_Section):
+  """Contains the properties for the 'scc' section."""
+
+  def __init__(self):
+    super(_SectionScc, self).__init__('scc')
+    self.organization = self._Add(
+        'organization',
+        help_text='Default organization `gcloud` should use for scc surface.')
+
+
 class _SectionAuth(_Section):
   """Contains the properties for the 'auth' section."""
 
@@ -1242,6 +1362,7 @@ class _SectionAuth(_Section):
         'credential_file_override', hidden=True)
     self.impersonate_service_account = self._Add(
         'impersonate_service_account', hidden=True)
+    self.pkce_code_verifier = self._Add('pkce_code_verifier', hidden=True)
 
 
 class _SectionBilling(_Section):
@@ -1313,8 +1434,12 @@ class _SectionFilestore(_Section):
     super(_SectionFilestore, self).__init__('filestore')
     self.location = self._Add(
         'location',
-        help_text='Default location to use when working with Cloud Filestore '
-        'locations. When a `--location` flag is required but not '
+        help_text='(DEPRECATED) Please use the `--location` flag or set the '
+        'filestore/zone property.')
+    self.zone = self._Add(
+        'zone',
+        help_text='Default zone to use when working with Cloud Filestore '
+        'zones. When a `--zone` flag is required but not '
         'provided, the command will fall back to this value, if set.')
 
 
@@ -1377,6 +1502,34 @@ class _SectionComposer(_Section):
             'referenced.'))
 
 
+class _SectionDataflow(_Section):
+  """Contains the properties for the 'dataflow' section."""
+
+  def __init__(self):
+    super(_SectionDataflow, self).__init__('dataflow')
+    self.disable_public_ips = self._AddBool(
+        'disable_public_ips',
+        help_text='Specifies that Cloud Dataflow workers '
+        'must not use public IP addresses.',
+        default=False)
+
+
+class _SectionDatafusion(_Section):
+  """Contains the properties for the 'datafusion' section."""
+
+  def __init__(self):
+    super(_SectionDatafusion, self).__init__('datafusion')
+    self.location = self._Add(
+        'location',
+        help_text=(
+            'Datafusion location to use. Each Datafusion location '
+            'constitutes an independent resource namespace constrained to '
+            'deploying environments into Compute Engine regions inside this '
+            'location. This parameter corresponds to the '
+            '/locations/<location> segment of the Datafusion resource URIs being '
+            'referenced.'))
+
+
 class _SectionDataproc(_Section):
   """Contains the properties for the 'ml_engine' section."""
 
@@ -1384,15 +1537,11 @@ class _SectionDataproc(_Section):
     super(_SectionDataproc, self).__init__('dataproc')
     self.region = self._Add(
         'region',
-        default='global',
         help_text=(
             'Cloud Dataproc region to use. Each Cloud Dataproc '
             'region constitutes an independent resource namespace constrained '
             'to deploying instances into Compute Engine zones inside '
-            'the region. The default value of `global` is a special '
-            'multi-region namespace which is capable of deploying instances '
-            'into all Compute Engine zones globally, and is disjoint '
-            'from other Cloud Dataproc regions.'))
+            'the region.'))
 
 
 class _SectionDeploymentManager(_Section):
@@ -1557,15 +1706,16 @@ class _SectionApiEndpointOverrides(_Section):
     self.accesscontextmanager = self._Add('accesscontextmanager')
     self.appengine = self._Add('appengine')
     self.bigtableadmin = self._Add('bigtableadmin')
-    self.bigtableclusteradmin = self._Add('bigtableclusteradmin')
     self.binaryauthorization = self._Add('binaryauthorization')
-    self.bio = self._Add('bio')
+    self.buildartifacts = self._Add('buildartifacts')
+    self.artifactregistry = self._Add('artifactregistry')
     self.categorymanager = self._Add('categorymanager')
     self.cloudbilling = self._Add('cloudbilling')
     self.cloudbuild = self._Add('cloudbuild')
     self.clouddebugger = self._Add('clouddebugger')
     self.clouderrorreporting = self._Add('clouderrorreporting')
     self.cloudfunctions = self._Add('cloudfunctions')
+    self.cloudidentity = self._Add('cloudidentity')
     self.cloudiot = self._Add('cloudiot')
     self.cloudkms = self._Add('cloudkms')
     self.cloudresourcemanager = self._Add('cloudresourcemanager')
@@ -1576,27 +1726,39 @@ class _SectionApiEndpointOverrides(_Section):
     self.compute = self._Add('compute')
     self.container = self._Add('container')
     self.containeranalysis = self._Add('containeranalysis')
+    self.datacatalog = self._Add('datacatalog')
     self.dataflow = self._Add('dataflow')
+    self.datafusion = self._Add('datafusion')
     self.datapol = self._Add('datapol')
     self.dataproc = self._Add('dataproc')
     self.datastore = self._Add('datastore')
     self.deploymentmanager = self._Add('deploymentmanager')
     self.discovery = self._Add('discovery')
     self.dns = self._Add('dns')
+    self.domains = self._Add('domains')
     self.file = self._Add('file')
     self.firestore = self._Add('firestore')
+    self.gameservices = self._Add('gameservices')
     self.genomics = self._Add('genomics')
     self.gkehub = self._Add('gkehub')
     self.healthcare = self._Add('healthcare')
     self.iam = self._Add('iam')
+    self.iamassist = self._Add('iamassist')
     self.kubernetespolicy = self._Add('kubernetespolicy')
+    self.labelmanager = self._Add('labelmanager')
     self.language = self._Add('language')
+    self.lifesciences = self._Add('lifesciences')
     self.logging = self._Add('logging')
+    self.managedidentities = self._Add('managedidentities')
     self.manager = self._Add('manager')
     self.ml = self._Add('ml')
     self.monitoring = self._Add('monitoring')
+    self.orgpolicy = self._Add('orgpolicy')
+    self.osconfig = self._Add('osconfig')
     self.oslogin = self._Add('oslogin')
+    self.policytroubleshooter = self._Add('policytroubleshooter')
     self.pubsub = self._Add('pubsub')
+    self.recommender = self._Add('recommender')
     self.replicapoolupdater = self._Add('replicapoolupdater')
     self.runtimeconfig = self._Add('runtimeconfig')
     self.redis = self._Add('redis')
@@ -1607,6 +1769,7 @@ class _SectionApiEndpointOverrides(_Section):
     self.serviceuser = self._Add('serviceuser')
     self.source = self._Add('source')
     self.sourcerepo = self._Add('sourcerepo')
+    self.secrets = self._Add('secretmanager')
     self.spanner = self._Add('spanner')
     self.speech = self._Add('speech')
     self.sql = self._Add('sql')
@@ -1642,9 +1805,11 @@ class _SectionApiClientOverrides(_Section):
     super(_SectionApiClientOverrides, self).__init__(
         'api_client_overrides', hidden=True)
     self.appengine = self._Add('appengine')
+    self.cloudidentity = self._Add('cloudidentity')
     self.compute = self._Add('compute')
     self.container = self._Add('container')
     self.sql = self._Add('sql')
+    self.run = self._Add('run')
 
 
 class _SectionEmulator(_Section):
@@ -1666,17 +1831,45 @@ class _SectionEmulator(_Section):
         'bigtable_host_port', default='localhost:8086')
 
 
+def AccessPolicyValidator(policy):
+  """Checks to see if the Access Policy string is valid."""
+  if policy is None:
+    return
+  if not policy.isdigit():
+    raise InvalidValueError(
+        'The access_context_manager.policy property must be set '
+        'to the policy number, not a string.')
+
+
 class _SectionAccessContextManager(_Section):
   """Contains the properties for the 'access_context_manager' section."""
 
   def __init__(self):
     super(_SectionAccessContextManager, self).__init__(
         'access_context_manager', hidden=True)
+
     self.policy = self._Add(
         'policy',
+        validator=AccessPolicyValidator,
         help_text=('ID of the policy resource to operate on. Can be found '
                    'by running the `access-context-manager policies list` '
                    'command.'))
+
+
+class _SectionContextAware(_Section):
+  """Contains the properties for the 'context_aware' section."""
+
+  def __init__(self):
+    super(_SectionContextAware, self).__init__('context_aware')
+    self.use_client_certificate = self._AddBool(
+        'use_client_certificate',
+        help_text=('If True, use client certificate to authorize user '
+                   'device using context aware access.'))
+    self.auto_discovery_file_path = self._Add(
+        'auto_discovery_file_path',
+        validator=ExistingAbsoluteFilepathValidator,
+        help_text='File path for auto discovery configuration file.',
+        hidden=True)
 
 
 class _SectionRedis(_Section):
@@ -1708,6 +1901,18 @@ class _SectionStorage(_Section):
         hidden=True,
         help_text='If True, use the deprecated upload implementation which '
         'uses gsutil.')
+
+
+class _SectionSurvey(_Section):
+  """Contains the properties for the 'survey' section."""
+
+  def __init__(self):
+    super(_SectionSurvey, self).__init__('survey')
+    self.disable_prompts = self._AddBool(
+        'disable_prompts',
+        default=False,
+        help_text='If True, gcloud will not prompt you to take periodic usage '
+        'experience surveys.')
 
 
 class _Property(object):

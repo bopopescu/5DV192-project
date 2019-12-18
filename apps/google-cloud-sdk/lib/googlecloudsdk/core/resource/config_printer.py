@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -108,7 +108,7 @@ class ConfigPrinter(resource_printer_base.ResourcePrinter):
   def _Prefix(prefix, name):
     """Returns a new prefix based on prefix and name."""
     if isinstance(name, int):
-      name = 'I' + str(name)
+      name = 'I' + six.text_type(name)
     return prefix + name + '_'
 
   def _PrintEnvExport(self, items, prefix=''):
@@ -131,11 +131,11 @@ class ConfigPrinter(resource_printer_base.ResourcePrinter):
       elif isinstance(value, list):
         for i, v in enumerate(value):
           if not isinstance(v, dict):
-            v = {'I' + str(i): v}
+            v = {'I' + six.text_type(i): v}
           self._PrintEnvExport(six.iteritems(v),
                                prefix=self._Prefix(prefix, name))
       else:
-        value = pipes.quote(six.text_type(value))  # pytype: disable=wrong-arg-types
+        value = pipes.quote(six.text_type(value))
         self._out.write(self._env_command_format.format(
             name=prefix + name, value=value))
 
@@ -154,7 +154,7 @@ class ConfigPrinter(resource_printer_base.ResourcePrinter):
       elif isinstance(value, list):
         for i, v in enumerate(value):
           if not isinstance(v, dict):
-            v = {'I' + str(i): v}
+            v = {'I' + six.text_type(i): v}
           self._PrintEnvUnset(six.iteritems(v),
                               prefix=self._Prefix(prefix, name))
       else:

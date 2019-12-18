@@ -295,9 +295,8 @@ class BuildOptions(_messages.Message):
       build step.  Using a global volume in a build with only one step is not
       valid as it is indicative of a build request with an incorrect
       configuration.
-    workerPool: Option to specify a `WorkerPool` for the build. User specifies
-      the pool with the format "[WORKERPOOL_PROJECT_ID]/[WORKERPOOL_NAME]".
-      This is an experimental field.
+    workerPool: Option to specify a `WorkerPool` for the build. Format:
+      projects/{project}/workerPools/{workerPool}  This field is experimental.
   """
 
   class LogStreamingOptionValueValuesEnum(_messages.Enum):
@@ -508,6 +507,9 @@ class BuildTrigger(_messages.Message):
     disabled: If true, the trigger will never result in a build.
     filename: Path, from the source root, to a file whose contents is used for
       the template.
+    github: GitHubEventsConfig describes the configuration of a trigger that
+      creates a build whenever a GitHub event is received.  Mutually exclusive
+      with `trigger_template`.
     id: Output only. Unique identifier of the trigger.
     ignoredFiles: ignored_files and included_files are file glob matches using
       http://godoc/pkg/path/filepath#Match extended with support for "**".  If
@@ -522,11 +524,18 @@ class BuildTrigger(_messages.Message):
       altered in the commit pass the ignored_files filter and included_files
       is not empty, then we make sure that at least one of those files matches
       a included_files glob. If not, then we do not trigger a build.
+    name: User-assigned name of the trigger. Must be unique within the
+      project. Trigger names must meet the following requirements:  + They
+      must contain only alphanumeric characters and dashes. + They can be 1-64
+      characters long. + They must begin and end with an alphanumeric
+      character.
     substitutions: Substitutions data for Build resource.
+    tags: Tags for annotation of a `BuildTrigger`
     triggerTemplate: Template describing the types of source changes to
       trigger a build.  Branch and tag names in trigger templates are
       interpreted as regular expressions. Any branch or tag change that
-      matches that regular expression will trigger a build.
+      matches that regular expression will trigger a build.  Mutually
+      exclusive with `github`.
   """
 
   @encoding.MapUnrecognizedFields('additionalProperties')
@@ -559,11 +568,14 @@ class BuildTrigger(_messages.Message):
   description = _messages.StringField(3)
   disabled = _messages.BooleanField(4)
   filename = _messages.StringField(5)
-  id = _messages.StringField(6)
-  ignoredFiles = _messages.StringField(7, repeated=True)
-  includedFiles = _messages.StringField(8, repeated=True)
-  substitutions = _messages.MessageField('SubstitutionsValue', 9)
-  triggerTemplate = _messages.MessageField('RepoSource', 10)
+  github = _messages.MessageField('GitHubEventsConfig', 6)
+  id = _messages.StringField(7)
+  ignoredFiles = _messages.StringField(8, repeated=True)
+  includedFiles = _messages.StringField(9, repeated=True)
+  name = _messages.StringField(10)
+  substitutions = _messages.MessageField('SubstitutionsValue', 11)
+  tags = _messages.StringField(12, repeated=True)
+  triggerTemplate = _messages.MessageField('RepoSource', 13)
 
 
 class BuiltImage(_messages.Message):
@@ -635,8 +647,8 @@ class CloudbuildProjectsBuildsCancelRequest(_messages.Message):
   Fields:
     cancelBuildRequest: A CancelBuildRequest resource to be passed as the
       request body.
-    id: ID of the build.
-    projectId: ID of the project.
+    id: Required. ID of the build.
+    projectId: Required. ID of the project.
   """
 
   cancelBuildRequest = _messages.MessageField('CancelBuildRequest', 1)
@@ -649,7 +661,7 @@ class CloudbuildProjectsBuildsCreateRequest(_messages.Message):
 
   Fields:
     build: A Build resource to be passed as the request body.
-    projectId: ID of the project.
+    projectId: Required. ID of the project.
   """
 
   build = _messages.MessageField('Build', 1)
@@ -660,8 +672,8 @@ class CloudbuildProjectsBuildsGetRequest(_messages.Message):
   r"""A CloudbuildProjectsBuildsGetRequest object.
 
   Fields:
-    id: ID of the build.
-    projectId: ID of the project.
+    id: Required. ID of the build.
+    projectId: Required. ID of the project.
   """
 
   id = _messages.StringField(1, required=True)
@@ -675,7 +687,7 @@ class CloudbuildProjectsBuildsListRequest(_messages.Message):
     filter: The raw filter text to constrain the results.
     pageSize: Number of results to return in the list.
     pageToken: Token to provide to skip to a particular spot in the list.
-    projectId: ID of the project.
+    projectId: Required. ID of the project.
   """
 
   filter = _messages.StringField(1)
@@ -688,8 +700,8 @@ class CloudbuildProjectsBuildsRetryRequest(_messages.Message):
   r"""A CloudbuildProjectsBuildsRetryRequest object.
 
   Fields:
-    id: Build ID of the original build.
-    projectId: ID of the project.
+    id: Required. Build ID of the original build.
+    projectId: Required. ID of the project.
     retryBuildRequest: A RetryBuildRequest resource to be passed as the
       request body.
   """
@@ -704,7 +716,8 @@ class CloudbuildProjectsTriggersCreateRequest(_messages.Message):
 
   Fields:
     buildTrigger: A BuildTrigger resource to be passed as the request body.
-    projectId: ID of the project for which to configure automatic builds.
+    projectId: Required. ID of the project for which to configure automatic
+      builds.
   """
 
   buildTrigger = _messages.MessageField('BuildTrigger', 1)
@@ -715,8 +728,8 @@ class CloudbuildProjectsTriggersDeleteRequest(_messages.Message):
   r"""A CloudbuildProjectsTriggersDeleteRequest object.
 
   Fields:
-    projectId: ID of the project that owns the trigger.
-    triggerId: ID of the `BuildTrigger` to delete.
+    projectId: Required. ID of the project that owns the trigger.
+    triggerId: Required. ID of the `BuildTrigger` to delete.
   """
 
   projectId = _messages.StringField(1, required=True)
@@ -727,8 +740,9 @@ class CloudbuildProjectsTriggersGetRequest(_messages.Message):
   r"""A CloudbuildProjectsTriggersGetRequest object.
 
   Fields:
-    projectId: ID of the project that owns the trigger.
-    triggerId: ID of the `BuildTrigger` to get.
+    projectId: Required. ID of the project that owns the trigger.
+    triggerId: Required. Identifier (`id` or `name`) of the `BuildTrigger` to
+      get.
   """
 
   projectId = _messages.StringField(1, required=True)
@@ -739,10 +753,14 @@ class CloudbuildProjectsTriggersListRequest(_messages.Message):
   r"""A CloudbuildProjectsTriggersListRequest object.
 
   Fields:
-    projectId: ID of the project for which to list BuildTriggers.
+    pageSize: Number of results to return in the list.
+    pageToken: Token to provide to skip to a particular spot in the list.
+    projectId: Required. ID of the project for which to list BuildTriggers.
   """
 
-  projectId = _messages.StringField(1, required=True)
+  pageSize = _messages.IntegerField(1, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(2)
+  projectId = _messages.StringField(3, required=True)
 
 
 class CloudbuildProjectsTriggersPatchRequest(_messages.Message):
@@ -750,8 +768,8 @@ class CloudbuildProjectsTriggersPatchRequest(_messages.Message):
 
   Fields:
     buildTrigger: A BuildTrigger resource to be passed as the request body.
-    projectId: ID of the project that owns the trigger.
-    triggerId: ID of the `BuildTrigger` to update.
+    projectId: Required. ID of the project that owns the trigger.
+    triggerId: Required. ID of the `BuildTrigger` to update.
   """
 
   buildTrigger = _messages.MessageField('BuildTrigger', 1)
@@ -763,9 +781,9 @@ class CloudbuildProjectsTriggersRunRequest(_messages.Message):
   r"""A CloudbuildProjectsTriggersRunRequest object.
 
   Fields:
-    projectId: ID of the project.
+    projectId: Required. ID of the project.
     repoSource: A RepoSource resource to be passed as the request body.
-    triggerId: ID of the trigger.
+    triggerId: Required. ID of the trigger.
   """
 
   projectId = _messages.StringField(1, required=True)
@@ -792,6 +810,29 @@ class FileHashes(_messages.Message):
   """
 
   fileHash = _messages.MessageField('Hash', 1, repeated=True)
+
+
+class GitHubEventsConfig(_messages.Message):
+  r"""GitHubEventsConfig describes the configuration of a trigger that creates
+  a build whenever a GitHub event is received.  This message is experimental.
+
+  Fields:
+    installationId: The installationID that emits the GitHub event.
+    name: Name of the repository. For example: The name for
+      https://github.com/googlecloudplatform/cloud-builders is "cloud-
+      builders".
+    owner: Owner of the repository. For example: The owner for
+      https://github.com/googlecloudplatform/cloud-builders is
+      "googlecloudplatform".
+    pullRequest: filter to match changes in pull requests.
+    push: filter to match changes in refs like branches, tags.
+  """
+
+  installationId = _messages.IntegerField(1)
+  name = _messages.StringField(2)
+  owner = _messages.StringField(3)
+  pullRequest = _messages.MessageField('PullRequestFilter', 4)
+  push = _messages.MessageField('PushFilter', 5)
 
 
 class Hash(_messages.Message):
@@ -825,11 +866,13 @@ class ListBuildTriggersResponse(_messages.Message):
   r"""Response containing existing `BuildTriggers`.
 
   Fields:
+    nextPageToken: Token to receive the next page of results.
     triggers: `BuildTriggers` for the project, sorted by `create_time`
       descending.
   """
 
-  triggers = _messages.MessageField('BuildTrigger', 1, repeated=True)
+  nextPageToken = _messages.StringField(1)
+  triggers = _messages.MessageField('BuildTrigger', 2, repeated=True)
 
 
 class ListBuildsResponse(_messages.Message):
@@ -888,7 +931,8 @@ class Operation(_messages.Message):
       if any.
     name: The server-assigned name, which is only unique within the same
       service that originally returns it. If you use the default HTTP mapping,
-      the `name` should have the format of `operations/some/unique/name`.
+      the `name` should be a resource name ending with
+      `operations/{unique_id}`.
     response: The normal response of the operation in case of success.  If the
       original method returns no data on success, such as `Delete`, the
       response is `google.protobuf.Empty`.  If the original method is standard
@@ -964,28 +1008,113 @@ class Operation(_messages.Message):
   response = _messages.MessageField('ResponseValue', 5)
 
 
+class PullRequestFilter(_messages.Message):
+  r"""PullRequestFilter contains filter properties for matching GitHub Pull
+  Requests.
+
+  Enums:
+    CommentControlValueValuesEnum: Whether to block builds on a "/gcbrun"
+      comment from a repository admin or collaborator.
+
+  Fields:
+    branch: Regex of branches to match.  The syntax of the regular expressions
+      accepted is the syntax accepted by RE2 and described at
+      https://github.com/google/re2/wiki/Syntax
+    commentControl: Whether to block builds on a "/gcbrun" comment from a
+      repository admin or collaborator.
+  """
+
+  class CommentControlValueValuesEnum(_messages.Enum):
+    r"""Whether to block builds on a "/gcbrun" comment from a repository admin
+    or collaborator.
+
+    Values:
+      COMMENTS_DISABLED: Do not require comments on Pull Requests before
+        builds are triggered.
+      COMMENTS_ENABLED: Enforce that repository owners or collaborators must
+        comment on Pull Requests before builds are triggered.
+    """
+    COMMENTS_DISABLED = 0
+    COMMENTS_ENABLED = 1
+
+  branch = _messages.StringField(1)
+  commentControl = _messages.EnumField('CommentControlValueValuesEnum', 2)
+
+
+class PushFilter(_messages.Message):
+  r"""Push contains filter properties for matching GitHub git pushes.
+
+  Fields:
+    branch: Regexes matching branches to build.  The syntax of the regular
+      expressions accepted is the syntax accepted by RE2 and described at
+      https://github.com/google/re2/wiki/Syntax
+    tag: Regexes matching tags to build.  The syntax of the regular
+      expressions accepted is the syntax accepted by RE2 and described at
+      https://github.com/google/re2/wiki/Syntax
+  """
+
+  branch = _messages.StringField(1)
+  tag = _messages.StringField(2)
+
+
 class RepoSource(_messages.Message):
   r"""Location of the source in a Google Cloud Source Repository.
 
+  Messages:
+    SubstitutionsValue: Substitutions to use in a triggered build. Should only
+      be used with RunBuildTrigger
+
   Fields:
-    branchName: Name of the branch to build.
+    branchName: Regex matching branches to build.  The syntax of the regular
+      expressions accepted is the syntax accepted by RE2 and described at
+      https://github.com/google/re2/wiki/Syntax
     commitSha: Explicit commit SHA to build.
     dir: Directory, relative to the source root, in which to run the build.
       This must be a relative path. If a step's `dir` is specified and is an
       absolute path, this value is ignored for that step's execution.
     projectId: ID of the project that owns the Cloud Source Repository. If
       omitted, the project ID requesting the build is assumed.
-    repoName: Name of the Cloud Source Repository. If omitted, the name
-      "default" is assumed.
-    tagName: Name of the tag to build.
+    repoName: Required. Name of the Cloud Source Repository.
+    substitutions: Substitutions to use in a triggered build. Should only be
+      used with RunBuildTrigger
+    tagName: Regex matching tags to build.  The syntax of the regular
+      expressions accepted is the syntax accepted by RE2 and described at
+      https://github.com/google/re2/wiki/Syntax
   """
+
+  @encoding.MapUnrecognizedFields('additionalProperties')
+  class SubstitutionsValue(_messages.Message):
+    r"""Substitutions to use in a triggered build. Should only be used with
+    RunBuildTrigger
+
+    Messages:
+      AdditionalProperty: An additional property for a SubstitutionsValue
+        object.
+
+    Fields:
+      additionalProperties: Additional properties of type SubstitutionsValue
+    """
+
+    class AdditionalProperty(_messages.Message):
+      r"""An additional property for a SubstitutionsValue object.
+
+      Fields:
+        key: Name of the additional property.
+        value: A string attribute.
+      """
+
+      key = _messages.StringField(1)
+      value = _messages.StringField(2)
+
+    additionalProperties = _messages.MessageField('AdditionalProperty', 1, repeated=True)
 
   branchName = _messages.StringField(1)
   commitSha = _messages.StringField(2)
   dir = _messages.StringField(3)
   projectId = _messages.StringField(4)
   repoName = _messages.StringField(5)
-  tagName = _messages.StringField(6)
+  substitutions = _messages.MessageField('SubstitutionsValue', 6)
+  tagName = _messages.StringField(7)
 
 
 class Results(_messages.Message):
@@ -994,6 +1123,7 @@ class Results(_messages.Message):
   Fields:
     artifactManifest: Path to the artifact manifest. Only populated when
       artifacts are uploaded.
+    artifactTiming: Time to push all non-container artifacts.
     buildStepImages: List of build step digests, in the order corresponding to
       build step indices.
     buildStepOutputs: List of build step outputs, produced by builder images,
@@ -1007,10 +1137,11 @@ class Results(_messages.Message):
   """
 
   artifactManifest = _messages.StringField(1)
-  buildStepImages = _messages.StringField(2, repeated=True)
-  buildStepOutputs = _messages.BytesField(3, repeated=True)
-  images = _messages.MessageField('BuiltImage', 4, repeated=True)
-  numArtifacts = _messages.IntegerField(5)
+  artifactTiming = _messages.MessageField('TimeSpan', 2)
+  buildStepImages = _messages.StringField(3, repeated=True)
+  buildStepOutputs = _messages.BytesField(4, repeated=True)
+  images = _messages.MessageField('BuiltImage', 5, repeated=True)
+  numArtifacts = _messages.IntegerField(6)
 
 
 class RetryBuildRequest(_messages.Message):
@@ -1213,37 +1344,10 @@ class StandardQueryParameters(_messages.Message):
 class Status(_messages.Message):
   r"""The `Status` type defines a logical error model that is suitable for
   different programming environments, including REST APIs and RPC APIs. It is
-  used by [gRPC](https://github.com/grpc). The error model is designed to be:
-  - Simple to use and understand for most users - Flexible enough to meet
-  unexpected needs  # Overview  The `Status` message contains three pieces of
-  data: error code, error message, and error details. The error code should be
-  an enum value of google.rpc.Code, but it may accept additional error codes
-  if needed.  The error message should be a developer-facing English message
-  that helps developers *understand* and *resolve* the error. If a localized
-  user-facing error message is needed, put the localized message in the error
-  details or localize it in the client. The optional error details may contain
-  arbitrary information about the error. There is a predefined set of error
-  detail types in the package `google.rpc` that can be used for common error
-  conditions.  # Language mapping  The `Status` message is the logical
-  representation of the error model, but it is not necessarily the actual wire
-  format. When the `Status` message is exposed in different client libraries
-  and different wire protocols, it can be mapped differently. For example, it
-  will likely be mapped to some exceptions in Java, but more likely mapped to
-  some error codes in C.  # Other uses  The error model and the `Status`
-  message can be used in a variety of environments, either with or without
-  APIs, to provide a consistent developer experience across different
-  environments.  Example uses of this error model include:  - Partial errors.
-  If a service needs to return partial errors to the client,     it may embed
-  the `Status` in the normal response to indicate the partial     errors.  -
-  Workflow errors. A typical workflow has multiple steps. Each step may
-  have a `Status` message for error reporting.  - Batch operations. If a
-  client uses batch request and batch response, the     `Status` message
-  should be used directly inside batch response, one for     each error sub-
-  response.  - Asynchronous operations. If an API call embeds asynchronous
-  operation     results in its response, the status of those operations should
-  be     represented directly using the `Status` message.  - Logging. If some
-  API errors are stored in logs, the message `Status` could     be used
-  directly after any stripping needed for security/privacy reasons.
+  used by [gRPC](https://github.com/grpc). Each `Status` message contains
+  three pieces of data: error code, error message, and error details.  You can
+  find out more about this error model and how to work with it in the [API
+  Design Guide](https://cloud.google.com/apis/design/errors).
 
   Messages:
     DetailsValueListEntry: A DetailsValueListEntry object.

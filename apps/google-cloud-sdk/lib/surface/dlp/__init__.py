@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -36,3 +36,4 @@ class DLP(base.Group):
   specify data stored on your Google Cloud Storage, BigQuery,
   or Cloud Datastore instances.
   """
+  category = base.SECURITY_CATEGORY

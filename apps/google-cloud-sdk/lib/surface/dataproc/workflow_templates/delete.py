@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,14 +23,25 @@ from googlecloudsdk.calliope import base
 from googlecloudsdk.command_lib.dataproc import flags
 from googlecloudsdk.core.console import console_io
 
+DETAILED_HELP = {
+    'EXAMPLES':
+        """\
+      To delete a workflow template 'my-workflow-template', run:
 
-@base.ReleaseTracks(base.ReleaseTrack.GA)
+        $ {command} my-workflow-template --region=us-central1
+      """,
+}
+
+
 class Delete(base.DeleteCommand):
   """Delete a workflow template."""
 
-  @staticmethod
-  def Args(parser):
-    flags.AddTemplateResourceArg(parser, 'delete', api_version='v1')
+  detailed_help = DETAILED_HELP
+
+  @classmethod
+  def Args(cls, parser):
+    dataproc = dp.Dataproc(cls.ReleaseTrack())
+    flags.AddTemplateResourceArg(parser, 'delete', dataproc.api_version)
 
   def Run(self, args):
     dataproc = dp.Dataproc(self.ReleaseTrack())
@@ -47,12 +58,3 @@ class Delete(base.DeleteCommand):
         cancel_on_no=True)
 
     dataproc.client.projects_regions_workflowTemplates.Delete(request)
-
-
-@base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA)
-class DeleteBeta(Delete):
-  """Delete a workflow template."""
-
-  @staticmethod
-  def Args(parser):
-    flags.AddTemplateResourceArg(parser, 'delete', api_version='v1beta2')

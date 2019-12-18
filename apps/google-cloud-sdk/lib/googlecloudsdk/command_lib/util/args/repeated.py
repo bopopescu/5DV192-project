@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -64,6 +64,7 @@ Makes a command that works like so:
 
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import print_function
 from __future__ import unicode_literals
 
 import functools
@@ -140,13 +141,15 @@ def ParseResourceNameArgs(args, arg_name, current_value_thunk, resource_parser):
   Returns:
     List of str: the new value for the field, or None if no change is required.
   """
+  underscored_name = arg_name.replace('-', '_')
   remove = _ConvertValuesToRelativeNames(
-      getattr(args, 'remove_' + arg_name), resource_parser)
+      getattr(args, 'remove_' + underscored_name), resource_parser)
   add = _ConvertValuesToRelativeNames(
-      getattr(args, 'add_' + arg_name), resource_parser)
-  clear = getattr(args, 'clear_' + arg_name)
+      getattr(args, 'add_' + underscored_name), resource_parser)
+  clear = getattr(args, 'clear_' + underscored_name)
+  # 'set' is allowed to be None, as it is deprecated.
   set_ = _ConvertValuesToRelativeNames(
-      getattr(args, 'set_' + arg_name), resource_parser)
+      getattr(args, 'set_' + underscored_name, None), resource_parser)
 
   return _ModifyCurrentValue(remove, add, clear, set_, current_value_thunk)
 
@@ -175,10 +178,11 @@ def ParsePrimitiveArgs(args, arg_name, current_value_thunk):
     List of str: the new value for the field, or None if no change is required.
 
   """
-  remove = getattr(args, 'remove_' + arg_name)
-  add = getattr(args, 'add_' + arg_name)
-  clear = getattr(args, 'clear_' + arg_name)
-  set_ = getattr(args, 'set_' + arg_name)
+  underscored_name = arg_name.replace('-', '_')
+  remove = getattr(args, 'remove_' + underscored_name)
+  add = getattr(args, 'add_' + underscored_name)
+  clear = getattr(args, 'clear_' + underscored_name)
+  set_ = getattr(args, 'set_' + underscored_name, None)
 
   return _ModifyCurrentValue(remove, add, clear, set_, current_value_thunk)
 
@@ -228,7 +232,9 @@ def AddPrimitiveArgs(parser,
                      property_name,
                      additional_help='',
                      metavar=None,
-                     is_dict_args=False):
+                     is_dict_args=False,
+                     auto_group_help=True,
+                     include_set=True):
   """Add arguments for updating a field to the given parser.
 
   Adds `--{add,remove,set,clear-<resource>` arguments.
@@ -236,8 +242,8 @@ def AddPrimitiveArgs(parser,
   Args:
     parser: calliope.parser_extensions.ArgumentInterceptor, the parser to add
       arguments to.
-    resource_name: str, the (singular) name of the resource being modified
-      (in whatever format you'd like it to appear in help text).
+    resource_name: str, the (singular) name of the resource being modified (in
+      whatever format you'd like it to appear in help text).
     arg_name: str, the (plural) argument suffix to use (hyphen-case).
     property_name: str, the description of the property being modified (plural;
       in whatever format you'd like it to appear in help text)
@@ -245,20 +251,26 @@ def AddPrimitiveArgs(parser,
     metavar: str, the name of the metavar to use (if different from
       arg_name.upper()).
     is_dict_args: boolean, True when the primitive args are dict args.
+    auto_group_help: bool, True to generate a summary help.
+    include_set: bool, True to include the (deprecated) set argument.
   """
   properties_name = property_name
-  group_help = 'These flags modify the member {} of this {}.'.format(
-      properties_name, resource_name)
-  if additional_help:
-    group_help += ' ' + additional_help
+  if auto_group_help:
+    group_help = 'These flags modify the member {} of this {}.'.format(
+        properties_name, resource_name)
+    if additional_help:
+      group_help += ' ' + additional_help
+  else:
+    group_help = additional_help
   group = parser.add_mutually_exclusive_group(group_help)
   metavar = metavar or arg_name.upper()
   args = [
       _GetAppendArg(arg_name, metavar, properties_name, is_dict_args),
       _GetRemoveArg(arg_name, metavar, properties_name, is_dict_args),
-      _GetSetArg(arg_name, metavar, properties_name, is_dict_args),
       _GetClearArg(arg_name, properties_name),
   ]
+  if include_set:
+    args.append(_GetSetArg(arg_name, metavar, properties_name, is_dict_args))
   for arg in args:
     arg.AddToParser(group)
 

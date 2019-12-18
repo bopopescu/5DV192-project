@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ from __future__ import division
 from __future__ import unicode_literals
 
 from googlecloudsdk.api_lib.dataproc import dataproc as dp
-from googlecloudsdk.api_lib.dataproc import util
 from googlecloudsdk.calliope import base
 from googlecloudsdk.command_lib.dataproc import flags
 
@@ -37,14 +36,15 @@ class Describe(base.DescribeCommand):
     $ {command} job_id
   """
 
-  @staticmethod
-  def Args(parser):
-    flags.AddJobFlag(parser, 'describe')
+  @classmethod
+  def Args(cls, parser):
+    dataproc = dp.Dataproc(cls.ReleaseTrack())
+    flags.AddJobResourceArg(parser, 'describe', dataproc.api_version)
 
   def Run(self, args):
     dataproc = dp.Dataproc(self.ReleaseTrack())
 
-    job_ref = util.ParseJob(args.job, dataproc)
+    job_ref = args.CONCEPTS.job.Parse()
 
     return dataproc.client.projects_regions_jobs.Get(
         dataproc.messages.DataprocProjectsRegionsJobsGetRequest(

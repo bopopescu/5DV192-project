@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ class JobBase(six.with_metaclass(abc.ABCMeta, object)):
     super(JobBase, self).__init__(*args, **kwargs)
     self.files_by_type = {}
     self.files_to_stage = []
-    self._staging_dir = None  # type: str
+    self._staging_dir = None
 
   def _GetStagedFile(self, file_str):
     """Validate file URI and register it for uploading if it is local."""
@@ -109,4 +109,4 @@ class JobBase(six.with_metaclass(abc.ABCMeta, object)):
             messages.LoggingConfig.DriverLogLevelsValue))
 
   def PopulateFilesByType(self, args):
-    self.files_by_type.update(self.GetFilesByType(args))  # pytype: disable=attribute-error
+    self.files_by_type.update(self.GetFilesByType(args))

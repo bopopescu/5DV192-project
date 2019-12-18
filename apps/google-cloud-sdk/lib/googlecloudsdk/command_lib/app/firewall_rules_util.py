@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ from __future__ import unicode_literals
 
 from googlecloudsdk.calliope import exceptions
 from googlecloudsdk.core import resources
+import six
 
 # The default rule is placed at MaxInt32 - 1 and is always evaluated last
 DEFAULT_RULE_PRIORITY = 2**31 - 1
@@ -58,7 +59,7 @@ def ParseFirewallRule(client, priority):
 
   """
   res = GetRegistry(client.ApiVersion()).Parse(
-      str(ParsePriority(priority)),
+      six.text_type(ParsePriority(priority)),
       params={'appsId': client.project},
       collection='appengine.apps.firewall.ingressRules')
   return res

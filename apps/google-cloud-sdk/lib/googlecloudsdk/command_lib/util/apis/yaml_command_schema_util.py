@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -169,7 +169,7 @@ def ParseAction(action, flag_name):
   if deprecation:
     return actions.DeprecationAction(flag_name, **deprecation)
 
-  raise ValueError('Unknown value for action: ' + str(action))
+  raise ValueError('Unknown value for action: ' + six.text_type(action))
 
 
 BUILTIN_TYPES = {
@@ -205,7 +205,7 @@ def ParseType(t):
   if 'arg_dict' in t:
     return ArgDict.FromData(t.get('arg_dict'))
 
-  raise ValueError('Unknown value for type: ' + str(t))
+  raise ValueError('Unknown value for type: ' + six.text_type(t))
 
 
 class Choice(object):
@@ -216,7 +216,10 @@ class Choice(object):
     if isinstance(self.arg_value, six.string_types):
       # We always do a case insensitive comparison.
       self.arg_value = self.arg_value.lower()
-    self.enum_value = data['enum_value']
+    if 'enum_value' in data:
+      self.enum_value = data['enum_value']
+    else:
+      self.enum_value = arg_utils.ChoiceToEnumName(self.arg_value)
     self.help_text = data.get('help_text')
 
   @classmethod

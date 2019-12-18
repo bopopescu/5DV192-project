@@ -417,6 +417,10 @@ class FieldFilter(_messages.Message):
         come first in `order_by`.
       EQUAL: Equal.
       ARRAY_CONTAINS: Contains. Requires that the field is an array.
+      IN: In. Requires that `value` is a non-empty ArrayValue with at most 10
+        values.
+      ARRAY_CONTAINS_ANY: Contains any. Requires that the field is an array
+        and `value` is a non-empty ArrayValue with at most 10 values.
     """
     OPERATOR_UNSPECIFIED = 0
     LESS_THAN = 1
@@ -425,6 +429,8 @@ class FieldFilter(_messages.Message):
     GREATER_THAN_OR_EQUAL = 4
     EQUAL = 5
     ARRAY_CONTAINS = 6
+    IN = 7
+    ARRAY_CONTAINS_ANY = 8
 
   field = _messages.MessageField('FieldReference', 1)
   op = _messages.EnumField('OpValueValuesEnum', 2)
@@ -534,8 +540,8 @@ class FirestoreProjectsDatabasesCollectionGroupsFieldsGetRequest(_messages.Messa
   r"""A FirestoreProjectsDatabasesCollectionGroupsFieldsGetRequest object.
 
   Fields:
-    name: A name of the form `projects/{project_id}/databases/{database_id}/co
-      llectionGroups/{collection_id}/fields/{field_id}`
+    name: Required. A name of the form `projects/{project_id}/databases/{datab
+      ase_id}/collectionGroups/{collection_id}/fields/{field_id}`
   """
 
   name = _messages.StringField(1, required=True)
@@ -554,8 +560,8 @@ class FirestoreProjectsDatabasesCollectionGroupsFieldsListRequest(_messages.Mess
     pageToken: A page token, returned from a previous call to
       FirestoreAdmin.ListFields, that may be used to get the next page of
       results.
-    parent: A parent name of the form `projects/{project_id}/databases/{databa
-      se_id}/collectionGroups/{collection_id}`
+    parent: Required. A parent name of the form `projects/{project_id}/databas
+      es/{database_id}/collectionGroups/{collection_id}`
   """
 
   filter = _messages.StringField(1)
@@ -603,8 +609,8 @@ class FirestoreProjectsDatabasesCollectionGroupsIndexesCreateRequest(_messages.M
   Fields:
     googleFirestoreAdminV1Index: A GoogleFirestoreAdminV1Index resource to be
       passed as the request body.
-    parent: A parent name of the form `projects/{project_id}/databases/{databa
-      se_id}/collectionGroups/{collection_id}`
+    parent: Required. A parent name of the form `projects/{project_id}/databas
+      es/{database_id}/collectionGroups/{collection_id}`
   """
 
   googleFirestoreAdminV1Index = _messages.MessageField('GoogleFirestoreAdminV1Index', 1)
@@ -615,8 +621,8 @@ class FirestoreProjectsDatabasesCollectionGroupsIndexesDeleteRequest(_messages.M
   r"""A FirestoreProjectsDatabasesCollectionGroupsIndexesDeleteRequest object.
 
   Fields:
-    name: A name of the form `projects/{project_id}/databases/{database_id}/co
-      llectionGroups/{collection_id}/indexes/{index_id}`
+    name: Required. A name of the form `projects/{project_id}/databases/{datab
+      ase_id}/collectionGroups/{collection_id}/indexes/{index_id}`
   """
 
   name = _messages.StringField(1, required=True)
@@ -626,8 +632,8 @@ class FirestoreProjectsDatabasesCollectionGroupsIndexesGetRequest(_messages.Mess
   r"""A FirestoreProjectsDatabasesCollectionGroupsIndexesGetRequest object.
 
   Fields:
-    name: A name of the form `projects/{project_id}/databases/{database_id}/co
-      llectionGroups/{collection_id}/indexes/{index_id}`
+    name: Required. A name of the form `projects/{project_id}/databases/{datab
+      ase_id}/collectionGroups/{collection_id}/indexes/{index_id}`
   """
 
   name = _messages.StringField(1, required=True)
@@ -642,8 +648,8 @@ class FirestoreProjectsDatabasesCollectionGroupsIndexesListRequest(_messages.Mes
     pageToken: A page token, returned from a previous call to
       FirestoreAdmin.ListIndexes, that may be used to get the next page of
       results.
-    parent: A parent name of the form `projects/{project_id}/databases/{databa
-      se_id}/collectionGroups/{collection_id}`
+    parent: Required. A parent name of the form `projects/{project_id}/databas
+      es/{database_id}/collectionGroups/{collection_id}`
   """
 
   filter = _messages.StringField(1)
@@ -658,7 +664,7 @@ class FirestoreProjectsDatabasesDocumentsBatchGetRequest(_messages.Message):
   Fields:
     batchGetDocumentsRequest: A BatchGetDocumentsRequest resource to be passed
       as the request body.
-    database: The database name. In the format:
+    database: Required. The database name. In the format:
       `projects/{project_id}/databases/{database_id}`.
   """
 
@@ -672,7 +678,7 @@ class FirestoreProjectsDatabasesDocumentsBeginTransactionRequest(_messages.Messa
   Fields:
     beginTransactionRequest: A BeginTransactionRequest resource to be passed
       as the request body.
-    database: The database name. In the format:
+    database: Required. The database name. In the format:
       `projects/{project_id}/databases/{database_id}`.
   """
 
@@ -685,7 +691,7 @@ class FirestoreProjectsDatabasesDocumentsCommitRequest(_messages.Message):
 
   Fields:
     commitRequest: A CommitRequest resource to be passed as the request body.
-    database: The database name. In the format:
+    database: Required. The database name. In the format:
       `projects/{project_id}/databases/{database_id}`.
   """
 
@@ -697,14 +703,14 @@ class FirestoreProjectsDatabasesDocumentsCreateDocumentRequest(_messages.Message
   r"""A FirestoreProjectsDatabasesDocumentsCreateDocumentRequest object.
 
   Fields:
-    collectionId: The collection ID, relative to `parent`, to list. For
-      example: `chatrooms`.
+    collectionId: Required. The collection ID, relative to `parent`, to list.
+      For example: `chatrooms`.
     document: A Document resource to be passed as the request body.
     documentId: The client-assigned document ID to use for this document.
       Optional. If not specified, an ID will be assigned by the service.
     mask_fieldPaths: The list of field paths in the mask. See Document.fields
       for a field path syntax reference.
-    parent: The parent resource. For example:
+    parent: Required. The parent resource. For example:
       `projects/{project_id}/databases/{database_id}/documents` or `projects/{
       project_id}/databases/{database_id}/documents/chatrooms/{chatroom_id}`
   """
@@ -724,9 +730,9 @@ class FirestoreProjectsDatabasesDocumentsDeleteRequest(_messages.Message):
       exist. When set to `false`, the target document must not exist.
     currentDocument_updateTime: When set, the target document must exist and
       have been last updated at that time.
-    name: The resource name of the Document to delete. In the format:
-      `projects/{project_id}/databases/{database_id}/documents/{document_path}
-      `.
+    name: Required. The resource name of the Document to delete. In the
+      format: `projects/{project_id}/databases/{database_id}/documents/{docume
+      nt_path}`.
   """
 
   currentDocument_exists = _messages.BooleanField(1)
@@ -740,7 +746,7 @@ class FirestoreProjectsDatabasesDocumentsGetRequest(_messages.Message):
   Fields:
     mask_fieldPaths: The list of field paths in the mask. See Document.fields
       for a field path syntax reference.
-    name: The resource name of the Document to get. In the format:
+    name: Required. The resource name of the Document to get. In the format:
       `projects/{project_id}/databases/{database_id}/documents/{document_path}
       `.
     readTime: Reads the version of the document at the given time. This may
@@ -760,7 +766,7 @@ class FirestoreProjectsDatabasesDocumentsListCollectionIdsRequest(_messages.Mess
   Fields:
     listCollectionIdsRequest: A ListCollectionIdsRequest resource to be passed
       as the request body.
-    parent: The parent document. In the format:
+    parent: Required. The parent document. In the format:
       `projects/{project_id}/databases/{database_id}/documents/{document_path}
       `. For example: `projects/my-project/databases/my-
       database/documents/chatrooms/my-chatroom`
@@ -774,15 +780,15 @@ class FirestoreProjectsDatabasesDocumentsListRequest(_messages.Message):
   r"""A FirestoreProjectsDatabasesDocumentsListRequest object.
 
   Fields:
-    collectionId: The collection ID, relative to `parent`, to list. For
-      example: `chatrooms` or `messages`.
+    collectionId: Required. The collection ID, relative to `parent`, to list.
+      For example: `chatrooms` or `messages`.
     mask_fieldPaths: The list of field paths in the mask. See Document.fields
       for a field path syntax reference.
     orderBy: The order to sort results by. For example: `priority desc, name`.
     pageSize: The maximum number of documents to return.
     pageToken: The `next_page_token` value returned from a previous List
       request, if any.
-    parent: The parent resource name. In the format:
+    parent: Required. The parent resource name. In the format:
       `projects/{project_id}/databases/{database_id}/documents` or `projects/{
       project_id}/databases/{database_id}/documents/{document_path}`. For
       example: `projects/my-project/databases/my-database/documents` or
@@ -813,7 +819,7 @@ class FirestoreProjectsDatabasesDocumentsListenRequest(_messages.Message):
   r"""A FirestoreProjectsDatabasesDocumentsListenRequest object.
 
   Fields:
-    database: The database name. In the format:
+    database: Required. The database name. In the format:
       `projects/{project_id}/databases/{database_id}`.
     listenRequest: A ListenRequest resource to be passed as the request body.
   """
@@ -852,7 +858,7 @@ class FirestoreProjectsDatabasesDocumentsRollbackRequest(_messages.Message):
   r"""A FirestoreProjectsDatabasesDocumentsRollbackRequest object.
 
   Fields:
-    database: The database name. In the format:
+    database: Required. The database name. In the format:
       `projects/{project_id}/databases/{database_id}`.
     rollbackRequest: A RollbackRequest resource to be passed as the request
       body.
@@ -866,7 +872,7 @@ class FirestoreProjectsDatabasesDocumentsRunQueryRequest(_messages.Message):
   r"""A FirestoreProjectsDatabasesDocumentsRunQueryRequest object.
 
   Fields:
-    parent: The parent resource name. In the format:
+    parent: Required. The parent resource name. In the format:
       `projects/{project_id}/databases/{database_id}/documents` or `projects/{
       project_id}/databases/{database_id}/documents/{document_path}`. For
       example: `projects/my-project/databases/my-database/documents` or
@@ -884,7 +890,7 @@ class FirestoreProjectsDatabasesDocumentsWriteRequest(_messages.Message):
   r"""A FirestoreProjectsDatabasesDocumentsWriteRequest object.
 
   Fields:
-    database: The database name. In the format:
+    database: Required. The database name. In the format:
       `projects/{project_id}/databases/{database_id}`. This is only required
       in the first message.
     writeRequest: A WriteRequest resource to be passed as the request body.
@@ -901,7 +907,7 @@ class FirestoreProjectsDatabasesExportDocumentsRequest(_messages.Message):
     googleFirestoreAdminV1ExportDocumentsRequest: A
       GoogleFirestoreAdminV1ExportDocumentsRequest resource to be passed as
       the request body.
-    name: Database to export. Should be of the form:
+    name: Required. Database to export. Should be of the form:
       `projects/{project_id}/databases/{database_id}`.
   """
 
@@ -916,7 +922,7 @@ class FirestoreProjectsDatabasesImportDocumentsRequest(_messages.Message):
     googleFirestoreAdminV1ImportDocumentsRequest: A
       GoogleFirestoreAdminV1ImportDocumentsRequest resource to be passed as
       the request body.
-    name: Database to import into. Should be of the form:
+    name: Required. Database to import into. Should be of the form:
       `projects/{project_id}/databases/{database_id}`.
   """
 
@@ -1289,9 +1295,13 @@ class GoogleFirestoreAdminV1Index(_messages.Message):
         queries against a collection that is the child of a specific document,
         specified at query time, and that has the collection id specified by
         the index.
+      COLLECTION_GROUP: Indexes with a collection group query scope specified
+        allow queries against all collections that has the collection id
+        specified by the index.
     """
     QUERY_SCOPE_UNSPECIFIED = 0
     COLLECTION = 1
+    COLLECTION_GROUP = 2
 
   class StateValueValuesEnum(_messages.Enum):
     r"""Output only. The serving state of the index.
@@ -1565,7 +1575,8 @@ class GoogleLongrunningOperation(_messages.Message):
       if any.
     name: The server-assigned name, which is only unique within the same
       service that originally returns it. If you use the default HTTP mapping,
-      the `name` should have the format of `operations/some/unique/name`.
+      the `name` should be a resource name ending with
+      `operations/{unique_id}`.
     response: The normal response of the operation in case of success.  If the
       original method returns no data on success, such as `Delete`, the
       response is `google.protobuf.Empty`.  If the original method is standard
@@ -1991,7 +2002,7 @@ class RollbackRequest(_messages.Message):
   r"""The request for Firestore.Rollback.
 
   Fields:
-    transaction: The transaction to roll back.
+    transaction: Required. The transaction to roll back.
   """
 
   transaction = _messages.BytesField(1)
@@ -2107,37 +2118,10 @@ class StandardQueryParameters(_messages.Message):
 class Status(_messages.Message):
   r"""The `Status` type defines a logical error model that is suitable for
   different programming environments, including REST APIs and RPC APIs. It is
-  used by [gRPC](https://github.com/grpc). The error model is designed to be:
-  - Simple to use and understand for most users - Flexible enough to meet
-  unexpected needs  # Overview  The `Status` message contains three pieces of
-  data: error code, error message, and error details. The error code should be
-  an enum value of google.rpc.Code, but it may accept additional error codes
-  if needed.  The error message should be a developer-facing English message
-  that helps developers *understand* and *resolve* the error. If a localized
-  user-facing error message is needed, put the localized message in the error
-  details or localize it in the client. The optional error details may contain
-  arbitrary information about the error. There is a predefined set of error
-  detail types in the package `google.rpc` that can be used for common error
-  conditions.  # Language mapping  The `Status` message is the logical
-  representation of the error model, but it is not necessarily the actual wire
-  format. When the `Status` message is exposed in different client libraries
-  and different wire protocols, it can be mapped differently. For example, it
-  will likely be mapped to some exceptions in Java, but more likely mapped to
-  some error codes in C.  # Other uses  The error model and the `Status`
-  message can be used in a variety of environments, either with or without
-  APIs, to provide a consistent developer experience across different
-  environments.  Example uses of this error model include:  - Partial errors.
-  If a service needs to return partial errors to the client,     it may embed
-  the `Status` in the normal response to indicate the partial     errors.  -
-  Workflow errors. A typical workflow has multiple steps. Each step may
-  have a `Status` message for error reporting.  - Batch operations. If a
-  client uses batch request and batch response, the     `Status` message
-  should be used directly inside batch response, one for     each error sub-
-  response.  - Asynchronous operations. If an API call embeds asynchronous
-  operation     results in its response, the status of those operations should
-  be     represented directly using the `Status` message.  - Logging. If some
-  API errors are stored in logs, the message `Status` could     be used
-  directly after any stripping needed for security/privacy reasons.
+  used by [gRPC](https://github.com/grpc). Each `Status` message contains
+  three pieces of data: error code, error message, and error details.  You can
+  find out more about this error model and how to work with it in the [API
+  Design Guide](https://cloud.google.com/apis/design/errors).
 
   Messages:
     DetailsValueListEntry: A DetailsValueListEntry object.
@@ -2230,11 +2214,8 @@ class Target(_messages.Message):
     resumeToken: A resume token from a prior TargetChange for an identical
       target.  Using a resume token with a different target is unsupported and
       may fail.
-    targetId: A client provided target ID.  If not set, the server will assign
-      an ID for the target.  Used for resuming a target without changing IDs.
-      The IDs can either be client-assigned or be server-assigned in a
-      previous stream. All targets with client provided IDs must be added
-      before adding a target that needs a server-assigned id.
+    targetId: The target ID that identifies the target on the stream. Must be
+      a positive number and non-zero.
   """
 
   documents = _messages.MessageField('DocumentsTarget', 1)
@@ -2265,11 +2246,8 @@ class TargetChange(_messages.Message):
       target change.
     targetChangeType: The type of change that occurred.
     targetIds: The target IDs of targets that have changed.  If empty, the
-      change applies to all targets.  For `target_change_type=ADD`, the order
-      of the target IDs matches the order of the requests to add the targets.
-      This allows clients to unambiguously associate server-assigned target
-      IDs with added targets.  For other states, the order of the target IDs
-      is not defined.
+      change applies to all targets.  The order of the target IDs is not
+      defined.
   """
 
   class TargetChangeTypeValueValuesEnum(_messages.Enum):
@@ -2332,7 +2310,7 @@ class UnaryFilter(_messages.Message):
     Values:
       OPERATOR_UNSPECIFIED: Unspecified. This value must not be used.
       IS_NAN: Test if a field is equal to NaN.
-      IS_NULL: Test if an exprestion evaluates to Null.
+      IS_NULL: Test if an expression evaluates to Null.
     """
     OPERATOR_UNSPECIFIED = 0
     IS_NAN = 1
@@ -2400,7 +2378,7 @@ class Write(_messages.Message):
     delete: A document name to delete. In the format:
       `projects/{project_id}/databases/{database_id}/documents/{document_path}
       `.
-    transform: Applies a tranformation to a document. At most one `transform`
+    transform: Applies a transformation to a document. At most one `transform`
       per document is allowed in a given request. An `update` cannot follow a
       `transform` on the same document in a given request.
     update: A document to write.

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2013 Google Inc. All Rights Reserved.
+# Copyright 2013 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""A hidden command that prints access tokens.
+"""A command that prints access tokens.
 """
 
 from __future__ import absolute_import
@@ -27,16 +27,25 @@ from googlecloudsdk.core.credentials import store as c_store
 from oauth2client import client
 
 
-@base.Hidden
 class AccessToken(base.Command):
-  """Print an access token for the active account."""
+  """Print an access token for the specified account."""
+  detailed_help = {
+      'DESCRIPTION': """\
+        {description}
+        """,
+      'EXAMPLES': """\
+        To print access tokens:
+
+          $ {command}
+        """,
+  }
 
   @staticmethod
   def Args(parser):
     parser.add_argument(
         'account', nargs='?',
-        help=('The account to get the access token for. Leave empty for the '
-              'active account.'))
+        help=('Account to get the access token for. If not specified, '
+              'the current active account will be used.'))
     parser.display_info.AddFormat('value(access_token)')
 
   @c_exc.RaiseErrorInsteadOf(auth_exceptions.AuthenticationError, client.Error)
@@ -45,7 +54,6 @@ class AccessToken(base.Command):
 
     cred = c_store.Load(args.account)
     c_store.Refresh(cred)
-
     if not cred.access_token:
       raise auth_exceptions.InvalidCredentialsError(
           'No access token could be obtained from the current credentials.')

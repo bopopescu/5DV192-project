@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ RANGE_HELP_TEXT = """\
     This flag only works if mode is
     [legacy](https://cloud.google.com/compute/docs/vpc/legacy).
 
-    Using legacy networks is **not recommended**, given that many newer Google
+    Using legacy networks is **DEPRECATED**, given that many newer Google
     Cloud Platform features are not supported on legacy networks. Please be
     advised that legacy networks may not be supported in the future.
     """
@@ -48,12 +48,18 @@ _BGP_ROUTING_MODE_CHOICES = {
                 'learned BGP routes.',
 }
 
+_MULTICAST_MODE_CHOICES = {
+    'disabled': 'Multicast is disabled for this network.',
+    'zonal': 'Multicast is allowed within a zone.',
+}
+
 _CREATE_SUBNET_MODE_CHOICES = {
     'auto': 'Subnets are created automatically.  This is the recommended '
             'selection.',
     'custom': 'Create subnets manually.',
-    'legacy': 'Create an old style network that has a range and cannot have '
-              'subnets.  This is not recommended for new networks.',
+    'legacy':
+        '[Deprecated] Create an old style network that has a range and cannot '
+        'have subnets.  This is not recommended for new networks.',
 }
 
 
@@ -78,6 +84,17 @@ def AddCreateSubnetModeArg(parser):
               AUTO.""")
 
 
+def AddMtuArg(parser):
+  """Adds the --mtu flag."""
+  parser.add_argument(
+      '--mtu',
+      type=int,
+      help="""Maximum transmission unit(MTU) is the size of the largest frame
+              that can be transmitted on this network. Default value is
+              1460 bytes, the maximum is 1500 bytes. The MTU advertised
+              via DHCP to all instances attached to this network.""")
+
+
 def AddCreateBgpRoutingModeArg(parser):
   """Adds the --bgp-routing-mode flag."""
   parser.add_argument(
@@ -88,6 +105,17 @@ def AddCreateBgpRoutingModeArg(parser):
       metavar='MODE',
       help="""The BGP routing mode for this network. If not specified, defaults
               to regional.""")
+
+
+def AddMulticastModeArg(parser):
+  """Adds the --multicast-mode flag."""
+  parser.add_argument(
+      '--multicast-mode',
+      choices=_MULTICAST_MODE_CHOICES,
+      type=lambda mode: mode.lower(),
+      hidden=True,
+      help="""The multicast mode for this network. If not specified, defaults to
+              disabled.""")
 
 
 def AddUpdateArgs(parser):
@@ -106,6 +134,20 @@ def AddUpdateArgs(parser):
       type=lambda mode: mode.lower(),
       metavar='MODE',
       help="""The target BGP routing mode for this network.""")
+
+
+def AddUpdateArgsAlpha(parser):
+  """Adds arguments for updating a network."""
+
+  AddUpdateArgs(parser)
+
+  parser.add_argument(
+      '--multicast-mode',
+      choices=_MULTICAST_MODE_CHOICES,
+      type=lambda mode: mode.lower(),
+      hidden=True,
+      help="""The multicast mode for this network.""")
+  AddMtuArg(parser)
 
 
 def CheckRangeLegacyModeOrRaise(args):

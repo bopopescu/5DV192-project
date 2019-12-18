@@ -758,13 +758,10 @@ There are no permissions required for making this API call.
 
     def Create(self, request, global_params=None):
       r"""Request that a new Project be created. The result is an Operation which.
-can be used to track the creation process. It is automatically deleted
-after a few hours, so there is no need to call DeleteOperation.
-
-Our SLO permits Project creation to take up to 30 seconds at the 90th
-percentile. As of 2016-08-29, we are observing 6 seconds 50th percentile
-latency. 95th percentile latency is around 11 seconds. We recommend
-polling at the 5th second with an exponential backoff.
+can be used to track the creation process. This process usually takes a few
+seconds, but can sometimes take much longer. The tracking Operation is
+automatically deleted after a few hours, so there is no need to call
+DeleteOperation.
 
 Authorization requires the Google IAM permission
 `resourcemanager.projects.create` on the specified parent for the new
@@ -998,13 +995,22 @@ values including `POLICY_TYPE_NOT_SET` for the `policy_type oneof`. The
     )
 
     def List(self, request, global_params=None):
-      r"""Lists Projects that are visible to the user and satisfy the.
-specified filter. This method returns Projects in an unspecified order.
+      r"""Lists Projects that the caller has the `resourcemanager.projects.get`.
+permission on and satisfy the specified filter.
+
+This method returns Projects in an unspecified order.
 This method is eventually consistent with project mutations; this means
 that a newly created project may not appear in the results or recent
 updates to an existing project may not be reflected in the results. To
 retrieve the latest state of a project, use the
 GetProject method.
+
+NOTE: If the request filter contains a `parent.type` and `parent.id` and
+the caller has the `resourcemanager.projects.list` permission on the
+parent, the results will be drawn from an alternate index which provides
+more consistent results. In future versions of this API, this List method
+will be split into List and Search to properly capture the behavorial
+difference.
 
       Args:
         request: (CloudresourcemanagerProjectsListRequest) input message
@@ -1090,7 +1096,11 @@ The following constraints apply when using `setIamPolicy()`:
 + Project does not support `allUsers` and `allAuthenticatedUsers` as
 `members` in a `Binding` of a `Policy`.
 
-+ The owner role can be granted only to `user` and `serviceAccount`.
++ The owner role can be granted to a `user`, `serviceAccount`, or a group
+that is part of an organization. For example,
+group@myownpersonaldomain.com could be added as an owner to a project in
+the myownpersonaldomain.com organization, but not the examplepetstore.com
+organization.
 
 + Service accounts can be made owners of a project directly
 without any restrictions. However, to be added as an owner, a user must be

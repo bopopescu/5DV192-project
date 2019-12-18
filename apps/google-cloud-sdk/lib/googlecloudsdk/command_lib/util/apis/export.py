@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -79,10 +79,14 @@ def _WrapDescription(depth, text):
 def _NormalizeTypeName(name):
   """Returns the JSON schema normalized type name for name."""
   s = six.text_type(name).lower()
+  if re.match(r'.?int64', s):
+    return 'string'
   if re.match(r'^int\d*$', s):
     return 'integer'
   if s == 'bool':
     return 'boolean'
+  if s == 'bytes':
+    return 'string'
   return s
 
 

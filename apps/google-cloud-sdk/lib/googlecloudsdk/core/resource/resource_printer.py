@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -54,7 +54,6 @@ from googlecloudsdk.core.resource import resource_property
 from googlecloudsdk.core.resource import resource_transform
 from googlecloudsdk.core.resource import table_printer
 from googlecloudsdk.core.resource import yaml_printer
-from googlecloudsdk.core.util import typing  # pylint: disable=unused-import
 
 
 class Error(core_exceptions.Error):
@@ -110,12 +109,17 @@ class MultiPrinter(resource_printer_base.ResourcePrinter):
     `--format="multi(data:format=json, info:format='table[box](a, b, c)')"`
 
   formats the *data* field as JSON and the *info* field as a boxed table.
+
+  Printer attributes:
+    separator: Separator string to print between each format. If multiple
+      resources are provided, the separator is also printed between each
+      resource.
   """
 
   def __init__(self, *args, **kwargs):
     super(MultiPrinter, self).__init__(*args, **kwargs)
     # pylint: disable=line-too-long
-    self.columns = []  # type: typing.List[typing.Tuple[resource_projection_spec.ProjectionSpec._Column, resource_printer_base.ResourcePrinter]]
+    self.columns = []
     # pylint: disable=line-too-long
     for col in self.column_attributes.Columns():
       if not col.attribute.subformat:
@@ -126,7 +130,10 @@ class MultiPrinter(resource_printer_base.ResourcePrinter):
           (col, Printer(col.attribute.subformat, out=self._out)))
 
   def _AddRecord(self, record, delimit=True):
-    for col, printer in self.columns:
+    separator = self.attributes.get('separator', '')
+    for i, (col, printer) in enumerate(self.columns):
+      if i != 0 or delimit:
+        self._out.write(separator)
       printer.Print(resource_property.Get(record, col.key))
 
 
@@ -166,6 +173,10 @@ _FORMATTERS = {
     'value': csv_printer.ValuePrinter,
     'yaml': yaml_printer.YamlPrinter,
 }
+
+
+def RegisterFormatter(format_name, printer):
+  _FORMATTERS[format_name] = printer
 
 
 def GetFormatRegistry():

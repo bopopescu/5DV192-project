@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,17 +30,17 @@ class DeleteAccessConfig(base.SilentCommand):
   """Delete an access configuration from a virtual machine network interface."""
 
   detailed_help = {
-      'DESCRIPTION': """\
+      'DESCRIPTION': """
         *{command}* is used to delete access configurations from network
         interfaces of Google Compute Engine virtual machines. Access
         configurations allow you to assign a public, external IP to a virtual
         machine.
       """,
-      'EXAMPLES': """\
+      'EXAMPLES': """
         To remove the externally accessible IP from a virtual machine named
         ``example-instance'' in zone ``us-central1-a'', run:
 
-          $ {command} example-instance --zone us-central1-a
+          $ {command} example-instance --zone=us-central1-a
       """,
   }
 

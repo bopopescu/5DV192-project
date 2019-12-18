@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,27 +21,54 @@ from __future__ import unicode_literals
 from googlecloudsdk.api_lib.accesscontextmanager import levels as levels_api
 from googlecloudsdk.calliope import base
 from googlecloudsdk.command_lib.accesscontextmanager import levels
+from googlecloudsdk.command_lib.accesscontextmanager import policies
 
 
-@base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA)
-class Update(base.UpdateCommand):
+@base.ReleaseTracks(base.ReleaseTrack.GA)
+class UpdateLevelsGA(base.UpdateCommand):
   """Update an existing access level."""
+
+  _API_VERSION = 'v1'
 
   @staticmethod
   def Args(parser):
+    UpdateLevelsGA.ArgsVersioned(parser, version='v1')
+
+  @staticmethod
+  def ArgsVersioned(parser, version='v1'):
     levels.AddResourceArg(parser, 'to update')
-    levels.AddLevelArgs(parser)
-    levels.AddLevelSpecArgs(parser)
+    levels.AddLevelArgs(parser, version=version)
+    levels.AddLevelSpecArgs(parser, version=version)
 
   def Run(self, args):
-    client = levels_api.Client()
+    client = levels_api.Client(version=self._API_VERSION)
 
     level_ref = args.CONCEPTS.level.Parse()
+    policies.ValidateAccessPolicyArg(level_ref, args)
 
-    mapper = levels.GetCombineFunctionEnumMapper()
+    mapper = levels.GetCombineFunctionEnumMapper(version=self._API_VERSION)
     combine_function = mapper.GetEnumForChoice(args.combine_function)
-    return client.Patch(level_ref,
-                        description=args.description,
-                        title=args.title,
-                        combine_function=combine_function,
-                        basic_level_conditions=args.basic_level_spec)
+    return client.Patch(
+        level_ref,
+        description=args.description,
+        title=args.title,
+        combine_function=combine_function,
+        basic_level_conditions=args.basic_level_spec)
+
+
+@base.ReleaseTracks(base.ReleaseTrack.BETA)
+class UpdateLevelsBeta(UpdateLevelsGA):
+  _API_VERSION = 'v1beta'
+
+  @staticmethod
+  def Args(parser):
+    UpdateLevelsGA.ArgsVersioned(parser, version='v1beta')
+
+
+@base.ReleaseTracks(base.ReleaseTrack.ALPHA)
+class UpdateLevelsAlpha(UpdateLevelsGA):
+  _API_VERSION = 'v1alpha'
+
+  @staticmethod
+  def Args(parser):
+    UpdateLevelsGA.ArgsVersioned(parser, version='v1alpha')

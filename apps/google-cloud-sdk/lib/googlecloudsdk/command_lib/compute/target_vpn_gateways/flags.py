@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2016 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -56,6 +56,6 @@ def TargetVpnGatewayArgumentForVpnTunnel(required=True):
       plural=False,
       required=required,
       regional_collection='compute.targetVpnGateways',
-      short_help='A reference to a target vpn gateway',
+      short_help='A reference to a Cloud VPN Classic Target VPN Gateway.',
       region_explanation=('Should be the same as region, if not specified, '
                           'it will be automatically set.'))

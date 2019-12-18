@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -39,8 +39,8 @@ def TypedArgRules():
       'instrumentation': {
           'required': ['test'],
           'optional': [
-              'test_package', 'test_runner_class', 'test_targets',
-              'use_orchestrator'
+              'num_uniform_shards', 'test_targets_for_shard', 'test_package',
+              'test_runner_class', 'test_targets', 'use_orchestrator'
           ],
           'defaults': {}
       },
@@ -72,8 +72,9 @@ def SharedArgRules():
       'optional': [
           'additional_apks',
           'app_package',
-          'async',
+          'async_',
           'auto_google_login',
+          'client_details',
           'device',
           'device_ids',
           'directories_to_pull',
@@ -93,7 +94,7 @@ def SharedArgRules():
           'timeout',
       ],
       'defaults': {
-          'async': False,
+          'async_': False,
           'auto_google_login': True,
           'num_flaky_test_attempts': 0,
           'performance_metrics': True,
@@ -170,6 +171,7 @@ class AndroidArgsManager(object):
     arg_validate.NormalizeAndValidateObbFileNames(args.obb_files)
     arg_validate.ValidateRoboDirectivesList(args)
     arg_validate.ValidateEnvironmentVariablesList(args)
+    arg_validate.ValidateTestTargetsForShard(args)
     arg_validate.NormalizeAndValidateDirectoriesToPullList(
         args.directories_to_pull)
     arg_validate.ValidateScenarioNumbers(args)

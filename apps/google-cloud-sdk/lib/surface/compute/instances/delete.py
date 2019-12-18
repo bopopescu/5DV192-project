@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -40,6 +40,15 @@ AUTO_DELETE_OVERRIDE_CHOICES = {
     'boot': 'The first partition is reserved for the root filesystem.',
     'data': 'A non-boot disk.',
     'all': 'All disk types.',
+}
+
+DETAILED_HELP = {
+    'EXAMPLES': """
+    To delete an instance called 'instance-1' in the zone 'us-central-2-a', run:
+
+      $ {command} instance-1 --zone=us-central2-a
+
+  """
 }
 
 
@@ -207,3 +216,5 @@ class Delete(base.DeleteCommand):
                               request_protobuf))
 
     return client.MakeRequests(delete_requests)
+
+Delete.detailed_help = DETAILED_HELP

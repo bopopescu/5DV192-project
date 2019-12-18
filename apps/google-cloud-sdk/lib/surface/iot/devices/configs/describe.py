@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""`gcloud iot configs describe` command."""
+"""`gcloud iot devices configs describe` command."""
 
 from __future__ import absolute_import
 from __future__ import division
@@ -27,6 +27,15 @@ from googlecloudsdk.command_lib.iot import resource_args
 @base.ReleaseTracks(base.ReleaseTrack.BETA, base.ReleaseTrack.GA)
 class Describe(base.DescribeCommand):
   """Show details about the latest configuration for a device."""
+
+  detailed_help = {
+      'EXAMPLES':
+          """\
+          To show the details of the latest configuration for a device in region 'us-central1', run:
+
+            $ {command} --region=us-central1 --registry=my-registry --device=my-device
+          """,
+  }
 
   @staticmethod
   def Args(parser):

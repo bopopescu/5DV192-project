@@ -22,14 +22,17 @@ class GenerateAccessTokenRequest(_messages.Message):
       `roles/iam.serviceAccountTokenCreator` role on the service account that
       is specified in the `name` field of the request.  The delegates must
       have the following format:
-      `projects/-/serviceAccounts/{ACCOUNT_EMAIL_OR_UNIQUEID}`
+      `projects/-/serviceAccounts/{ACCOUNT_EMAIL_OR_UNIQUEID}`. The `-`
+      wildcard character is required; replacing it with a project ID is
+      invalid.
     lifetime: The desired lifetime duration of the access token in seconds.
       Must be set to a value less than or equal to 3600 (1 hour). If a value
       is not specified, the token's lifetime will be set to a default value of
       one hour.
-    scope: Code to identify the scopes to be included in the OAuth 2.0 access
-      token. See https://developers.google.com/identity/protocols/googlescopes
-      for more information. At least one value required.
+    scope: Required. Code to identify the scopes to be included in the OAuth
+      2.0 access token. See
+      https://developers.google.com/identity/protocols/googlescopes for more
+      information. At least one value required.
   """
 
   delegates = _messages.StringField(1, repeated=True)
@@ -53,8 +56,8 @@ class GenerateIdTokenRequest(_messages.Message):
   r"""A GenerateIdTokenRequest object.
 
   Fields:
-    audience: The audience for the token, such as the API or account that this
-      token grants access to.
+    audience: Required. The audience for the token, such as the API or account
+      that this token grants access to.
     delegates: The sequence of service accounts in a delegation chain. Each
       service account must be granted the
       `roles/iam.serviceAccountTokenCreator` role on its next service account
@@ -62,7 +65,9 @@ class GenerateIdTokenRequest(_messages.Message):
       `roles/iam.serviceAccountTokenCreator` role on the service account that
       is specified in the `name` field of the request.  The delegates must
       have the following format:
-      `projects/-/serviceAccounts/{ACCOUNT_EMAIL_OR_UNIQUEID}`
+      `projects/-/serviceAccounts/{ACCOUNT_EMAIL_OR_UNIQUEID}`. The `-`
+      wildcard character is required; replacing it with a project ID is
+      invalid.
     includeEmail: Include the service account email in the token. If set to
       `true`, the token will contain `email` and `email_verified` claims.
   """
@@ -82,59 +87,6 @@ class GenerateIdTokenResponse(_messages.Message):
   token = _messages.StringField(1)
 
 
-class GenerateIdentityBindingAccessTokenRequest(_messages.Message):
-  r"""A GenerateIdentityBindingAccessTokenRequest object.
-
-  Fields:
-    jwt: Required. Input token. Must be in JWT format according to RFC7523
-      (https://tools.ietf.org/html/rfc7523) and must have 'kid' field in the
-      header. Supported signing algorithms: RS256 (RS512, ES256, ES512 coming
-      soon). Mandatory payload fields (along the lines of RFC 7523, section
-      3): - iss: issuer of the token. Must provide a discovery document at
-      $iss/.well-known/openid-configuration . The document needs to be
-      formatted according to section 4.2 of the OpenID Connect Discovery
-      1.0 specification. - iat: Issue time in seconds since epoch. Must be in
-      the past. - exp: Expiration time in seconds since epoch. Must be less
-      than 48 hours        after iat. We recommend to create tokens that last
-      shorter than 6        hours to improve security unless business reasons
-      mandate longer        expiration times. Shorter token lifetimes are
-      generally more secure        since tokens that have been exfiltrated by
-      attackers can be used for        a shorter time. you can configure the
-      maximum lifetime of the        incoming token in the configuration of
-      the mapper.        The resulting Google token will expire within an hour
-      or at "exp",        whichever is earlier. - sub: JWT subject, identity
-      asserted in the JWT. - aud: Configured in the mapper policy. By default
-      the service account        email.  Claims from the incoming token can be
-      transferred into the output token accoding to the mapper configuration.
-      The outgoing claim size is limited. Outgoing claims size must be less
-      than 4kB serialized as JSON without whitespace.  Example header: {
-      "alg": "RS256",   "kid": "92a4265e14ab04d4d228a48d10d4ca31610936f8" }
-      Example payload: {   "iss": "https://accounts.google.com",   "iat":
-      1517963104,   "exp": 1517966704,   "aud":   "https://iamcredentials.goog
-      leapis.com/google.iam.credentials.v1.CloudGaia",   "sub":
-      "113475438248934895348",   "my_claims": {     "additional_claim":
-      "value"   } }
-    scope: Code to identify the scopes to be included in the OAuth 2.0 access
-      token. See https://developers.google.com/identity/protocols/googlescopes
-      for more information. At least one value required.
-  """
-
-  jwt = _messages.StringField(1)
-  scope = _messages.StringField(2, repeated=True)
-
-
-class GenerateIdentityBindingAccessTokenResponse(_messages.Message):
-  r"""A GenerateIdentityBindingAccessTokenResponse object.
-
-  Fields:
-    accessToken: The OAuth 2.0 access token.
-    expireTime: Token expiration time. The expiration time is always set.
-  """
-
-  accessToken = _messages.StringField(1)
-  expireTime = _messages.StringField(2)
-
-
 class IamcredentialsProjectsServiceAccountsGenerateAccessTokenRequest(_messages.Message):
   r"""A IamcredentialsProjectsServiceAccountsGenerateAccessTokenRequest
   object.
@@ -142,9 +94,11 @@ class IamcredentialsProjectsServiceAccountsGenerateAccessTokenRequest(_messages.
   Fields:
     generateAccessTokenRequest: A GenerateAccessTokenRequest resource to be
       passed as the request body.
-    name: The resource name of the service account for which the credentials
-      are requested, in the following format:
-      `projects/-/serviceAccounts/{ACCOUNT_EMAIL_OR_UNIQUEID}`.
+    name: Required. The resource name of the service account for which the
+      credentials are requested, in the following format:
+      `projects/-/serviceAccounts/{ACCOUNT_EMAIL_OR_UNIQUEID}`. The `-`
+      wildcard character is required; replacing it with a project ID is
+      invalid.
   """
 
   generateAccessTokenRequest = _messages.MessageField('GenerateAccessTokenRequest', 1)
@@ -157,29 +111,14 @@ class IamcredentialsProjectsServiceAccountsGenerateIdTokenRequest(_messages.Mess
   Fields:
     generateIdTokenRequest: A GenerateIdTokenRequest resource to be passed as
       the request body.
-    name: The resource name of the service account for which the credentials
-      are requested, in the following format:
-      `projects/-/serviceAccounts/{ACCOUNT_EMAIL_OR_UNIQUEID}`.
+    name: Required. The resource name of the service account for which the
+      credentials are requested, in the following format:
+      `projects/-/serviceAccounts/{ACCOUNT_EMAIL_OR_UNIQUEID}`. The `-`
+      wildcard character is required; replacing it with a project ID is
+      invalid.
   """
 
   generateIdTokenRequest = _messages.MessageField('GenerateIdTokenRequest', 1)
-  name = _messages.StringField(2, required=True)
-
-
-class IamcredentialsProjectsServiceAccountsGenerateIdentityBindingAccessTokenRequest(_messages.Message):
-  r"""A IamcredentialsProjectsServiceAccountsGenerateIdentityBindingAccessToke
-  nRequest object.
-
-  Fields:
-    generateIdentityBindingAccessTokenRequest: A
-      GenerateIdentityBindingAccessTokenRequest resource to be passed as the
-      request body.
-    name: The resource name of the service account for which the credentials
-      are requested, in the following format:
-      `projects/-/serviceAccounts/{ACCOUNT_EMAIL_OR_UNIQUEID}`.
-  """
-
-  generateIdentityBindingAccessTokenRequest = _messages.MessageField('GenerateIdentityBindingAccessTokenRequest', 1)
   name = _messages.StringField(2, required=True)
 
 
@@ -187,9 +126,11 @@ class IamcredentialsProjectsServiceAccountsSignBlobRequest(_messages.Message):
   r"""A IamcredentialsProjectsServiceAccountsSignBlobRequest object.
 
   Fields:
-    name: The resource name of the service account for which the credentials
-      are requested, in the following format:
-      `projects/-/serviceAccounts/{ACCOUNT_EMAIL_OR_UNIQUEID}`.
+    name: Required. The resource name of the service account for which the
+      credentials are requested, in the following format:
+      `projects/-/serviceAccounts/{ACCOUNT_EMAIL_OR_UNIQUEID}`. The `-`
+      wildcard character is required; replacing it with a project ID is
+      invalid.
     signBlobRequest: A SignBlobRequest resource to be passed as the request
       body.
   """
@@ -202,9 +143,11 @@ class IamcredentialsProjectsServiceAccountsSignJwtRequest(_messages.Message):
   r"""A IamcredentialsProjectsServiceAccountsSignJwtRequest object.
 
   Fields:
-    name: The resource name of the service account for which the credentials
-      are requested, in the following format:
-      `projects/-/serviceAccounts/{ACCOUNT_EMAIL_OR_UNIQUEID}`.
+    name: Required. The resource name of the service account for which the
+      credentials are requested, in the following format:
+      `projects/-/serviceAccounts/{ACCOUNT_EMAIL_OR_UNIQUEID}`. The `-`
+      wildcard character is required; replacing it with a project ID is
+      invalid.
     signJwtRequest: A SignJwtRequest resource to be passed as the request
       body.
   """
@@ -224,8 +167,10 @@ class SignBlobRequest(_messages.Message):
       `roles/iam.serviceAccountTokenCreator` role on the service account that
       is specified in the `name` field of the request.  The delegates must
       have the following format:
-      `projects/-/serviceAccounts/{ACCOUNT_EMAIL_OR_UNIQUEID}`
-    payload: The bytes to sign.
+      `projects/-/serviceAccounts/{ACCOUNT_EMAIL_OR_UNIQUEID}`. The `-`
+      wildcard character is required; replacing it with a project ID is
+      invalid.
+    payload: Required. The bytes to sign.
   """
 
   delegates = _messages.StringField(1, repeated=True)
@@ -255,9 +200,11 @@ class SignJwtRequest(_messages.Message):
       `roles/iam.serviceAccountTokenCreator` role on the service account that
       is specified in the `name` field of the request.  The delegates must
       have the following format:
-      `projects/-/serviceAccounts/{ACCOUNT_EMAIL_OR_UNIQUEID}`
-    payload: The JWT payload to sign: a JSON object that contains a JWT Claims
-      Set.
+      `projects/-/serviceAccounts/{ACCOUNT_EMAIL_OR_UNIQUEID}`. The `-`
+      wildcard character is required; replacing it with a project ID is
+      invalid.
+    payload: Required. The JWT payload to sign: a JSON object that contains a
+      JWT Claims Set.
   """
 
   delegates = _messages.StringField(1, repeated=True)

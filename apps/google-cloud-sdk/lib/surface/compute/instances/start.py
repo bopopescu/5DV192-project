@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ from googlecloudsdk.api_lib.compute.operations import poller
 from googlecloudsdk.api_lib.util import waiter
 from googlecloudsdk.calliope import base
 from googlecloudsdk.command_lib.compute.instances import flags
+from googlecloudsdk.command_lib.compute.ssh_utils import GetExternalIPAddress
+from googlecloudsdk.command_lib.compute.ssh_utils import GetInternalIPAddress
 from googlecloudsdk.core import exceptions
 from googlecloudsdk.core import log
 from googlecloudsdk.core import resources
@@ -43,11 +45,7 @@ class FailedToFetchInstancesError(exceptions.Error):
 
 
 class Start(base.SilentCommand):
-  """Start a stopped virtual machine instance.
-
-    *{command}* is used to start a stopped Google Compute Engine virtual
-  machine. Only a stopped virtual machine can be started.
-  """
+  """Start a stopped virtual machine instance."""
 
   @staticmethod
   def Args(parser):
@@ -128,7 +126,7 @@ class Start(base.SilentCommand):
 
     operation_refs = [holder.resources.Parse(r.selfLink) for r in responses]
 
-    if args.async:
+    if args.async_:
       for operation_ref in operation_refs:
         log.status.Print('Start instance in progress for [{}].'.format(
             operation_ref.SelfLink()))
@@ -147,7 +145,34 @@ class Start(base.SilentCommand):
             i.Name() for i in instance_refs)),
         max_wait_ms=None)
 
-    for instance_ref in instance_refs:
+    for instance_ref, res in zip(instance_refs, result):
       log.status.Print('Updated [{0}].'.format(instance_ref))
 
+      log.status.Print('Instance internal IP is {0}'.format(
+          GetInternalIPAddress(res)))
+      if GetExternalIPAddress(res, no_raise=True):
+        log.status.Print('Instance external IP is {0}'.format(
+            GetExternalIPAddress(res)))
+
     return result
+
+
+def DetailedHelp():
+  """Construct help text based on the command release track."""
+  detailed_help = {
+      'brief': 'Start a stopped virtual machine instance.',
+      'DESCRIPTION': """\
+        *{command}* is used to start a stopped Google Compute Engine virtual
+        machine. Only a stopped virtual machine can be started.
+        """,
+      'EXAMPLES': """\
+        To start a stopped instance named 'example-instance' in zone
+        ``us-central1-a'', run:
+
+          $ {command} example-instance --zone=us-central1-a
+        """,
+  }
+  return detailed_help
+
+
+Start.detailed_help = DetailedHelp()

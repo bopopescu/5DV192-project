@@ -125,6 +125,10 @@
         "inspectTemplateName": {
           "description": "Optional template to use. Any configuration directly specified in\ninspect_config will override those set in the template. Singular fields\nthat are set in this request will replace their corresponding fields in the\ntemplate. Repeated fields are appended. Singular sub-messages and groups\nare recursively merged.",
           "type": "string"
+        },
+        "locationId": {
+          "description": "The geographic location to process content inspection. Reserved for future\nextensions.",
+          "type": "string"
         }
       }
     },
@@ -134,7 +138,7 @@
       "type": "object",
       "properties": {
         "infoTypes": {
-          "description": "Restricts what info_types to look for. The values must correspond to\nInfoType values returned by ListInfoTypes or listed at\nhttps:\/\/cloud.google.com\/dlp\/docs\/infotypes-reference.\n\nWhen no InfoTypes or CustomInfoTypes are specified in a request, the\nsystem may automatically choose what detectors to run. By default this may\nbe all types, but may change over time as detectors are updated.\n\nThe special InfoType name \"ALL_BASIC\" can be used to trigger all detectors,\nbut may change over time as new InfoTypes are added. If you need precise\ncontrol and predictability as to what detectors are run you should specify\nspecific InfoTypes listed in the reference.",
+          "description": "Restricts what info_types to look for. The values must correspond to\nInfoType values returned by ListInfoTypes or listed at\nhttps:\/\/cloud.google.com\/dlp\/docs\/infotypes-reference.\n\nWhen no InfoTypes or CustomInfoTypes are specified in a request, the\nsystem may automatically choose what detectors to run. By default this may\nbe all types, but may change over time as detectors are updated.\n\nIf you need precise control and predictability as to what detectors are\nrun you should specify specific InfoTypes listed in the reference,\notherwise a default list will be used, which may change over time.",
           "type": "array",
           "items": {
             "$ref": "GooglePrivacyDlpV2InfoType"
@@ -220,12 +224,12 @@
       "type": "object",
       "properties": {
         "maxFindingsPerItem": {
-          "description": "Max number of findings that will be returned for each item scanned.\nWhen set within `InspectDataSourceRequest`,\nthe maximum returned is 1000 regardless if this is set higher.\nWhen set within `InspectContentRequest`, this field is ignored.",
+          "description": "Max number of findings that will be returned for each item scanned.\nWhen set within `InspectDataSourceRequest`,\nthe maximum returned is 2000 regardless if this is set higher.\nWhen set within `InspectContentRequest`, this field is ignored.",
           "type": "integer",
           "format": "int32"
         },
         "maxFindingsPerRequest": {
-          "description": "Max number of findings that will be returned per request\/job.\nWhen set within `InspectContentRequest`, the maximum returned is 1000\nregardless if this is set higher.",
+          "description": "Max number of findings that will be returned per request\/job.\nWhen set within `InspectContentRequest`, the maximum returned is 2000\nregardless if this is set higher.",
           "type": "integer",
           "format": "int32"
         },
@@ -404,7 +408,7 @@
     },
     "GooglePrivacyDlpV2DetectionRule": {
       "id": "GooglePrivacyDlpV2DetectionRule",
-      "description": "Rule for modifying a CustomInfoType to alter behavior under certain\ncircumstances, depending on the specific details of the rule. Not supported\nfor the `surrogate_type` custom info type.",
+      "description": "Deprecated; use `InspectionRuleSet` instead. Rule for modifying a\n`CustomInfoType` to alter behavior under certain circumstances, depending\non the specific details of the rule. Not supported for the `surrogate_type`\ncustom infoType.",
       "type": "object",
       "properties": {
         "hotwordRule": {
@@ -744,6 +748,7 @@
             "",
             "",
             "",
+            "",
             ""
           ],
           "type": "string",
@@ -754,7 +759,8 @@
             "IMAGE_BMP",
             "IMAGE_PNG",
             "IMAGE_SVG",
-            "TEXT_UTF8"
+            "TEXT_UTF8",
+            "AVRO"
           ]
         },
         "data": {
@@ -1182,6 +1188,10 @@
       "description": "Request to search for potentially sensitive info in an image and redact it\nby covering it with a colored rectangle.",
       "type": "object",
       "properties": {
+        "locationId": {
+          "description": "The geographic location to process the request. Reserved for future\nextensions.",
+          "type": "string"
+        },
         "inspectConfig": {
           "description": "Configuration for the inspector.",
           "$ref": "GooglePrivacyDlpV2InspectConfig"
@@ -1288,6 +1298,10 @@
         "deidentifyTemplateName": {
           "description": "Optional template to use. Any configuration directly specified in\ndeidentify_config will override those set in the template. Singular fields\nthat are set in this request will replace their corresponding fields in the\ntemplate. Repeated fields are appended. Singular sub-messages and groups\nare recursively merged.",
           "type": "string"
+        },
+        "locationId": {
+          "description": "The geographic location to process de-identification. Reserved for future\nextensions.",
+          "type": "string"
         }
       }
     },
@@ -1303,6 +1317,10 @@
         "recordTransformations": {
           "description": "Treat the dataset as structured. Transformations can be applied to\nspecific locations within structured datasets, such as transforming\na column within a table.",
           "$ref": "GooglePrivacyDlpV2RecordTransformations"
+        },
+        "transformationErrorHandling": {
+          "description": "Mode for handling transformation errors. If left unspecified, the default\nmode is `TransformationErrorHandling.ThrowError`.",
+          "$ref": "GooglePrivacyDlpV2TransformationErrorHandling"
         }
       }
     },
@@ -1372,6 +1390,9 @@
         },
         "dateShiftConfig": {
           "$ref": "GooglePrivacyDlpV2DateShiftConfig"
+        },
+        "cryptoDeterministicConfig": {
+          "$ref": "GooglePrivacyDlpV2CryptoDeterministicConfig"
         }
       }
     },
@@ -1399,7 +1420,7 @@
       "type": "object",
       "properties": {
         "maskingCharacter": {
-          "description": "Character to mask the sensitive values&mdash;for example, \"*\" for an\nalphabetic string such as name, or \"0\" for a numeric string such as ZIP\ncode or credit card number. String must have length 1. If not supplied, we\nwill default to \"*\" for strings, 0 for digits.",
+          "description": "Character to use to mask the sensitive values&mdash;for example, `*` for an\nalphabetic string such as a name, or `0` for a numeric string such as ZIP\ncode or credit card number. This string must have a length of 1. If not\nsupplied, this value defaults to `*` for strings, and `0` for digits.",
           "type": "string"
         },
         "numberToMask": {
@@ -1408,11 +1429,11 @@
           "format": "int32"
         },
         "reverseOrder": {
-          "description": "Mask characters in reverse order. For example, if `masking_character` is\n'0', number_to_mask is 14, and `reverse_order` is false, then\n1234-5678-9012-3456 -> 00000000000000-3456\nIf `masking_character` is '*', `number_to_mask` is 3, and `reverse_order`\nis true, then 12345 -> 12***",
+          "description": "Mask characters in reverse order. For example, if `masking_character` is\n`0`, `number_to_mask` is `14`, and `reverse_order` is `false`, then the\ninput string `1234-5678-9012-3456` is masked as `00000000000000-3456`.\nIf `masking_character` is `*`, `number_to_mask` is `3`, and `reverse_order`\nis `true`, then the string `12345` is masked as `12***`.",
           "type": "boolean"
         },
         "charactersToIgnore": {
-          "description": "When masking a string, items in this list will be skipped when replacing.\nFor example, if your string is 555-555-5555 and you ask us to skip `-` and\nmask 5 chars with * we would produce ***-*55-5555.",
+          "description": "When masking a string, items in this list will be skipped when replacing\ncharacters. For example, if the input string is `555-555-5555` and you\ninstruct Cloud DLP to skip `-` and mask 5 characters with `*`, Cloud DLP\nreturns `***-**5-5555`.",
           "type": "array",
           "items": {
             "$ref": "GooglePrivacyDlpV2CharsToIgnore"
@@ -1451,7 +1472,7 @@
     },
     "GooglePrivacyDlpV2CryptoReplaceFfxFpeConfig": {
       "id": "GooglePrivacyDlpV2CryptoReplaceFfxFpeConfig",
-      "description": "Replaces an identifier with a surrogate using FPE with the FFX\nmode of operation; however when used in the `ReidentifyContent` API method,\nit serves the opposite function by reversing the surrogate back into\nthe original identifier.\nThe identifier must be encoded as ASCII.\nFor a given crypto key and context, the same identifier will be\nreplaced with the same surrogate.\nIdentifiers must be at least two characters long.\nIn the case that the identifier is the empty string, it will be skipped.\nSee https:\/\/cloud.google.com\/dlp\/docs\/pseudonymization to learn more.",
+      "description": "Replaces an identifier with a surrogate using Format Preserving Encryption\n(FPE) with the FFX mode of operation; however when used in the\n`ReidentifyContent` API method, it serves the opposite function by reversing\nthe surrogate back into the original identifier. The identifier must be\nencoded as ASCII. For a given crypto key and context, the same identifier\nwill be replaced with the same surrogate. Identifiers must be at least two\ncharacters long. In the case that the identifier is the empty string, it will\nbe skipped. See https:\/\/cloud.google.com\/dlp\/docs\/pseudonymization to learn\nmore.\n\nNote: We recommend using  CryptoDeterministicConfig for all use cases which\ndo not require preserving the input alphabet space and size, plus warrant\nreferential integrity.",
       "type": "object",
       "properties": {
         "cryptoKey": {
@@ -1480,11 +1501,11 @@
           ]
         },
         "customAlphabet": {
-          "description": "This is supported by mapping these to the alphanumeric characters\nthat the FFX mode natively supports. This happens before\/after\nencryption\/decryption.\nEach character listed must appear only once.\nNumber of characters must be in the range [2, 62].\nThis must be encoded as ASCII.\nThe order of characters does not matter.",
+          "description": "This is supported by mapping these to the alphanumeric characters\nthat the FFX mode natively supports. This happens before\/after\nencryption\/decryption.\nEach character listed must appear only once.\nNumber of characters must be in the range [2, 95].\nThis must be encoded as ASCII.\nThe order of characters does not matter.",
           "type": "string"
         },
         "radix": {
-          "description": "The native way to select the alphabet. Must be in the range [2, 62].",
+          "description": "The native way to select the alphabet. Must be in the range [2, 95].",
           "type": "integer",
           "format": "int32"
         },
@@ -1527,7 +1548,7 @@
       "type": "object",
       "properties": {
         "key": {
-          "description": "The AES 128\/192\/256 bit key. [required]",
+          "description": "A 128\/192\/256 bit key. [required]",
           "type": "string",
           "format": "byte"
         }
@@ -1535,7 +1556,7 @@
     },
     "GooglePrivacyDlpV2KmsWrappedCryptoKey": {
       "id": "GooglePrivacyDlpV2KmsWrappedCryptoKey",
-      "description": "Include to use an existing data crypto key wrapped by KMS.\nAuthorization requires the following IAM permissions when sending a request\nto perform a crypto transformation using a kms-wrapped crypto key:\ndlp.kms.encrypt",
+      "description": "Include to use an existing data crypto key wrapped by KMS.\nThe wrapped key must be a 128\/192\/256 bit key.\nAuthorization requires the following IAM permissions when sending a request\nto perform a crypto transformation using a kms-wrapped crypto key:\ndlp.kms.encrypt",
       "type": "object",
       "properties": {
         "wrappedKey": {
@@ -1621,7 +1642,7 @@
             "[1-12]",
             "[1-31]",
             "[1-7]",
-            "[1-52]",
+            "[1-53]",
             "[0-23]"
           ],
           "type": "string",
@@ -1664,12 +1685,31 @@
           "format": "int32"
         },
         "context": {
-          "description": "Points to the field that contains the context, for example, an entity id.\nIf set, must also set method. If set, shift will be consistent for the\ngiven context.",
+          "description": "Points to the field that contains the context, for example, an entity id.\nIf set, must also set cryptoKey. If set, shift will be consistent for the\ngiven context.",
           "$ref": "GooglePrivacyDlpV2FieldId"
         },
         "cryptoKey": {
-          "description": "Causes the shift to be computed based on this key and the context. This\nresults in the same shift for the same context and crypto_key.",
+          "description": "Causes the shift to be computed based on this key and the context. This\nresults in the same shift for the same context and crypto_key. If\nset, must also set context. Can only be applied to table items.",
           "$ref": "GooglePrivacyDlpV2CryptoKey"
+        }
+      }
+    },
+    "GooglePrivacyDlpV2CryptoDeterministicConfig": {
+      "id": "GooglePrivacyDlpV2CryptoDeterministicConfig",
+      "description": "Pseudonymization method that generates deterministic encryption for the given\ninput. Outputs a base64 encoded representation of the encrypted output.\nUses AES-SIV based on the RFC https:\/\/tools.ietf.org\/html\/rfc5297.",
+      "type": "object",
+      "properties": {
+        "cryptoKey": {
+          "description": "The key used by the encryption function.",
+          "$ref": "GooglePrivacyDlpV2CryptoKey"
+        },
+        "surrogateInfoType": {
+          "description": "The custom info type to annotate the surrogate with.\nThis annotation will be applied to the surrogate by prefixing it with\nthe name of the custom info type followed by the number of\ncharacters comprising the surrogate. The following scheme defines the\nformat: <info type name>(<surrogate character count>):<surrogate>\n\nFor example, if the name of custom info type is 'MY_TOKEN_INFO_TYPE' and\nthe surrogate is 'abc', the full replacement value\nwill be: 'MY_TOKEN_INFO_TYPE(3):abc'\n\nThis annotation identifies the surrogate when inspecting content using the\ncustom info type 'Surrogate'. This facilitates reversal of the\nsurrogate when it occurs in free text.\n\nNote: For record transformations where the entire cell in a table is being\ntransformed, surrogates are optional to use. Surrogates are used to denote\nthe location of the token and are necessary for re-identification in free\nform text.\n\nIn order for inspection to work properly, the name of this info type must\nnot occur naturally anywhere in your data; otherwise, inspection may either\n\n- reverse a surrogate that does not correspond to an actual identifier\n- be unable to parse the surrogate and result in an error\n\nTherefore, choose your custom info type name carefully after considering\nwhat your data looks like. One way to select a name that has a high chance\nof yielding reliable detection is to include one or more unicode characters\nthat are highly improbable to exist in your data.\nFor example, assuming your data is entered from a regular ASCII keyboard,\nthe symbol with the hex code point 29DD might be used like so:\n\u29DDMY_TOKEN_TYPE.",
+          "$ref": "GooglePrivacyDlpV2InfoType"
+        },
+        "context": {
+          "description": "Optional. A context may be used for higher security and maintaining\nreferential integrity such that the same identifier in two different\ncontexts will be given a distinct surrogate. The context is appended to\nplaintext value being encrypted. On decryption the provided context is\nvalidated against the value used during encryption. If a context was\nprovided during encryption, same context must be provided during decryption\nas well.\n\nIf the context is not set, plaintext would be used as is for encryption.\nIf the context is set but:\n\n1. there is no record present when transforming a given value or\n2. the field is not present when transforming a given value,\n\nplaintext would be used as is for encryption.\n\nNote that case (1) is expected when an `InfoTypeTransformation` is\napplied to both structured and non-structured `ContentItem`s.",
+          "$ref": "GooglePrivacyDlpV2FieldId"
         }
       }
     },
@@ -1768,7 +1808,7 @@
     },
     "GooglePrivacyDlpV2Condition": {
       "id": "GooglePrivacyDlpV2Condition",
-      "description": "The field type of `value` and `field` do not need to match to be\nconsidered equal, but not all comparisons are possible.\n\nA `value` of type:\n\n- `string` can be compared against all other types\n- `boolean` can only be compared against other booleans\n- `integer` can be compared against doubles or a string if the string value\ncan be parsed as an integer.\n- `double` can be compared against integers or a string if the string can\nbe parsed as a double.\n- `Timestamp` can be compared against strings in RFC 3339 date string\nformat.\n- `TimeOfDay` can be compared against timestamps and strings in the format\nof 'HH:mm:ss'.\n\nIf we fail to compare do to type mismatch, a warning will be given and\nthe condition will evaluate to false.",
+      "description": "The field type of `value` and `field` do not need to match to be\nconsidered equal, but not all comparisons are possible.\nEQUAL_TO and NOT_EQUAL_TO attempt to compare even with incompatible types,\nbut all other comparisons are invalid with incompatible types.\nA `value` of type:\n\n- `string` can be compared against all other types\n- `boolean` can only be compared against other booleans\n- `integer` can be compared against doubles or a string if the string value\ncan be parsed as an integer.\n- `double` can be compared against integers or a string if the string can\nbe parsed as a double.\n- `Timestamp` can be compared against strings in RFC 3339 date string\nformat.\n- `TimeOfDay` can be compared against timestamps and strings in the format\nof 'HH:mm:ss'.\n\nIf we fail to compare do to type mismatch, a warning will be given and\nthe condition will evaluate to false.",
       "type": "object",
       "properties": {
         "field": {
@@ -1779,8 +1819,8 @@
           "description": "Operator used to compare the field or infoType to the value. [required]",
           "enumDescriptions": [
             "",
-            "Equal.",
-            "Not equal to.",
+            "Equal. Attempts to match even with incompatible types.",
+            "Not equal to. Attempts to match even with incompatible types.",
             "Greater than.",
             "Less than.",
             "Greater than or equals.",
@@ -1814,6 +1854,33 @@
           "description": "A condition that when it evaluates to true will result in the record being\nevaluated to be suppressed from the transformed content.",
           "$ref": "GooglePrivacyDlpV2RecordCondition"
         }
+      }
+    },
+    "GooglePrivacyDlpV2TransformationErrorHandling": {
+      "id": "GooglePrivacyDlpV2TransformationErrorHandling",
+      "description": "How to handle transformation errors during de-identification. A\ntransformation error occurs when the requested transformation is incompatible\nwith the data. For example, trying to de-identify an IP address using a\n`DateShift` transformation would result in a transformation error, since date\ninfo cannot be extracted from an IP address.\nInformation about any incompatible transformations, and how they were\nhandled, is returned in the response as part of the\n`TransformationOverviews`.",
+      "type": "object",
+      "properties": {
+        "throwError": {
+          "$ref": "GooglePrivacyDlpV2ThrowError"
+        },
+        "leaveUntransformed": {
+          "$ref": "GooglePrivacyDlpV2LeaveUntransformed"
+        }
+      }
+    },
+    "GooglePrivacyDlpV2ThrowError": {
+      "id": "GooglePrivacyDlpV2ThrowError",
+      "description": "Throw an error and fail the request when a transformation error occurs.",
+      "type": "object",
+      "properties": {
+      }
+    },
+    "GooglePrivacyDlpV2LeaveUntransformed": {
+      "id": "GooglePrivacyDlpV2LeaveUntransformed",
+      "description": "Skips the data without modifying it if the requested transformation would\ncause an error. For example, if a `DateShift` transformation were applied\nan an IP address, this mode would leave the IP address unchanged in the\nresponse.",
+      "type": "object",
+      "properties": {
       }
     },
     "GooglePrivacyDlpV2DeidentifyContentResponse": {
@@ -1852,7 +1919,7 @@
     },
     "GooglePrivacyDlpV2TransformationSummary": {
       "id": "GooglePrivacyDlpV2TransformationSummary",
-      "description": "Summary of a single tranformation.\nOnly one of 'transformation', 'field_transformation', or 'record_suppress'\nwill be set.",
+      "description": "Summary of a single transformation.\nOnly one of 'transformation', 'field_transformation', or 'record_suppress'\nwill be set.",
       "type": "object",
       "properties": {
         "infoType": {
@@ -1925,7 +1992,7 @@
       "type": "object",
       "properties": {
         "reidentifyConfig": {
-          "description": "Configuration for the re-identification of the content item.\nThis field shares the same proto message type that is used for\nde-identification, however its usage here is for the reversal of the\nprevious de-identification. Re-identification is performed by examining\nthe transformations used to de-identify the items and executing the\nreverse. This requires that only reversible transformations\nbe provided here. The reversible transformations are:\n\n - `CryptoReplaceFfxFpeConfig`",
+          "description": "Configuration for the re-identification of the content item.\nThis field shares the same proto message type that is used for\nde-identification, however its usage here is for the reversal of the\nprevious de-identification. Re-identification is performed by examining\nthe transformations used to de-identify the items and executing the\nreverse. This requires that only reversible transformations\nbe provided here. The reversible transformations are:\n\n - `CryptoDeterministicConfig`\n - `CryptoReplaceFfxFpeConfig`",
           "$ref": "GooglePrivacyDlpV2DeidentifyConfig"
         },
         "inspectConfig": {
@@ -1942,6 +2009,10 @@
         },
         "reidentifyTemplateName": {
           "description": "Optional template to use. References an instance of `DeidentifyTemplate`.\nAny configuration directly specified in `reidentify_config` or\n`inspect_config` will override those set in the template. Singular fields\nthat are set in this request will replace their corresponding fields in the\ntemplate. Repeated fields are appended. Singular sub-messages and groups\nare recursively merged.",
+          "type": "string"
+        },
+        "locationId": {
+          "description": "The geographic location to process content reidentification.  Reserved for\nfuture extensions.",
           "type": "string"
         }
       }
@@ -2021,7 +2092,11 @@
           "$ref": "GooglePrivacyDlpV2InspectTemplate"
         },
         "templateId": {
-          "description": "The template id can contain uppercase and lowercase letters,\nnumbers, and hyphens; that is, it must match the regular\nexpression: `[a-zA-Z\\\\d-]+`. The maximum length is 100\ncharacters. Can be empty to allow the system to generate one.",
+          "description": "The template id can contain uppercase and lowercase letters,\nnumbers, and hyphens; that is, it must match the regular\nexpression: `[a-zA-Z\\\\d-_]+`. The maximum length is 100\ncharacters. Can be empty to allow the system to generate one.",
+          "type": "string"
+        },
+        "locationId": {
+          "description": "The geographic location to store the inspection template. Reserved for\nfuture extensions.",
           "type": "string"
         }
       }
@@ -2044,12 +2119,12 @@
           "type": "string"
         },
         "createTime": {
-          "description": "The creation timestamp of a inspectTemplate, output only field.",
+          "description": "The creation timestamp of an inspectTemplate, output only field.",
           "type": "string",
           "format": "google-datetime"
         },
         "updateTime": {
-          "description": "The last update timestamp of a inspectTemplate, output only field.",
+          "description": "The last update timestamp of an inspectTemplate, output only field.",
           "type": "string",
           "format": "google-datetime"
         },
@@ -2110,14 +2185,18 @@
           "$ref": "GooglePrivacyDlpV2DeidentifyTemplate"
         },
         "templateId": {
-          "description": "The template id can contain uppercase and lowercase letters,\nnumbers, and hyphens; that is, it must match the regular\nexpression: `[a-zA-Z\\\\d-]+`. The maximum length is 100\ncharacters. Can be empty to allow the system to generate one.",
+          "description": "The template id can contain uppercase and lowercase letters,\nnumbers, and hyphens; that is, it must match the regular\nexpression: `[a-zA-Z\\\\d-_]+`. The maximum length is 100\ncharacters. Can be empty to allow the system to generate one.",
+          "type": "string"
+        },
+        "locationId": {
+          "description": "The geographic location to store the deidentification template. Reserved\nfor future extensions.",
           "type": "string"
         }
       }
     },
     "GooglePrivacyDlpV2DeidentifyTemplate": {
       "id": "GooglePrivacyDlpV2DeidentifyTemplate",
-      "description": "The DeidentifyTemplates contains instructions on how to deidentify content.\nSee https:\/\/cloud.google.com\/dlp\/docs\/concepts-templates to learn more.",
+      "description": "DeidentifyTemplates contains instructions on how to de-identify content.\nSee https:\/\/cloud.google.com\/dlp\/docs\/concepts-templates to learn more.",
       "type": "object",
       "properties": {
         "name": {
@@ -2133,12 +2212,12 @@
           "type": "string"
         },
         "createTime": {
-          "description": "The creation timestamp of a inspectTemplate, output only field.",
+          "description": "The creation timestamp of an inspectTemplate, output only field.",
           "type": "string",
           "format": "google-datetime"
         },
         "updateTime": {
-          "description": "The last update timestamp of a inspectTemplate, output only field.",
+          "description": "The last update timestamp of an inspectTemplate, output only field.",
           "type": "string",
           "format": "google-datetime"
         },
@@ -2192,7 +2271,11 @@
           "$ref": "GooglePrivacyDlpV2JobTrigger"
         },
         "triggerId": {
-          "description": "The trigger id can contain uppercase and lowercase letters,\nnumbers, and hyphens; that is, it must match the regular\nexpression: `[a-zA-Z\\\\d-]+`. The maximum length is 100\ncharacters. Can be empty to allow the system to generate one.",
+          "description": "The trigger id can contain uppercase and lowercase letters,\nnumbers, and hyphens; that is, it must match the regular\nexpression: `[a-zA-Z\\\\d-_]+`. The maximum length is 100\ncharacters. Can be empty to allow the system to generate one.",
+          "type": "string"
+        },
+        "locationId": {
+          "description": "The geographic location to store the job trigger. Reserved for\nfuture extensions.",
           "type": "string"
         }
       }
@@ -2203,7 +2286,7 @@
       "type": "object",
       "properties": {
         "name": {
-          "description": "Unique resource name for the triggeredJob, assigned by the service when the\ntriggeredJob is created, for example\n`projects\/dlp-test-project\/triggeredJobs\/53234423`.",
+          "description": "Unique resource name for the triggeredJob, assigned by the service when the\ntriggeredJob is created, for example\n`projects\/dlp-test-project\/jobTriggers\/53234423`.",
           "type": "string"
         },
         "displayName": {
@@ -2281,7 +2364,7 @@
           "type": "string"
         },
         "actions": {
-          "description": "Actions to execute at the completion of the job. Are executed in the order\nprovided.",
+          "description": "Actions to execute at the completion of the job.",
           "type": "array",
           "items": {
             "$ref": "GooglePrivacyDlpV2Action"
@@ -2361,7 +2444,9 @@
           "enumDescriptions": [
             "Includes all files.",
             "Includes all file extensions not covered by text file types.",
-            "Included file extensions:\n  asc, brf, c, cc, cpp, csv, cxx, c++, cs, css, dart, eml, go, h, hh, hpp,\n  hxx, h++, hs, html, htm, shtml, shtm, xhtml, lhs, ini, java, js, json,\n  ocaml, md, mkd, markdown, m, ml, mli, pl, pm, php, phtml, pht, py, pyw,\n  rb, rbw, rs, rc, scala, sh, sql, tex, txt, text, tsv, vcard, vcs, wml,\n  xml, xsl, xsd, yml, yaml."
+            "Included file extensions:\n  asc, brf, c, cc, cpp, csv, cxx, c++, cs, css, dart, eml, go, h, hh, hpp,\n  hxx, h++, hs, html, htm, shtml, shtm, xhtml, lhs, ini, java, js, json,\n  ocaml, md, mkd, markdown, m, ml, mli, pl, pm, php, phtml, pht, py, pyw,\n  rb, rbw, rs, rc, scala, sh, sql, tex, txt, text, tsv, vcard, vcs, wml,\n  xml, xsl, xsd, yml, yaml.",
+            "Included file extensions:\n  bmp, gif, jpg, jpeg, jpe, png.\nbytes_limit_per_file has no effect on image files.",
+            "Included file extensions:\n  avro"
           ],
           "type": "array",
           "items": {
@@ -2369,7 +2454,9 @@
             "enum": [
               "FILE_TYPE_UNSPECIFIED",
               "BINARY_FILE",
-              "TEXT_FILE"
+              "TEXT_FILE",
+              "IMAGE",
+              "AVRO"
             ]
           }
         },
@@ -2497,7 +2584,7 @@
           "format": "google-datetime"
         },
         "timestampField": {
-          "description": "Specification of the field containing the timestamp of scanned items.\nUsed for data sources like Datastore or BigQuery.\nIf not specified for BigQuery, table last modification timestamp\nis checked against given time span.\nThe valid data types of the timestamp field are:\nfor BigQuery - timestamp, date, datetime;\nfor Datastore - timestamp.\nDatastore entity will be scanned if the timestamp property does not exist\nor its value is empty or invalid.",
+          "description": "Specification of the field containing the timestamp of scanned items.\nUsed for data sources like Datastore and BigQuery.\n\nFor BigQuery:\nRequired to filter out rows based on the given start and\nend times. If not specified and the table was modified between the given\nstart and end times, the entire table will be scanned.\nThe valid data types of the timestamp field are: `INTEGER`, `DATE`,\n`TIMESTAMP`, or `DATETIME` BigQuery column.\n\nFor Datastore.\nValid data types of the timestamp field are: `TIMESTAMP`.\nDatastore entity will be scanned if the timestamp property does not\nexist or its value is empty or invalid.",
           "$ref": "GooglePrivacyDlpV2FieldId"
         },
         "enableAutoPopulationOfTimespanConfig": {
@@ -2523,9 +2610,17 @@
           "description": "Publish summary to Cloud Security Command Center (Alpha).",
           "$ref": "GooglePrivacyDlpV2PublishSummaryToCscc"
         },
+        "publishFindingsToCloudDataCatalog": {
+          "description": "Publish findings to Cloud Datahub.",
+          "$ref": "GooglePrivacyDlpV2PublishFindingsToCloudDataCatalog"
+        },
         "jobNotificationEmails": {
-          "description": "Enable email notification to project owners and editors on job\u2018s\ncompletion\/failure.",
+          "description": "Enable email notification to project owners and editors on job's\ncompletion\/failure.",
           "$ref": "GooglePrivacyDlpV2JobNotificationEmails"
+        },
+        "publishToStackdriver": {
+          "description": "Enable Stackdriver metric dlp.googleapis.com\/finding_count.",
+          "$ref": "GooglePrivacyDlpV2PublishToStackdriver"
         }
       }
     },
@@ -2572,7 +2667,7 @@
     },
     "GooglePrivacyDlpV2PublishToPubSub": {
       "id": "GooglePrivacyDlpV2PublishToPubSub",
-      "description": "Publish the results of a DlpJob to a pub sub channel.\nCompatible with: Inspect, Risk",
+      "description": "Publish a message into given Pub\/Sub topic when DlpJob has completed. The\nmessage contains a single field, `DlpJobName`, which is equal to the\nfinished job's\n[`DlpJob.name`](\/dlp\/docs\/reference\/rest\/v2\/projects.dlpJobs#DlpJob).\nCompatible with: Inspect, Risk",
       "type": "object",
       "properties": {
         "topic": {
@@ -2588,9 +2683,23 @@
       "properties": {
       }
     },
+    "GooglePrivacyDlpV2PublishFindingsToCloudDataCatalog": {
+      "id": "GooglePrivacyDlpV2PublishFindingsToCloudDataCatalog",
+      "description": "Publish findings of a DlpJob to Cloud Data Catalog. Labels summarizing the\nresults of the DlpJob will be applied to the entry for the resource scanned\nin Cloud Data Catalog. Any labels previously written by another DlpJob will\nbe deleted. InfoType naming patterns are strictly enforced when using this\nfeature. Note that the findings will be persisted in Cloud Data Catalog\nstorage and are governed by Data Catalog service-specific policy, see\nhttps:\/\/cloud.google.com\/terms\/service-terms\nOnly a single instance of this action can be specified and only allowed if\nall resources being scanned are BigQuery tables.\nCompatible with: Inspect",
+      "type": "object",
+      "properties": {
+      }
+    },
     "GooglePrivacyDlpV2JobNotificationEmails": {
       "id": "GooglePrivacyDlpV2JobNotificationEmails",
       "description": "Enable email notification to project owners and editors on jobs's\ncompletion\/failure.",
+      "type": "object",
+      "properties": {
+      }
+    },
+    "GooglePrivacyDlpV2PublishToStackdriver": {
+      "id": "GooglePrivacyDlpV2PublishToStackdriver",
+      "description": "Enable Stackdriver metric dlp.googleapis.com\/finding_count. This\nwill publish a metric to stack driver on each infotype requested and\nhow many findings were found for it. CustomDetectors will be bucketed\nas 'Custom' under the Stackdriver label 'info_type'.",
       "type": "object",
       "properties": {
       }
@@ -2638,7 +2747,7 @@
     },
     "GoogleRpcStatus": {
       "id": "GoogleRpcStatus",
-      "description": "The `Status` type defines a logical error model that is suitable for different\nprogramming environments, including REST APIs and RPC APIs. It is used by\n[gRPC](https:\/\/github.com\/grpc). The error model is designed to be:\n\n- Simple to use and understand for most users\n- Flexible enough to meet unexpected needs\n\n# Overview\n\nThe `Status` message contains three pieces of data: error code, error message,\nand error details. The error code should be an enum value of\ngoogle.rpc.Code, but it may accept additional error codes if needed.  The\nerror message should be a developer-facing English message that helps\ndevelopers *understand* and *resolve* the error. If a localized user-facing\nerror message is needed, put the localized message in the error details or\nlocalize it in the client. The optional error details may contain arbitrary\ninformation about the error. There is a predefined set of error detail types\nin the package `google.rpc` that can be used for common error conditions.\n\n# Language mapping\n\nThe `Status` message is the logical representation of the error model, but it\nis not necessarily the actual wire format. When the `Status` message is\nexposed in different client libraries and different wire protocols, it can be\nmapped differently. For example, it will likely be mapped to some exceptions\nin Java, but more likely mapped to some error codes in C.\n\n# Other uses\n\nThe error model and the `Status` message can be used in a variety of\nenvironments, either with or without APIs, to provide a\nconsistent developer experience across different environments.\n\nExample uses of this error model include:\n\n- Partial errors. If a service needs to return partial errors to the client,\n    it may embed the `Status` in the normal response to indicate the partial\n    errors.\n\n- Workflow errors. A typical workflow has multiple steps. Each step may\n    have a `Status` message for error reporting.\n\n- Batch operations. If a client uses batch request and batch response, the\n    `Status` message should be used directly inside batch response, one for\n    each error sub-response.\n\n- Asynchronous operations. If an API call embeds asynchronous operation\n    results in its response, the status of those operations should be\n    represented directly using the `Status` message.\n\n- Logging. If some API errors are stored in logs, the message `Status` could\n    be used directly after any stripping needed for security\/privacy reasons.",
+      "description": "The `Status` type defines a logical error model that is suitable for\ndifferent programming environments, including REST APIs and RPC APIs. It is\nused by [gRPC](https:\/\/github.com\/grpc). Each `Status` message contains\nthree pieces of data: error code, error message, and error details.\n\nYou can find out more about this error model and how to work with it in the\n[API Design Guide](https:\/\/cloud.google.com\/apis\/design\/errors).",
       "type": "object",
       "properties": {
         "code": {
@@ -3468,6 +3577,7 @@
     },
     "GooglePrivacyDlpV2Result": {
       "id": "GooglePrivacyDlpV2Result",
+      "description": "All result fields mentioned below are updated while the job is processing.",
       "type": "object",
       "properties": {
         "processedBytes": {
@@ -3517,7 +3627,11 @@
           "$ref": "GooglePrivacyDlpV2RiskAnalysisJobConfig"
         },
         "jobId": {
-          "description": "The job id can contain uppercase and lowercase letters,\nnumbers, and hyphens; that is, it must match the regular\nexpression: `[a-zA-Z\\\\d-]+`. The maximum length is 100\ncharacters. Can be empty to allow the system to generate one.",
+          "description": "The job id can contain uppercase and lowercase letters,\nnumbers, and hyphens; that is, it must match the regular\nexpression: `[a-zA-Z\\\\d-_]+`. The maximum length is 100\ncharacters. Can be empty to allow the system to generate one.",
+          "type": "string"
+        },
+        "locationId": {
+          "description": "The geographic location to store and process the job. Reserved for\nfuture extensions.",
           "type": "string"
         }
       }
@@ -3579,14 +3693,18 @@
           "$ref": "GooglePrivacyDlpV2StoredInfoTypeConfig"
         },
         "storedInfoTypeId": {
-          "description": "The storedInfoType ID can contain uppercase and lowercase letters,\nnumbers, and hyphens; that is, it must match the regular\nexpression: `[a-zA-Z\\\\d-]+`. The maximum length is 100\ncharacters. Can be empty to allow the system to generate one.",
+          "description": "The storedInfoType ID can contain uppercase and lowercase letters,\nnumbers, and hyphens; that is, it must match the regular\nexpression: `[a-zA-Z\\\\d-_]+`. The maximum length is 100\ncharacters. Can be empty to allow the system to generate one.",
+          "type": "string"
+        },
+        "locationId": {
+          "description": "The geographic location to store the stored infoType. Reserved for\nfuture extensions.",
           "type": "string"
         }
       }
     },
     "GooglePrivacyDlpV2StoredInfoTypeConfig": {
       "id": "GooglePrivacyDlpV2StoredInfoTypeConfig",
-      "description": "Configuration for a StoredInfoType.",
+      "description": "Configuration for stored infoTypes. All fields and subfield are provided\nby the user. For more information, see\nhttps:\/\/cloud.google.com\/dlp\/docs\/creating-custom-infotypes.",
       "type": "object",
       "properties": {
         "displayName": {
@@ -3708,6 +3826,33 @@
           "items": {
             "$ref": "GooglePrivacyDlpV2Error"
           }
+        },
+        "stats": {
+          "description": "Statistics about this storedInfoType version.",
+          "$ref": "GooglePrivacyDlpV2StoredInfoTypeStats"
+        }
+      }
+    },
+    "GooglePrivacyDlpV2StoredInfoTypeStats": {
+      "id": "GooglePrivacyDlpV2StoredInfoTypeStats",
+      "description": "Statistics for a StoredInfoType.",
+      "type": "object",
+      "properties": {
+        "largeCustomDictionary": {
+          "description": "StoredInfoType where findings are defined by a dictionary of phrases.",
+          "$ref": "GooglePrivacyDlpV2LargeCustomDictionaryStats"
+        }
+      }
+    },
+    "GooglePrivacyDlpV2LargeCustomDictionaryStats": {
+      "id": "GooglePrivacyDlpV2LargeCustomDictionaryStats",
+      "description": "Summary statistics of a custom dictionary.",
+      "type": "object",
+      "properties": {
+        "approxNumPhrases": {
+          "description": "Approximate number of distinct phrases in the dictionary.",
+          "type": "string",
+          "format": "int64"
         }
       }
     },
@@ -3814,7 +3959,7 @@
               "httpMethod": "POST",
               "parameters": {
                 "parent": {
-                  "description": "The parent resource name.",
+                  "description": "Required. The parent resource name.",
                   "location": "path",
                   "required": true,
                   "pattern": "^projects\/[^\/]+$",
@@ -3834,6 +3979,1031 @@
                 "https://www.googleapis.com/auth/cloud-platform"
               ],
               "description": "Re-identifies content that has been de-identified.\nSee\nhttps:\/\/cloud.google.com\/dlp\/docs\/pseudonymization#re-identification_in_free_text_code_example\nto learn more."
+            }
+          }
+        },
+        "locations": {
+          "resources": {
+            "content": {
+              "methods": {
+                "inspect": {
+                  "id": "dlp.projects.locations.content.inspect",
+                  "path": "v2/{+parent}/locations/{locationId}/content:inspect",
+                  "flatPath": "v2/projects/{projectsId}/locations/{locationId}/content:inspect",
+                  "httpMethod": "POST",
+                  "parameters": {
+                    "parent": {
+                      "description": "The parent resource name, for example projects\/my-project-id.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^projects\/[^\/]+$",
+                      "type": "string"
+                    },
+                    "locationId": {
+                      "description": "The geographic location to process content inspection. Reserved for future\nextensions.",
+                      "location": "path",
+                      "required": true,
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "parent",
+                    "locationId"
+                  ],
+                  "request": {
+                    "$ref": "GooglePrivacyDlpV2InspectContentRequest"
+                  },
+                  "response": {
+                    "$ref": "GooglePrivacyDlpV2InspectContentResponse"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Finds potentially sensitive info in content.\nThis method has limits on input size, processing time, and output size.\n\nWhen no InfoTypes or CustomInfoTypes are specified in this request, the\nsystem will automatically choose what detectors to run. By default this may\nbe all types, but may change over time as detectors are updated.\n\nFor how to guides, see https:\/\/cloud.google.com\/dlp\/docs\/inspecting-images\nand https:\/\/cloud.google.com\/dlp\/docs\/inspecting-text,"
+                },
+                "deidentify": {
+                  "id": "dlp.projects.locations.content.deidentify",
+                  "path": "v2/{+parent}/locations/{locationId}/content:deidentify",
+                  "flatPath": "v2/projects/{projectsId}/locations/{locationId}/content:deidentify",
+                  "httpMethod": "POST",
+                  "parameters": {
+                    "parent": {
+                      "description": "The parent resource name, for example projects\/my-project-id.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^projects\/[^\/]+$",
+                      "type": "string"
+                    },
+                    "locationId": {
+                      "description": "The geographic location to process de-identification. Reserved for future\nextensions.",
+                      "location": "path",
+                      "required": true,
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "parent",
+                    "locationId"
+                  ],
+                  "request": {
+                    "$ref": "GooglePrivacyDlpV2DeidentifyContentRequest"
+                  },
+                  "response": {
+                    "$ref": "GooglePrivacyDlpV2DeidentifyContentResponse"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "De-identifies potentially sensitive info from a ContentItem.\nThis method has limits on input size and output size.\nSee https:\/\/cloud.google.com\/dlp\/docs\/deidentify-sensitive-data to\nlearn more.\n\nWhen no InfoTypes or CustomInfoTypes are specified in this request, the\nsystem will automatically choose what detectors to run. By default this may\nbe all types, but may change over time as detectors are updated."
+                },
+                "reidentify": {
+                  "id": "dlp.projects.locations.content.reidentify",
+                  "path": "v2/{+parent}/locations/{locationId}/content:reidentify",
+                  "flatPath": "v2/projects/{projectsId}/locations/{locationId}/content:reidentify",
+                  "httpMethod": "POST",
+                  "parameters": {
+                    "parent": {
+                      "description": "Required. The parent resource name.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^projects\/[^\/]+$",
+                      "type": "string"
+                    },
+                    "locationId": {
+                      "description": "The geographic location to process content reidentification.  Reserved for\nfuture extensions.",
+                      "location": "path",
+                      "required": true,
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "parent",
+                    "locationId"
+                  ],
+                  "request": {
+                    "$ref": "GooglePrivacyDlpV2ReidentifyContentRequest"
+                  },
+                  "response": {
+                    "$ref": "GooglePrivacyDlpV2ReidentifyContentResponse"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Re-identifies content that has been de-identified.\nSee\nhttps:\/\/cloud.google.com\/dlp\/docs\/pseudonymization#re-identification_in_free_text_code_example\nto learn more."
+                }
+              }
+            },
+            "image": {
+              "methods": {
+                "redact": {
+                  "id": "dlp.projects.locations.image.redact",
+                  "path": "v2/{+parent}/locations/{locationId}/image:redact",
+                  "flatPath": "v2/projects/{projectsId}/locations/{locationId}/image:redact",
+                  "httpMethod": "POST",
+                  "parameters": {
+                    "parent": {
+                      "description": "The parent resource name, for example projects\/my-project-id.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^projects\/[^\/]+$",
+                      "type": "string"
+                    },
+                    "locationId": {
+                      "description": "The geographic location to process the request. Reserved for future\nextensions.",
+                      "location": "path",
+                      "required": true,
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "parent",
+                    "locationId"
+                  ],
+                  "request": {
+                    "$ref": "GooglePrivacyDlpV2RedactImageRequest"
+                  },
+                  "response": {
+                    "$ref": "GooglePrivacyDlpV2RedactImageResponse"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Redacts potentially sensitive info from an image.\nThis method has limits on input size, processing time, and output size.\nSee https:\/\/cloud.google.com\/dlp\/docs\/redacting-sensitive-data-images to\nlearn more.\n\nWhen no InfoTypes or CustomInfoTypes are specified in this request, the\nsystem will automatically choose what detectors to run. By default this may\nbe all types, but may change over time as detectors are updated."
+                }
+              }
+            },
+            "inspectTemplates": {
+              "methods": {
+                "create": {
+                  "id": "dlp.projects.locations.inspectTemplates.create",
+                  "path": "v2/{+parent}/locations/{locationId}/inspectTemplates",
+                  "flatPath": "v2/projects/{projectsId}/locations/{locationId}/inspectTemplates",
+                  "httpMethod": "POST",
+                  "parameters": {
+                    "parent": {
+                      "description": "Required. The parent resource name, for example projects\/my-project-id or\norganizations\/my-org-id.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^projects\/[^\/]+$",
+                      "type": "string"
+                    },
+                    "locationId": {
+                      "description": "The geographic location to store the inspection template. Reserved for\nfuture extensions.",
+                      "location": "path",
+                      "required": true,
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "parent",
+                    "locationId"
+                  ],
+                  "request": {
+                    "$ref": "GooglePrivacyDlpV2CreateInspectTemplateRequest"
+                  },
+                  "response": {
+                    "$ref": "GooglePrivacyDlpV2InspectTemplate"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Creates an InspectTemplate for re-using frequently used configuration\nfor inspecting content, images, and storage.\nSee https:\/\/cloud.google.com\/dlp\/docs\/creating-templates to learn more."
+                },
+                "patch": {
+                  "id": "dlp.projects.locations.inspectTemplates.patch",
+                  "path": "v2/{+name}",
+                  "flatPath": "v2/projects/{projectsId}/locations/{locationsId}/inspectTemplates/{inspectTemplatesId}",
+                  "httpMethod": "PATCH",
+                  "parameters": {
+                    "name": {
+                      "description": "Required. Resource name of organization and inspectTemplate to be updated, for\nexample `organizations\/433245324\/inspectTemplates\/432452342` or\nprojects\/project-id\/inspectTemplates\/432452342.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^projects\/[^\/]+\/locations\/[^\/]+\/inspectTemplates\/[^\/]+$",
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "request": {
+                    "$ref": "GooglePrivacyDlpV2UpdateInspectTemplateRequest"
+                  },
+                  "response": {
+                    "$ref": "GooglePrivacyDlpV2InspectTemplate"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Updates the InspectTemplate.\nSee https:\/\/cloud.google.com\/dlp\/docs\/creating-templates to learn more."
+                },
+                "get": {
+                  "id": "dlp.projects.locations.inspectTemplates.get",
+                  "path": "v2/{+name}",
+                  "flatPath": "v2/projects/{projectsId}/locations/{locationsId}/inspectTemplates/{inspectTemplatesId}",
+                  "httpMethod": "GET",
+                  "parameters": {
+                    "name": {
+                      "description": "Required. Resource name of the organization and inspectTemplate to be read, for\nexample `organizations\/433245324\/inspectTemplates\/432452342` or\nprojects\/project-id\/inspectTemplates\/432452342.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^projects\/[^\/]+\/locations\/[^\/]+\/inspectTemplates\/[^\/]+$",
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "response": {
+                    "$ref": "GooglePrivacyDlpV2InspectTemplate"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Gets an InspectTemplate.\nSee https:\/\/cloud.google.com\/dlp\/docs\/creating-templates to learn more."
+                },
+                "list": {
+                  "id": "dlp.projects.locations.inspectTemplates.list",
+                  "path": "v2/{+parent}/locations/{locationId}/inspectTemplates",
+                  "flatPath": "v2/projects/{projectsId}/locations/{locationId}/inspectTemplates",
+                  "httpMethod": "GET",
+                  "parameters": {
+                    "parent": {
+                      "description": "Required. The parent resource name, for example projects\/my-project-id or\norganizations\/my-org-id.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^projects\/[^\/]+$",
+                      "type": "string"
+                    },
+                    "locationId": {
+                      "description": "The geographic location where inspection templates will be retrieved from.\nUse `-` for all locations. Reserved for future extensions.",
+                      "location": "path",
+                      "required": true,
+                      "type": "string"
+                    },
+                    "pageToken": {
+                      "description": "Optional page token to continue retrieval. Comes from previous call\nto `ListInspectTemplates`.",
+                      "location": "query",
+                      "type": "string"
+                    },
+                    "pageSize": {
+                      "description": "Optional size of the page, can be limited by server. If zero server returns\na page of max size 100.",
+                      "location": "query",
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "orderBy": {
+                      "description": "Optional comma separated list of fields to order by,\nfollowed by `asc` or `desc` postfix. This list is case-insensitive,\ndefault sorting order is ascending, redundant space characters are\ninsignificant.\n\nExample: `name asc,update_time, create_time desc`\n\nSupported fields are:\n\n- `create_time`: corresponds to time the template was created.\n- `update_time`: corresponds to time the template was last updated.\n- `name`: corresponds to template's name.\n- `display_name`: corresponds to template's display name.",
+                      "location": "query",
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "parent",
+                    "locationId"
+                  ],
+                  "response": {
+                    "$ref": "GooglePrivacyDlpV2ListInspectTemplatesResponse"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Lists InspectTemplates.\nSee https:\/\/cloud.google.com\/dlp\/docs\/creating-templates to learn more."
+                },
+                "delete": {
+                  "id": "dlp.projects.locations.inspectTemplates.delete",
+                  "path": "v2/{+name}",
+                  "flatPath": "v2/projects/{projectsId}/locations/{locationsId}/inspectTemplates/{inspectTemplatesId}",
+                  "httpMethod": "DELETE",
+                  "parameters": {
+                    "name": {
+                      "description": "Required. Resource name of the organization and inspectTemplate to be deleted, for\nexample `organizations\/433245324\/inspectTemplates\/432452342` or\nprojects\/project-id\/inspectTemplates\/432452342.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^projects\/[^\/]+\/locations\/[^\/]+\/inspectTemplates\/[^\/]+$",
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "response": {
+                    "$ref": "GoogleProtobufEmpty"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Deletes an InspectTemplate.\nSee https:\/\/cloud.google.com\/dlp\/docs\/creating-templates to learn more."
+                }
+              }
+            },
+            "deidentifyTemplates": {
+              "methods": {
+                "create": {
+                  "id": "dlp.projects.locations.deidentifyTemplates.create",
+                  "path": "v2/{+parent}/locations/{locationId}/deidentifyTemplates",
+                  "flatPath": "v2/projects/{projectsId}/locations/{locationId}/deidentifyTemplates",
+                  "httpMethod": "POST",
+                  "parameters": {
+                    "parent": {
+                      "description": "Required. The parent resource name, for example projects\/my-project-id or\norganizations\/my-org-id.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^projects\/[^\/]+$",
+                      "type": "string"
+                    },
+                    "locationId": {
+                      "description": "The geographic location to store the deidentification template. Reserved\nfor future extensions.",
+                      "location": "path",
+                      "required": true,
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "parent",
+                    "locationId"
+                  ],
+                  "request": {
+                    "$ref": "GooglePrivacyDlpV2CreateDeidentifyTemplateRequest"
+                  },
+                  "response": {
+                    "$ref": "GooglePrivacyDlpV2DeidentifyTemplate"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Creates a DeidentifyTemplate for re-using frequently used configuration\nfor de-identifying content, images, and storage.\nSee https:\/\/cloud.google.com\/dlp\/docs\/creating-templates-deid to learn\nmore."
+                },
+                "patch": {
+                  "id": "dlp.projects.locations.deidentifyTemplates.patch",
+                  "path": "v2/{+name}",
+                  "flatPath": "v2/projects/{projectsId}/locations/{locationsId}/deidentifyTemplates/{deidentifyTemplatesId}",
+                  "httpMethod": "PATCH",
+                  "parameters": {
+                    "name": {
+                      "description": "Required. Resource name of organization and deidentify template to be updated, for\nexample `organizations\/433245324\/deidentifyTemplates\/432452342` or\nprojects\/project-id\/deidentifyTemplates\/432452342.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^projects\/[^\/]+\/locations\/[^\/]+\/deidentifyTemplates\/[^\/]+$",
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "request": {
+                    "$ref": "GooglePrivacyDlpV2UpdateDeidentifyTemplateRequest"
+                  },
+                  "response": {
+                    "$ref": "GooglePrivacyDlpV2DeidentifyTemplate"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Updates the DeidentifyTemplate.\nSee https:\/\/cloud.google.com\/dlp\/docs\/creating-templates-deid to learn\nmore."
+                },
+                "get": {
+                  "id": "dlp.projects.locations.deidentifyTemplates.get",
+                  "path": "v2/{+name}",
+                  "flatPath": "v2/projects/{projectsId}/locations/{locationsId}/deidentifyTemplates/{deidentifyTemplatesId}",
+                  "httpMethod": "GET",
+                  "parameters": {
+                    "name": {
+                      "description": "Required. Resource name of the organization and deidentify template to be read, for\nexample `organizations\/433245324\/deidentifyTemplates\/432452342` or\nprojects\/project-id\/deidentifyTemplates\/432452342.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^projects\/[^\/]+\/locations\/[^\/]+\/deidentifyTemplates\/[^\/]+$",
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "response": {
+                    "$ref": "GooglePrivacyDlpV2DeidentifyTemplate"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Gets a DeidentifyTemplate.\nSee https:\/\/cloud.google.com\/dlp\/docs\/creating-templates-deid to learn\nmore."
+                },
+                "list": {
+                  "id": "dlp.projects.locations.deidentifyTemplates.list",
+                  "path": "v2/{+parent}/locations/{locationId}/deidentifyTemplates",
+                  "flatPath": "v2/projects/{projectsId}/locations/{locationId}/deidentifyTemplates",
+                  "httpMethod": "GET",
+                  "parameters": {
+                    "parent": {
+                      "description": "Required. The parent resource name, for example projects\/my-project-id or\norganizations\/my-org-id.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^projects\/[^\/]+$",
+                      "type": "string"
+                    },
+                    "locationId": {
+                      "description": "The geographic location where deidentifications templates will be retrieved\nfrom. Use `-` for all locations. Reserved for future extensions.",
+                      "location": "path",
+                      "required": true,
+                      "type": "string"
+                    },
+                    "pageToken": {
+                      "description": "Optional page token to continue retrieval. Comes from previous call\nto `ListDeidentifyTemplates`.",
+                      "location": "query",
+                      "type": "string"
+                    },
+                    "pageSize": {
+                      "description": "Optional size of the page, can be limited by server. If zero server returns\na page of max size 100.",
+                      "location": "query",
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "orderBy": {
+                      "description": "Optional comma separated list of fields to order by,\nfollowed by `asc` or `desc` postfix. This list is case-insensitive,\ndefault sorting order is ascending, redundant space characters are\ninsignificant.\n\nExample: `name asc,update_time, create_time desc`\n\nSupported fields are:\n\n- `create_time`: corresponds to time the template was created.\n- `update_time`: corresponds to time the template was last updated.\n- `name`: corresponds to template's name.\n- `display_name`: corresponds to template's display name.",
+                      "location": "query",
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "parent",
+                    "locationId"
+                  ],
+                  "response": {
+                    "$ref": "GooglePrivacyDlpV2ListDeidentifyTemplatesResponse"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Lists DeidentifyTemplates.\nSee https:\/\/cloud.google.com\/dlp\/docs\/creating-templates-deid to learn\nmore."
+                },
+                "delete": {
+                  "id": "dlp.projects.locations.deidentifyTemplates.delete",
+                  "path": "v2/{+name}",
+                  "flatPath": "v2/projects/{projectsId}/locations/{locationsId}/deidentifyTemplates/{deidentifyTemplatesId}",
+                  "httpMethod": "DELETE",
+                  "parameters": {
+                    "name": {
+                      "description": "Required. Resource name of the organization and deidentify template to be deleted,\nfor example `organizations\/433245324\/deidentifyTemplates\/432452342` or\nprojects\/project-id\/deidentifyTemplates\/432452342.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^projects\/[^\/]+\/locations\/[^\/]+\/deidentifyTemplates\/[^\/]+$",
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "response": {
+                    "$ref": "GoogleProtobufEmpty"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Deletes a DeidentifyTemplate.\nSee https:\/\/cloud.google.com\/dlp\/docs\/creating-templates-deid to learn\nmore."
+                }
+              }
+            },
+            "jobTriggers": {
+              "methods": {
+                "create": {
+                  "id": "dlp.projects.locations.jobTriggers.create",
+                  "path": "v2/{+parent}/locations/{locationId}/jobTriggers",
+                  "flatPath": "v2/projects/{projectsId}/locations/{locationId}/jobTriggers",
+                  "httpMethod": "POST",
+                  "parameters": {
+                    "parent": {
+                      "description": "Required. The parent resource name, for example projects\/my-project-id.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^projects\/[^\/]+$",
+                      "type": "string"
+                    },
+                    "locationId": {
+                      "description": "The geographic location to store the job trigger. Reserved for\nfuture extensions.",
+                      "location": "path",
+                      "required": true,
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "parent",
+                    "locationId"
+                  ],
+                  "request": {
+                    "$ref": "GooglePrivacyDlpV2CreateJobTriggerRequest"
+                  },
+                  "response": {
+                    "$ref": "GooglePrivacyDlpV2JobTrigger"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Creates a job trigger to run DLP actions such as scanning storage for\nsensitive information on a set schedule.\nSee https:\/\/cloud.google.com\/dlp\/docs\/creating-job-triggers to learn more."
+                },
+                "patch": {
+                  "id": "dlp.projects.locations.jobTriggers.patch",
+                  "path": "v2/{+name}",
+                  "flatPath": "v2/projects/{projectsId}/locations/{locationsId}/jobTriggers/{jobTriggersId}",
+                  "httpMethod": "PATCH",
+                  "parameters": {
+                    "name": {
+                      "description": "Required. Resource name of the project and the triggeredJob, for example\n`projects\/dlp-test-project\/jobTriggers\/53234423`.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^projects\/[^\/]+\/locations\/[^\/]+\/jobTriggers\/[^\/]+$",
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "request": {
+                    "$ref": "GooglePrivacyDlpV2UpdateJobTriggerRequest"
+                  },
+                  "response": {
+                    "$ref": "GooglePrivacyDlpV2JobTrigger"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Updates a job trigger.\nSee https:\/\/cloud.google.com\/dlp\/docs\/creating-job-triggers to learn more."
+                },
+                "get": {
+                  "id": "dlp.projects.locations.jobTriggers.get",
+                  "path": "v2/{+name}",
+                  "flatPath": "v2/projects/{projectsId}/locations/{locationsId}/jobTriggers/{jobTriggersId}",
+                  "httpMethod": "GET",
+                  "parameters": {
+                    "name": {
+                      "description": "Required. Resource name of the project and the triggeredJob, for example\n`projects\/dlp-test-project\/jobTriggers\/53234423`.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^projects\/[^\/]+\/locations\/[^\/]+\/jobTriggers\/[^\/]+$",
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "response": {
+                    "$ref": "GooglePrivacyDlpV2JobTrigger"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Gets a job trigger.\nSee https:\/\/cloud.google.com\/dlp\/docs\/creating-job-triggers to learn more."
+                },
+                "list": {
+                  "id": "dlp.projects.locations.jobTriggers.list",
+                  "path": "v2/{+parent}/locations/{locationId}/jobTriggers",
+                  "flatPath": "v2/projects/{projectsId}/locations/{locationId}/jobTriggers",
+                  "httpMethod": "GET",
+                  "parameters": {
+                    "parent": {
+                      "description": "Required. The parent resource name, for example `projects\/my-project-id`.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^projects\/[^\/]+$",
+                      "type": "string"
+                    },
+                    "locationId": {
+                      "description": "The geographic location where job triggers will be retrieved from.\nUse `-` for all locations. Reserved for future extensions.",
+                      "location": "path",
+                      "required": true,
+                      "type": "string"
+                    },
+                    "pageToken": {
+                      "description": "Optional page token to continue retrieval. Comes from previous call\nto ListJobTriggers. `order_by` field must not\nchange for subsequent calls.",
+                      "location": "query",
+                      "type": "string"
+                    },
+                    "pageSize": {
+                      "description": "Optional size of the page, can be limited by a server.",
+                      "location": "query",
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "orderBy": {
+                      "description": "Optional comma separated list of triggeredJob fields to order by,\nfollowed by `asc` or `desc` postfix. This list is case-insensitive,\ndefault sorting order is ascending, redundant space characters are\ninsignificant.\n\nExample: `name asc,update_time, create_time desc`\n\nSupported fields are:\n\n- `create_time`: corresponds to time the JobTrigger was created.\n- `update_time`: corresponds to time the JobTrigger was last updated.\n- `last_run_time`: corresponds to the last time the JobTrigger ran.\n- `name`: corresponds to JobTrigger's name.\n- `display_name`: corresponds to JobTrigger's display name.\n- `status`: corresponds to JobTrigger's status.",
+                      "location": "query",
+                      "type": "string"
+                    },
+                    "filter": {
+                      "description": "Optional. Allows filtering.\n\nSupported syntax:\n\n* Filter expressions are made up of one or more restrictions.\n* Restrictions can be combined by `AND` or `OR` logical operators. A\nsequence of restrictions implicitly uses `AND`.\n* A restriction has the form of `<field> <operator> <value>`.\n* Supported fields\/values for inspect jobs:\n    - `status` - HEALTHY|PAUSED|CANCELLED\n    - `inspected_storage` - DATASTORE|CLOUD_STORAGE|BIGQUERY\n    - 'last_run_time` - RFC 3339 formatted timestamp, surrounded by\n    quotation marks. Nanoseconds are ignored.\n    - 'error_count' - Number of errors that have occurred while running.\n* The operator must be `=` or `!=` for status and inspected_storage.\n\nExamples:\n\n* inspected_storage = cloud_storage AND status = HEALTHY\n* inspected_storage = cloud_storage OR inspected_storage = bigquery\n* inspected_storage = cloud_storage AND (state = PAUSED OR state = HEALTHY)\n* last_run_time > \\\"2017-12-12T00:00:00+00:00\\\"\n\nThe length of this field should be no more than 500 characters.",
+                      "location": "query",
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "parent",
+                    "locationId"
+                  ],
+                  "response": {
+                    "$ref": "GooglePrivacyDlpV2ListJobTriggersResponse"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Lists job triggers.\nSee https:\/\/cloud.google.com\/dlp\/docs\/creating-job-triggers to learn more."
+                },
+                "delete": {
+                  "id": "dlp.projects.locations.jobTriggers.delete",
+                  "path": "v2/{+name}",
+                  "flatPath": "v2/projects/{projectsId}/locations/{locationsId}/jobTriggers/{jobTriggersId}",
+                  "httpMethod": "DELETE",
+                  "parameters": {
+                    "name": {
+                      "description": "Required. Resource name of the project and the triggeredJob, for example\n`projects\/dlp-test-project\/jobTriggers\/53234423`.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^projects\/[^\/]+\/locations\/[^\/]+\/jobTriggers\/[^\/]+$",
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "response": {
+                    "$ref": "GoogleProtobufEmpty"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Deletes a job trigger.\nSee https:\/\/cloud.google.com\/dlp\/docs\/creating-job-triggers to learn more."
+                },
+                "activate": {
+                  "id": "dlp.projects.locations.jobTriggers.activate",
+                  "path": "v2/{+name}:activate",
+                  "flatPath": "v2/projects/{projectsId}/locations/{locationsId}/jobTriggers/{jobTriggersId}:activate",
+                  "httpMethod": "POST",
+                  "parameters": {
+                    "name": {
+                      "description": "Required. Resource name of the trigger to activate, for example\n`projects\/dlp-test-project\/jobTriggers\/53234423`.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^projects\/[^\/]+\/locations\/[^\/]+\/jobTriggers\/[^\/]+$",
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "request": {
+                    "$ref": "GooglePrivacyDlpV2ActivateJobTriggerRequest"
+                  },
+                  "response": {
+                    "$ref": "GooglePrivacyDlpV2DlpJob"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Activate a job trigger. Causes the immediate execute of a trigger\ninstead of waiting on the trigger event to occur."
+                }
+              }
+            },
+            "dlpJobs": {
+              "methods": {
+                "create": {
+                  "id": "dlp.projects.locations.dlpJobs.create",
+                  "path": "v2/{+parent}/locations/{locationId}/dlpJobs",
+                  "flatPath": "v2/projects/{projectsId}/locations/{locationId}/dlpJobs",
+                  "httpMethod": "POST",
+                  "parameters": {
+                    "parent": {
+                      "description": "Required. The parent resource name, for example projects\/my-project-id.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^projects\/[^\/]+$",
+                      "type": "string"
+                    },
+                    "locationId": {
+                      "description": "The geographic location to store and process the job. Reserved for\nfuture extensions.",
+                      "location": "path",
+                      "required": true,
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "parent",
+                    "locationId"
+                  ],
+                  "request": {
+                    "$ref": "GooglePrivacyDlpV2CreateDlpJobRequest"
+                  },
+                  "response": {
+                    "$ref": "GooglePrivacyDlpV2DlpJob"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Creates a new job to inspect storage or calculate risk metrics.\nSee https:\/\/cloud.google.com\/dlp\/docs\/inspecting-storage and\nhttps:\/\/cloud.google.com\/dlp\/docs\/compute-risk-analysis to learn more.\n\nWhen no InfoTypes or CustomInfoTypes are specified in inspect jobs, the\nsystem will automatically choose what detectors to run. By default this may\nbe all types, but may change over time as detectors are updated."
+                },
+                "list": {
+                  "id": "dlp.projects.locations.dlpJobs.list",
+                  "path": "v2/{+parent}/locations/{locationId}/dlpJobs",
+                  "flatPath": "v2/projects/{projectsId}/locations/{locationId}/dlpJobs",
+                  "httpMethod": "GET",
+                  "parameters": {
+                    "parent": {
+                      "description": "Required. The parent resource name, for example projects\/my-project-id.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^projects\/[^\/]+$",
+                      "type": "string"
+                    },
+                    "locationId": {
+                      "description": "The geographic location where jobs will be retrieved from.\nUse `-` for all locations. Reserved for future extensions.",
+                      "location": "path",
+                      "required": true,
+                      "type": "string"
+                    },
+                    "filter": {
+                      "description": "Optional. Allows filtering.\n\nSupported syntax:\n\n* Filter expressions are made up of one or more restrictions.\n* Restrictions can be combined by `AND` or `OR` logical operators. A\nsequence of restrictions implicitly uses `AND`.\n* A restriction has the form of `<field> <operator> <value>`.\n* Supported fields\/values for inspect jobs:\n    - `state` - PENDING|RUNNING|CANCELED|FINISHED|FAILED\n    - `inspected_storage` - DATASTORE|CLOUD_STORAGE|BIGQUERY\n    - `trigger_name` - The resource name of the trigger that created job.\n    - 'end_time` - Corresponds to time the job finished.\n    - 'start_time` - Corresponds to time the job finished.\n* Supported fields for risk analysis jobs:\n    - `state` - RUNNING|CANCELED|FINISHED|FAILED\n    - 'end_time` - Corresponds to time the job finished.\n    - 'start_time` - Corresponds to time the job finished.\n* The operator must be `=` or `!=`.\n\nExamples:\n\n* inspected_storage = cloud_storage AND state = done\n* inspected_storage = cloud_storage OR inspected_storage = bigquery\n* inspected_storage = cloud_storage AND (state = done OR state = canceled)\n* end_time > \\\"2017-12-12T00:00:00+00:00\\\"\n\nThe length of this field should be no more than 500 characters.",
+                      "location": "query",
+                      "type": "string"
+                    },
+                    "pageSize": {
+                      "description": "The standard list page size.",
+                      "location": "query",
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "pageToken": {
+                      "description": "The standard list page token.",
+                      "location": "query",
+                      "type": "string"
+                    },
+                    "type": {
+                      "description": "The type of job. Defaults to `DlpJobType.INSPECT`",
+                      "location": "query",
+                      "type": "string",
+                      "enum": [
+                        "DLP_JOB_TYPE_UNSPECIFIED",
+                        "INSPECT_JOB",
+                        "RISK_ANALYSIS_JOB"
+                      ]
+                    },
+                    "orderBy": {
+                      "description": "Optional comma separated list of fields to order by,\nfollowed by `asc` or `desc` postfix. This list is case-insensitive,\ndefault sorting order is ascending, redundant space characters are\ninsignificant.\n\nExample: `name asc, end_time asc, create_time desc`\n\nSupported fields are:\n\n- `create_time`: corresponds to time the job was created.\n- `end_time`: corresponds to time the job ended.\n- `name`: corresponds to job's name.\n- `state`: corresponds to `state`",
+                      "location": "query",
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "parent",
+                    "locationId"
+                  ],
+                  "response": {
+                    "$ref": "GooglePrivacyDlpV2ListDlpJobsResponse"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Lists DlpJobs that match the specified filter in the request.\nSee https:\/\/cloud.google.com\/dlp\/docs\/inspecting-storage and\nhttps:\/\/cloud.google.com\/dlp\/docs\/compute-risk-analysis to learn more."
+                },
+                "get": {
+                  "id": "dlp.projects.locations.dlpJobs.get",
+                  "path": "v2/{+name}",
+                  "flatPath": "v2/projects/{projectsId}/locations/{locationsId}/dlpJobs/{dlpJobsId}",
+                  "httpMethod": "GET",
+                  "parameters": {
+                    "name": {
+                      "description": "Required. The name of the DlpJob resource.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^projects\/[^\/]+\/locations\/[^\/]+\/dlpJobs\/[^\/]+$",
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "response": {
+                    "$ref": "GooglePrivacyDlpV2DlpJob"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Gets the latest state of a long-running DlpJob.\nSee https:\/\/cloud.google.com\/dlp\/docs\/inspecting-storage and\nhttps:\/\/cloud.google.com\/dlp\/docs\/compute-risk-analysis to learn more."
+                },
+                "delete": {
+                  "id": "dlp.projects.locations.dlpJobs.delete",
+                  "path": "v2/{+name}",
+                  "flatPath": "v2/projects/{projectsId}/locations/{locationsId}/dlpJobs/{dlpJobsId}",
+                  "httpMethod": "DELETE",
+                  "parameters": {
+                    "name": {
+                      "description": "Required. The name of the DlpJob resource to be deleted.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^projects\/[^\/]+\/locations\/[^\/]+\/dlpJobs\/[^\/]+$",
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "response": {
+                    "$ref": "GoogleProtobufEmpty"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Deletes a long-running DlpJob. This method indicates that the client is\nno longer interested in the DlpJob result. The job will be cancelled if\npossible.\nSee https:\/\/cloud.google.com\/dlp\/docs\/inspecting-storage and\nhttps:\/\/cloud.google.com\/dlp\/docs\/compute-risk-analysis to learn more."
+                },
+                "cancel": {
+                  "id": "dlp.projects.locations.dlpJobs.cancel",
+                  "path": "v2/{+name}:cancel",
+                  "flatPath": "v2/projects/{projectsId}/locations/{locationsId}/dlpJobs/{dlpJobsId}:cancel",
+                  "httpMethod": "POST",
+                  "parameters": {
+                    "name": {
+                      "description": "Required. The name of the DlpJob resource to be cancelled.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^projects\/[^\/]+\/locations\/[^\/]+\/dlpJobs\/[^\/]+$",
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "request": {
+                    "$ref": "GooglePrivacyDlpV2CancelDlpJobRequest"
+                  },
+                  "response": {
+                    "$ref": "GoogleProtobufEmpty"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Starts asynchronous cancellation on a long-running DlpJob. The server\nmakes a best effort to cancel the DlpJob, but success is not\nguaranteed.\nSee https:\/\/cloud.google.com\/dlp\/docs\/inspecting-storage and\nhttps:\/\/cloud.google.com\/dlp\/docs\/compute-risk-analysis to learn more."
+                }
+              }
+            },
+            "storedInfoTypes": {
+              "methods": {
+                "create": {
+                  "id": "dlp.projects.locations.storedInfoTypes.create",
+                  "path": "v2/{+parent}/locations/{locationId}/storedInfoTypes",
+                  "flatPath": "v2/projects/{projectsId}/locations/{locationId}/storedInfoTypes",
+                  "httpMethod": "POST",
+                  "parameters": {
+                    "parent": {
+                      "description": "Required. The parent resource name, for example projects\/my-project-id or\norganizations\/my-org-id.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^projects\/[^\/]+$",
+                      "type": "string"
+                    },
+                    "locationId": {
+                      "description": "The geographic location to store the stored infoType. Reserved for\nfuture extensions.",
+                      "location": "path",
+                      "required": true,
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "parent",
+                    "locationId"
+                  ],
+                  "request": {
+                    "$ref": "GooglePrivacyDlpV2CreateStoredInfoTypeRequest"
+                  },
+                  "response": {
+                    "$ref": "GooglePrivacyDlpV2StoredInfoType"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Creates a pre-built stored infoType to be used for inspection.\nSee https:\/\/cloud.google.com\/dlp\/docs\/creating-stored-infotypes to\nlearn more."
+                },
+                "patch": {
+                  "id": "dlp.projects.locations.storedInfoTypes.patch",
+                  "path": "v2/{+name}",
+                  "flatPath": "v2/projects/{projectsId}/locations/{locationsId}/storedInfoTypes/{storedInfoTypesId}",
+                  "httpMethod": "PATCH",
+                  "parameters": {
+                    "name": {
+                      "description": "Required. Resource name of organization and storedInfoType to be updated, for\nexample `organizations\/433245324\/storedInfoTypes\/432452342` or\nprojects\/project-id\/storedInfoTypes\/432452342.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^projects\/[^\/]+\/locations\/[^\/]+\/storedInfoTypes\/[^\/]+$",
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "request": {
+                    "$ref": "GooglePrivacyDlpV2UpdateStoredInfoTypeRequest"
+                  },
+                  "response": {
+                    "$ref": "GooglePrivacyDlpV2StoredInfoType"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Updates the stored infoType by creating a new version. The existing version\nwill continue to be used until the new version is ready.\nSee https:\/\/cloud.google.com\/dlp\/docs\/creating-stored-infotypes to\nlearn more."
+                },
+                "get": {
+                  "id": "dlp.projects.locations.storedInfoTypes.get",
+                  "path": "v2/{+name}",
+                  "flatPath": "v2/projects/{projectsId}/locations/{locationsId}/storedInfoTypes/{storedInfoTypesId}",
+                  "httpMethod": "GET",
+                  "parameters": {
+                    "name": {
+                      "description": "Required. Resource name of the organization and storedInfoType to be read, for\nexample `organizations\/433245324\/storedInfoTypes\/432452342` or\nprojects\/project-id\/storedInfoTypes\/432452342.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^projects\/[^\/]+\/locations\/[^\/]+\/storedInfoTypes\/[^\/]+$",
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "response": {
+                    "$ref": "GooglePrivacyDlpV2StoredInfoType"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Gets a stored infoType.\nSee https:\/\/cloud.google.com\/dlp\/docs\/creating-stored-infotypes to\nlearn more."
+                },
+                "list": {
+                  "id": "dlp.projects.locations.storedInfoTypes.list",
+                  "path": "v2/{+parent}/locations/{locationId}/storedInfoTypes",
+                  "flatPath": "v2/projects/{projectsId}/locations/{locationId}/storedInfoTypes",
+                  "httpMethod": "GET",
+                  "parameters": {
+                    "parent": {
+                      "description": "Required. The parent resource name, for example projects\/my-project-id or\norganizations\/my-org-id.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^projects\/[^\/]+$",
+                      "type": "string"
+                    },
+                    "locationId": {
+                      "description": "The geographic location where stored infoTypes will be retrieved from.\nUse `-` for all locations. Reserved for future extensions.",
+                      "location": "path",
+                      "required": true,
+                      "type": "string"
+                    },
+                    "pageToken": {
+                      "description": "Optional page token to continue retrieval. Comes from previous call\nto `ListStoredInfoTypes`.",
+                      "location": "query",
+                      "type": "string"
+                    },
+                    "pageSize": {
+                      "description": "Optional size of the page, can be limited by server. If zero server returns\na page of max size 100.",
+                      "location": "query",
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "orderBy": {
+                      "description": "Optional comma separated list of fields to order by,\nfollowed by `asc` or `desc` postfix. This list is case-insensitive,\ndefault sorting order is ascending, redundant space characters are\ninsignificant.\n\nExample: `name asc, display_name, create_time desc`\n\nSupported fields are:\n\n- `create_time`: corresponds to time the most recent version of the\nresource was created.\n- `state`: corresponds to the state of the resource.\n- `name`: corresponds to resource name.\n- `display_name`: corresponds to info type's display name.",
+                      "location": "query",
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "parent",
+                    "locationId"
+                  ],
+                  "response": {
+                    "$ref": "GooglePrivacyDlpV2ListStoredInfoTypesResponse"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Lists stored infoTypes.\nSee https:\/\/cloud.google.com\/dlp\/docs\/creating-stored-infotypes to\nlearn more."
+                },
+                "delete": {
+                  "id": "dlp.projects.locations.storedInfoTypes.delete",
+                  "path": "v2/{+name}",
+                  "flatPath": "v2/projects/{projectsId}/locations/{locationsId}/storedInfoTypes/{storedInfoTypesId}",
+                  "httpMethod": "DELETE",
+                  "parameters": {
+                    "name": {
+                      "description": "Required. Resource name of the organization and storedInfoType to be deleted, for\nexample `organizations\/433245324\/storedInfoTypes\/432452342` or\nprojects\/project-id\/storedInfoTypes\/432452342.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^projects\/[^\/]+\/locations\/[^\/]+\/storedInfoTypes\/[^\/]+$",
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "response": {
+                    "$ref": "GoogleProtobufEmpty"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Deletes a stored infoType.\nSee https:\/\/cloud.google.com\/dlp\/docs\/creating-stored-infotypes to\nlearn more."
+                }
+              }
             }
           }
         },
@@ -3878,7 +5048,7 @@
               "httpMethod": "POST",
               "parameters": {
                 "parent": {
-                  "description": "The parent resource name, for example projects\/my-project-id or\norganizations\/my-org-id.",
+                  "description": "Required. The parent resource name, for example projects\/my-project-id or\norganizations\/my-org-id.",
                   "location": "path",
                   "required": true,
                   "pattern": "^projects\/[^\/]+$",
@@ -3906,7 +5076,7 @@
               "httpMethod": "PATCH",
               "parameters": {
                 "name": {
-                  "description": "Resource name of organization and inspectTemplate to be updated, for\nexample `organizations\/433245324\/inspectTemplates\/432452342` or\nprojects\/project-id\/inspectTemplates\/432452342.",
+                  "description": "Required. Resource name of organization and inspectTemplate to be updated, for\nexample `organizations\/433245324\/inspectTemplates\/432452342` or\nprojects\/project-id\/inspectTemplates\/432452342.",
                   "location": "path",
                   "required": true,
                   "pattern": "^projects\/[^\/]+\/inspectTemplates\/[^\/]+$",
@@ -3934,7 +5104,7 @@
               "httpMethod": "GET",
               "parameters": {
                 "name": {
-                  "description": "Resource name of the organization and inspectTemplate to be read, for\nexample `organizations\/433245324\/inspectTemplates\/432452342` or\nprojects\/project-id\/inspectTemplates\/432452342.",
+                  "description": "Required. Resource name of the organization and inspectTemplate to be read, for\nexample `organizations\/433245324\/inspectTemplates\/432452342` or\nprojects\/project-id\/inspectTemplates\/432452342.",
                   "location": "path",
                   "required": true,
                   "pattern": "^projects\/[^\/]+\/inspectTemplates\/[^\/]+$",
@@ -3959,7 +5129,7 @@
               "httpMethod": "GET",
               "parameters": {
                 "parent": {
-                  "description": "The parent resource name, for example projects\/my-project-id or\norganizations\/my-org-id.",
+                  "description": "Required. The parent resource name, for example projects\/my-project-id or\norganizations\/my-org-id.",
                   "location": "path",
                   "required": true,
                   "pattern": "^projects\/[^\/]+$",
@@ -3978,6 +5148,11 @@
                 },
                 "orderBy": {
                   "description": "Optional comma separated list of fields to order by,\nfollowed by `asc` or `desc` postfix. This list is case-insensitive,\ndefault sorting order is ascending, redundant space characters are\ninsignificant.\n\nExample: `name asc,update_time, create_time desc`\n\nSupported fields are:\n\n- `create_time`: corresponds to time the template was created.\n- `update_time`: corresponds to time the template was last updated.\n- `name`: corresponds to template's name.\n- `display_name`: corresponds to template's display name.",
+                  "location": "query",
+                  "type": "string"
+                },
+                "locationId": {
+                  "description": "The geographic location where inspection templates will be retrieved from.\nUse `-` for all locations. Reserved for future extensions.",
                   "location": "query",
                   "type": "string"
                 }
@@ -4000,7 +5175,7 @@
               "httpMethod": "DELETE",
               "parameters": {
                 "name": {
-                  "description": "Resource name of the organization and inspectTemplate to be deleted, for\nexample `organizations\/433245324\/inspectTemplates\/432452342` or\nprojects\/project-id\/inspectTemplates\/432452342.",
+                  "description": "Required. Resource name of the organization and inspectTemplate to be deleted, for\nexample `organizations\/433245324\/inspectTemplates\/432452342` or\nprojects\/project-id\/inspectTemplates\/432452342.",
                   "location": "path",
                   "required": true,
                   "pattern": "^projects\/[^\/]+\/inspectTemplates\/[^\/]+$",
@@ -4029,7 +5204,7 @@
               "httpMethod": "POST",
               "parameters": {
                 "parent": {
-                  "description": "The parent resource name, for example projects\/my-project-id or\norganizations\/my-org-id.",
+                  "description": "Required. The parent resource name, for example projects\/my-project-id or\norganizations\/my-org-id.",
                   "location": "path",
                   "required": true,
                   "pattern": "^projects\/[^\/]+$",
@@ -4057,7 +5232,7 @@
               "httpMethod": "PATCH",
               "parameters": {
                 "name": {
-                  "description": "Resource name of organization and deidentify template to be updated, for\nexample `organizations\/433245324\/deidentifyTemplates\/432452342` or\nprojects\/project-id\/deidentifyTemplates\/432452342.",
+                  "description": "Required. Resource name of organization and deidentify template to be updated, for\nexample `organizations\/433245324\/deidentifyTemplates\/432452342` or\nprojects\/project-id\/deidentifyTemplates\/432452342.",
                   "location": "path",
                   "required": true,
                   "pattern": "^projects\/[^\/]+\/deidentifyTemplates\/[^\/]+$",
@@ -4085,7 +5260,7 @@
               "httpMethod": "GET",
               "parameters": {
                 "name": {
-                  "description": "Resource name of the organization and deidentify template to be read, for\nexample `organizations\/433245324\/deidentifyTemplates\/432452342` or\nprojects\/project-id\/deidentifyTemplates\/432452342.",
+                  "description": "Required. Resource name of the organization and deidentify template to be read, for\nexample `organizations\/433245324\/deidentifyTemplates\/432452342` or\nprojects\/project-id\/deidentifyTemplates\/432452342.",
                   "location": "path",
                   "required": true,
                   "pattern": "^projects\/[^\/]+\/deidentifyTemplates\/[^\/]+$",
@@ -4110,7 +5285,7 @@
               "httpMethod": "GET",
               "parameters": {
                 "parent": {
-                  "description": "The parent resource name, for example projects\/my-project-id or\norganizations\/my-org-id.",
+                  "description": "Required. The parent resource name, for example projects\/my-project-id or\norganizations\/my-org-id.",
                   "location": "path",
                   "required": true,
                   "pattern": "^projects\/[^\/]+$",
@@ -4129,6 +5304,11 @@
                 },
                 "orderBy": {
                   "description": "Optional comma separated list of fields to order by,\nfollowed by `asc` or `desc` postfix. This list is case-insensitive,\ndefault sorting order is ascending, redundant space characters are\ninsignificant.\n\nExample: `name asc,update_time, create_time desc`\n\nSupported fields are:\n\n- `create_time`: corresponds to time the template was created.\n- `update_time`: corresponds to time the template was last updated.\n- `name`: corresponds to template's name.\n- `display_name`: corresponds to template's display name.",
+                  "location": "query",
+                  "type": "string"
+                },
+                "locationId": {
+                  "description": "The geographic location where deidentifications templates will be retrieved\nfrom. Use `-` for all locations. Reserved for future extensions.",
                   "location": "query",
                   "type": "string"
                 }
@@ -4151,7 +5331,7 @@
               "httpMethod": "DELETE",
               "parameters": {
                 "name": {
-                  "description": "Resource name of the organization and deidentify template to be deleted,\nfor example `organizations\/433245324\/deidentifyTemplates\/432452342` or\nprojects\/project-id\/deidentifyTemplates\/432452342.",
+                  "description": "Required. Resource name of the organization and deidentify template to be deleted,\nfor example `organizations\/433245324\/deidentifyTemplates\/432452342` or\nprojects\/project-id\/deidentifyTemplates\/432452342.",
                   "location": "path",
                   "required": true,
                   "pattern": "^projects\/[^\/]+\/deidentifyTemplates\/[^\/]+$",
@@ -4180,7 +5360,7 @@
               "httpMethod": "POST",
               "parameters": {
                 "parent": {
-                  "description": "The parent resource name, for example projects\/my-project-id.",
+                  "description": "Required. The parent resource name, for example projects\/my-project-id.",
                   "location": "path",
                   "required": true,
                   "pattern": "^projects\/[^\/]+$",
@@ -4208,7 +5388,7 @@
               "httpMethod": "PATCH",
               "parameters": {
                 "name": {
-                  "description": "Resource name of the project and the triggeredJob, for example\n`projects\/dlp-test-project\/jobTriggers\/53234423`.",
+                  "description": "Required. Resource name of the project and the triggeredJob, for example\n`projects\/dlp-test-project\/jobTriggers\/53234423`.",
                   "location": "path",
                   "required": true,
                   "pattern": "^projects\/[^\/]+\/jobTriggers\/[^\/]+$",
@@ -4236,7 +5416,7 @@
               "httpMethod": "GET",
               "parameters": {
                 "name": {
-                  "description": "Resource name of the project and the triggeredJob, for example\n`projects\/dlp-test-project\/jobTriggers\/53234423`.",
+                  "description": "Required. Resource name of the project and the triggeredJob, for example\n`projects\/dlp-test-project\/jobTriggers\/53234423`.",
                   "location": "path",
                   "required": true,
                   "pattern": "^projects\/[^\/]+\/jobTriggers\/[^\/]+$",
@@ -4261,7 +5441,7 @@
               "httpMethod": "GET",
               "parameters": {
                 "parent": {
-                  "description": "The parent resource name, for example `projects\/my-project-id`.",
+                  "description": "Required. The parent resource name, for example `projects\/my-project-id`.",
                   "location": "path",
                   "required": true,
                   "pattern": "^projects\/[^\/]+$",
@@ -4287,6 +5467,11 @@
                   "description": "Optional. Allows filtering.\n\nSupported syntax:\n\n* Filter expressions are made up of one or more restrictions.\n* Restrictions can be combined by `AND` or `OR` logical operators. A\nsequence of restrictions implicitly uses `AND`.\n* A restriction has the form of `<field> <operator> <value>`.\n* Supported fields\/values for inspect jobs:\n    - `status` - HEALTHY|PAUSED|CANCELLED\n    - `inspected_storage` - DATASTORE|CLOUD_STORAGE|BIGQUERY\n    - 'last_run_time` - RFC 3339 formatted timestamp, surrounded by\n    quotation marks. Nanoseconds are ignored.\n    - 'error_count' - Number of errors that have occurred while running.\n* The operator must be `=` or `!=` for status and inspected_storage.\n\nExamples:\n\n* inspected_storage = cloud_storage AND status = HEALTHY\n* inspected_storage = cloud_storage OR inspected_storage = bigquery\n* inspected_storage = cloud_storage AND (state = PAUSED OR state = HEALTHY)\n* last_run_time > \\\"2017-12-12T00:00:00+00:00\\\"\n\nThe length of this field should be no more than 500 characters.",
                   "location": "query",
                   "type": "string"
+                },
+                "locationId": {
+                  "description": "The geographic location where job triggers will be retrieved from.\nUse `-` for all locations. Reserved for future extensions.",
+                  "location": "query",
+                  "type": "string"
                 }
               },
               "parameterOrder": [
@@ -4307,7 +5492,7 @@
               "httpMethod": "DELETE",
               "parameters": {
                 "name": {
-                  "description": "Resource name of the project and the triggeredJob, for example\n`projects\/dlp-test-project\/jobTriggers\/53234423`.",
+                  "description": "Required. Resource name of the project and the triggeredJob, for example\n`projects\/dlp-test-project\/jobTriggers\/53234423`.",
                   "location": "path",
                   "required": true,
                   "pattern": "^projects\/[^\/]+\/jobTriggers\/[^\/]+$",
@@ -4332,7 +5517,7 @@
               "httpMethod": "POST",
               "parameters": {
                 "name": {
-                  "description": "Resource name of the trigger to activate, for example\n`projects\/dlp-test-project\/jobTriggers\/53234423`.",
+                  "description": "Required. Resource name of the trigger to activate, for example\n`projects\/dlp-test-project\/jobTriggers\/53234423`.",
                   "location": "path",
                   "required": true,
                   "pattern": "^projects\/[^\/]+\/jobTriggers\/[^\/]+$",
@@ -4364,7 +5549,7 @@
               "httpMethod": "POST",
               "parameters": {
                 "parent": {
-                  "description": "The parent resource name, for example projects\/my-project-id.",
+                  "description": "Required. The parent resource name, for example projects\/my-project-id.",
                   "location": "path",
                   "required": true,
                   "pattern": "^projects\/[^\/]+$",
@@ -4392,14 +5577,14 @@
               "httpMethod": "GET",
               "parameters": {
                 "parent": {
-                  "description": "The parent resource name, for example projects\/my-project-id.",
+                  "description": "Required. The parent resource name, for example projects\/my-project-id.",
                   "location": "path",
                   "required": true,
                   "pattern": "^projects\/[^\/]+$",
                   "type": "string"
                 },
                 "filter": {
-                  "description": "Optional. Allows filtering.\n\nSupported syntax:\n\n* Filter expressions are made up of one or more restrictions.\n* Restrictions can be combined by `AND` or `OR` logical operators. A\nsequence of restrictions implicitly uses `AND`.\n* A restriction has the form of `<field> <operator> <value>`.\n* Supported fields\/values for inspect jobs:\n    - `state` - PENDING|RUNNING|CANCELED|FINISHED|FAILED\n    - `inspected_storage` - DATASTORE|CLOUD_STORAGE|BIGQUERY\n    - `trigger_name` - The resource name of the trigger that created job.\n* Supported fields for risk analysis jobs:\n    - `state` - RUNNING|CANCELED|FINISHED|FAILED\n* The operator must be `=` or `!=`.\n\nExamples:\n\n* inspected_storage = cloud_storage AND state = done\n* inspected_storage = cloud_storage OR inspected_storage = bigquery\n* inspected_storage = cloud_storage AND (state = done OR state = canceled)\n\nThe length of this field should be no more than 500 characters.",
+                  "description": "Optional. Allows filtering.\n\nSupported syntax:\n\n* Filter expressions are made up of one or more restrictions.\n* Restrictions can be combined by `AND` or `OR` logical operators. A\nsequence of restrictions implicitly uses `AND`.\n* A restriction has the form of `<field> <operator> <value>`.\n* Supported fields\/values for inspect jobs:\n    - `state` - PENDING|RUNNING|CANCELED|FINISHED|FAILED\n    - `inspected_storage` - DATASTORE|CLOUD_STORAGE|BIGQUERY\n    - `trigger_name` - The resource name of the trigger that created job.\n    - 'end_time` - Corresponds to time the job finished.\n    - 'start_time` - Corresponds to time the job finished.\n* Supported fields for risk analysis jobs:\n    - `state` - RUNNING|CANCELED|FINISHED|FAILED\n    - 'end_time` - Corresponds to time the job finished.\n    - 'start_time` - Corresponds to time the job finished.\n* The operator must be `=` or `!=`.\n\nExamples:\n\n* inspected_storage = cloud_storage AND state = done\n* inspected_storage = cloud_storage OR inspected_storage = bigquery\n* inspected_storage = cloud_storage AND (state = done OR state = canceled)\n* end_time > \\\"2017-12-12T00:00:00+00:00\\\"\n\nThe length of this field should be no more than 500 characters.",
                   "location": "query",
                   "type": "string"
                 },
@@ -4428,6 +5613,11 @@
                   "description": "Optional comma separated list of fields to order by,\nfollowed by `asc` or `desc` postfix. This list is case-insensitive,\ndefault sorting order is ascending, redundant space characters are\ninsignificant.\n\nExample: `name asc, end_time asc, create_time desc`\n\nSupported fields are:\n\n- `create_time`: corresponds to time the job was created.\n- `end_time`: corresponds to time the job ended.\n- `name`: corresponds to job's name.\n- `state`: corresponds to `state`",
                   "location": "query",
                   "type": "string"
+                },
+                "locationId": {
+                  "description": "The geographic location where jobs will be retrieved from.\nUse `-` for all locations. Reserved for future extensions.",
+                  "location": "query",
+                  "type": "string"
                 }
               },
               "parameterOrder": [
@@ -4448,7 +5638,7 @@
               "httpMethod": "GET",
               "parameters": {
                 "name": {
-                  "description": "The name of the DlpJob resource.",
+                  "description": "Required. The name of the DlpJob resource.",
                   "location": "path",
                   "required": true,
                   "pattern": "^projects\/[^\/]+\/dlpJobs\/[^\/]+$",
@@ -4473,7 +5663,7 @@
               "httpMethod": "DELETE",
               "parameters": {
                 "name": {
-                  "description": "The name of the DlpJob resource to be deleted.",
+                  "description": "Required. The name of the DlpJob resource to be deleted.",
                   "location": "path",
                   "required": true,
                   "pattern": "^projects\/[^\/]+\/dlpJobs\/[^\/]+$",
@@ -4498,7 +5688,7 @@
               "httpMethod": "POST",
               "parameters": {
                 "name": {
-                  "description": "The name of the DlpJob resource to be cancelled.",
+                  "description": "Required. The name of the DlpJob resource to be cancelled.",
                   "location": "path",
                   "required": true,
                   "pattern": "^projects\/[^\/]+\/dlpJobs\/[^\/]+$",
@@ -4530,7 +5720,7 @@
               "httpMethod": "POST",
               "parameters": {
                 "parent": {
-                  "description": "The parent resource name, for example projects\/my-project-id or\norganizations\/my-org-id.",
+                  "description": "Required. The parent resource name, for example projects\/my-project-id or\norganizations\/my-org-id.",
                   "location": "path",
                   "required": true,
                   "pattern": "^projects\/[^\/]+$",
@@ -4558,7 +5748,7 @@
               "httpMethod": "PATCH",
               "parameters": {
                 "name": {
-                  "description": "Resource name of organization and storedInfoType to be updated, for\nexample `organizations\/433245324\/storedInfoTypes\/432452342` or\nprojects\/project-id\/storedInfoTypes\/432452342.",
+                  "description": "Required. Resource name of organization and storedInfoType to be updated, for\nexample `organizations\/433245324\/storedInfoTypes\/432452342` or\nprojects\/project-id\/storedInfoTypes\/432452342.",
                   "location": "path",
                   "required": true,
                   "pattern": "^projects\/[^\/]+\/storedInfoTypes\/[^\/]+$",
@@ -4586,7 +5776,7 @@
               "httpMethod": "GET",
               "parameters": {
                 "name": {
-                  "description": "Resource name of the organization and storedInfoType to be read, for\nexample `organizations\/433245324\/storedInfoTypes\/432452342` or\nprojects\/project-id\/storedInfoTypes\/432452342.",
+                  "description": "Required. Resource name of the organization and storedInfoType to be read, for\nexample `organizations\/433245324\/storedInfoTypes\/432452342` or\nprojects\/project-id\/storedInfoTypes\/432452342.",
                   "location": "path",
                   "required": true,
                   "pattern": "^projects\/[^\/]+\/storedInfoTypes\/[^\/]+$",
@@ -4611,7 +5801,7 @@
               "httpMethod": "GET",
               "parameters": {
                 "parent": {
-                  "description": "The parent resource name, for example projects\/my-project-id or\norganizations\/my-org-id.",
+                  "description": "Required. The parent resource name, for example projects\/my-project-id or\norganizations\/my-org-id.",
                   "location": "path",
                   "required": true,
                   "pattern": "^projects\/[^\/]+$",
@@ -4630,6 +5820,11 @@
                 },
                 "orderBy": {
                   "description": "Optional comma separated list of fields to order by,\nfollowed by `asc` or `desc` postfix. This list is case-insensitive,\ndefault sorting order is ascending, redundant space characters are\ninsignificant.\n\nExample: `name asc, display_name, create_time desc`\n\nSupported fields are:\n\n- `create_time`: corresponds to time the most recent version of the\nresource was created.\n- `state`: corresponds to the state of the resource.\n- `name`: corresponds to resource name.\n- `display_name`: corresponds to info type's display name.",
+                  "location": "query",
+                  "type": "string"
+                },
+                "locationId": {
+                  "description": "The geographic location where stored infoTypes will be retrieved from.\nUse `-` for all locations. Reserved for future extensions.",
                   "location": "query",
                   "type": "string"
                 }
@@ -4652,7 +5847,7 @@
               "httpMethod": "DELETE",
               "parameters": {
                 "name": {
-                  "description": "Resource name of the organization and storedInfoType to be deleted, for\nexample `organizations\/433245324\/storedInfoTypes\/432452342` or\nprojects\/project-id\/storedInfoTypes\/432452342.",
+                  "description": "Required. Resource name of the organization and storedInfoType to be deleted, for\nexample `organizations\/433245324\/storedInfoTypes\/432452342` or\nprojects\/project-id\/storedInfoTypes\/432452342.",
                   "location": "path",
                   "required": true,
                   "pattern": "^projects\/[^\/]+\/storedInfoTypes\/[^\/]+$",
@@ -4691,6 +5886,11 @@
               "description": "Optional filter to only return infoTypes supported by certain parts of the\nAPI. Defaults to supported_by=INSPECT.",
               "location": "query",
               "type": "string"
+            },
+            "locationId": {
+              "description": "The geographic location to list info types. Reserved for future\nextensions.",
+              "location": "query",
+              "type": "string"
             }
           },
           "parameterOrder": [
@@ -4705,6 +5905,48 @@
         }
       }
     },
+    "locations": {
+      "resources": {
+        "infoTypes": {
+          "methods": {
+            "list": {
+              "id": "dlp.locations.infoTypes.list",
+              "path": "v2/locations/{locationId}/infoTypes",
+              "flatPath": "v2/locations/{locationId}/infoTypes",
+              "httpMethod": "GET",
+              "parameters": {
+                "locationId": {
+                  "description": "The geographic location to list info types. Reserved for future\nextensions.",
+                  "location": "path",
+                  "required": true,
+                  "type": "string"
+                },
+                "languageCode": {
+                  "description": "Optional BCP-47 language code for localized infoType friendly\nnames. If omitted, or if localized strings are not available,\nen-US strings will be returned.",
+                  "location": "query",
+                  "type": "string"
+                },
+                "filter": {
+                  "description": "Optional filter to only return infoTypes supported by certain parts of the\nAPI. Defaults to supported_by=INSPECT.",
+                  "location": "query",
+                  "type": "string"
+                }
+              },
+              "parameterOrder": [
+                "locationId"
+              ],
+              "response": {
+                "$ref": "GooglePrivacyDlpV2ListInfoTypesResponse"
+              },
+              "scopes": [
+                "https://www.googleapis.com/auth/cloud-platform"
+              ],
+              "description": "Returns a list of the sensitive information types that the DLP API\nsupports. See https:\/\/cloud.google.com\/dlp\/docs\/infotypes-reference to\nlearn more."
+            }
+          }
+        }
+      }
+    },
     "organizations": {
       "resources": {
         "inspectTemplates": {
@@ -4716,7 +5958,7 @@
               "httpMethod": "POST",
               "parameters": {
                 "parent": {
-                  "description": "The parent resource name, for example projects\/my-project-id or\norganizations\/my-org-id.",
+                  "description": "Required. The parent resource name, for example projects\/my-project-id or\norganizations\/my-org-id.",
                   "location": "path",
                   "required": true,
                   "pattern": "^organizations\/[^\/]+$",
@@ -4744,7 +5986,7 @@
               "httpMethod": "PATCH",
               "parameters": {
                 "name": {
-                  "description": "Resource name of organization and inspectTemplate to be updated, for\nexample `organizations\/433245324\/inspectTemplates\/432452342` or\nprojects\/project-id\/inspectTemplates\/432452342.",
+                  "description": "Required. Resource name of organization and inspectTemplate to be updated, for\nexample `organizations\/433245324\/inspectTemplates\/432452342` or\nprojects\/project-id\/inspectTemplates\/432452342.",
                   "location": "path",
                   "required": true,
                   "pattern": "^organizations\/[^\/]+\/inspectTemplates\/[^\/]+$",
@@ -4772,7 +6014,7 @@
               "httpMethod": "GET",
               "parameters": {
                 "name": {
-                  "description": "Resource name of the organization and inspectTemplate to be read, for\nexample `organizations\/433245324\/inspectTemplates\/432452342` or\nprojects\/project-id\/inspectTemplates\/432452342.",
+                  "description": "Required. Resource name of the organization and inspectTemplate to be read, for\nexample `organizations\/433245324\/inspectTemplates\/432452342` or\nprojects\/project-id\/inspectTemplates\/432452342.",
                   "location": "path",
                   "required": true,
                   "pattern": "^organizations\/[^\/]+\/inspectTemplates\/[^\/]+$",
@@ -4797,7 +6039,7 @@
               "httpMethod": "GET",
               "parameters": {
                 "parent": {
-                  "description": "The parent resource name, for example projects\/my-project-id or\norganizations\/my-org-id.",
+                  "description": "Required. The parent resource name, for example projects\/my-project-id or\norganizations\/my-org-id.",
                   "location": "path",
                   "required": true,
                   "pattern": "^organizations\/[^\/]+$",
@@ -4816,6 +6058,11 @@
                 },
                 "orderBy": {
                   "description": "Optional comma separated list of fields to order by,\nfollowed by `asc` or `desc` postfix. This list is case-insensitive,\ndefault sorting order is ascending, redundant space characters are\ninsignificant.\n\nExample: `name asc,update_time, create_time desc`\n\nSupported fields are:\n\n- `create_time`: corresponds to time the template was created.\n- `update_time`: corresponds to time the template was last updated.\n- `name`: corresponds to template's name.\n- `display_name`: corresponds to template's display name.",
+                  "location": "query",
+                  "type": "string"
+                },
+                "locationId": {
+                  "description": "The geographic location where inspection templates will be retrieved from.\nUse `-` for all locations. Reserved for future extensions.",
                   "location": "query",
                   "type": "string"
                 }
@@ -4838,7 +6085,7 @@
               "httpMethod": "DELETE",
               "parameters": {
                 "name": {
-                  "description": "Resource name of the organization and inspectTemplate to be deleted, for\nexample `organizations\/433245324\/inspectTemplates\/432452342` or\nprojects\/project-id\/inspectTemplates\/432452342.",
+                  "description": "Required. Resource name of the organization and inspectTemplate to be deleted, for\nexample `organizations\/433245324\/inspectTemplates\/432452342` or\nprojects\/project-id\/inspectTemplates\/432452342.",
                   "location": "path",
                   "required": true,
                   "pattern": "^organizations\/[^\/]+\/inspectTemplates\/[^\/]+$",
@@ -4858,6 +6105,505 @@
             }
           }
         },
+        "locations": {
+          "resources": {
+            "inspectTemplates": {
+              "methods": {
+                "create": {
+                  "id": "dlp.organizations.locations.inspectTemplates.create",
+                  "path": "v2/{+parent}/locations/{locationId}/inspectTemplates",
+                  "flatPath": "v2/organizations/{organizationsId}/locations/{locationId}/inspectTemplates",
+                  "httpMethod": "POST",
+                  "parameters": {
+                    "parent": {
+                      "description": "Required. The parent resource name, for example projects\/my-project-id or\norganizations\/my-org-id.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^organizations\/[^\/]+$",
+                      "type": "string"
+                    },
+                    "locationId": {
+                      "description": "The geographic location to store the inspection template. Reserved for\nfuture extensions.",
+                      "location": "path",
+                      "required": true,
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "parent",
+                    "locationId"
+                  ],
+                  "request": {
+                    "$ref": "GooglePrivacyDlpV2CreateInspectTemplateRequest"
+                  },
+                  "response": {
+                    "$ref": "GooglePrivacyDlpV2InspectTemplate"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Creates an InspectTemplate for re-using frequently used configuration\nfor inspecting content, images, and storage.\nSee https:\/\/cloud.google.com\/dlp\/docs\/creating-templates to learn more."
+                },
+                "patch": {
+                  "id": "dlp.organizations.locations.inspectTemplates.patch",
+                  "path": "v2/{+name}",
+                  "flatPath": "v2/organizations/{organizationsId}/locations/{locationsId}/inspectTemplates/{inspectTemplatesId}",
+                  "httpMethod": "PATCH",
+                  "parameters": {
+                    "name": {
+                      "description": "Required. Resource name of organization and inspectTemplate to be updated, for\nexample `organizations\/433245324\/inspectTemplates\/432452342` or\nprojects\/project-id\/inspectTemplates\/432452342.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^organizations\/[^\/]+\/locations\/[^\/]+\/inspectTemplates\/[^\/]+$",
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "request": {
+                    "$ref": "GooglePrivacyDlpV2UpdateInspectTemplateRequest"
+                  },
+                  "response": {
+                    "$ref": "GooglePrivacyDlpV2InspectTemplate"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Updates the InspectTemplate.\nSee https:\/\/cloud.google.com\/dlp\/docs\/creating-templates to learn more."
+                },
+                "get": {
+                  "id": "dlp.organizations.locations.inspectTemplates.get",
+                  "path": "v2/{+name}",
+                  "flatPath": "v2/organizations/{organizationsId}/locations/{locationsId}/inspectTemplates/{inspectTemplatesId}",
+                  "httpMethod": "GET",
+                  "parameters": {
+                    "name": {
+                      "description": "Required. Resource name of the organization and inspectTemplate to be read, for\nexample `organizations\/433245324\/inspectTemplates\/432452342` or\nprojects\/project-id\/inspectTemplates\/432452342.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^organizations\/[^\/]+\/locations\/[^\/]+\/inspectTemplates\/[^\/]+$",
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "response": {
+                    "$ref": "GooglePrivacyDlpV2InspectTemplate"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Gets an InspectTemplate.\nSee https:\/\/cloud.google.com\/dlp\/docs\/creating-templates to learn more."
+                },
+                "list": {
+                  "id": "dlp.organizations.locations.inspectTemplates.list",
+                  "path": "v2/{+parent}/locations/{locationId}/inspectTemplates",
+                  "flatPath": "v2/organizations/{organizationsId}/locations/{locationId}/inspectTemplates",
+                  "httpMethod": "GET",
+                  "parameters": {
+                    "parent": {
+                      "description": "Required. The parent resource name, for example projects\/my-project-id or\norganizations\/my-org-id.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^organizations\/[^\/]+$",
+                      "type": "string"
+                    },
+                    "locationId": {
+                      "description": "The geographic location where inspection templates will be retrieved from.\nUse `-` for all locations. Reserved for future extensions.",
+                      "location": "path",
+                      "required": true,
+                      "type": "string"
+                    },
+                    "pageToken": {
+                      "description": "Optional page token to continue retrieval. Comes from previous call\nto `ListInspectTemplates`.",
+                      "location": "query",
+                      "type": "string"
+                    },
+                    "pageSize": {
+                      "description": "Optional size of the page, can be limited by server. If zero server returns\na page of max size 100.",
+                      "location": "query",
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "orderBy": {
+                      "description": "Optional comma separated list of fields to order by,\nfollowed by `asc` or `desc` postfix. This list is case-insensitive,\ndefault sorting order is ascending, redundant space characters are\ninsignificant.\n\nExample: `name asc,update_time, create_time desc`\n\nSupported fields are:\n\n- `create_time`: corresponds to time the template was created.\n- `update_time`: corresponds to time the template was last updated.\n- `name`: corresponds to template's name.\n- `display_name`: corresponds to template's display name.",
+                      "location": "query",
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "parent",
+                    "locationId"
+                  ],
+                  "response": {
+                    "$ref": "GooglePrivacyDlpV2ListInspectTemplatesResponse"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Lists InspectTemplates.\nSee https:\/\/cloud.google.com\/dlp\/docs\/creating-templates to learn more."
+                },
+                "delete": {
+                  "id": "dlp.organizations.locations.inspectTemplates.delete",
+                  "path": "v2/{+name}",
+                  "flatPath": "v2/organizations/{organizationsId}/locations/{locationsId}/inspectTemplates/{inspectTemplatesId}",
+                  "httpMethod": "DELETE",
+                  "parameters": {
+                    "name": {
+                      "description": "Required. Resource name of the organization and inspectTemplate to be deleted, for\nexample `organizations\/433245324\/inspectTemplates\/432452342` or\nprojects\/project-id\/inspectTemplates\/432452342.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^organizations\/[^\/]+\/locations\/[^\/]+\/inspectTemplates\/[^\/]+$",
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "response": {
+                    "$ref": "GoogleProtobufEmpty"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Deletes an InspectTemplate.\nSee https:\/\/cloud.google.com\/dlp\/docs\/creating-templates to learn more."
+                }
+              }
+            },
+            "deidentifyTemplates": {
+              "methods": {
+                "create": {
+                  "id": "dlp.organizations.locations.deidentifyTemplates.create",
+                  "path": "v2/{+parent}/locations/{locationId}/deidentifyTemplates",
+                  "flatPath": "v2/organizations/{organizationsId}/locations/{locationId}/deidentifyTemplates",
+                  "httpMethod": "POST",
+                  "parameters": {
+                    "parent": {
+                      "description": "Required. The parent resource name, for example projects\/my-project-id or\norganizations\/my-org-id.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^organizations\/[^\/]+$",
+                      "type": "string"
+                    },
+                    "locationId": {
+                      "description": "The geographic location to store the deidentification template. Reserved\nfor future extensions.",
+                      "location": "path",
+                      "required": true,
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "parent",
+                    "locationId"
+                  ],
+                  "request": {
+                    "$ref": "GooglePrivacyDlpV2CreateDeidentifyTemplateRequest"
+                  },
+                  "response": {
+                    "$ref": "GooglePrivacyDlpV2DeidentifyTemplate"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Creates a DeidentifyTemplate for re-using frequently used configuration\nfor de-identifying content, images, and storage.\nSee https:\/\/cloud.google.com\/dlp\/docs\/creating-templates-deid to learn\nmore."
+                },
+                "patch": {
+                  "id": "dlp.organizations.locations.deidentifyTemplates.patch",
+                  "path": "v2/{+name}",
+                  "flatPath": "v2/organizations/{organizationsId}/locations/{locationsId}/deidentifyTemplates/{deidentifyTemplatesId}",
+                  "httpMethod": "PATCH",
+                  "parameters": {
+                    "name": {
+                      "description": "Required. Resource name of organization and deidentify template to be updated, for\nexample `organizations\/433245324\/deidentifyTemplates\/432452342` or\nprojects\/project-id\/deidentifyTemplates\/432452342.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^organizations\/[^\/]+\/locations\/[^\/]+\/deidentifyTemplates\/[^\/]+$",
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "request": {
+                    "$ref": "GooglePrivacyDlpV2UpdateDeidentifyTemplateRequest"
+                  },
+                  "response": {
+                    "$ref": "GooglePrivacyDlpV2DeidentifyTemplate"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Updates the DeidentifyTemplate.\nSee https:\/\/cloud.google.com\/dlp\/docs\/creating-templates-deid to learn\nmore."
+                },
+                "get": {
+                  "id": "dlp.organizations.locations.deidentifyTemplates.get",
+                  "path": "v2/{+name}",
+                  "flatPath": "v2/organizations/{organizationsId}/locations/{locationsId}/deidentifyTemplates/{deidentifyTemplatesId}",
+                  "httpMethod": "GET",
+                  "parameters": {
+                    "name": {
+                      "description": "Required. Resource name of the organization and deidentify template to be read, for\nexample `organizations\/433245324\/deidentifyTemplates\/432452342` or\nprojects\/project-id\/deidentifyTemplates\/432452342.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^organizations\/[^\/]+\/locations\/[^\/]+\/deidentifyTemplates\/[^\/]+$",
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "response": {
+                    "$ref": "GooglePrivacyDlpV2DeidentifyTemplate"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Gets a DeidentifyTemplate.\nSee https:\/\/cloud.google.com\/dlp\/docs\/creating-templates-deid to learn\nmore."
+                },
+                "list": {
+                  "id": "dlp.organizations.locations.deidentifyTemplates.list",
+                  "path": "v2/{+parent}/locations/{locationId}/deidentifyTemplates",
+                  "flatPath": "v2/organizations/{organizationsId}/locations/{locationId}/deidentifyTemplates",
+                  "httpMethod": "GET",
+                  "parameters": {
+                    "parent": {
+                      "description": "Required. The parent resource name, for example projects\/my-project-id or\norganizations\/my-org-id.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^organizations\/[^\/]+$",
+                      "type": "string"
+                    },
+                    "locationId": {
+                      "description": "The geographic location where deidentifications templates will be retrieved\nfrom. Use `-` for all locations. Reserved for future extensions.",
+                      "location": "path",
+                      "required": true,
+                      "type": "string"
+                    },
+                    "pageToken": {
+                      "description": "Optional page token to continue retrieval. Comes from previous call\nto `ListDeidentifyTemplates`.",
+                      "location": "query",
+                      "type": "string"
+                    },
+                    "pageSize": {
+                      "description": "Optional size of the page, can be limited by server. If zero server returns\na page of max size 100.",
+                      "location": "query",
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "orderBy": {
+                      "description": "Optional comma separated list of fields to order by,\nfollowed by `asc` or `desc` postfix. This list is case-insensitive,\ndefault sorting order is ascending, redundant space characters are\ninsignificant.\n\nExample: `name asc,update_time, create_time desc`\n\nSupported fields are:\n\n- `create_time`: corresponds to time the template was created.\n- `update_time`: corresponds to time the template was last updated.\n- `name`: corresponds to template's name.\n- `display_name`: corresponds to template's display name.",
+                      "location": "query",
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "parent",
+                    "locationId"
+                  ],
+                  "response": {
+                    "$ref": "GooglePrivacyDlpV2ListDeidentifyTemplatesResponse"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Lists DeidentifyTemplates.\nSee https:\/\/cloud.google.com\/dlp\/docs\/creating-templates-deid to learn\nmore."
+                },
+                "delete": {
+                  "id": "dlp.organizations.locations.deidentifyTemplates.delete",
+                  "path": "v2/{+name}",
+                  "flatPath": "v2/organizations/{organizationsId}/locations/{locationsId}/deidentifyTemplates/{deidentifyTemplatesId}",
+                  "httpMethod": "DELETE",
+                  "parameters": {
+                    "name": {
+                      "description": "Required. Resource name of the organization and deidentify template to be deleted,\nfor example `organizations\/433245324\/deidentifyTemplates\/432452342` or\nprojects\/project-id\/deidentifyTemplates\/432452342.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^organizations\/[^\/]+\/locations\/[^\/]+\/deidentifyTemplates\/[^\/]+$",
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "response": {
+                    "$ref": "GoogleProtobufEmpty"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Deletes a DeidentifyTemplate.\nSee https:\/\/cloud.google.com\/dlp\/docs\/creating-templates-deid to learn\nmore."
+                }
+              }
+            },
+            "storedInfoTypes": {
+              "methods": {
+                "create": {
+                  "id": "dlp.organizations.locations.storedInfoTypes.create",
+                  "path": "v2/{+parent}/locations/{locationId}/storedInfoTypes",
+                  "flatPath": "v2/organizations/{organizationsId}/locations/{locationId}/storedInfoTypes",
+                  "httpMethod": "POST",
+                  "parameters": {
+                    "parent": {
+                      "description": "Required. The parent resource name, for example projects\/my-project-id or\norganizations\/my-org-id.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^organizations\/[^\/]+$",
+                      "type": "string"
+                    },
+                    "locationId": {
+                      "description": "The geographic location to store the stored infoType. Reserved for\nfuture extensions.",
+                      "location": "path",
+                      "required": true,
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "parent",
+                    "locationId"
+                  ],
+                  "request": {
+                    "$ref": "GooglePrivacyDlpV2CreateStoredInfoTypeRequest"
+                  },
+                  "response": {
+                    "$ref": "GooglePrivacyDlpV2StoredInfoType"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Creates a pre-built stored infoType to be used for inspection.\nSee https:\/\/cloud.google.com\/dlp\/docs\/creating-stored-infotypes to\nlearn more."
+                },
+                "patch": {
+                  "id": "dlp.organizations.locations.storedInfoTypes.patch",
+                  "path": "v2/{+name}",
+                  "flatPath": "v2/organizations/{organizationsId}/locations/{locationsId}/storedInfoTypes/{storedInfoTypesId}",
+                  "httpMethod": "PATCH",
+                  "parameters": {
+                    "name": {
+                      "description": "Required. Resource name of organization and storedInfoType to be updated, for\nexample `organizations\/433245324\/storedInfoTypes\/432452342` or\nprojects\/project-id\/storedInfoTypes\/432452342.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^organizations\/[^\/]+\/locations\/[^\/]+\/storedInfoTypes\/[^\/]+$",
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "request": {
+                    "$ref": "GooglePrivacyDlpV2UpdateStoredInfoTypeRequest"
+                  },
+                  "response": {
+                    "$ref": "GooglePrivacyDlpV2StoredInfoType"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Updates the stored infoType by creating a new version. The existing version\nwill continue to be used until the new version is ready.\nSee https:\/\/cloud.google.com\/dlp\/docs\/creating-stored-infotypes to\nlearn more."
+                },
+                "get": {
+                  "id": "dlp.organizations.locations.storedInfoTypes.get",
+                  "path": "v2/{+name}",
+                  "flatPath": "v2/organizations/{organizationsId}/locations/{locationsId}/storedInfoTypes/{storedInfoTypesId}",
+                  "httpMethod": "GET",
+                  "parameters": {
+                    "name": {
+                      "description": "Required. Resource name of the organization and storedInfoType to be read, for\nexample `organizations\/433245324\/storedInfoTypes\/432452342` or\nprojects\/project-id\/storedInfoTypes\/432452342.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^organizations\/[^\/]+\/locations\/[^\/]+\/storedInfoTypes\/[^\/]+$",
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "response": {
+                    "$ref": "GooglePrivacyDlpV2StoredInfoType"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Gets a stored infoType.\nSee https:\/\/cloud.google.com\/dlp\/docs\/creating-stored-infotypes to\nlearn more."
+                },
+                "list": {
+                  "id": "dlp.organizations.locations.storedInfoTypes.list",
+                  "path": "v2/{+parent}/locations/{locationId}/storedInfoTypes",
+                  "flatPath": "v2/organizations/{organizationsId}/locations/{locationId}/storedInfoTypes",
+                  "httpMethod": "GET",
+                  "parameters": {
+                    "parent": {
+                      "description": "Required. The parent resource name, for example projects\/my-project-id or\norganizations\/my-org-id.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^organizations\/[^\/]+$",
+                      "type": "string"
+                    },
+                    "locationId": {
+                      "description": "The geographic location where stored infoTypes will be retrieved from.\nUse `-` for all locations. Reserved for future extensions.",
+                      "location": "path",
+                      "required": true,
+                      "type": "string"
+                    },
+                    "pageToken": {
+                      "description": "Optional page token to continue retrieval. Comes from previous call\nto `ListStoredInfoTypes`.",
+                      "location": "query",
+                      "type": "string"
+                    },
+                    "pageSize": {
+                      "description": "Optional size of the page, can be limited by server. If zero server returns\na page of max size 100.",
+                      "location": "query",
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "orderBy": {
+                      "description": "Optional comma separated list of fields to order by,\nfollowed by `asc` or `desc` postfix. This list is case-insensitive,\ndefault sorting order is ascending, redundant space characters are\ninsignificant.\n\nExample: `name asc, display_name, create_time desc`\n\nSupported fields are:\n\n- `create_time`: corresponds to time the most recent version of the\nresource was created.\n- `state`: corresponds to the state of the resource.\n- `name`: corresponds to resource name.\n- `display_name`: corresponds to info type's display name.",
+                      "location": "query",
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "parent",
+                    "locationId"
+                  ],
+                  "response": {
+                    "$ref": "GooglePrivacyDlpV2ListStoredInfoTypesResponse"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Lists stored infoTypes.\nSee https:\/\/cloud.google.com\/dlp\/docs\/creating-stored-infotypes to\nlearn more."
+                },
+                "delete": {
+                  "id": "dlp.organizations.locations.storedInfoTypes.delete",
+                  "path": "v2/{+name}",
+                  "flatPath": "v2/organizations/{organizationsId}/locations/{locationsId}/storedInfoTypes/{storedInfoTypesId}",
+                  "httpMethod": "DELETE",
+                  "parameters": {
+                    "name": {
+                      "description": "Required. Resource name of the organization and storedInfoType to be deleted, for\nexample `organizations\/433245324\/storedInfoTypes\/432452342` or\nprojects\/project-id\/storedInfoTypes\/432452342.",
+                      "location": "path",
+                      "required": true,
+                      "pattern": "^organizations\/[^\/]+\/locations\/[^\/]+\/storedInfoTypes\/[^\/]+$",
+                      "type": "string"
+                    }
+                  },
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "response": {
+                    "$ref": "GoogleProtobufEmpty"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ],
+                  "description": "Deletes a stored infoType.\nSee https:\/\/cloud.google.com\/dlp\/docs\/creating-stored-infotypes to\nlearn more."
+                }
+              }
+            }
+          }
+        },
         "deidentifyTemplates": {
           "methods": {
             "create": {
@@ -4867,7 +6613,7 @@
               "httpMethod": "POST",
               "parameters": {
                 "parent": {
-                  "description": "The parent resource name, for example projects\/my-project-id or\norganizations\/my-org-id.",
+                  "description": "Required. The parent resource name, for example projects\/my-project-id or\norganizations\/my-org-id.",
                   "location": "path",
                   "required": true,
                   "pattern": "^organizations\/[^\/]+$",
@@ -4895,7 +6641,7 @@
               "httpMethod": "PATCH",
               "parameters": {
                 "name": {
-                  "description": "Resource name of organization and deidentify template to be updated, for\nexample `organizations\/433245324\/deidentifyTemplates\/432452342` or\nprojects\/project-id\/deidentifyTemplates\/432452342.",
+                  "description": "Required. Resource name of organization and deidentify template to be updated, for\nexample `organizations\/433245324\/deidentifyTemplates\/432452342` or\nprojects\/project-id\/deidentifyTemplates\/432452342.",
                   "location": "path",
                   "required": true,
                   "pattern": "^organizations\/[^\/]+\/deidentifyTemplates\/[^\/]+$",
@@ -4923,7 +6669,7 @@
               "httpMethod": "GET",
               "parameters": {
                 "name": {
-                  "description": "Resource name of the organization and deidentify template to be read, for\nexample `organizations\/433245324\/deidentifyTemplates\/432452342` or\nprojects\/project-id\/deidentifyTemplates\/432452342.",
+                  "description": "Required. Resource name of the organization and deidentify template to be read, for\nexample `organizations\/433245324\/deidentifyTemplates\/432452342` or\nprojects\/project-id\/deidentifyTemplates\/432452342.",
                   "location": "path",
                   "required": true,
                   "pattern": "^organizations\/[^\/]+\/deidentifyTemplates\/[^\/]+$",
@@ -4948,7 +6694,7 @@
               "httpMethod": "GET",
               "parameters": {
                 "parent": {
-                  "description": "The parent resource name, for example projects\/my-project-id or\norganizations\/my-org-id.",
+                  "description": "Required. The parent resource name, for example projects\/my-project-id or\norganizations\/my-org-id.",
                   "location": "path",
                   "required": true,
                   "pattern": "^organizations\/[^\/]+$",
@@ -4967,6 +6713,11 @@
                 },
                 "orderBy": {
                   "description": "Optional comma separated list of fields to order by,\nfollowed by `asc` or `desc` postfix. This list is case-insensitive,\ndefault sorting order is ascending, redundant space characters are\ninsignificant.\n\nExample: `name asc,update_time, create_time desc`\n\nSupported fields are:\n\n- `create_time`: corresponds to time the template was created.\n- `update_time`: corresponds to time the template was last updated.\n- `name`: corresponds to template's name.\n- `display_name`: corresponds to template's display name.",
+                  "location": "query",
+                  "type": "string"
+                },
+                "locationId": {
+                  "description": "The geographic location where deidentifications templates will be retrieved\nfrom. Use `-` for all locations. Reserved for future extensions.",
                   "location": "query",
                   "type": "string"
                 }
@@ -4989,7 +6740,7 @@
               "httpMethod": "DELETE",
               "parameters": {
                 "name": {
-                  "description": "Resource name of the organization and deidentify template to be deleted,\nfor example `organizations\/433245324\/deidentifyTemplates\/432452342` or\nprojects\/project-id\/deidentifyTemplates\/432452342.",
+                  "description": "Required. Resource name of the organization and deidentify template to be deleted,\nfor example `organizations\/433245324\/deidentifyTemplates\/432452342` or\nprojects\/project-id\/deidentifyTemplates\/432452342.",
                   "location": "path",
                   "required": true,
                   "pattern": "^organizations\/[^\/]+\/deidentifyTemplates\/[^\/]+$",
@@ -5018,7 +6769,7 @@
               "httpMethod": "POST",
               "parameters": {
                 "parent": {
-                  "description": "The parent resource name, for example projects\/my-project-id or\norganizations\/my-org-id.",
+                  "description": "Required. The parent resource name, for example projects\/my-project-id or\norganizations\/my-org-id.",
                   "location": "path",
                   "required": true,
                   "pattern": "^organizations\/[^\/]+$",
@@ -5046,7 +6797,7 @@
               "httpMethod": "PATCH",
               "parameters": {
                 "name": {
-                  "description": "Resource name of organization and storedInfoType to be updated, for\nexample `organizations\/433245324\/storedInfoTypes\/432452342` or\nprojects\/project-id\/storedInfoTypes\/432452342.",
+                  "description": "Required. Resource name of organization and storedInfoType to be updated, for\nexample `organizations\/433245324\/storedInfoTypes\/432452342` or\nprojects\/project-id\/storedInfoTypes\/432452342.",
                   "location": "path",
                   "required": true,
                   "pattern": "^organizations\/[^\/]+\/storedInfoTypes\/[^\/]+$",
@@ -5074,7 +6825,7 @@
               "httpMethod": "GET",
               "parameters": {
                 "name": {
-                  "description": "Resource name of the organization and storedInfoType to be read, for\nexample `organizations\/433245324\/storedInfoTypes\/432452342` or\nprojects\/project-id\/storedInfoTypes\/432452342.",
+                  "description": "Required. Resource name of the organization and storedInfoType to be read, for\nexample `organizations\/433245324\/storedInfoTypes\/432452342` or\nprojects\/project-id\/storedInfoTypes\/432452342.",
                   "location": "path",
                   "required": true,
                   "pattern": "^organizations\/[^\/]+\/storedInfoTypes\/[^\/]+$",
@@ -5099,7 +6850,7 @@
               "httpMethod": "GET",
               "parameters": {
                 "parent": {
-                  "description": "The parent resource name, for example projects\/my-project-id or\norganizations\/my-org-id.",
+                  "description": "Required. The parent resource name, for example projects\/my-project-id or\norganizations\/my-org-id.",
                   "location": "path",
                   "required": true,
                   "pattern": "^organizations\/[^\/]+$",
@@ -5118,6 +6869,11 @@
                 },
                 "orderBy": {
                   "description": "Optional comma separated list of fields to order by,\nfollowed by `asc` or `desc` postfix. This list is case-insensitive,\ndefault sorting order is ascending, redundant space characters are\ninsignificant.\n\nExample: `name asc, display_name, create_time desc`\n\nSupported fields are:\n\n- `create_time`: corresponds to time the most recent version of the\nresource was created.\n- `state`: corresponds to the state of the resource.\n- `name`: corresponds to resource name.\n- `display_name`: corresponds to info type's display name.",
+                  "location": "query",
+                  "type": "string"
+                },
+                "locationId": {
+                  "description": "The geographic location where stored infoTypes will be retrieved from.\nUse `-` for all locations. Reserved for future extensions.",
                   "location": "query",
                   "type": "string"
                 }
@@ -5140,7 +6896,7 @@
               "httpMethod": "DELETE",
               "parameters": {
                 "name": {
-                  "description": "Resource name of the organization and storedInfoType to be deleted, for\nexample `organizations\/433245324\/storedInfoTypes\/432452342` or\nprojects\/project-id\/storedInfoTypes\/432452342.",
+                  "description": "Required. Resource name of the organization and storedInfoType to be deleted, for\nexample `organizations\/433245324\/storedInfoTypes\/432452342` or\nprojects\/project-id\/storedInfoTypes\/432452342.",
                   "location": "path",
                   "required": true,
                   "pattern": "^organizations\/[^\/]+\/storedInfoTypes\/[^\/]+$",

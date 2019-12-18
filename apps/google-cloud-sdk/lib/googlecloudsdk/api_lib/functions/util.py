@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import print_function
 from __future__ import unicode_literals
 
 import argparse
@@ -26,7 +27,6 @@ import os
 import re
 
 from apitools.base.py import exceptions as apitools_exceptions
-
 from googlecloudsdk.api_lib.functions import exceptions
 from googlecloudsdk.api_lib.functions import operations
 from googlecloudsdk.api_lib.storage import storage_util
@@ -35,6 +35,7 @@ from googlecloudsdk.api_lib.util import exceptions as exceptions_util
 from googlecloudsdk.calliope import arg_parsers
 from googlecloudsdk.calliope import base as calliope_base
 from googlecloudsdk.calliope import exceptions as base_exceptions
+from googlecloudsdk.command_lib.iam import iam_util
 from googlecloudsdk.core import exceptions as core_exceptions
 from googlecloudsdk.core import properties
 from googlecloudsdk.core import resources
@@ -76,6 +77,10 @@ def _GetApiVersion(track=calliope_base.ReleaseTrack.GA):  # pylint: disable=unus
 
 def GetApiClientInstance(track=calliope_base.ReleaseTrack.GA):
   return apis.GetClientInstance(_API_NAME, _GetApiVersion(track))
+
+
+def GetResourceManagerApiClientInstance():
+  return apis.GetClientInstance('cloudresourcemanager', 'v1')
 
 
 def GetApiMessagesModule(track=calliope_base.ReleaseTrack.GA):
@@ -232,14 +237,10 @@ def ValidateDirectoryExistsOrRaiseFunctionError(directory):
   """
   if not os.path.exists(directory):
     raise exceptions.FunctionsError(
-        'argument --source: Provided directory does not exist. If '
-        'you intended to provide a path to Google Cloud Repository, you must '
-        'specify the --source-url argument')
+        'argument `--source`: Provided directory does not exist')
   if not os.path.isdir(directory):
     raise exceptions.FunctionsError(
-        'argument --source: Provided path does not point to a directory. If '
-        'you intended to provide a path to Google Cloud Repository, you must '
-        'specify the --source-url argument')
+        'argument `--source`: Provided path does not point to a directory')
   return directory
 
 
@@ -266,10 +267,15 @@ def _GetViolationsFromError(error):
     String of newline-separated violations descriptions.
   """
   error_payload = exceptions_util.HttpErrorPayload(error)
-  field_errors = error_payload.field_violations
-  if not field_errors:
-    return ''
-  return '\n'.join(field_errors.values()) + '\n'
+  errors = []
+  errors.extend(
+      ['{}:\n{}'.format(k, v) for k, v in error_payload.violations.items()])
+  errors.extend([
+      '{}:\n{}'.format(k, v) for k, v in error_payload.field_violations.items()
+  ])
+  if errors:
+    return '\n'.join(errors) + '\n'
+  return ''
 
 
 def _GetPermissionErrorDetails(error_info):
@@ -333,6 +339,20 @@ def GetFunction(function_name):
     raise
 
 
+# TODO(b/139026575): Remove do_every_poll option
+@CatchHTTPErrorRaiseHTTPException
+def WaitForFunctionUpdateOperation(op, do_every_poll=None):
+  """Wait for the specied function update to complete.
+
+  Args:
+    op: Cloud operation to wait on.
+    do_every_poll: function, A function to execute every time we poll.
+  """
+  client = GetApiClientInstance()
+  operations.Wait(op, client.MESSAGES_MODULE, client, _DEPLOY_WAIT_NOTICE,
+                  do_every_poll=do_every_poll)
+
+
 @CatchHTTPErrorRaiseHTTPException
 def PatchFunction(function, fields_to_patch):
   """Call the api to patch a function based on updated fields.
@@ -340,29 +360,98 @@ def PatchFunction(function, fields_to_patch):
   Args:
     function: the function to patch
     fields_to_patch: the fields to patch on the function
+
   Returns:
-    The patched function.
+    The cloud operation for the Patch.
   """
   client = GetApiClientInstance()
   messages = client.MESSAGES_MODULE
   fields_to_patch_str = ','.join(sorted(fields_to_patch))
-  op = client.projects_locations_functions.Patch(
+  return client.projects_locations_functions.Patch(
       messages.CloudfunctionsProjectsLocationsFunctionsPatchRequest(
           cloudFunction=function,
           name=function.name,
           updateMask=fields_to_patch_str,
       )
   )
-  operations.Wait(op, messages, client, _DEPLOY_WAIT_NOTICE)
-  return GetFunction(function.name)
 
 
 @CatchHTTPErrorRaiseHTTPException
 def CreateFunction(function, location):
+  """Call the api to create a function.
+
+  Args:
+    function: the function to create
+    location: location for function
+
+  Returns:
+    Cloud operation for the create.
+  """
   client = GetApiClientInstance()
   messages = client.MESSAGES_MODULE
-  op = client.projects_locations_functions.Create(
+  return client.projects_locations_functions.Create(
       messages.CloudfunctionsProjectsLocationsFunctionsCreateRequest(
           location=location, cloudFunction=function))
-  operations.Wait(op, messages, client, _DEPLOY_WAIT_NOTICE)
-  return GetFunction(function.name)
+
+
+@CatchHTTPErrorRaiseHTTPException
+def GetFunctionIamPolicy(function_resource_name):
+  client = GetApiClientInstance()
+  messages = client.MESSAGES_MODULE
+  return client.projects_locations_functions.GetIamPolicy(
+      messages.CloudfunctionsProjectsLocationsFunctionsGetIamPolicyRequest(
+          resource=function_resource_name))
+
+
+@CatchHTTPErrorRaiseHTTPException
+def AddFunctionIamPolicyBinding(function_resource_name,
+                                member='allUsers',
+                                role='roles/cloudfunctions.invoker'):
+  client = GetApiClientInstance()
+  messages = client.MESSAGES_MODULE
+  policy = GetFunctionIamPolicy(function_resource_name)
+  iam_util.AddBindingToIamPolicy(messages.Binding, policy, member, role)
+  return client.projects_locations_functions.SetIamPolicy(
+      messages.CloudfunctionsProjectsLocationsFunctionsSetIamPolicyRequest(
+          resource=function_resource_name,
+          setIamPolicyRequest=messages.SetIamPolicyRequest(policy=policy)))
+
+
+@CatchHTTPErrorRaiseHTTPException
+def RemoveFunctionIamPolicyBindingIfFound(
+    function_resource_name,
+    member='allUsers',
+    role='roles/cloudfunctions.invoker'):
+  """Removes the specified policy binding if it is found."""
+  client = GetApiClientInstance()
+  messages = client.MESSAGES_MODULE
+  policy = GetFunctionIamPolicy(function_resource_name)
+  if iam_util.BindingInPolicy(policy, member, role):
+    iam_util.RemoveBindingFromIamPolicy(policy, member, role)
+    client.projects_locations_functions.SetIamPolicy(
+        messages.CloudfunctionsProjectsLocationsFunctionsSetIamPolicyRequest(
+            resource=function_resource_name,
+            setIamPolicyRequest=messages.SetIamPolicyRequest(policy=policy)))
+    return True
+  else:
+    return False
+
+
+@CatchHTTPErrorRaiseHTTPException
+def CanAddFunctionIamPolicyBinding(project):
+  """Returns True iff the caller can add policy bindings for project."""
+  client = GetResourceManagerApiClientInstance()
+  messages = client.MESSAGES_MODULE
+  needed_permissions = [
+      'resourcemanager.projects.getIamPolicy',
+      'resourcemanager.projects.setIamPolicy']
+  iam_request = messages.CloudresourcemanagerProjectsTestIamPermissionsRequest(
+      resource=project,
+      testIamPermissionsRequest=messages.TestIamPermissionsRequest(
+          permissions=needed_permissions))
+  iam_response = client.projects.TestIamPermissions(iam_request)
+  can_add = True
+  for needed_permission in needed_permissions:
+    if needed_permission not in iam_response.permissions:
+      can_add = False
+  return can_add

@@ -1,4 +1,4 @@
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2016 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@
 # To add new api simply add an entry with its api name and version
 # pointing to its discovery doc file which should be checked into root_dir.
 
-# api version can have the follwing fields:
+# api version can have the following fields:
 # api_name:
 #   api_version:
 #     discovery_doc: <relative path wrt root_dir>
@@ -41,10 +41,17 @@ apis:
       default: false
     v1beta:
       discovery_doc: accesscontextmanager_v1beta.json
-      default: true
+      default: false
     v1:
       discovery_doc: accesscontextmanager_v1.json
-      default: false
+      default: true
+  admin:
+    v1:
+      discovery_doc: admin_v1.json
+      default: true
+      resources:
+        customer:
+          path: customer/{customerId}
   appengine:
     v1alpha:
       discovery_doc: appengine_v1alpha.json
@@ -58,24 +65,16 @@ apis:
       resources:
         projects:
           path: projects/{projectId}
+  artifactregistry:
+    v1beta1:
+      discovery_doc: artifactregistry_v1beta1.json
+      default: true
   bigtableadmin:
     v2:
       discovery_doc: bigtableadmin_v2.json
       resources:
         projects:
           path: projects/{projectId}
-  bigtableclusteradmin:
-    v1:
-      discovery_doc: bigtableclusteradmin_v1.json
-      resources:
-        operations:
-          path: operations/{+operationId}
-        projects:
-          path: projects/{projectId}
-        projects.zones:
-          path: projects/{projectId}/zones/{zoneId}
-        projects.zones.clusters:
-          path: projects/{projectId}/zones/{zoneId}/clusters/{clusterId}
   binaryauthorization:
     v1alpha2:
       default: true
@@ -89,9 +88,19 @@ apis:
       resources:
         projects.policy:
           path: projects/{projectsId}/policy
-  bio:
     v1:
-      discovery_doc: bio_v1.json
+      default: false
+      discovery_doc: binaryauthorization_v1.json
+      resources:
+        projects.policy:
+          path: projects/{projectsId}/policy
+  billingbudgets:
+    v1alpha1:
+      discovery_doc: billingbudgets_v1alpha1.json
+      default: true
+  buildartifacts:
+    v1alpha2:
+      discovery_doc: buildartifacts_v1alpha2.json
       default: true
   cloudasset:
     v1beta1:
@@ -99,6 +108,17 @@ apis:
       discovery_doc: cloudasset_v1beta1.json
     v1:
       discovery_doc: cloudasset_v1.json
+    v1p1alpha1:
+      discovery_doc: cloudasset_v1p1alpha1.json
+      resources:
+        iamPolicies:
+          path: iamPolicies
+    v1p2beta1:
+      discovery_doc: cloudasset_v1p2beta1.json
+    v1p4alpha1:
+      discovery_doc: cloudasset_v1p4alpha1.json
+    v1p5alpha1:
+      discovery_doc: cloudasset_v1p5alpha1.json
   cloudbilling:
     v1:
       discovery_doc: cloudbilling_v1.json
@@ -125,6 +145,11 @@ apis:
       unelidable_request_methods:
       - cloudbuild.projects.builds.create
       - cloudbuild.projects.workerPools.patch
+    v1alpha2:
+      discovery_doc: cloudbuild_v1alpha2.json
+      resources:
+        projects:
+          path: projects/{projectId}
   clouddebugger:
     v2:
       discovery_doc: clouddebugger_v2.json
@@ -143,6 +168,18 @@ apis:
           path: providers/{triggerProvider}/eventTypes/{triggerEvent}
         projects.buckets:
           path: projects/_/buckets/{bucketId}
+  cloudidentity:
+    v1alpha1:
+      discovery_doc: cloudidentity_v1alpha1.json
+      resources:
+    v1beta1:
+      discovery_doc: cloudidentity_v1beta1.json
+      default: true
+      resources:
+        groups:
+          path: groups/{groupId}
+        groups.memberships:
+          path: groups/{groupId}/memberships/{membershipId}
   cloudiot:
     v1:
       discovery_doc: cloudiot_v1.json
@@ -185,14 +222,21 @@ apis:
   cloudtasks:
     v2beta2:
       discovery_doc: cloudtasks_v2beta2.json
-      default: true
     v2beta3:
       discovery_doc: cloudtasks_v2beta3.json
+    v2:
+      discovery_doc: cloudtasks_v2.json
+      default: true
+  cloudtrace:
+    v2beta1:
+      discovery_doc: cloudtrace_v2beta1.json
   cloudscheduler:
     v1alpha1:
       discovery_doc: cloudscheduler_v1alpha1.json
     v1beta1:
       discovery_doc: cloudscheduler_v1beta1.json
+    v1:
+      discovery_doc: cloudscheduler_v1.json
       default: true
   composer:
     v1alpha2:
@@ -202,6 +246,9 @@ apis:
     v1:
       discovery_doc: composer_v1.json
       default: true
+  composerflex:
+    v1alpha1:
+      discovery_doc: composerflex_v1alpha1.json
   compute:
     alpha:
       discovery_doc: compute_alpha.json
@@ -213,7 +260,7 @@ apis:
     beta:
       discovery_doc: compute_beta.json
       unelidable_request_methods:
-      - compute.disks.resize
+        - compute.disks.resize
       resources:
         nextHopGateways:
           path: projects/{project}/global/gateways/{nextHopGateway}
@@ -250,15 +297,29 @@ apis:
       default: true
     v1beta1:
       discovery_doc: containeranalysis_v1beta1.json
+    v1:
+      discovery_doc: containeranalysis_v1.json
   datacatalog:
     v1alpha3:
       discovery_doc: datacatalog_v1alpha3.json
+    v1beta1:
+      discovery_doc: datacatalog_v1beta1.json
       default: true
-#    v1beta1:
-#      discovery_doc: datacatalog_v1beta1.json
+      resources:
+        catalog:
+          path: catalog
+        entries:
+          path: entries
+        projects.locations.tagTemplates.fields:
+          path: projects/{projectsId}/locations/{locationsId}/tagTemplates/{tagTemplatesId}/fields/{fieldsId}
+        projects.locations.entryGroups.entries.tags:
+          path: projects/{projectsId}/locations/{locationsId}/entryGroups/{entryGroupsId}/entries/{entriesId}/tags/{tagsId}
   dataflow:
     v1b3:
       discovery_doc: dataflow_v1b3.json
+  datafusion:
+    v1beta1:
+      discovery_doc: datafusion_v1beta1.json
   dataproc:
     v1:
       discovery_doc: dataproc_v1.json
@@ -295,6 +356,12 @@ apis:
       default: true
     v2beta:
       discovery_doc: deploymentmanager_v2beta.json
+  dialogflow:
+    v2:
+      discovery_doc: dialogflow_v2.json
+      resources:
+        projects.agent:
+          path: projects/{projectsId}/agent
   discovery:
     v1:
       discovery_doc: discovery_v1.json
@@ -307,12 +374,12 @@ apis:
       default: true
     v1beta2:
       discovery_doc: dns_v1beta2.json
-  edge:
+    v1alpha2:
+      discovery_doc: dns_v1alpha2.json
+  domains:
     v1alpha1:
-      discovery_doc: edge_v1alpha1.json
-  edgeml:
-    v1beta1:
-      discovery_doc: edgeml_v1beta1.json
+      discovery_doc: domains_v1alpha1.json
+      default: true
   eventflow:
     v1beta2:
       discovery_doc: eventflow_v1beta2.json
@@ -327,7 +394,6 @@ apis:
   firestore:
     v1beta2:
       discovery_doc: firestore_v1beta2.json
-      default: true
       resources:
         projects.databases.operations:
           path: projects/{projectsId}/databases/{databasesId}/operations/{operationsId}
@@ -335,6 +401,7 @@ apis:
       discovery_doc: firestore_v1beta1.json
     v1:
       discovery_doc: firestore_v1.json
+      default: true
   genomics:
     v1:
       discovery_doc: genomics_v1.json
@@ -344,14 +411,19 @@ apis:
     v2alpha1:
       discovery_doc: genomics_v2alpha1.json
   gkehub:
+    v1alpha1:
+      discovery_doc: gkehub_v1alpha1.json
     v1beta1:
       discovery_doc: gkehub_v1beta1.json
       default: true
+      resources:
+        projects.locations.memberships:
+          path: projects/{projectsId}/locations/{locationsId}/memberships/{membershipsId}
   healthcare:
-    v1alpha:
-      discovery_doc: healthcare_v1alpha.json
     v1alpha2:
       discovery_doc: healthcare_v1alpha2.json
+    v1beta1:
+      discovery_doc: healthcare_v1beta1.json
       default: true
   oslogin:
     v1alpha:
@@ -370,12 +442,26 @@ apis:
       resources:
         users.projects:
           path: users/{user}/projects/{project}
+  osconfig:
+    v1alpha1:
+      discovery_doc: osconfig_v1alpha1.json
+    v1alpha2:
+      discovery_doc: osconfig_v1alpha2.json
+    v1beta:
+      discovery_doc: osconfig_v1beta.json
+      default: true
   iam:
     v1:
       discovery_doc: iam_v1.json
       resources:
         iamPolicies:
           path: iamPolicies
+  iamassist:
+    v1alpha2:
+      resources:
+        simulator:
+          path: simulator
+      discovery_doc: iamassist_v1alpha2.json
   iamcredentials:
     v1:
       discovery_doc: iamcredentials_v1.json
@@ -394,6 +480,9 @@ apis:
           path: projects/{project}/iap_web/{iapWebId}/services/{serviceId}
         projects.iap_web.services.versions:
           path: projects/{project}/iap_web/{iapWebId}/services/{serviceId}/versions/{versionId}
+  labelmanager:
+    v1alpha1:
+      discovery_doc: labelmanager_v1alpha1.json
   language:
     v1beta2:
       discovery_doc: language_v1beta2.json
@@ -406,6 +495,18 @@ apis:
       resources:
         documents:
           path: documents
+  lifesciences:
+    v2beta:
+      discovery_doc: lifesciences_v2beta.json
+      default: true
+  managedidentities:
+    v1alpha1:
+      discovery_doc: managedidentities_v1alpha1.json
+    v1beta1:
+      discovery_doc: managedidentities_v1beta1.json
+    v1:
+      discovery_doc: managedidentities_v1.json
+      default: true
   logging:
     v2:
       discovery_doc: logging_v2.json
@@ -420,8 +521,23 @@ apis:
         projects.alertPolicies.conditions:
           path: projects/{projectsId}/alertPolicies/{alertPoliciesId}/conditions/{conditionsId}
       unelidable_request_methods:
-      - monitoring.projects.alertPolicies.create
-      - monitoring.projects.notificationChannels.create
+        - monitoring.projects.alertPolicies.create
+        - monitoring.projects.notificationChannels.create
+  orgpolicy:
+    v2alpha1:
+      discovery_doc: orgpolicy_v2alpha1.json
+  policytroubleshooter:
+    v1beta:
+      resources:
+        iam:
+          path: iam
+      discovery_doc: policytroubleshooter_v1beta.json
+    v1:
+      default: true
+      resources:
+        iam:
+          path: iam
+      discovery_doc: policytroubleshooter_v1.json
   pubsub:
     v1:
       discovery_doc: pubsub_v1.json
@@ -439,15 +555,38 @@ apis:
   run:
     v1alpha1:
       discovery_doc: run_v1alpha1.json
+      default: true
+    v1beta1:
+      discovery_doc: run_v1beta1.json
+    v1:
+      discovery_doc: run_v1.json
   runtimeconfig:
     v1beta1:
       discovery_doc: runtimeconfig_v1beta1.json
+  secretmanager:
+    v1beta1:
+      discovery_doc: secretmanager_v1beta1.json
+      default: true
   securitycenter:
+    v1beta1:
+      discovery_doc: securitycenter_v1beta1.json
+      resources:
+        organizations.sources.findings:
+          path: organizations/{organizationsId}/sources/{sourcesId}/findings/{findingId}
+        organizations.assets:
+          path: organizations/{organizationsId}/assets/{assetsId}
     v1:
       discovery_doc: securitycenter_v1.json
-  serverless:
-    v1alpha1:
-      discovery_doc: serverless_v1alpha1.json
+      resources:
+        organizations.sources.findings:
+          path: organizations/{organizationsId}/sources/{sourcesId}/findings/{findingId}
+        organizations.assets:
+          path: organizations/{organizationsId}/assets/{assetsId}
+      default: true
+  serviceconsumermanagement:
+    v1beta1:
+      discovery_doc: serviceconsumermanagement_v1beta1.json
+      default: true
   servicemanagement:
     v1:
       discovery_doc: servicemanagement_v1.json
@@ -459,6 +598,8 @@ apis:
       discovery_doc: servicenetworking_v1.json
       default: true
   serviceusage:
+    v1alpha:
+      discovery_doc: serviceusage_v1alpha.json
     v1beta1:
       discovery_doc: serviceusage_v1beta1.json
     v1:
@@ -510,7 +651,7 @@ apis:
       # url and the value in the request body should be different and the
       # request message is still needed.
       unelidable_request_methods:
-      - testing.projects.testMatrices.create
+        - testing.projects.testMatrices.create
   toolresults:
     v1beta3:
       discovery_doc: toolresults_v1beta3.json
@@ -533,6 +674,10 @@ apis:
       resources:
         images:
           path: images
+        projects.locations.productSets.products:
+          path: projects/{projectsId}/locations/{locationsId}/productSets/{productSetsId}/products
+        files:
+          path: files
   dlp:
     v2:
       discovery_doc: dlp_v2.json
@@ -549,6 +694,11 @@ apis:
   vpcaccess:
     v1alpha1:
       discovery_doc: vpcaccess_v1alpha1.json
+    v1beta1:
+      discovery_doc: vpcaccess_v1beta1.json
+    v1:
+      discovery_doc: vpcaccess_v1.json
+      default: true
   remotebuildexecution:
     v1alpha:
       discovery_doc: remotebuildexecution_v1alpha.json
@@ -569,3 +719,31 @@ apis:
         projects.scanConfigs.scanRuns.crawledUrls:
           path: projects/{projectsId}/scanConfigs/{scanConfigsId}/scanRuns/{scanRunsId}
           enable_uri_parsing: false
+  recommender:
+    v1alpha1:
+      discovery_doc: recommender_v1alpha1.json
+      default: true
+      resources:
+        projects.locations:
+          path: projects/{projectsId}/locations/{locationsId}
+          enable_uri_parsing: false
+        projects.locations.recommenders:
+          path: projects/{projectsId}/locations/{locationsId}/recommenders/{recommendersId}
+          enable_uri_parsing: false
+        projects.locations.recommenders.recommendations:
+          path: projects/{projectsId}/locations/{locationsId}/recommenders/{recommendersId}/recommendations/{recommendationsId}
+          enable_uri_parsing: false
+        operations:
+          path: operations/{+operationId}
+    v1alpha2:
+      discovery_doc: recommender_v1alpha2.json
+    v1beta1:
+      discovery_doc: recommender_v1beta1.json
+    v1:
+      discovery_doc: recommender_v1.json
+  gameservices:
+    v1alpha:
+      discovery_doc: gameservices_v1alpha.json
+  translate:
+    v3beta1:
+      discovery_doc: translate_v3beta1.json

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -43,22 +43,22 @@ class CancelPreview(base.Command, dm_base.DmCommand):
   """
 
   detailed_help = {
-      'EXAMPLES': """\
-          To cancel a running operation on a deployment, run:
+      'EXAMPLES': """
+To cancel a running operation on a deployment, run:
 
-            $ {command} my-deployment
+  $ {command} my-deployment
 
-          To issue a cancel preview command without waiting for the operation to complete, run:
+To issue a cancel preview command without waiting for the operation to complete, run:
 
-            $ {command} my-deployment --async
+  $ {command} my-deployment --async
 
-          To cancel a preview command providing a fingerprint:
+To cancel a preview command providing a fingerprint:
 
-            $ {command} my-deployment --fingerprint deployment-fingerprint
+  $ {command} my-deployment --fingerprint=deployment-fingerprint
 
-          When a deployment preview is cancelled, the deployment itself is not
-          deleted.
-          """,
+When a deployment preview is cancelled, the deployment itself is not
+deleted.
+""",
   }
 
   @staticmethod
@@ -124,7 +124,7 @@ class CancelPreview(base.Command, dm_base.DmCommand):
       dm_util.PrintFingerprint(new_fingerprint)
     except apitools_exceptions.HttpError as error:
       raise exceptions.HttpException(error, dm_api_util.HTTP_ERROR_FORMAT)
-    if args.async:
+    if args.async_:
       return operation
     else:
       op_name = operation.name

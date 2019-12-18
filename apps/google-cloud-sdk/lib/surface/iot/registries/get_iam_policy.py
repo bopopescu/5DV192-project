@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ class GetIamPolicy(base.ListCommand):
           """\
           To print the IAM policy for a given device registry, run:
 
-            $ {command} --region us-central1 my-registry
+            $ {command} --region=us-central1 my-registry
           """,
   }
 

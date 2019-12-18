@@ -28,7 +28,7 @@ class AddSubnetworkRequest(_messages.Message):
       the following format: `projects/{project}/global/networks/{network}`,
       where {project} is a project number, such as `12345`. {network} is the
       name of a VPC network in the project.
-    description: An optional description of the subnet.
+    description: Optional. Description of the subnet.
     ipPrefixLength: Required. The prefix length of the subnet's IP address
       range.  Use CIDR range notation, such as `30` to provision a subnet with
       an `x.x.x.x/30` CIDR range. The IP address range is drawn from a pool of
@@ -117,7 +117,7 @@ class Api(_messages.Message):
 
 
 class AuthProvider(_messages.Message):
-  r"""Configuration for an anthentication provider, including support for
+  r"""Configuration for an authentication provider, including support for
   [JSON Web Token (JWT)](https://tools.ietf.org/html/draft-ietf-oauth-json-
   web-token-32).
 
@@ -145,10 +145,11 @@ class AuthProvider(_messages.Message):
     jwksUri: URL of the provider's public key set to validate signature of the
       JWT. See [OpenID Discovery](https://openid.net/specs/openid-connect-
       discovery-1_0.html#ProviderMetadata). Optional if the key set document:
-      - can be retrieved from    [OpenID Discovery](https://openid.net/specs
-      /openid-connect-discovery-1_0.html    of the issuer.  - can be inferred
-      from the email domain of the issuer (e.g. a Google service account).
-      Example: https://www.googleapis.com/oauth2/v1/certs
+      - can be retrieved from    [OpenID
+      Discovery](https://openid.net/specs/openid-connect-discovery-1_0.html of
+      the issuer.  - can be inferred from the email domain of the issuer (e.g.
+      a Google  service account).  Example:
+      https://www.googleapis.com/oauth2/v1/certs
   """
 
   audiences = _messages.StringField(1)
@@ -227,20 +228,6 @@ class AuthenticationRule(_messages.Message):
   selector = _messages.StringField(4)
 
 
-class AuthorizationConfig(_messages.Message):
-  r"""Configuration of authorization.  This section determines the
-  authorization provider, if unspecified, then no authorization check will be
-  done.  Example:      experimental:       authorization:         provider:
-  firebaserules.googleapis.com
-
-  Fields:
-    provider: The name of the authorization provider, such as
-      firebaserules.googleapis.com.
-  """
-
-  provider = _messages.StringField(1)
-
-
 class Backend(_messages.Message):
   r"""`Backend` defines the backend configuration for a service.
 
@@ -291,8 +278,8 @@ class BackendRule(_messages.Message):
         Request path: /api/company/widgetworks/user/johndoe     Translated:
         https://example.cloudfunctions.net/getUser?cid=widgetworks&uid=johndoe
         Request path: /api/company/widgetworks/user/johndoe?timezone=EST
-        Translated:   https://example.cloudfunctions.net/getUser?timezone=EST&
-        cid=widgetworks&uid=johndoe
+        Translated:     https://example.cloudfunctions.net/getUser?timezone=ES
+        T&cid=widgetworks&uid=johndoe
       APPEND_PATH_TO_ADDRESS: The request path will be appended to the backend
         address.  # Examples  Given the following operation config:
         Method path:        /api/company/{cid}/user/{uid}     Backend address:
@@ -301,8 +288,8 @@ class BackendRule(_messages.Message):
         /api/company/widgetworks/user/johndoe     Translated:
         https://example.appspot.com/api/company/widgetworks/user/johndoe
         Request path: /api/company/widgetworks/user/johndoe?timezone=EST
-        Translated:   https://example.appspot.com/api/company/widgetworks/user
-        /johndoe?timezone=EST
+        Translated:     https://example.appspot.com/api/company/widgetworks/us
+        er/johndoe?timezone=EST
     """
     PATH_TRANSLATION_UNSPECIFIED = 0
     CONSTANT_ADDRESS = 1
@@ -372,9 +359,13 @@ class Connection(_messages.Message):
     peering: Output only. The name of the VPC Network Peering connection that
       was created by the service producer.
     reservedPeeringRanges: The name of one or more allocated IP address ranges
-      for this service producer of type `PEERING`. Note that invoking this
-      method with a different range when connection is already established
-      will not modify already provisioned service producer subnetworks.
+      for this service producer of type `PEERING`. Note that invoking
+      CreateConnection method with a different range when connection is
+      already established will not modify already provisioned service producer
+      subnetworks. If CreateConnection method is invoked repeatedly to
+      reconnect when peering connection had been disconnected on the consumer
+      side, leaving this field empty will restore previously allocated IP
+      ranges.
     service: Output only. The name of the peering service that's associated
       with this connection, in the following format: `services/{service
       name}`.
@@ -384,6 +375,18 @@ class Connection(_messages.Message):
   peering = _messages.StringField(2)
   reservedPeeringRanges = _messages.StringField(3, repeated=True)
   service = _messages.StringField(4)
+
+
+class ConsumerProject(_messages.Message):
+  r"""Represents a consumer project.
+
+  Fields:
+    projectNum: Required. Project number of the consumer that is launching the
+      service instance. It can own the network that is peered with Google or,
+      be a service project in an XPN where the host project has the network.
+  """
+
+  projectNum = _messages.IntegerField(1)
 
 
 class Context(_messages.Message):
@@ -491,6 +494,19 @@ class CustomHttpPattern(_messages.Message):
   path = _messages.StringField(2)
 
 
+class DisableVpcServiceControlsRequest(_messages.Message):
+  r"""Request to disable VPC service controls.
+
+  Fields:
+    consumerNetwork: Required. The network that the consumer is using to
+      connect with services. Must be in the form of
+      projects/{project}/global/networks/{network} {project} is a project
+      number, as in '12345' {network} is network name.
+  """
+
+  consumerNetwork = _messages.StringField(1)
+
+
 class Documentation(_messages.Message):
   r"""`Documentation` provides the information for describing a service.
   Example: <pre><code>documentation:   summary: >     The Google Calendar API
@@ -537,6 +553,10 @@ class Documentation(_messages.Message):
     rules: A list of documentation rules that apply to individual API
       elements.  **NOTE:** All service configuration rules follow "last one
       wins" order.
+    serviceRootUrl: Specifies the service root url if the default one (the
+      service name from the yaml file) is not suitable. This can be seen in
+      any fully specified service urls as well as sections that show a base
+      that other urls are relative to.
     summary: A short summary of what the service does. Can only be provided by
       plain text.
   """
@@ -545,7 +565,8 @@ class Documentation(_messages.Message):
   overview = _messages.StringField(2)
   pages = _messages.MessageField('Page', 3, repeated=True)
   rules = _messages.MessageField('DocumentationRule', 4, repeated=True)
-  summary = _messages.StringField(5)
+  serviceRootUrl = _messages.StringField(5)
+  summary = _messages.StringField(6)
 
 
 class DocumentationRule(_messages.Message):
@@ -559,8 +580,8 @@ class DocumentationRule(_messages.Message):
       is a qualified name of the element which may end in "*", indicating a
       wildcard. Wildcards are only allowed at the end and for a whole
       component of the qualified name, i.e. "foo.*" is ok, but not "foo.b*" or
-      "foo.*.bar". To specify a default for all applicable elements, the whole
-      pattern "*" is used.
+      "foo.*.bar". A wildcard will match one or more components. To specify a
+      default for all applicable elements, the whole pattern "*" is used.
   """
 
   deprecationDescription = _messages.StringField(1)
@@ -576,6 +597,19 @@ class Empty(_messages.Message):
   JSON representation for `Empty` is empty JSON object `{}`.
   """
 
+
+
+class EnableVpcServiceControlsRequest(_messages.Message):
+  r"""Request to enable VPC service controls.
+
+  Fields:
+    consumerNetwork: Required. The network that the consumer is using to
+      connect with services. Must be in the form of
+      projects/{project}/global/networks/{network} {project} is a project
+      number, as in '12345' {network} is network name.
+  """
+
+  consumerNetwork = _messages.StringField(1)
 
 
 class Endpoint(_messages.Message):
@@ -659,17 +693,6 @@ class EnumValue(_messages.Message):
   name = _messages.StringField(1)
   number = _messages.IntegerField(2, variant=_messages.Variant.INT32)
   options = _messages.MessageField('Option', 3, repeated=True)
-
-
-class Experimental(_messages.Message):
-  r"""Experimental service configuration. These configuration options can only
-  be used by whitelisted users.
-
-  Fields:
-    authorization: Authorization configuration.
-  """
-
-  authorization = _messages.MessageField('AuthorizationConfig', 1)
 
 
 class Field(_messages.Message):
@@ -1164,6 +1187,8 @@ class MetricDescriptor(_messages.Message):
   type's existing data unusable.
 
   Enums:
+    LaunchStageValueValuesEnum: Optional. The launch stage of the metric
+      definition.
     MetricKindValueValuesEnum: Whether the metric records instantaneous
       values, changes to a value, etc. Some combinations of `metric_kind` and
       `value_type` might not be supported.
@@ -1183,11 +1208,17 @@ class MetricDescriptor(_messages.Message):
       `appengine.googleapis.com/http/server/response_latencies` metric type
       has a label for the HTTP response code, `response_code`, so you can look
       at latencies for successful responses or just for responses that failed.
+    launchStage: Optional. The launch stage of the metric definition.
     metadata: Optional. Metadata which can be used to guide usage of the
       metric.
     metricKind: Whether the metric records instantaneous values, changes to a
       value, etc. Some combinations of `metric_kind` and `value_type` might
       not be supported.
+    monitoredResourceTypes: Read-only. If present, then a time series, which
+      is identified partially by a metric type and a
+      MonitoredResourceDescriptor, that is associated with this metric type
+      can only be associated with one of the monitored resource types listed
+      here.
     name: The resource name of the metric descriptor.
     type: The metric type, including its DNS name prefix. The type is not URL-
       encoded.  All user-defined metric types have the DNS name
@@ -1196,36 +1227,79 @@ class MetricDescriptor(_messages.Message):
       "custom.googleapis.com/invoice/paid/amount"
       "external.googleapis.com/prometheus/up"
       "appengine.googleapis.com/http/server/response_latencies"
-    unit: The unit in which the metric value is reported. It is only
-      applicable if the `value_type` is `INT64`, `DOUBLE`, or `DISTRIBUTION`.
-      The supported units are a subset of [The Unified Code for Units of
-      Measure](http://unitsofmeasure.org/ucum.html) standard:  **Basic units
-      (UNIT)**  * `bit`   bit * `By`    byte * `s`     second * `min`   minute
-      * `h`     hour * `d`     day  **Prefixes (PREFIX)**  * `k`     kilo
-      (10**3) * `M`     mega    (10**6) * `G`     giga    (10**9) * `T`
-      tera    (10**12) * `P`     peta    (10**15) * `E`     exa     (10**18) *
-      `Z`     zetta   (10**21) * `Y`     yotta   (10**24) * `m`     milli
-      (10**-3) * `u`     micro   (10**-6) * `n`     nano    (10**-9) * `p`
-      pico    (10**-12) * `f`     femto   (10**-15) * `a`     atto
-      (10**-18) * `z`     zepto   (10**-21) * `y`     yocto   (10**-24) * `Ki`
-      kibi    (2**10) * `Mi`    mebi    (2**20) * `Gi`    gibi    (2**30) *
-      `Ti`    tebi    (2**40)  **Grammar**  The grammar also includes these
-      connectors:  * `/`    division (as an infix operator, e.g. `1/s`). * `.`
-      multiplication (as an infix operator, e.g. `GBy.d`)  The grammar for a
-      unit is as follows:      Expression = Component { "." Component } { "/"
-      Component } ;      Component = ( [ PREFIX ] UNIT | "%" ) [ Annotation ]
-      | Annotation               | "1"               ;      Annotation = "{"
-      NAME "}" ;  Notes:  * `Annotation` is just a comment if it follows a
-      `UNIT` and is    equivalent to `1` if it is used alone. For examples,
-      `{requests}/s == 1/s`, `By{transmitted}/s == By/s`. * `NAME` is a
-      sequence of non-blank printable ASCII characters not    containing '{'
-      or '}'. * `1` represents dimensionless value 1, such as in `1/s`. * `%`
-      represents dimensionless value 1/100, and annotates values giving    a
-      percentage.
+    unit: * `Ki`    kibi    (2^10) * `Mi`    mebi    (2^20) * `Gi`    gibi
+      (2^30) * `Ti`    tebi    (2^40) * `Pi`    pebi    (2^50)  **Grammar**
+      The grammar also includes these connectors:  * `/`    division or ratio
+      (as an infix operator). For examples,          `kBy/{email}` or
+      `MiBy/10ms` (although you should almost never          have `/s` in a
+      metric `unit`; rates should always be computed at          query time
+      from the underlying cumulative or delta value). * `.`    multiplication
+      or composition (as an infix operator). For          examples, `GBy.d` or
+      `k{watt}.h`.  The grammar for a unit is as follows:      Expression =
+      Component { "." Component } { "/" Component } ;      Component = ( [
+      PREFIX ] UNIT | "%" ) [ Annotation ]               | Annotation
+      | "1"               ;      Annotation = "{" NAME "}" ;  Notes:  *
+      `Annotation` is just a comment if it follows a `UNIT`. If the annotation
+      is used alone, then the unit is equivalent to `1`. For examples,
+      `{request}/s == 1/s`, `By{transmitted}/s == By/s`. * `NAME` is a
+      sequence of non-blank printable ASCII characters not    containing `{`
+      or `}`. * `1` represents a unitary [dimensionless
+      unit](https://en.wikipedia.org/wiki/Dimensionless_quantity) of 1, such
+      as in `1/s`. It is typically used when none of the basic units are
+      appropriate. For example, "new users per day" can be represented as
+      `1/d` or `{new-users}/d` (and a metric value `5` would mean "5 new
+      users). Alternatively, "thousands of page views per day" would be
+      represented as `1000/d` or `k1/d` or `k{page_views}/d` (and a metric
+      value of `5.3` would mean "5300 page views per day"). * `%` represents
+      dimensionless value of 1/100, and annotates values giving    a
+      percentage (so the metric values are typically in the range of 0..100,
+      and a metric value `3` means "3 percent"). * `10^2.%` indicates a metric
+      contains a ratio, typically in the range    0..1, that will be
+      multiplied by 100 and displayed as a percentage    (so a metric value
+      `0.03` means "3 percent").
     valueType: Whether the measurement is an integer, a floating-point number,
       etc. Some combinations of `metric_kind` and `value_type` might not be
       supported.
   """
+
+  class LaunchStageValueValuesEnum(_messages.Enum):
+    r"""Optional. The launch stage of the metric definition.
+
+    Values:
+      LAUNCH_STAGE_UNSPECIFIED: Do not use this default value.
+      EARLY_ACCESS: Early Access features are limited to a closed group of
+        testers. To use these features, you must sign up in advance and sign a
+        Trusted Tester agreement (which includes confidentiality provisions).
+        These features may be unstable, changed in backward-incompatible ways,
+        and are not guaranteed to be released.
+      ALPHA: Alpha is a limited availability test for releases before they are
+        cleared for widespread use. By Alpha, all significant design issues
+        are resolved and we are in the process of verifying functionality.
+        Alpha customers need to apply for access, agree to applicable terms,
+        and have their projects whitelisted. Alpha releases don't have to be
+        feature complete, no SLAs are provided, and there are no technical
+        support obligations, but they will be far enough along that customers
+        can actually use them in test environments or for limited-use tests --
+        just like they would in normal production cases.
+      BETA: Beta is the point at which we are ready to open a release for any
+        customer to use. There are no SLA or technical support obligations in
+        a Beta release. Products will be complete from a feature perspective,
+        but may have some open outstanding issues. Beta releases are suitable
+        for limited production use cases.
+      GA: GA features are open to all developers and are considered stable and
+        fully qualified for production use.
+      DEPRECATED: Deprecated features are scheduled to be shut down and
+        removed. For more information, see the "Deprecation Policy" section of
+        our [Terms of Service](https://cloud.google.com/terms/) and the
+        [Google Cloud Platform Subject to the Deprecation
+        Policy](https://cloud.google.com/terms/deprecation) documentation.
+    """
+    LAUNCH_STAGE_UNSPECIFIED = 0
+    EARLY_ACCESS = 1
+    ALPHA = 2
+    BETA = 3
+    GA = 4
+    DEPRECATED = 5
 
   class MetricKindValueValuesEnum(_messages.Enum):
     r"""Whether the metric records instantaneous values, changes to a value,
@@ -1273,25 +1347,29 @@ class MetricDescriptor(_messages.Message):
   description = _messages.StringField(1)
   displayName = _messages.StringField(2)
   labels = _messages.MessageField('LabelDescriptor', 3, repeated=True)
-  metadata = _messages.MessageField('MetricDescriptorMetadata', 4)
-  metricKind = _messages.EnumField('MetricKindValueValuesEnum', 5)
-  name = _messages.StringField(6)
-  type = _messages.StringField(7)
-  unit = _messages.StringField(8)
-  valueType = _messages.EnumField('ValueTypeValueValuesEnum', 9)
+  launchStage = _messages.EnumField('LaunchStageValueValuesEnum', 4)
+  metadata = _messages.MessageField('MetricDescriptorMetadata', 5)
+  metricKind = _messages.EnumField('MetricKindValueValuesEnum', 6)
+  monitoredResourceTypes = _messages.StringField(7, repeated=True)
+  name = _messages.StringField(8)
+  type = _messages.StringField(9)
+  unit = _messages.StringField(10)
+  valueType = _messages.EnumField('ValueTypeValueValuesEnum', 11)
 
 
 class MetricDescriptorMetadata(_messages.Message):
   r"""Additional annotations that can be used to guide the usage of a metric.
 
   Enums:
-    LaunchStageValueValuesEnum: The launch stage of the metric definition.
+    LaunchStageValueValuesEnum: Deprecated. Must use the
+      MetricDescriptor.launch_stage instead.
 
   Fields:
     ingestDelay: The delay of data points caused by ingestion. Data points
       older than this age are guaranteed to be ingested and available to be
       read, excluding data loss due to errors.
-    launchStage: The launch stage of the metric definition.
+    launchStage: Deprecated. Must use the MetricDescriptor.launch_stage
+      instead.
     samplePeriod: The sampling period of metric data points. For metrics which
       are written periodically, consecutive data points are stored at this
       time interval, excluding data loss due to errors. Metrics with a higher
@@ -1299,7 +1377,7 @@ class MetricDescriptorMetadata(_messages.Message):
   """
 
   class LaunchStageValueValuesEnum(_messages.Enum):
-    r"""The launch stage of the metric definition.
+    r"""Deprecated. Must use the MetricDescriptor.launch_stage instead.
 
     Values:
       LAUNCH_STAGE_UNSPECIFIED: Do not use this default value.
@@ -1450,6 +1528,10 @@ class MonitoredResourceDescriptor(_messages.Message):
   different monitored resource types. APIs generally provide a `list` method
   that returns the monitored resource descriptors used by the API.
 
+  Enums:
+    LaunchStageValueValuesEnum: Optional. The launch stage of the monitored
+      resource definition.
+
   Fields:
     description: Optional. A detailed description of the monitored resource
       type that might be used in documentation.
@@ -1461,6 +1543,8 @@ class MonitoredResourceDescriptor(_messages.Message):
       monitored resource type. For example, an individual Google Cloud SQL
       database is identified by values for the labels `"database_id"` and
       `"zone"`.
+    launchStage: Optional. The launch stage of the monitored resource
+      definition.
     name: Optional. The resource name of the monitored resource descriptor:
       `"projects/{project_id}/monitoredResourceDescriptors/{type}"` where
       {type} is the value of the `type` field in this object and {project_id}
@@ -1472,11 +1556,51 @@ class MonitoredResourceDescriptor(_messages.Message):
       maximum length of this value is 256 characters.
   """
 
+  class LaunchStageValueValuesEnum(_messages.Enum):
+    r"""Optional. The launch stage of the monitored resource definition.
+
+    Values:
+      LAUNCH_STAGE_UNSPECIFIED: Do not use this default value.
+      EARLY_ACCESS: Early Access features are limited to a closed group of
+        testers. To use these features, you must sign up in advance and sign a
+        Trusted Tester agreement (which includes confidentiality provisions).
+        These features may be unstable, changed in backward-incompatible ways,
+        and are not guaranteed to be released.
+      ALPHA: Alpha is a limited availability test for releases before they are
+        cleared for widespread use. By Alpha, all significant design issues
+        are resolved and we are in the process of verifying functionality.
+        Alpha customers need to apply for access, agree to applicable terms,
+        and have their projects whitelisted. Alpha releases don't have to be
+        feature complete, no SLAs are provided, and there are no technical
+        support obligations, but they will be far enough along that customers
+        can actually use them in test environments or for limited-use tests --
+        just like they would in normal production cases.
+      BETA: Beta is the point at which we are ready to open a release for any
+        customer to use. There are no SLA or technical support obligations in
+        a Beta release. Products will be complete from a feature perspective,
+        but may have some open outstanding issues. Beta releases are suitable
+        for limited production use cases.
+      GA: GA features are open to all developers and are considered stable and
+        fully qualified for production use.
+      DEPRECATED: Deprecated features are scheduled to be shut down and
+        removed. For more information, see the "Deprecation Policy" section of
+        our [Terms of Service](https://cloud.google.com/terms/) and the
+        [Google Cloud Platform Subject to the Deprecation
+        Policy](https://cloud.google.com/terms/deprecation) documentation.
+    """
+    LAUNCH_STAGE_UNSPECIFIED = 0
+    EARLY_ACCESS = 1
+    ALPHA = 2
+    BETA = 3
+    GA = 4
+    DEPRECATED = 5
+
   description = _messages.StringField(1)
   displayName = _messages.StringField(2)
   labels = _messages.MessageField('LabelDescriptor', 3, repeated=True)
-  name = _messages.StringField(4)
-  type = _messages.StringField(5)
+  launchStage = _messages.EnumField('LaunchStageValueValuesEnum', 4)
+  name = _messages.StringField(5)
+  type = _messages.StringField(6)
 
 
 class Monitoring(_messages.Message):
@@ -1593,7 +1717,8 @@ class Operation(_messages.Message):
       if any.
     name: The server-assigned name, which is only unique within the same
       service that originally returns it. If you use the default HTTP mapping,
-      the `name` should have the format of `operations/some/unique/name`.
+      the `name` should be a resource name ending with
+      `operations/{unique_id}`.
     response: The normal response of the operation in case of success.  If the
       original method returns no data on success, such as `Delete`, the
       response is `google.protobuf.Empty`.  If the original method is standard
@@ -1751,12 +1876,12 @@ class Page(_messages.Message):
 
 class Quota(_messages.Message):
   r"""Quota configuration helps to achieve fairness and budgeting in service
-  usage.  The quota configuration works this way: - The service configuration
-  defines a set of metrics. - For API calls, the quota.metric_rules maps
-  methods to metrics with   corresponding costs. - The quota.limits defines
-  limits on the metrics, which will be used for   quota checks at runtime.  An
-  example quota configuration in yaml format:     quota:      limits:       -
-  name: apiWriteQpsPerProject        metric:
+  usage.  The metric based quota configuration works this way: - The service
+  configuration defines a set of metrics. - For API calls, the
+  quota.metric_rules maps methods to metrics with   corresponding costs. - The
+  quota.limits defines limits on the metrics, which will be used for   quota
+  checks at runtime.  An example quota configuration in yaml format:
+  quota:      limits:       - name: apiWriteQpsPerProject        metric:
   library.googleapis.com/write_calls        unit: "1/min/{project}"  # rate
   limit for consumer projects        values:          STANDARD: 10000        #
   The metric rules bind all methods to the read_calls metric,      # except
@@ -1810,11 +1935,8 @@ class QuotaLimit(_messages.Message):
       set, the UI will provide a default display name based on the quota
       configuration. This field can be used to override the default display
       name generated from the configuration.
-    duration: Duration of this limit in textual notation. Example: "100s",
-      "24h", "1d". For duration longer than a day, only multiple of days is
-      supported. We support only "100s" and "1d" for now. Additional support
-      will be added in the future. "0" indicates indefinite duration.  Used by
-      group-based quotas only.
+    duration: Duration of this limit in textual notation. Must be "100s" or
+      "1d".  Used by group-based quotas only.
     freeTier: Free tier value displayed in the Developers Console for this
       limit. The free tier is the number of tokens that will be subtracted
       from the billed amount when billing is enabled. This field can only be
@@ -1900,6 +2022,19 @@ class Range(_messages.Message):
   network = _messages.StringField(2)
 
 
+class RangeReservation(_messages.Message):
+  r"""Represents a range reservation.
+
+  Fields:
+    ipPrefixLength: Required. The size of the desired subnet. Use usual CIDR
+      range notation. For example, '30' to find unused x.x.x.x/30 CIDR range.
+      The goal is to determine if one of the allocated ranges has enough free
+      space for a subnet of the requested size.
+  """
+
+  ipPrefixLength = _messages.IntegerField(1, variant=_messages.Variant.INT32)
+
+
 class SearchRangeRequest(_messages.Message):
   r"""Request to search for an unused range within allocated ranges.
 
@@ -1908,11 +2043,10 @@ class SearchRangeRequest(_messages.Message):
       CIDR range notation. For example, '30' to find unused x.x.x.x/30 CIDR
       range. Actual range will be determined using allocated range for the
       consumer peered network and returned in the result.
-    network: Network name in the consumer project.   This network must have
-      been already peered with a shared VPC network using CreateConnection
-      method. Must be in a form
-      'projects/{project}/global/networks/{network}'. {project} is a project
-      number, as in '12345' {network} is network name.
+    network: Network name in the consumer project. This network must have been
+      already peered with a shared VPC network using CreateConnection method.
+      Must be in a form 'projects/{project}/global/networks/{network}'.
+      {project} is a project number, as in '12345' {network} is network name.
   """
 
   ipPrefixLength = _messages.IntegerField(1, variant=_messages.Variant.INT32)
@@ -1959,11 +2093,11 @@ class Service(_messages.Message):
       included.  Enums which are not referenced but shall be included should
       be listed here by name. Example:      enums:     - name:
       google.someapi.v1.SomeEnum
-    experimental: Experimental configuration.
     http: HTTP configuration.
     id: A unique ID for a specific instance of this message, typically
-      assigned by the client for tracking purpose. If empty, the server may
-      choose to generate one instead. Must be no longer than 60 characters.
+      assigned by the client for tracking purpose. Must be no longer than 63
+      characters and only lower case letters, digits, '.', '_' and '-' are
+      allowed. If empty, the server may choose to generate one instead.
     logging: Logging configuration.
     logs: Defines the logs used by this service.
     metrics: Defines the metrics used by this service.
@@ -2005,23 +2139,22 @@ class Service(_messages.Message):
   documentation = _messages.MessageField('Documentation', 9)
   endpoints = _messages.MessageField('Endpoint', 10, repeated=True)
   enums = _messages.MessageField('Enum', 11, repeated=True)
-  experimental = _messages.MessageField('Experimental', 12)
-  http = _messages.MessageField('Http', 13)
-  id = _messages.StringField(14)
-  logging = _messages.MessageField('Logging', 15)
-  logs = _messages.MessageField('LogDescriptor', 16, repeated=True)
-  metrics = _messages.MessageField('MetricDescriptor', 17, repeated=True)
-  monitoredResources = _messages.MessageField('MonitoredResourceDescriptor', 18, repeated=True)
-  monitoring = _messages.MessageField('Monitoring', 19)
-  name = _messages.StringField(20)
-  producerProjectId = _messages.StringField(21)
-  quota = _messages.MessageField('Quota', 22)
-  sourceInfo = _messages.MessageField('SourceInfo', 23)
-  systemParameters = _messages.MessageField('SystemParameters', 24)
-  systemTypes = _messages.MessageField('Type', 25, repeated=True)
-  title = _messages.StringField(26)
-  types = _messages.MessageField('Type', 27, repeated=True)
-  usage = _messages.MessageField('Usage', 28)
+  http = _messages.MessageField('Http', 12)
+  id = _messages.StringField(13)
+  logging = _messages.MessageField('Logging', 14)
+  logs = _messages.MessageField('LogDescriptor', 15, repeated=True)
+  metrics = _messages.MessageField('MetricDescriptor', 16, repeated=True)
+  monitoredResources = _messages.MessageField('MonitoredResourceDescriptor', 17, repeated=True)
+  monitoring = _messages.MessageField('Monitoring', 18)
+  name = _messages.StringField(19)
+  producerProjectId = _messages.StringField(20)
+  quota = _messages.MessageField('Quota', 21)
+  sourceInfo = _messages.MessageField('SourceInfo', 22)
+  systemParameters = _messages.MessageField('SystemParameters', 23)
+  systemTypes = _messages.MessageField('Type', 24, repeated=True)
+  title = _messages.StringField(25)
+  types = _messages.MessageField('Type', 26, repeated=True)
+  usage = _messages.MessageField('Usage', 27)
 
 
 class ServicenetworkingOperationsCancelRequest(_messages.Message):
@@ -2120,8 +2253,8 @@ class ServicenetworkingServicesConnectionsListRequest(_messages.Message):
     parent: The service that is managing peering connectivity for a service
       producer's organization. For Google services that support this
       functionality, this value is
-      `services/servicenetworking.googleapis.com`. If you specify `-` as the
-      parameter value, all configured public peering services are listed.
+      `services/servicenetworking.googleapis.com`. If you specify `services/-`
+      as the parameter value, all configured peering services are listed.
   """
 
   network = _messages.StringField(1)
@@ -2152,6 +2285,38 @@ class ServicenetworkingServicesConnectionsPatchRequest(_messages.Message):
   updateMask = _messages.StringField(4)
 
 
+class ServicenetworkingServicesDisableVpcServiceControlsRequest(_messages.Message):
+  r"""A ServicenetworkingServicesDisableVpcServiceControlsRequest object.
+
+  Fields:
+    disableVpcServiceControlsRequest: A DisableVpcServiceControlsRequest
+      resource to be passed as the request body.
+    parent: The service that is managing peering connectivity for a service
+      producer's organization. For Google services that support this
+      functionality, this value is
+      `services/servicenetworking.googleapis.com`.
+  """
+
+  disableVpcServiceControlsRequest = _messages.MessageField('DisableVpcServiceControlsRequest', 1)
+  parent = _messages.StringField(2, required=True)
+
+
+class ServicenetworkingServicesEnableVpcServiceControlsRequest(_messages.Message):
+  r"""A ServicenetworkingServicesEnableVpcServiceControlsRequest object.
+
+  Fields:
+    enableVpcServiceControlsRequest: A EnableVpcServiceControlsRequest
+      resource to be passed as the request body.
+    parent: The service that is managing peering connectivity for a service
+      producer's organization. For Google services that support this
+      functionality, this value is
+      `services/servicenetworking.googleapis.com`.
+  """
+
+  enableVpcServiceControlsRequest = _messages.MessageField('EnableVpcServiceControlsRequest', 1)
+  parent = _messages.StringField(2, required=True)
+
+
 class ServicenetworkingServicesSearchRangeRequest(_messages.Message):
   r"""A ServicenetworkingServicesSearchRangeRequest object.
 
@@ -2165,6 +2330,21 @@ class ServicenetworkingServicesSearchRangeRequest(_messages.Message):
 
   parent = _messages.StringField(1, required=True)
   searchRangeRequest = _messages.MessageField('SearchRangeRequest', 2)
+
+
+class ServicenetworkingServicesValidateRequest(_messages.Message):
+  r"""A ServicenetworkingServicesValidateRequest object.
+
+  Fields:
+    parent: Required. This is in a form services/{service} where {service} is
+      the name of the private access management service. For example 'service-
+      peering.example.com'.
+    validateConsumerConfigRequest: A ValidateConsumerConfigRequest resource to
+      be passed as the request body.
+  """
+
+  parent = _messages.StringField(1, required=True)
+  validateConsumerConfigRequest = _messages.MessageField('ValidateConsumerConfigRequest', 2)
 
 
 class SourceContext(_messages.Message):
@@ -2285,37 +2465,10 @@ class StandardQueryParameters(_messages.Message):
 class Status(_messages.Message):
   r"""The `Status` type defines a logical error model that is suitable for
   different programming environments, including REST APIs and RPC APIs. It is
-  used by [gRPC](https://github.com/grpc). The error model is designed to be:
-  - Simple to use and understand for most users - Flexible enough to meet
-  unexpected needs  # Overview  The `Status` message contains three pieces of
-  data: error code, error message, and error details. The error code should be
-  an enum value of google.rpc.Code, but it may accept additional error codes
-  if needed.  The error message should be a developer-facing English message
-  that helps developers *understand* and *resolve* the error. If a localized
-  user-facing error message is needed, put the localized message in the error
-  details or localize it in the client. The optional error details may contain
-  arbitrary information about the error. There is a predefined set of error
-  detail types in the package `google.rpc` that can be used for common error
-  conditions.  # Language mapping  The `Status` message is the logical
-  representation of the error model, but it is not necessarily the actual wire
-  format. When the `Status` message is exposed in different client libraries
-  and different wire protocols, it can be mapped differently. For example, it
-  will likely be mapped to some exceptions in Java, but more likely mapped to
-  some error codes in C.  # Other uses  The error model and the `Status`
-  message can be used in a variety of environments, either with or without
-  APIs, to provide a consistent developer experience across different
-  environments.  Example uses of this error model include:  - Partial errors.
-  If a service needs to return partial errors to the client,     it may embed
-  the `Status` in the normal response to indicate the partial     errors.  -
-  Workflow errors. A typical workflow has multiple steps. Each step may
-  have a `Status` message for error reporting.  - Batch operations. If a
-  client uses batch request and batch response, the     `Status` message
-  should be used directly inside batch response, one for     each error sub-
-  response.  - Asynchronous operations. If an API call embeds asynchronous
-  operation     results in its response, the status of those operations should
-  be     represented directly using the `Status` message.  - Logging. If some
-  API errors are stored in logs, the message `Status` could     be used
-  directly after any stripping needed for security/privacy reasons.
+  used by [gRPC](https://github.com/grpc). Each `Status` message contains
+  three pieces of data: error code, error message, and error details.  You can
+  find out more about this error model and how to work with it in the [API
+  Design Guide](https://cloud.google.com/apis/design/errors).
 
   Messages:
     DetailsValueListEntry: A DetailsValueListEntry object.
@@ -2527,6 +2680,88 @@ class UsageRule(_messages.Message):
   allowUnregisteredCalls = _messages.BooleanField(1)
   selector = _messages.StringField(2)
   skipServiceControl = _messages.BooleanField(3)
+
+
+class ValidateConsumerConfigRequest(_messages.Message):
+  r"""A ValidateConsumerConfigRequest object.
+
+  Fields:
+    consumerNetwork: Required. The network that the consumer is using to
+      connect with services. Must be in the form of
+      projects/{project}/global/networks/{network} {project} is a project
+      number, as in '12345' {network} is network name.
+    consumerProject: NETWORK_NOT_IN_CONSUMERS_PROJECT,
+      NETWORK_NOT_IN_CONSUMERS_HOST_PROJECT, and HOST_PROJECT_NOT_FOUND are
+      done when consumer_project is provided.
+    rangeReservation: RANGES_EXHAUSTED, RANGES_EXHAUSTED, and
+      RANGES_DELETED_LATER are done when range_reservation is provided.
+    validateNetwork: The validations will be performed in the order listed in
+      the ValidationError enum. The first failure will return. If a validation
+      is not requested, then the next one will be performed.
+      SERVICE_NETWORKING_NOT_ENABLED and NETWORK_NOT_PEERED checks are
+      performed for all requests where validation is requested.
+      NETWORK_NOT_FOUND and NETWORK_DISCONNECTED checks are done for requests
+      that have validate_network set to true.
+  """
+
+  consumerNetwork = _messages.StringField(1)
+  consumerProject = _messages.MessageField('ConsumerProject', 2)
+  rangeReservation = _messages.MessageField('RangeReservation', 3)
+  validateNetwork = _messages.BooleanField(4)
+
+
+class ValidateConsumerConfigResponse(_messages.Message):
+  r"""A ValidateConsumerConfigResponse object.
+
+  Enums:
+    ValidationErrorValueValuesEnum:
+
+  Fields:
+    isValid: A boolean attribute.
+    validationError: A ValidationErrorValueValuesEnum attribute.
+  """
+
+  class ValidationErrorValueValuesEnum(_messages.Enum):
+    r"""ValidationErrorValueValuesEnum enum type.
+
+    Values:
+      VALIDATION_ERROR_UNSPECIFIED: <no description>
+      VALIDATION_NOT_REQUESTED: In case none of the validations are requested.
+      SERVICE_NETWORKING_NOT_ENABLED: <no description>
+      NETWORK_NOT_FOUND: The network provided by the consumer does not exist.
+      NETWORK_NOT_PEERED: The network has not been peered with the producer
+        org.
+      NETWORK_PEERING_DELETED: The peering was created and later deleted.
+      NETWORK_NOT_IN_CONSUMERS_PROJECT: The network is a regular VPC but the
+        network is not in the consumer's project.
+      NETWORK_NOT_IN_CONSUMERS_HOST_PROJECT: The consumer project is a service
+        project, and network is a shared VPC, but the network is not in the
+        host project of this consumer project.
+      HOST_PROJECT_NOT_FOUND: The host project associated with the consumer
+        project was not found.
+      CONSUMER_PROJECT_NOT_SERVICE_PROJECT: The consumer project is not a
+        service project for the specified host project.
+      RANGES_EXHAUSTED: The reserved IP ranges do not have enough space to
+        create a subnet of desired size.
+      RANGES_NOT_RESERVED: The IP ranges were not reserved.
+      RANGES_DELETED_LATER: The IP ranges were reserved but deleted later.
+    """
+    VALIDATION_ERROR_UNSPECIFIED = 0
+    VALIDATION_NOT_REQUESTED = 1
+    SERVICE_NETWORKING_NOT_ENABLED = 2
+    NETWORK_NOT_FOUND = 3
+    NETWORK_NOT_PEERED = 4
+    NETWORK_PEERING_DELETED = 5
+    NETWORK_NOT_IN_CONSUMERS_PROJECT = 6
+    NETWORK_NOT_IN_CONSUMERS_HOST_PROJECT = 7
+    HOST_PROJECT_NOT_FOUND = 8
+    CONSUMER_PROJECT_NOT_SERVICE_PROJECT = 9
+    RANGES_EXHAUSTED = 10
+    RANGES_NOT_RESERVED = 11
+    RANGES_DELETED_LATER = 12
+
+  isValid = _messages.BooleanField(1)
+  validationError = _messages.EnumField('ValidationErrorValueValuesEnum', 2)
 
 
 encoding.AddCustomJsonFieldMapping(

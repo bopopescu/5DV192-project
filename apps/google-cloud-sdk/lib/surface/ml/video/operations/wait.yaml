@@ -6,9 +6,13 @@
       Poll a long-running video analysis operation until it completes. When
       the operation is complete, this command will display the results of the
       analysis.
+    examples: |
+      To poll a long-running video analysis operation named 'projects/my-project/locations/us-east1/operations/123' until it completes, run the following:
+
+        $ {command} projects/my-project/locations/us-east1/operations/123
 
   request:
-    collection: videointelligence.operations
+    collection: videointelligence.projects.locations.operations
     api_version: v1
 
   arguments:
@@ -17,9 +21,7 @@
       spec: !REF googlecloudsdk.command_lib.ml.video.resources:operation
 
   async:
-    collection: videointelligence.operations
-    operation_get_method_params:
-      name: operationsId
+    collection: videointelligence.projects.locations.operations
     result_attribute: response
 
   output:

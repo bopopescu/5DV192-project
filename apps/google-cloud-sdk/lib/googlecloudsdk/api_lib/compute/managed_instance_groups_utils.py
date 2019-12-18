@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ from apitools.base.py import list_pager
 from googlecloudsdk.api_lib.compute import exceptions
 from googlecloudsdk.api_lib.compute import lister
 from googlecloudsdk.api_lib.compute import path_simplifier
+from googlecloudsdk.api_lib.compute import request_helper
 from googlecloudsdk.api_lib.compute import utils
 from googlecloudsdk.calliope import arg_parsers
 from googlecloudsdk.calliope import base
@@ -80,6 +81,10 @@ class ResourceNotFoundException(Error):
   """The user tries to get/use/update resource which does not exist."""
 
 
+class InvalidArgumentError(exceptions.Error):
+  """The user provides invalid arguments."""
+
+
 class ResourceAlreadyExistsException(Error):
   """The user tries to create resource which already exists."""
 
@@ -94,7 +99,7 @@ def ArgsSupportQueueScaling(args):
 
 def AddAutoscalerArgs(
     parser, queue_scaling_enabled=False, autoscaling_file_enabled=False,
-    stackdriver_metrics_flags=False, mode_enabled=False):
+    stackdriver_metrics_flags=False, mode_enabled=False, scale_down=False):
   """Adds commandline arguments to parser."""
   parser.add_argument(
       '--cool-down-period',
@@ -252,6 +257,9 @@ Mutually exclusive with `--update-stackdriver-metric`.
   if mode_enabled:
     GetModeFlag().AddToParser(parser)
 
+  if scale_down:
+    AddScaleDownControlFlag(parser)
+
 
 def GetModeFlag():
   # Can't use a ChoiceEnumMapper because we don't have access to the "messages"
@@ -262,19 +270,53 @@ def GetModeFlag():
           'on': ('to permit autoscaling to scale up and down (default for '
                  'new autoscalers).'),
           'only-up': 'to permit autoscaling to scale only up and not down.',
-          'only-down': 'to permit autoscaling to scale only down and not up.',
           'off': ('to turn off autoscaling, while keeping the new '
                   'configuration.')
       },
       help_str="""\
           Set the mode of an autoscaler for a managed instance group.
 
-          You can turn off or restrict MIG activities without changing MIG
-          configuration and then having to restore it later. MIG configuration
-          persists while the activities are turned off or restricted, and the
-          activities pick it up when they are turned on again or when the
-          restrictions are lifted.
+          You can turn off or restrict MIG autoscaler activities (scaling up,
+          scaling down) without changing autoscaler configuration and then
+          having to restore it later. Autoscaler configuration persists while
+          the activities are turned off or restricted, and the activities pick
+          it up when they are turned on again or when the restrictions are
+          lifted.
       """)
+
+
+def AddScaleDownControlFlag(parser):
+  parser.add_argument(
+      '--scale-down-control',
+      type=arg_parsers.ArgDict(
+          spec={
+              'max-scaled-down-replicas': str,
+              'max-scaled-down-replicas-percent': str,
+              'time-window': int,
+          },
+      ),
+      help="""\
+        Configuration that allows slower scale down so that even if Autoscaler
+        recommends an abrupt scale down of a managed instance group, it will be
+        throttled as specified by the parameters.
+
+        *max-scaled-down-replicas*::: Maximum allowed number of VMs that can be
+        deducted from the peak recommendation during the window. Possibly all
+        these VMs can be deleted at once so user service needs to be prepared
+        to lose that many VMs in one step. Mutually exclusive with
+        'max-scaled-down-replicas-percent'.
+
+        *max-scaled-down-replicas-percent*::: Maximum allowed percent of VMs
+        that can be deducted from the peak recommendation during the window.
+        Possibly all these VMs can be deleted at once so user service needs
+        to be prepared to lose that many VMs in one step. Mutually exclusive
+        with  'max-scaled-down-replicas'.
+
+        *time-window*::: How long back autoscaling should look when computing
+        recommendations to include directives regarding slower scale down.
+        Measured in seconds.
+        """
+  )
 
 
 def _ValidateCloudPubSubResource(pubsub_spec_dict, expected_resource_type):
@@ -339,7 +381,7 @@ def _ValidateRemoveStackdriverMetricVsUpdateStackdriverMetric(args):
         '[--update-stackdriver-metric] flag.')
 
 
-def _ValidateRequiringUpdateStackdriverMetric(args):
+def _ValidateRequiringUpdateStackdriverMetric(args):  # pylint:disable=missing-docstring
   if not args.IsSpecified('update_stackdriver_metric'):
     requiring_flags = [
         'stackdriver_metric_filter',
@@ -354,7 +396,7 @@ def _ValidateRequiringUpdateStackdriverMetric(args):
             '[--update-stackdriver-metric] required to use this flag.')
 
 
-def _ValidateRequiredByUpdateStackdriverMetric(args):
+def _ValidateRequiredByUpdateStackdriverMetric(args):  # pylint:disable=missing-docstring
   if args.IsSpecified('update_stackdriver_metric'):
     one_of_required = [
         'stackdriver_metric_single_instance_assignment',
@@ -368,7 +410,7 @@ def _ValidateRequiredByUpdateStackdriverMetric(args):
           '--update-stackdriver-metric', msg)
 
 
-def _ValidateSingleInstanceAssignmentVsUtilizationTarget(args):
+def _ValidateSingleInstanceAssignmentVsUtilizationTarget(args):  # pylint:disable=missing-docstring
   if args.IsSpecified('stackdriver_metric_single_instance_assignment'):
     potential_conflicting = [
         'stackdriver_metric_utilization_target',
@@ -868,7 +910,51 @@ def _BuildMode(args, messages, original):
   return ParseModeString(args.mode, messages)
 
 
-def _BuildAutoscalerPolicy(args, messages, original, mode_enabled=False):
+def BuildScaleDown(args, messages):
+  """Builds AutoscalingPolicyScaleDownControl.
+
+  Args:
+    args: command line arguments.
+    messages: module containing message classes.
+  Returns:
+    AutoscalingPolicyScaleDownControl message object.
+
+  if args.IsSpecified('scale_down_control'):
+    replicas_arg = args.scale_down_control.get('max-scaled-down-replicas')
+
+    if replicas_arg.endswith('%'):
+      max_replicas = messages.FixedOrPercent(
+          percent=int(replicas_arg[:-1]))
+    else:
+      max_replicas = messages.FixedOrPercent(fixed=int(replicas_arg))
+
+    return messages.AutoscalingPolicyScaleDownControl(
+        maxScaledDownReplicas=max_replicas,
+        timeWindowSec=args.scale_down_control.get('time-window'))
+  Raises:
+    InvalidArgumentError:  if both max-scaled-down-replicas and
+      max-scaled-down-replicas-percent are specified.
+  """
+  if args.IsSpecified('scale_down_control'):
+    replicas_arg = args.scale_down_control.get('max-scaled-down-replicas')
+    replicas_arg_percent = args.scale_down_control.get(
+        'max-scaled-down-replicas-percent')
+    if replicas_arg and replicas_arg_percent:
+      raise InvalidArgumentError(
+          'max-scaled-down-replicas and max-scaled-down-replicas-percent'
+          'are mutually exclusive, you can\'t specify both')
+    elif replicas_arg_percent:
+      max_replicas = messages.FixedOrPercent(percent=int(replicas_arg_percent))
+    else:
+      max_replicas = messages.FixedOrPercent(fixed=int(replicas_arg))
+
+    return messages.AutoscalingPolicyScaleDownControl(
+        maxScaledDownReplicas=max_replicas,
+        timeWindowSec=args.scale_down_control.get('time-window'))
+
+
+def _BuildAutoscalerPolicy(args, messages, original, mode_enabled=False,
+                           scale_down=False):
   """Builds AutoscalingPolicy from args.
 
   Args:
@@ -877,6 +963,8 @@ def _BuildAutoscalerPolicy(args, messages, original, mode_enabled=False):
     original: original autoscaler message.
     mode_enabled: bool, whether to include the 'autoscalingPolicy.mode' field in
       the message.
+    scale_down: bool, whether to include the
+    'autoscalingPolicy.scaleDownControl' field in the message
   Returns:
     AutoscalingPolicy message object.
   """
@@ -893,6 +981,9 @@ def _BuildAutoscalerPolicy(args, messages, original, mode_enabled=False):
   }
   if mode_enabled:
     policy_dict['mode'] = _BuildMode(args, messages, original)
+  if scale_down:
+    policy_dict['scaleDownControl'] = BuildScaleDown(args, messages)
+
   return messages.AutoscalingPolicy(
       **dict((key, value) for key, value in six.iteritems(policy_dict)
              if value is not None))  # Filter out None values.
@@ -924,11 +1015,12 @@ def AdjustAutoscalerNameForCreation(autoscaler_resource, igm_ref):
 
 
 def BuildAutoscaler(args, messages, igm_ref, name, original,
-                    mode_enabled=False):
+                    mode_enabled=False, scale_down=False):
   """Builds autoscaler message protocol buffer."""
   autoscaler = messages.Autoscaler(
       autoscalingPolicy=_BuildAutoscalerPolicy(args, messages, original,
-                                               mode_enabled=mode_enabled),
+                                               mode_enabled=mode_enabled,
+                                               scale_down=scale_down),
       description=args.description,
       name=name,
       target=igm_ref.SelfLink(),
@@ -989,18 +1081,18 @@ def _GetInstanceTemplatesSet(*versions_lists):
   return versions_set
 
 
-def ValidateVersions(igm_info, new_versions, force=False):
+def ValidateVersions(igm_info, new_versions, resources, force=False):
   """Validates whether versions provided by user are consistent.
 
   Args:
     igm_info: instance group manager resource.
     new_versions: list of new versions.
     force: if true, we allow any combination of instance templates, as long as
-    they are different. If false, only the following transitions are allowed:
-    X -> Y, X -> (X, Y), (X, Y) -> X, (X, Y) -> Y, (X, Y) -> (X, Y)
+    they are different. If false, only the following transitions are allowed: X
+      -> Y, X -> (X, Y), (X, Y) -> X, (X, Y) -> Y, (X, Y) -> (X, Y)
   """
-  if (len(new_versions) == 2
-      and new_versions[0].instanceTemplate == new_versions[1].instanceTemplate):
+  if (len(new_versions) == 2 and
+      new_versions[0].instanceTemplate == new_versions[1].instanceTemplate):
     raise calliope_exceptions.ToolException(
         'Provided instance templates must be different.')
   if force:
@@ -1010,15 +1102,24 @@ def ValidateVersions(igm_info, new_versions, force=False):
   # are allowed in gcloud (unless --force)
   # Equivalently, at most two versions in old and new versions set union
   if igm_info.versions:
-    igm_templates = [version.instanceTemplate for version in igm_info.versions]
+    igm_templates = [
+        resources.ParseURL(version.instanceTemplate).RelativeName()
+        for version in igm_info.versions
+    ]
   elif igm_info.instanceTemplate:
-    igm_templates = [igm_info.instanceTemplate]
+    igm_templates = [
+        resources.ParseURL(igm_info.instanceTemplate).RelativeName()
+    ]
   else:
     raise calliope_exceptions.ToolException(
         'Either versions or instance template must be specified for '
         'managed instance group.')
 
-  new_templates = [version.instanceTemplate for version in new_versions]
+  new_templates = [
+      resources.ParseURL(version.instanceTemplate).RelativeName()
+      for version in new_versions
+  ]
+
   version_count = len(_GetInstanceTemplatesSet(igm_templates, new_templates))
   if version_count > 2:
     raise calliope_exceptions.ToolException(
@@ -1205,3 +1306,80 @@ def ApplyInstanceRedistributionTypeToUpdatePolicy(
         InstanceRedistributionTypeValueValuesEnum)(
             instance_redistribution_type)
   return update_policy
+
+
+def ListPerInstanceConfigs(client, igm_ref):
+  """Lists per-instance-configs for a given IGM."""
+  if not hasattr(client.messages,
+                 'ComputeInstanceGroupManagersListPerInstanceConfigsRequest'):
+    return []
+  if igm_ref.Collection() == 'compute.instanceGroupManagers':
+    service = client.apitools_client.instanceGroupManagers
+    request = (client.messages
+               .ComputeInstanceGroupManagersListPerInstanceConfigsRequest)(
+                   instanceGroupManager=igm_ref.Name(),
+                   project=igm_ref.project,
+                   zone=igm_ref.zone,
+               )
+  elif igm_ref.Collection() == 'compute.regionInstanceGroupManagers':
+    service = client.apitools_client.regionInstanceGroupManagers
+    request = (client.messages.
+               ComputeRegionInstanceGroupManagersListPerInstanceConfigsRequest)(
+                   instanceGroupManager=igm_ref.Name(),
+                   project=igm_ref.project,
+                   region=igm_ref.region,
+               )
+  else:
+    raise ValueError('Unknown reference type {0}'.format(igm_ref.Collection()))
+
+  errors = []
+  results = list(
+      request_helper.MakeRequests(
+          requests=[(service, 'ListPerInstanceConfigs', request)],
+          http=client.apitools_client.http,
+          batch_url=client.batch_url,
+          errors=errors))
+
+  if not results:
+    return []
+  return results[0].items
+
+
+def IsStateful(client, igm_info, igm_ref):
+  """For a given IGM, returns if it is stateful."""
+  # TODO(b/129752312): use igm.is_stateful field when launched
+  pics = ListPerInstanceConfigs(client, igm_ref)
+  has_policy = (
+      hasattr(igm_info, 'statefulPolicy') and
+      igm_info.statefulPolicy is not None)
+
+  return has_policy or pics
+
+
+def ValidateIgmReadyForStatefulness(igm_resource, client):
+  """Throws exception if IGM is in state not ready for adding statefulness."""
+  if not igm_resource.updatePolicy:
+    return
+
+  client_update_policy = client.messages.InstanceGroupManagerUpdatePolicy
+  type_is_proactive = (
+      igm_resource.updatePolicy.type == (
+          client_update_policy.TypeValueValuesEnum.PROACTIVE))
+  replacement_method_is_substitute = (
+      igm_resource.updatePolicy.replacementMethod == (
+          client_update_policy.ReplacementMethodValueValuesEnum.SUBSTITUTE))
+  instance_redistribution_type_is_proactive = (
+      igm_resource.updatePolicy.instanceRedistributionType == (
+          client_update_policy.InstanceRedistributionTypeValueValuesEnum
+          .PROACTIVE))
+
+  if type_is_proactive and replacement_method_is_substitute:
+    raise exceptions.Error(
+        'Stateful IGMs cannot use SUBSTITUTE replacement method. '
+        'Try `gcloud alpha compute instance-groups managed '
+        'rolling-update stop-proactive-update')
+  if instance_redistribution_type_is_proactive:
+    raise exceptions.Error(
+        'Stateful regional IGMs cannot use proactive instance redistribution. '
+        'Try `gcloud alpha compute instance-groups managed '
+        'update --instance-redistribution-type=NONE')

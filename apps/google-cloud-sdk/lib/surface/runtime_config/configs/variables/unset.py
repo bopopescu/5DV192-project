@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2016 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -37,15 +37,15 @@ class Unset(base.DeleteCommand):
       'EXAMPLES': """\
           To delete a variable named "my-var", run:
 
-            $ {command} --config-name my-config my-var
+            $ {command} --config-name=my-config my-var
 
           To delete a variable, but fail if it does not exist, run:
 
-            $ {command} --config-name my-config my-var --fail-if-absent
+            $ {command} --config-name=my-config my-var --fail-if-absent
 
           To recursively delete a parent variable and its children, run:
 
-            $ {command} --config-name my-config my-parent-var --recursive
+            $ {command} --config-name=my-config my-parent-var --recursive
           """,
   }
 

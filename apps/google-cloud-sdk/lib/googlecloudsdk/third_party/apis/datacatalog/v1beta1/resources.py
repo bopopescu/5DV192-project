@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,6 +24,20 @@ DOCS_URL = 'https://cloud.google.com/data-catalog/docs/'
 class Collections(enum.Enum):
   """Collections for all supported apis."""
 
+  CATALOG = (
+      'catalog',
+      'catalog',
+      {},
+      [],
+      True
+  )
+  ENTRIES = (
+      'entries',
+      'entries',
+      {},
+      [],
+      True
+  )
   PROJECTS = (
       'projects',
       'projects/{projectsId}',
@@ -31,12 +45,80 @@ class Collections(enum.Enum):
       [u'projectsId'],
       True
   )
-  PROJECTS_TAGTEMPLATES = (
-      'projects.tagTemplates',
+  PROJECTS_LOCATIONS = (
+      'projects.locations',
+      'projects/{projectsId}/locations/{locationsId}',
+      {},
+      [u'projectsId', u'locationsId'],
+      True
+  )
+  PROJECTS_LOCATIONS_ENTRYGROUPS = (
+      'projects.locations.entryGroups',
       '{+name}',
       {
           '':
-              'projects/{projectsId}/tagTemplates/{tagTemplatesId}',
+              'projects/{projectsId}/locations/{locationsId}/entryGroups/'
+              '{entryGroupsId}',
+      },
+      [u'name'],
+      True
+  )
+  PROJECTS_LOCATIONS_ENTRYGROUPS_ENTRIES = (
+      'projects.locations.entryGroups.entries',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/entryGroups/'
+              '{entryGroupsId}/entries/{entriesId}',
+      },
+      [u'name'],
+      True
+  )
+  PROJECTS_LOCATIONS_ENTRYGROUPS_ENTRIES_TAGS = (
+      'projects.locations.entryGroups.entries.tags',
+      'projects/{projectsId}/locations/{locationsId}/entryGroups/'
+      '{entryGroupsId}/entries/{entriesId}/tags/{tagsId}',
+      {},
+      [u'projectsId', u'locationsId', u'entryGroupsId', u'entriesId', u'tagsId'],
+      True
+  )
+  PROJECTS_LOCATIONS_TAGTEMPLATES = (
+      'projects.locations.tagTemplates',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/tagTemplates/'
+              '{tagTemplatesId}',
+      },
+      [u'name'],
+      True
+  )
+  PROJECTS_LOCATIONS_TAGTEMPLATES_FIELDS = (
+      'projects.locations.tagTemplates.fields',
+      'projects/{projectsId}/locations/{locationsId}/tagTemplates/'
+      '{tagTemplatesId}/fields/{fieldsId}',
+      {},
+      [u'projectsId', u'locationsId', u'tagTemplatesId', u'fieldsId'],
+      True
+  )
+  PROJECTS_LOCATIONS_TAXONOMIES = (
+      'projects.locations.taxonomies',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/taxonomies/'
+              '{taxonomiesId}',
+      },
+      [u'name'],
+      True
+  )
+  PROJECTS_LOCATIONS_TAXONOMIES_POLICYTAGS = (
+      'projects.locations.taxonomies.policyTags',
+      '{+name}',
+      {
+          '':
+              'projects/{projectsId}/locations/{locationsId}/taxonomies/'
+              '{taxonomiesId}/policyTags/{policyTagsId}',
       },
       [u'name'],
       True

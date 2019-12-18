@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,14 +34,14 @@ class EnvInit(base.Command):
   """
 
   detailed_help = {
-      'EXAMPLES': """\
-          To print the env variables exports for a pubsub emulator, run:
+      'EXAMPLES': """
+To print the env variables exports for a pubsub emulator, run:
 
-            $ {command} --data-dir DATA-DIR
+  $ {command} --data-dir=DATA-DIR
 
-          For a detailed walkthrough of setting Pub/Sub emulator environment
-          variables, see https://cloud.google.com/pubsub/docs/emulator#env.
-          """,
+For a detailed walkthrough of setting Pub/Sub emulator environment
+variables, see https://cloud.google.com/pubsub/docs/emulator#env.
+""",
   }
 
   @staticmethod

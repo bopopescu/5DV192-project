@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,7 +27,17 @@ from googlecloudsdk.command_lib.compute.sole_tenancy.node_groups import flags
 
 
 class ListNodes(base.ListCommand):
-  """List Google Compute Engine sole-tenant nodes present in a node group."""
+  """List Compute Engine sole-tenant nodes present in a node group."""
+
+  detailed_help = {
+      'brief': 'List Compute Engine sole-tenant nodes present in a node'
+               'group.',
+      'EXAMPLES': """
+         To list sole-tenant nodes present in a node group, run:
+
+           $ {command} my-node-group
+       """
+  }
 
   @staticmethod
   def _Flags(parser):

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,6 +28,15 @@ from googlecloudsdk.core.console import console_io
 
 class Cancel(base.Command):
   """Cancel a currently-running Cloud Firestore admin operation."""
+
+  detailed_help = {
+      'EXAMPLES':
+          """\
+          To cancel the currently-running `exampleOperationId` operation, run:
+
+            $ {command} exampleOperationId
+      """
+  }
 
   @staticmethod
   def Args(parser):

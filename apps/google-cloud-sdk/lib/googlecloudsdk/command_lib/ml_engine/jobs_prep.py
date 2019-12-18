@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2016 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 The main entry point is UploadPythonPackages, which takes in parameters derived
 from the command line arguments and returns a list of URLs to be given to the
-Cloud ML Engine API. See its docstring for details.
+AI Platform API. See its docstring for details.
 """
 
 from __future__ import absolute_import
@@ -32,7 +32,6 @@ import sys
 import textwrap
 
 from googlecloudsdk.api_lib.storage import storage_util
-from googlecloudsdk.command_lib.ml_engine import flags
 from googlecloudsdk.command_lib.ml_engine import uploads
 from googlecloudsdk.core import exceptions
 from googlecloudsdk.core import execution_utils
@@ -48,11 +47,6 @@ from setuptools import setup
 if __name__ == '__main__':
     setup(name='{package_name}', packages=['{package_name}'])
 """
-
-
-_NO_PACKAGES_ERROR_MSG = (
-    'If `--package-path` is not specified, at least one Python package '
-    'must be specified via `--packages`.')
 
 
 class UploadFailureError(exceptions.Error):
@@ -81,10 +75,10 @@ class SysExecutableMissingError(UploadFailureError):
   """Error indicating that sys.executable was empty."""
 
   def __init__(self):
-    super(SysExecutableMissingError, self).__init__(textwrap.dedent("""\
+    super(SysExecutableMissingError, self).__init__(
+        textwrap.dedent("""\
         No Python executable found on path. A Python executable with setuptools
-        installed on the PYTHONPATH is required for building Cloud ML Engine
-        training jobs.
+        installed on the PYTHONPATH is required for building AI Platform training jobs.
         """))
 
 
@@ -451,7 +445,7 @@ def BuildPackages(package_path, output_dir):
     try:
       return _RunSetupTools(package_root, setup_py_path, output_dir)
     except RuntimeError as err:
-      raise SetuptoolsFailedError(str(err), generated)
+      raise SetuptoolsFailedError(six.text_type(err), generated)
     finally:
       if generated:
         # For some reason, this artifact gets generated in the package root by
@@ -482,11 +476,10 @@ def _UploadFilesByPath(paths, staging_location):
                              staging_location.name)
 
 
-def UploadPythonPackages(packages=(), package_path=None, staging_location=None,
-                         supports_container_training=False):
+def UploadPythonPackages(packages=(), package_path=None, staging_location=None):
   """Uploads Python packages (if necessary), building them as-specified.
 
-  A Cloud ML Engine job needs one or more Python packages to run. These Python
+  An AI Platform job needs one or more Python packages to run. These Python
   packages can be specified in one of three ways:
 
     1. As a path to a local, pre-built Python package file.
@@ -495,15 +488,15 @@ def UploadPythonPackages(packages=(), package_path=None, staging_location=None,
     3. As a local Python source tree (the `--package-path` flag).
 
   In case 1, we upload the local files to Cloud Storage[1] and provide their
-  paths. These can then be given to the Cloud ML Engine API, which can fetch
+  paths. These can then be given to the AI Platform API, which can fetch
   these files.
 
   In case 2, we don't need to do anything. We can just send these paths directly
-  to the Cloud ML Engine API.
+  to the AI Platform API.
 
   In case 3, we perform a build using setuptools[2], and upload the resulting
   artifacts to Cloud Storage[1]. The paths to these artifacts can be given to
-  the Cloud ML Engine API. See the `BuildPackages` method.
+  the AI Platform API. See the `BuildPackages` method.
 
   These methods of specifying Python packages may be combined.
 
@@ -523,9 +516,6 @@ def UploadPythonPackages(packages=(), package_path=None, staging_location=None,
     staging_location: storage_util.ObjectReference. Cloud Storage prefix to
       which archives are uploaded. Not necessary if only remote packages are
       given.
-    supports_container_training: bool, if this release track supports container
-      training. If containiner training is requested then uploads are not
-      required.
 
   Returns:
     list of str. Fully qualified Cloud Storage URLs (`gs://..`) from uploaded
@@ -559,9 +549,6 @@ def UploadPythonPackages(packages=(), package_path=None, staging_location=None,
     # directory to still be around
     remote_paths.extend(_UploadFilesByPath(local_paths, staging_location))
 
-  # For custom container training, uploads are not required.
-  if not remote_paths and not supports_container_training:
-    raise flags.ArgumentError(_NO_PACKAGES_ERROR_MSG)
   return remote_paths
 
 

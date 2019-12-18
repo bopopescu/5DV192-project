@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,18 +21,15 @@ from __future__ import unicode_literals
 from googlecloudsdk.calliope import base
 
 
+@base.Hidden
 class Configurations(base.Group):
   """View and manage your Cloud Run configurations."""
 
   detailed_help = {
       'EXAMPLES': """\
-          To update one or more env vars:
+          To describe the configuration managed by the service foo:
 
-            $ {command} update --update-env-vars KEY1=VALUE1,KEY2=VALUE2
-
-          To remove one or more env vars:
-
-            $ {command} update --remove-env-vars KEY1,KEY2
+            $ {command} describe foo
 
       """,
   }

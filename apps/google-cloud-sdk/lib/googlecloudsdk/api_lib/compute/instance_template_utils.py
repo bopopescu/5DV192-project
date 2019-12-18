@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2016 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,9 +31,16 @@ from googlecloudsdk.core import properties
 EPHEMERAL_ADDRESS = object()
 
 
-def CreateNetworkInterfaceMessage(
-    resources, scope_lister, messages, network, region, subnet, address,
-    alias_ip_ranges_string=None, network_tier=None):
+def CreateNetworkInterfaceMessage(resources,
+                                  scope_lister,
+                                  messages,
+                                  network,
+                                  private_ip,
+                                  region,
+                                  subnet,
+                                  address,
+                                  alias_ip_ranges_string=None,
+                                  network_tier=None):
   """Creates and returns a new NetworkInterface message.
 
   Args:
@@ -41,6 +48,7 @@ def CreateNetworkInterfaceMessage(
     scope_lister: function, provides scopes for prompting subnet region,
     messages: GCE API messages,
     network: network,
+    private_ip: IPv4 internal IP address to assign to the instance.
     region: region for subnetwork,
     subnet: regional subnetwork,
     address: specify static address for instance template
@@ -77,6 +85,9 @@ def CreateNetworkInterfaceMessage(
         params={'project': properties.VALUES.core.project.GetOrFail},
         collection='compute.networks')
     network_interface.network = network_ref.SelfLink()
+
+  if private_ip is not None:
+    network_interface.networkIP = private_ip
 
   if address:
     access_config = messages.AccessConfig(
@@ -125,13 +136,12 @@ def CreateNetworkInterfaceMessages(resources, scope_lister, messages,
 
       network_tier = interface.get('network-tier', None)
 
-      result.append(CreateNetworkInterfaceMessage(
-          resources, scope_lister, messages, interface.get('network', None),
-          region,
-          interface.get('subnet', None),
-          address,
-          interface.get('aliases', None),
-          network_tier))
+      result.append(
+          CreateNetworkInterfaceMessage(
+              resources, scope_lister, messages, interface.get('network', None),
+              interface.get('private-network-ip', None), region,
+              interface.get('subnet', None), address,
+              interface.get('aliases', None), network_tier))
   return result
 
 
@@ -206,7 +216,9 @@ def CreatePersistentCreateDiskMessages(
              * image-project - the project name that has the image,
              * auto-delete - whether disks is deleted when VM is deleted ('yes'
                if True),
-             * device-name - device name on VM.
+             * device-name - device name on VM,
+             * disk-resource-policy - resource policies applied to disk.
+
     support_kms: if KMS is supported
     container_mount_disk: list of disks to be mounted to container, if any.
 
@@ -248,16 +260,22 @@ def CreatePersistentCreateDiskMessages(
     device_name = instance_utils.GetDiskDeviceName(disk, name,
                                                    container_mount_disk)
 
+    init_params = client.messages.AttachedDiskInitializeParams(
+        diskName=name,
+        description=disk.get('description'),
+        sourceImage=image_uri,
+        diskSizeGb=disk_size_gb,
+        diskType=disk.get('type'))
+
+    policies = disk.get('disk-resource-policy')
+    if policies:
+      init_params.resourcePolicies = policies
+
     create_disk = client.messages.AttachedDisk(
         autoDelete=auto_delete,
         boot=False,
         deviceName=device_name,
-        initializeParams=client.messages.AttachedDiskInitializeParams(
-            diskName=name,
-            description=disk.get('description'),
-            sourceImage=image_uri,
-            diskSizeGb=disk_size_gb,
-            diskType=disk.get('type')),
+        initializeParams=init_params,
         mode=mode,
         type=client.messages.AttachedDisk.TypeValueValuesEnum.PERSISTENT,
         diskEncryptionKey=disk_key)

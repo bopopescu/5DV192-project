@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,9 +34,14 @@ def _IsZonalGroup(ref):
 class StopAutoscaling(base.Command):
   """Stop autoscaling a managed instance group.
 
-    *{command}* stops autoscaling a managed instance group. If autoscaling
-  is not enabled for the managed instance group, this command does nothing and
-  will report an error.
+    *{command}* stops autoscaling a managed instance group and deletes the
+  autoscaler configuration. If autoscaling is not enabled for the managed
+  instance group, this command does nothing and will report an error.
+
+  If you need to keep the autoscaler configuration, you can temporarily disable
+  an autoscaler by setting its `mode` to `off` using the ``update-autoscaling''
+  command instead.
+
   """
 
   @staticmethod

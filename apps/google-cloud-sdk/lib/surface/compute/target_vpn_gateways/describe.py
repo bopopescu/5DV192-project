@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@ from googlecloudsdk.command_lib.compute.target_vpn_gateways import flags
 
 
 class Describe(base.DescribeCommand):
-  """Describe a Google Compute Engine target vpn gateway.
+  """Describe a Google Compute Engine Cloud VPN Classic Target VPN Gateway.
 
   *{command}* displays all data associated with a Google Compute
-  Engine target vpn gateway in a project.
+  Engine Cloud VPN Target VPN Gateway in a project.
   """
 
   TARGET_VPN_GATEWAY_ARG = None

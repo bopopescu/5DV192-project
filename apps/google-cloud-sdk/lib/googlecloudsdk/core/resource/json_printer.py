@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -58,16 +58,15 @@ class JsonPrinter(resource_printer_base.ResourcePrinter):
   def __Dump(self, resource):
     data = json.dumps(
         resource,
-        ensure_ascii=True,
+        ensure_ascii=False,
         indent=resource_printer_base.STRUCTURED_INDENTATION,
         separators=(',', ': '),
-        sort_keys=True)  # pytype: disable=wrong-arg-types
-    # ensure_ascii makes the json module always return byte strings. Any
-    # non-ascii characters will be escaped. This is the default behavior, it is
-    # just now explicit. We decode here so we get text strings back, and we can
-    # use the default ascii encoding because we know there is no non-ascii in
-    # there.
-    # TODO(b/73727780): Include actual unicode output in json dumps.
+        sort_keys=True)
+    # In python 3, json.dumps returns a unicode string regardless of the value
+    # for ensure_ascii. In python 2, things are messy. It returns unicode
+    # string when ensure_ascii=False and there are unicode characters in the
+    # result. Otherwise, it will return a python 2 str. Here, we make the
+    # behavior consistent.
     return six.text_type(data)
 
   def _AddRecord(self, record, delimit=True):

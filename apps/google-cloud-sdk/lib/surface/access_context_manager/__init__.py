@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,17 +21,12 @@ from __future__ import unicode_literals
 from googlecloudsdk.calliope import base
 
 
-@base.ReleaseTracks(base.ReleaseTrack.ALPHA)
-class AccessContextManagerAlpha(base.Group):
+@base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA,
+                    base.ReleaseTrack.GA)
+class AccessContextManager(base.Group):
   """Manage Access Context Manager resources.
 
   Policy API for configuring context aware access features and access zones.
   """
 
-
-@base.ReleaseTracks(base.ReleaseTrack.BETA)
-class AccessContextManagerBeta(base.Group):
-  """Manage Access Context Manager resources.
-
-  Policy API for configuring context aware access features and access zones.
-  """
+  category = base.IDENTITY_AND_SECURITY_CATEGORY

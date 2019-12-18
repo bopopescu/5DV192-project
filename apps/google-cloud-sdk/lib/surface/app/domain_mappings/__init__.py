@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ class DomainMappings(base.Group):
 
             $ {command} list
 
-          To create a domain with an automatically managed certiticate, run:
+          To create a domain with an automatically managed certificate, run:
 
             $ {command} create 'example.com' --certificate-management=AUTOMATIC
 

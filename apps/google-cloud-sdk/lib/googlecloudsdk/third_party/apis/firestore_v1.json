@@ -5,7 +5,7 @@
   "name": "firestore",
   "canonicalName": "Firestore",
   "version": "v1",
-  "revision": "20190208",
+  "revision": "20191206",
   "title": "Cloud Firestore API",
   "description": "Accesses the NoSQL document database built for automatic scaling, high performance, and ease of application development.\n",
   "ownerDomain": "google.com",
@@ -188,7 +188,7 @@
       "type": "object",
       "properties": {
         "name": {
-          "description": "The server-assigned name, which is only unique within the same service that\noriginally returns it. If you use the default HTTP mapping, the\n`name` should have the format of `operations\/some\/unique\/name`.",
+          "description": "The server-assigned name, which is only unique within the same service that\noriginally returns it. If you use the default HTTP mapping, the\n`name` should be a resource name ending with `operations\/{unique_id}`.",
           "type": "string"
         },
         "metadata": {
@@ -219,7 +219,7 @@
     },
     "Status": {
       "id": "Status",
-      "description": "The `Status` type defines a logical error model that is suitable for different\nprogramming environments, including REST APIs and RPC APIs. It is used by\n[gRPC](https:\/\/github.com\/grpc). The error model is designed to be:\n\n- Simple to use and understand for most users\n- Flexible enough to meet unexpected needs\n\n# Overview\n\nThe `Status` message contains three pieces of data: error code, error message,\nand error details. The error code should be an enum value of\ngoogle.rpc.Code, but it may accept additional error codes if needed.  The\nerror message should be a developer-facing English message that helps\ndevelopers *understand* and *resolve* the error. If a localized user-facing\nerror message is needed, put the localized message in the error details or\nlocalize it in the client. The optional error details may contain arbitrary\ninformation about the error. There is a predefined set of error detail types\nin the package `google.rpc` that can be used for common error conditions.\n\n# Language mapping\n\nThe `Status` message is the logical representation of the error model, but it\nis not necessarily the actual wire format. When the `Status` message is\nexposed in different client libraries and different wire protocols, it can be\nmapped differently. For example, it will likely be mapped to some exceptions\nin Java, but more likely mapped to some error codes in C.\n\n# Other uses\n\nThe error model and the `Status` message can be used in a variety of\nenvironments, either with or without APIs, to provide a\nconsistent developer experience across different environments.\n\nExample uses of this error model include:\n\n- Partial errors. If a service needs to return partial errors to the client,\n    it may embed the `Status` in the normal response to indicate the partial\n    errors.\n\n- Workflow errors. A typical workflow has multiple steps. Each step may\n    have a `Status` message for error reporting.\n\n- Batch operations. If a client uses batch request and batch response, the\n    `Status` message should be used directly inside batch response, one for\n    each error sub-response.\n\n- Asynchronous operations. If an API call embeds asynchronous operation\n    results in its response, the status of those operations should be\n    represented directly using the `Status` message.\n\n- Logging. If some API errors are stored in logs, the message `Status` could\n    be used directly after any stripping needed for security\/privacy reasons.",
+      "description": "The `Status` type defines a logical error model that is suitable for\ndifferent programming environments, including REST APIs and RPC APIs. It is\nused by [gRPC](https:\/\/github.com\/grpc). Each `Status` message contains\nthree pieces of data: error code, error message, and error details.\n\nYou can find out more about this error model and how to work with it in the\n[API Design Guide](https:\/\/cloud.google.com\/apis\/design\/errors).",
       "type": "object",
       "properties": {
         "code": {
@@ -264,19 +264,21 @@
       "type": "object",
       "properties": {
         "name": {
-          "description": "Output only.\nA server defined name for this index.\nThe form of this name for composite indexes will be:\n`projects\/{project_id}\/databases\/{database_id}\/collectionGroups\/{collection_id}\/indexes\/{composite_index_id}`\nFor single field indexes, this field will be empty.",
+          "description": "Output only. A server defined name for this index.\nThe form of this name for composite indexes will be:\n`projects\/{project_id}\/databases\/{database_id}\/collectionGroups\/{collection_id}\/indexes\/{composite_index_id}`\nFor single field indexes, this field will be empty.",
           "type": "string"
         },
         "queryScope": {
           "description": "Indexes with a collection query scope specified allow queries\nagainst a collection that is the child of a specific document, specified at\nquery time, and that has the same collection id.\n\nIndexes with a collection group query scope specified allow queries against\nall collections descended from a specific document, specified at query\ntime, and that have the same collection id as this index.",
           "enumDescriptions": [
             "The query scope is unspecified. Not a valid option.",
-            "Indexes with a collection query scope specified allow queries\nagainst a collection that is the child of a specific document, specified\nat query time, and that has the collection id specified by the index."
+            "Indexes with a collection query scope specified allow queries\nagainst a collection that is the child of a specific document, specified\nat query time, and that has the collection id specified by the index.",
+            "Indexes with a collection group query scope specified allow queries\nagainst all collections that has the collection id specified by the\nindex."
           ],
           "type": "string",
           "enum": [
             "QUERY_SCOPE_UNSPECIFIED",
-            "COLLECTION"
+            "COLLECTION",
+            "COLLECTION_GROUP"
           ]
         },
         "fields": {
@@ -287,7 +289,7 @@
           }
         },
         "state": {
-          "description": "Output only.\nThe serving state of the index.",
+          "description": "Output only. The serving state of the index.",
           "enumDescriptions": [
             "The state is unspecified.",
             "The index is being created.\nThere is an active long-running operation for the index.\nThe index is updated when writing a document.\nSome index data may exist.",
@@ -387,11 +389,11 @@
           }
         },
         "usesAncestorConfig": {
-          "description": "Output only.\nWhen true, the `Field`'s index configuration is set from the\nconfiguration specified by the `ancestor_field`.\nWhen false, the `Field`'s index configuration is defined explicitly.",
+          "description": "Output only. When true, the `Field`'s index configuration is set from the\nconfiguration specified by the `ancestor_field`.\nWhen false, the `Field`'s index configuration is defined explicitly.",
           "type": "boolean"
         },
         "ancestorField": {
-          "description": "Output only.\nSpecifies the resource name of the `Field` from which this field's\nindex configuration is set (when `uses_ancestor_config` is true),\nor from which it *would* be set if this field had no index configuration\n(when `uses_ancestor_config` is false).",
+          "description": "Output only. Specifies the resource name of the `Field` from which this field's\nindex configuration is set (when `uses_ancestor_config` is true),\nor from which it *would* be set if this field had no index configuration\n(when `uses_ancestor_config` is false).",
           "type": "string"
         },
         "reverting": {
@@ -772,7 +774,7 @@
           "type": "string"
         },
         "transform": {
-          "description": "Applies a tranformation to a document.\nAt most one `transform` per document is allowed in a given request.\nAn `update` cannot follow a `transform` on the same document in a given\nrequest.",
+          "description": "Applies a transformation to a document.\nAt most one `transform` per document is allowed in a given request.\nAn `update` cannot follow a `transform` on the same document in a given\nrequest.",
           "$ref": "DocumentTransform"
         },
         "updateMask": {
@@ -906,7 +908,7 @@
       "type": "object",
       "properties": {
         "transaction": {
-          "description": "The transaction to roll back.",
+          "description": "Required. The transaction to roll back.",
           "type": "string",
           "format": "byte"
         }
@@ -1086,7 +1088,9 @@
             "Greater than. Requires that the field come first in `order_by`.",
             "Greater than or equal. Requires that the field come first in\n`order_by`.",
             "Equal.",
-            "Contains. Requires that the field is an array."
+            "Contains. Requires that the field is an array.",
+            "In. Requires that `value` is a non-empty ArrayValue with at most 10\nvalues.",
+            "Contains any. Requires that the field is an array and\n`value` is a non-empty ArrayValue with at most 10 values."
           ],
           "type": "string",
           "enum": [
@@ -1096,7 +1100,9 @@
             "GREATER_THAN",
             "GREATER_THAN_OR_EQUAL",
             "EQUAL",
-            "ARRAY_CONTAINS"
+            "ARRAY_CONTAINS",
+            "IN",
+            "ARRAY_CONTAINS_ANY"
           ]
         },
         "value": {
@@ -1115,7 +1121,7 @@
           "enumDescriptions": [
             "Unspecified. This value must not be used.",
             "Test if a field is equal to NaN.",
-            "Test if an exprestion evaluates to Null."
+            "Test if an expression evaluates to Null."
           ],
           "type": "string",
           "enum": [
@@ -1304,7 +1310,7 @@
           "format": "google-datetime"
         },
         "targetId": {
-          "description": "A client provided target ID.\n\nIf not set, the server will assign an ID for the target.\n\nUsed for resuming a target without changing IDs. The IDs can either be\nclient-assigned or be server-assigned in a previous stream. All targets\nwith client provided IDs must be added before adding a target that needs\na server-assigned id.",
+          "description": "The target ID that identifies the target on the stream. Must be a positive\nnumber and non-zero.",
           "type": "integer",
           "format": "int32"
         },
@@ -1394,7 +1400,7 @@
           ]
         },
         "targetIds": {
-          "description": "The target IDs of targets that have changed.\n\nIf empty, the change applies to all targets.\n\nFor `target_change_type=ADD`, the order of the target IDs matches the order\nof the requests to add the targets. This allows clients to unambiguously\nassociate server-assigned target IDs with added targets.\n\nFor other states, the order of the target IDs is not defined.",
+          "description": "The target IDs of targets that have changed.\n\nIf empty, the change applies to all targets.\n\nThe order of the target IDs is not defined.",
           "type": "array",
           "items": {
             "type": "integer",
@@ -1921,7 +1927,7 @@
               "httpMethod": "POST",
               "parameters": {
                 "name": {
-                  "description": "Database to export. Should be of the form:\n`projects\/{project_id}\/databases\/{database_id}`.",
+                  "description": "Required. Database to export. Should be of the form:\n`projects\/{project_id}\/databases\/{database_id}`.",
                   "location": "path",
                   "required": true,
                   "pattern": "^projects\/[^\/]+\/databases\/[^\/]+$",
@@ -1950,7 +1956,7 @@
               "httpMethod": "POST",
               "parameters": {
                 "name": {
-                  "description": "Database to import into. Should be of the form:\n`projects\/{project_id}\/databases\/{database_id}`.",
+                  "description": "Required. Database to import into. Should be of the form:\n`projects\/{project_id}\/databases\/{database_id}`.",
                   "location": "path",
                   "required": true,
                   "pattern": "^projects\/[^\/]+\/databases\/[^\/]+$",
@@ -2113,7 +2119,7 @@
                       "httpMethod": "POST",
                       "parameters": {
                         "parent": {
-                          "description": "A parent name of the form\n`projects\/{project_id}\/databases\/{database_id}\/collectionGroups\/{collection_id}`",
+                          "description": "Required. A parent name of the form\n`projects\/{project_id}\/databases\/{database_id}\/collectionGroups\/{collection_id}`",
                           "location": "path",
                           "required": true,
                           "pattern": "^projects\/[^\/]+\/databases\/[^\/]+\/collectionGroups\/[^\/]+$",
@@ -2142,7 +2148,7 @@
                       "httpMethod": "GET",
                       "parameters": {
                         "parent": {
-                          "description": "A parent name of the form\n`projects\/{project_id}\/databases\/{database_id}\/collectionGroups\/{collection_id}`",
+                          "description": "Required. A parent name of the form\n`projects\/{project_id}\/databases\/{database_id}\/collectionGroups\/{collection_id}`",
                           "location": "path",
                           "required": true,
                           "pattern": "^projects\/[^\/]+\/databases\/[^\/]+\/collectionGroups\/[^\/]+$",
@@ -2184,7 +2190,7 @@
                       "httpMethod": "GET",
                       "parameters": {
                         "name": {
-                          "description": "A name of the form\n`projects\/{project_id}\/databases\/{database_id}\/collectionGroups\/{collection_id}\/indexes\/{index_id}`",
+                          "description": "Required. A name of the form\n`projects\/{project_id}\/databases\/{database_id}\/collectionGroups\/{collection_id}\/indexes\/{index_id}`",
                           "location": "path",
                           "required": true,
                           "pattern": "^projects\/[^\/]+\/databases\/[^\/]+\/collectionGroups\/[^\/]+\/indexes\/[^\/]+$",
@@ -2210,7 +2216,7 @@
                       "httpMethod": "DELETE",
                       "parameters": {
                         "name": {
-                          "description": "A name of the form\n`projects\/{project_id}\/databases\/{database_id}\/collectionGroups\/{collection_id}\/indexes\/{index_id}`",
+                          "description": "Required. A name of the form\n`projects\/{project_id}\/databases\/{database_id}\/collectionGroups\/{collection_id}\/indexes\/{index_id}`",
                           "location": "path",
                           "required": true,
                           "pattern": "^projects\/[^\/]+\/databases\/[^\/]+\/collectionGroups\/[^\/]+\/indexes\/[^\/]+$",
@@ -2240,7 +2246,7 @@
                       "httpMethod": "GET",
                       "parameters": {
                         "name": {
-                          "description": "A name of the form\n`projects\/{project_id}\/databases\/{database_id}\/collectionGroups\/{collection_id}\/fields\/{field_id}`",
+                          "description": "Required. A name of the form\n`projects\/{project_id}\/databases\/{database_id}\/collectionGroups\/{collection_id}\/fields\/{field_id}`",
                           "location": "path",
                           "required": true,
                           "pattern": "^projects\/[^\/]+\/databases\/[^\/]+\/collectionGroups\/[^\/]+\/fields\/[^\/]+$",
@@ -2301,7 +2307,7 @@
                       "httpMethod": "GET",
                       "parameters": {
                         "parent": {
-                          "description": "A parent name of the form\n`projects\/{project_id}\/databases\/{database_id}\/collectionGroups\/{collection_id}`",
+                          "description": "Required. A parent name of the form\n`projects\/{project_id}\/databases\/{database_id}\/collectionGroups\/{collection_id}`",
                           "location": "path",
                           "required": true,
                           "pattern": "^projects\/[^\/]+\/databases\/[^\/]+\/collectionGroups\/[^\/]+$",
@@ -2349,7 +2355,7 @@
                   "httpMethod": "GET",
                   "parameters": {
                     "name": {
-                      "description": "The resource name of the Document to get. In the format:\n`projects\/{project_id}\/databases\/{database_id}\/documents\/{document_path}`.",
+                      "description": "Required. The resource name of the Document to get. In the format:\n`projects\/{project_id}\/databases\/{database_id}\/documents\/{document_path}`.",
                       "location": "path",
                       "required": true,
                       "pattern": "^projects\/[^\/]+\/databases\/[^\/]+\/documents\/[^\/]+\/.+$",
@@ -2393,14 +2399,14 @@
                   "httpMethod": "GET",
                   "parameters": {
                     "parent": {
-                      "description": "The parent resource name. In the format:\n`projects\/{project_id}\/databases\/{database_id}\/documents` or\n`projects\/{project_id}\/databases\/{database_id}\/documents\/{document_path}`.\nFor example:\n`projects\/my-project\/databases\/my-database\/documents` or\n`projects\/my-project\/databases\/my-database\/documents\/chatrooms\/my-chatroom`",
+                      "description": "Required. The parent resource name. In the format:\n`projects\/{project_id}\/databases\/{database_id}\/documents` or\n`projects\/{project_id}\/databases\/{database_id}\/documents\/{document_path}`.\nFor example:\n`projects\/my-project\/databases\/my-database\/documents` or\n`projects\/my-project\/databases\/my-database\/documents\/chatrooms\/my-chatroom`",
                       "location": "path",
                       "required": true,
                       "pattern": "^projects\/[^\/]+\/databases\/[^\/]+\/documents\/[^\/]+\/.+$",
                       "type": "string"
                     },
                     "collectionId": {
-                      "description": "The collection ID, relative to `parent`, to list. For example: `chatrooms`\nor `messages`.",
+                      "description": "Required. The collection ID, relative to `parent`, to list. For example: `chatrooms`\nor `messages`.",
                       "location": "path",
                       "required": true,
                       "type": "string"
@@ -2465,14 +2471,14 @@
                   "httpMethod": "POST",
                   "parameters": {
                     "parent": {
-                      "description": "The parent resource. For example:\n`projects\/{project_id}\/databases\/{database_id}\/documents` or\n`projects\/{project_id}\/databases\/{database_id}\/documents\/chatrooms\/{chatroom_id}`",
+                      "description": "Required. The parent resource. For example:\n`projects\/{project_id}\/databases\/{database_id}\/documents` or\n`projects\/{project_id}\/databases\/{database_id}\/documents\/chatrooms\/{chatroom_id}`",
                       "location": "path",
                       "required": true,
                       "pattern": "^projects\/[^\/]+\/databases\/[^\/]+\/documents\/.+$",
                       "type": "string"
                     },
                     "collectionId": {
-                      "description": "The collection ID, relative to `parent`, to list. For example: `chatrooms`.",
+                      "description": "Required. The collection ID, relative to `parent`, to list. For example: `chatrooms`.",
                       "location": "path",
                       "required": true,
                       "type": "string"
@@ -2564,7 +2570,7 @@
                   "httpMethod": "DELETE",
                   "parameters": {
                     "name": {
-                      "description": "The resource name of the Document to delete. In the format:\n`projects\/{project_id}\/databases\/{database_id}\/documents\/{document_path}`.",
+                      "description": "Required. The resource name of the Document to delete. In the format:\n`projects\/{project_id}\/databases\/{database_id}\/documents\/{document_path}`.",
                       "location": "path",
                       "required": true,
                       "pattern": "^projects\/[^\/]+\/databases\/[^\/]+\/documents\/[^\/]+\/.+$",
@@ -2601,7 +2607,7 @@
                   "httpMethod": "POST",
                   "parameters": {
                     "database": {
-                      "description": "The database name. In the format:\n`projects\/{project_id}\/databases\/{database_id}`.",
+                      "description": "Required. The database name. In the format:\n`projects\/{project_id}\/databases\/{database_id}`.",
                       "location": "path",
                       "required": true,
                       "pattern": "^projects\/[^\/]+\/databases\/[^\/]+$",
@@ -2630,7 +2636,7 @@
                   "httpMethod": "POST",
                   "parameters": {
                     "database": {
-                      "description": "The database name. In the format:\n`projects\/{project_id}\/databases\/{database_id}`.",
+                      "description": "Required. The database name. In the format:\n`projects\/{project_id}\/databases\/{database_id}`.",
                       "location": "path",
                       "required": true,
                       "pattern": "^projects\/[^\/]+\/databases\/[^\/]+$",
@@ -2659,7 +2665,7 @@
                   "httpMethod": "POST",
                   "parameters": {
                     "database": {
-                      "description": "The database name. In the format:\n`projects\/{project_id}\/databases\/{database_id}`.",
+                      "description": "Required. The database name. In the format:\n`projects\/{project_id}\/databases\/{database_id}`.",
                       "location": "path",
                       "required": true,
                       "pattern": "^projects\/[^\/]+\/databases\/[^\/]+$",
@@ -2688,7 +2694,7 @@
                   "httpMethod": "POST",
                   "parameters": {
                     "database": {
-                      "description": "The database name. In the format:\n`projects\/{project_id}\/databases\/{database_id}`.",
+                      "description": "Required. The database name. In the format:\n`projects\/{project_id}\/databases\/{database_id}`.",
                       "location": "path",
                       "required": true,
                       "pattern": "^projects\/[^\/]+\/databases\/[^\/]+$",
@@ -2717,7 +2723,7 @@
                   "httpMethod": "POST",
                   "parameters": {
                     "parent": {
-                      "description": "The parent resource name. In the format:\n`projects\/{project_id}\/databases\/{database_id}\/documents` or\n`projects\/{project_id}\/databases\/{database_id}\/documents\/{document_path}`.\nFor example:\n`projects\/my-project\/databases\/my-database\/documents` or\n`projects\/my-project\/databases\/my-database\/documents\/chatrooms\/my-chatroom`",
+                      "description": "Required. The parent resource name. In the format:\n`projects\/{project_id}\/databases\/{database_id}\/documents` or\n`projects\/{project_id}\/databases\/{database_id}\/documents\/{document_path}`.\nFor example:\n`projects\/my-project\/databases\/my-database\/documents` or\n`projects\/my-project\/databases\/my-database\/documents\/chatrooms\/my-chatroom`",
                       "location": "path",
                       "required": true,
                       "pattern": "^projects\/[^\/]+\/databases\/[^\/]+\/documents$",
@@ -2746,7 +2752,7 @@
                   "httpMethod": "POST",
                   "parameters": {
                     "parent": {
-                      "description": "The parent resource name. In the format:\n`projects\/{project_id}\/databases\/{database_id}\/documents` or\n`projects\/{project_id}\/databases\/{database_id}\/documents\/{document_path}`.\nFor example:\n`projects\/my-project\/databases\/my-database\/documents` or\n`projects\/my-project\/databases\/my-database\/documents\/chatrooms\/my-chatroom`",
+                      "description": "Required. The parent resource name. In the format:\n`projects\/{project_id}\/databases\/{database_id}\/documents` or\n`projects\/{project_id}\/databases\/{database_id}\/documents\/{document_path}`.\nFor example:\n`projects\/my-project\/databases\/my-database\/documents` or\n`projects\/my-project\/databases\/my-database\/documents\/chatrooms\/my-chatroom`",
                       "location": "path",
                       "required": true,
                       "pattern": "^projects\/[^\/]+\/databases\/[^\/]+\/documents\/[^\/]+\/.+$",
@@ -2775,7 +2781,7 @@
                   "httpMethod": "POST",
                   "parameters": {
                     "database": {
-                      "description": "The database name. In the format:\n`projects\/{project_id}\/databases\/{database_id}`.\nThis is only required in the first message.",
+                      "description": "Required. The database name. In the format:\n`projects\/{project_id}\/databases\/{database_id}`.\nThis is only required in the first message.",
                       "location": "path",
                       "required": true,
                       "pattern": "^projects\/[^\/]+\/databases\/[^\/]+$",
@@ -2804,7 +2810,7 @@
                   "httpMethod": "POST",
                   "parameters": {
                     "database": {
-                      "description": "The database name. In the format:\n`projects\/{project_id}\/databases\/{database_id}`.",
+                      "description": "Required. The database name. In the format:\n`projects\/{project_id}\/databases\/{database_id}`.",
                       "location": "path",
                       "required": true,
                       "pattern": "^projects\/[^\/]+\/databases\/[^\/]+$",
@@ -2833,7 +2839,7 @@
                   "httpMethod": "POST",
                   "parameters": {
                     "parent": {
-                      "description": "The parent document. In the format:\n`projects\/{project_id}\/databases\/{database_id}\/documents\/{document_path}`.\nFor example:\n`projects\/my-project\/databases\/my-database\/documents\/chatrooms\/my-chatroom`",
+                      "description": "Required. The parent document. In the format:\n`projects\/{project_id}\/databases\/{database_id}\/documents\/{document_path}`.\nFor example:\n`projects\/my-project\/databases\/my-database\/documents\/chatrooms\/my-chatroom`",
                       "location": "path",
                       "required": true,
                       "pattern": "^projects\/[^\/]+\/databases\/[^\/]+\/documents$",
@@ -2862,7 +2868,7 @@
                   "httpMethod": "POST",
                   "parameters": {
                     "parent": {
-                      "description": "The parent document. In the format:\n`projects\/{project_id}\/databases\/{database_id}\/documents\/{document_path}`.\nFor example:\n`projects\/my-project\/databases\/my-database\/documents\/chatrooms\/my-chatroom`",
+                      "description": "Required. The parent document. In the format:\n`projects\/{project_id}\/databases\/{database_id}\/documents\/{document_path}`.\nFor example:\n`projects\/my-project\/databases\/my-database\/documents\/chatrooms\/my-chatroom`",
                       "location": "path",
                       "required": true,
                       "pattern": "^projects\/[^\/]+\/databases\/[^\/]+\/documents\/[^\/]+\/.+$",

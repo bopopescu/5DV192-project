@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2019 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ from __future__ import division
 from __future__ import unicode_literals
 
 import functools
-import enum  # pylint: disable=unused-import, for pytype
 
 from googlecloudsdk.api_lib.compute import filter_rewrite
 from googlecloudsdk.api_lib.compute.regions import service as regions_service
@@ -237,7 +236,6 @@ class ResourceArgScopes(object):
     self.scopes = {}
 
   def AddScope(self, scope, collection):
-    # type: (enum.Enum, str) -> None
     self.scopes[scope] = ResourceArgScope(scope, self.flag_prefix, collection)
 
   def SpecifiedByArgs(self, args):
@@ -348,21 +346,31 @@ class ResourceResolver(object):
           .format(default_scope,
                   ' or '.join([s.scope_enum.name for s in self.scopes])))
 
-  def _GetResourceScopeParam(
-      self, resource_scope, scope_value, project, api_resource_registry):
+  def _GetResourceScopeParam(self,
+                             resource_scope,
+                             scope_value,
+                             project,
+                             api_resource_registry,
+                             with_project=True):
+    """Gets the resource scope parameters."""
+
     if scope_value is not None:
       if resource_scope.scope_enum == compute_scope.ScopeEnum.GLOBAL:
         return None
       else:
         collection = compute_scope.ScopeEnum.CollectionForScope(
             resource_scope.scope_enum)
-        return api_resource_registry.Parse(
-            scope_value,
-            params={'project': project},
-            collection=collection).Name()
+        if with_project:
+          return api_resource_registry.Parse(
+              scope_value, params={
+                  'project': project
+              }, collection=collection).Name()
+        else:
+          return api_resource_registry.Parse(
+              scope_value, params={}, collection=collection).Name()
     else:
-      if resource_scope and (
-          resource_scope.scope_enum != compute_scope.ScopeEnum.GLOBAL):
+      if resource_scope and (resource_scope.scope_enum !=
+                             compute_scope.ScopeEnum.GLOBAL):
         return resource_scope.scope_enum.property_func
 
   def _GetRefsAndUnderspecifiedNames(
@@ -394,9 +402,13 @@ class ResourceResolver(object):
       refs.append(ref)
     return refs, underspecified_names
 
-  def _ResolveUnderspecifiedNames(
-      self, underspecified_names, default_scope, scope_lister, project,
-      api_resource_registry):
+  def _ResolveUnderspecifiedNames(self,
+                                  underspecified_names,
+                                  default_scope,
+                                  scope_lister,
+                                  project,
+                                  api_resource_registry,
+                                  with_project=True):
     """Attempt to resolve scope for unresolved names.
 
     If unresolved_names was generated with _GetRefsAndUnderspecifiedNames
@@ -408,6 +420,8 @@ class ResourceResolver(object):
       scope_lister: callback used to list potential scopes for the resources
       project: str, id of the project
       api_resource_registry: resources Registry
+      with_project: indicates whether or not project is associated. It should be
+        False for flexible resource APIs
 
     Raises:
       UnderSpecifiedResourceError: when resource scope can't be resolved.
@@ -428,7 +442,12 @@ class ResourceResolver(object):
       raise UnderSpecifiedResourceError(names, [s.flag for s in self.scopes])
 
     resource_scope = self.scopes[resource_scope_enum]
-    params = {'project': project,}
+    if with_project:
+      params = {
+          'project': project,
+      }
+    else:
+      params = {}
 
     if resource_scope.scope_enum != compute_scope.ScopeEnum.GLOBAL:
       params[resource_scope.scope_enum.param_name] = scope_value
@@ -446,7 +465,8 @@ class ResourceResolver(object):
                        scope_value,
                        api_resource_registry,
                        default_scope=None,
-                       scope_lister=None):
+                       scope_lister=None,
+                       with_project=True):
     """Resolve this resource against the arguments.
 
     Args:
@@ -470,6 +490,8 @@ class ResourceResolver(object):
           specify default_scope.
       scope_lister: func(scope, underspecified_names), a callback which returns
         list of items (with 'name' attribute) for given scope.
+      with_project: indicates whether or not project is associated. It should be
+        False for flexible resource APIs.
     Returns:
       Resource reference or list of references if plural.
     Raises:
@@ -485,14 +507,22 @@ class ResourceResolver(object):
     if default_scope is not None:
       default_scope = self.scopes[default_scope]
     project = properties.VALUES.core.project.GetOrFail
-    params = {
-        'project': project,
-    }
+    if with_project:
+      params = {
+          'project': project,
+      }
+    else:
+      params = {}
+
     if scope_value is None:
       resource_scope = self.scopes.GetImplicitScope(default_scope)
 
     resource_scope_param = self._GetResourceScopeParam(
-        resource_scope, scope_value, project, api_resource_registry)
+        resource_scope,
+        scope_value,
+        project,
+        api_resource_registry,
+        with_project=with_project)
     if resource_scope_param is not None:
       params[resource_scope.scope_enum.param_name] = resource_scope_param
 
@@ -506,11 +536,15 @@ class ResourceResolver(object):
     # If we still have some resources which need to be resolve see if we can
     # prompt the user and try to resolve these again.
     self._ResolveUnderspecifiedNames(
-        underspecified_names, default_scope, scope_lister, project,
-        api_resource_registry)
+        underspecified_names,
+        default_scope,
+        scope_lister,
+        project,
+        api_resource_registry,
+        with_project=with_project)
 
     # Now unpack each element.
-    refs = [ref[0] for ref in refs]  # type: list[resources.Resource]
+    refs = [ref[0] for ref in refs]
 
     # Make sure correct collection was given for each resource, for example
     # URLs have implicit collections.
@@ -663,6 +697,12 @@ class ResourceArgument(object):
               int(self.plural) + 1, self.resource_name or '',
               self.custom_plural),
           operation_type)
+      if self.name.startswith('instance'):
+        params['help'] += (' For details on valid instance names, refer '
+                           'to the criteria documented under the field '
+                           '\'name\' at: '
+                           'https://cloud.google.com/compute/docs/reference/'
+                           'rest/v1/instances')
 
     if self.name_arg.startswith('--'):
       params['required'] = self.required
@@ -718,10 +758,12 @@ class ResourceArgument(object):
           help='If set, the {0} global.'
           .format(resource_mention))
 
-  def ResolveAsResource(self, args,
+  def ResolveAsResource(self,
+                        args,
                         api_resource_registry,
                         default_scope=None,
-                        scope_lister=None):
+                        scope_lister=None,
+                        with_project=True):
     """Resolve this resource against the arguments.
 
     Args:
@@ -733,6 +775,8 @@ class ResourceArgument(object):
           specify default_scope.
       scope_lister: func(scope, underspecified_names), a callback which returns
         list of items (with 'name' attribute) for given scope.
+      with_project: indicates whether or not project is associated. It should be
+        False for flexible resource APIs.
     Returns:
       Resource reference or list of references if plural.
     """
@@ -751,8 +795,13 @@ class ResourceArgument(object):
             'Can\'t specify {0} without specifying resource via {1}'.format(
                 flag, self.name))
     refs = self._resource_resolver.ResolveResources(
-        names, resource_scope, scope_value, api_resource_registry,
-        default_scope, scope_lister)
+        names,
+        resource_scope,
+        scope_value,
+        api_resource_registry,
+        default_scope,
+        scope_lister,
+        with_project=with_project)
     if self.plural:
       return refs
     if refs:
@@ -795,6 +844,51 @@ def AddStorageLocationFlag(parser, resource):
       """.format(resource))
 
 
+def AddGuestFlushFlag(parser, resource):
+  parser.add_argument(
+      '--guest-flush',
+      action='store_true',
+      default=False,
+      help=('Create an application-consistent {} by informing the OS '
+            'to prepare for the snapshot process. Currently only supported '
+            'on Windows instances using the Volume Shadow Copy Service '
+            '(VSS).'.format(resource)))
+
+
+def AddShieldedInstanceInitialStateKeyArg(parser):
+  """Add the initial state for shielded instance arg."""
+  parser.add_argument(
+      '--platform-key-file',
+      help="""\
+      Single Platform Key file path used when booting up
+      shielded instance from this image.
+        """)
+  parser.add_argument(
+      '--key-exchange-key-file',
+      type=arg_parsers.ArgList(),
+      metavar='KEK_VALUE',
+      help="""\
+      List of key exchange key file paths used when booting up
+      shieled instance from this image.
+        """)
+  parser.add_argument(
+      '--signature-database-file',
+      type=arg_parsers.ArgList(),
+      metavar='DB_VALUE',
+      help="""\
+      List of valid public certificates file paths used when booting up
+      shieled instance from this image.
+        """)
+  parser.add_argument(
+      '--forbidden-database-file',
+      type=arg_parsers.ArgList(),
+      metavar='DBX_VALUE',
+      help="""\
+      List of revoked certificates file paths used when
+      booting up shieled instance from this image.
+        """)
+
+
 def RewriteFilter(args, message=None, frontend_fields=None):
   """Rewrites args.filter into client and server filter expression strings.
 
@@ -824,3 +918,40 @@ def RewriteFilter(args, message=None, frontend_fields=None):
           args.filter, defaults=defaults)
   log.info('client_filter=%r server_filter=%r', client_filter, server_filter)
   return client_filter, server_filter
+
+
+def AddSourceDiskCsekKeyArg(parser):
+  spec = {
+      'disk': str,
+      'csek-key-file': str
+  }
+  parser.add_argument(
+      '--source-disk-csek-key',
+      type=arg_parsers.ArgDict(spec=spec),
+      action='append',
+      metavar='PROPERTY=VALUE',
+      help="""
+              Customer-supplied encryption key of the disk attached to the
+              source instance. Required if the source disk is protected by
+              a customer-supplied encryption key. This flag may be repeated to
+              specify multiple attached disks.
+
+              *disk*::: URL of the disk attached to the source instance.
+              This can be a full or   valid partial URL
+
+              *csek-key-file*::: path to customer-supplied encryption key.
+            """
+  )
+
+
+def AddEraseVssSignature(parser, resource):
+  parser.add_argument(
+      '--erase-windows-vss-signature',
+      action='store_true',
+      default=False,
+      help="""
+              Specifies whether the disk restored from {resource} should
+              erase Windows specific VSS signature.
+              See https://cloud.google.com/sdk/gcloud/reference/compute/disks/snapshot#--guest-flush
+           """.format(resource=resource)
+  )

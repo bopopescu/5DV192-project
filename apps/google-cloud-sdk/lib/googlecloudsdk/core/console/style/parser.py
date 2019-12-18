@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ class TypedTextParser(object):
              set(getattr(text_attributes, 'attrs', [])))
     if attrs:
       style_sequence += ';'.join(sorted([
-          str(attr.value) for attr in attrs]))
+          six.text_type(attr.value) for attr in attrs]))
     color = (getattr(text_attributes, 'color', None) or
              getattr(style_context, 'color', None))
     if color:

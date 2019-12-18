@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2016 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -43,8 +43,7 @@ class GlobalUrlMapsCompleter(compute_completers.ListCommandCompleter):
   def __init__(self, **kwargs):
     super(GlobalUrlMapsCompleter, self).__init__(
         collection='compute.urlMaps',
-        api_version='alpha',
-        list_command=('alpha compute url-maps list --global --uri'),
+        list_command=('compute url-maps list --global --uri'),
         **kwargs)
 
 
@@ -53,8 +52,7 @@ class RegionalUrlMapsCompleter(compute_completers.ListCommandCompleter):
   def __init__(self, **kwargs):
     super(RegionalUrlMapsCompleter, self).__init__(
         collection='compute.regionUrlMaps',
-        api_version='alpha',
-        list_command='alpha compute url-maps list --filter=region:* --uri',
+        list_command='compute url-maps list --filter=region:* --uri',
         **kwargs)
 
 
@@ -65,35 +63,42 @@ class UrlMapsCompleterAlpha(completers.MultiResourceCompleter):
         completers=[GlobalUrlMapsCompleter, RegionalUrlMapsCompleter], **kwargs)
 
 
-def UrlMapArgument(required=True, plural=False, include_alpha=False):
+def UrlMapArgument(required=True,
+                   plural=False,
+                   include_l7_internal_load_balancing=False):
   return compute_flags.ResourceArgument(
-      name='url_map_name',
+      name='url_map',
       resource_name='URL map',
-      completer=UrlMapsCompleterAlpha if include_alpha else UrlMapsCompleter,
+      completer=UrlMapsCompleterAlpha
+      if include_l7_internal_load_balancing else UrlMapsCompleter,
       plural=plural,
       required=required,
       global_collection='compute.urlMaps',
-      regional_collection='compute.regionUrlMaps' if include_alpha else None,
+      regional_collection='compute.regionUrlMaps'
+      if include_l7_internal_load_balancing else None,
       region_explanation=compute_flags.REGION_PROPERTY_EXPLANATION
-      if include_alpha else None)
+      if include_l7_internal_load_balancing else None)
 
 
 def UrlMapArgumentForTargetProxy(required=True,
                                  proxy_type='HTTP',
-                                 include_alpha=False):
+                                 include_l7_internal_load_balancing=False):
   return compute_flags.ResourceArgument(
       name='--url-map',
-      resource_name='url map',
-      completer=UrlMapsCompleterAlpha if include_alpha else UrlMapsCompleter,
+      resource_name='URL map',
+      completer=UrlMapsCompleterAlpha
+      if include_l7_internal_load_balancing else UrlMapsCompleter,
       plural=False,
       required=required,
       global_collection='compute.urlMaps',
-      regional_collection='compute.regionUrlMaps' if include_alpha else None,
+      regional_collection='compute.regionUrlMaps'
+      if include_l7_internal_load_balancing else None,
       short_help=(
           'A reference to a URL map resource that defines the mapping of '
           'URLs to backend services.'),
       detailed_help="""\
-        A reference to a URL map resource that defines the mapping of
-        URLs to backend services. The URL map must exist and cannot be
-        deleted while referenced by a target {0} proxy.
+        A reference to a URL map resource. A URL map defines the mapping of URLs
+        to backend services. Before you can refer to a URL map, you must
+        create the URL map. To delete a URL map that a target proxy is referring
+        to, you must first delete the target {0} proxy.
         """.format(proxy_type))

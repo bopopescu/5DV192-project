@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -37,9 +37,10 @@ import six
 class Update(base.UpdateCommand):
   r"""Update per instance config of a managed instance group.
 
-  *{command}* updates per instance config of instance controlled by a Google
-  Compute Engine managed instance group. Command gives option to change the list
-  of preserved resources by the instance during restart or recreation.
+  *{command}* updates the per instance config of an instance controlled by a
+  Google Compute Engine managed instance group. The command lets you change the
+  list of instance-specific stateful resources, that is, the list of resources
+  that are preserved during instance restarts and recreations.
 
   For example:
 
@@ -48,10 +49,16 @@ class Update(base.UpdateCommand):
         source=projects/my-project/zones/us-central1-a/disks/my-disk-3 \
         --remove-stateful-disks=my-disk-1,my-disk-2
 
-  will update stateful disk `my-disk-3` to the new one pointed by `source` (or
-  add if `my-disk-3` did not exist in the instance config); it will also remove
-  `my-disk-1` and `my-disk-2` from the instance config overrides - they will not
-  be preserved anymore during next restart or recreation of the instance.
+  This command updates the stateful disk, `my-disk-3`, to the image provided by
+  `source`. If my-disk-3 did not exist previously in the per instance config,
+  and if it does not exist in the group's instance template, then the group adds
+  my-disk-3 to example-instance. The command also removes stateful configuration
+  for my-disk-1 and my-disk-2; if these disk are not defined in the group's
+  instance template, then they are detached.
+
+  Changes are applied immediately to the corresponding instances, by performing
+  the necessary action (for example, REFRESH), unless overridden by providing
+  the `--no-update-instance` flag.
   """
 
   @staticmethod
@@ -64,8 +71,8 @@ class Update(base.UpdateCommand):
     messages = holder.client.messages
     per_instance_config = configs_getter.get_instance_config(
         igm_ref=igm_ref, instance_ref=instance_ref)
-
     remove_stateful_disks_set = set(remove_stateful_disks or [])
+    removed_stateful_disks_set = set()
     update_stateful_disks_dict = Update._UpdateStatefulDisksToDict(
         update_stateful_disks)
     new_stateful_disks = []
@@ -77,12 +84,14 @@ class Update(base.UpdateCommand):
       disk_name = current_stateful_disk.key
       # Disk to be removed
       if disk_name in remove_stateful_disks_set:
+        removed_stateful_disks_set.add(disk_name)
         continue
       # Disk to be updated
       if disk_name in update_stateful_disks_dict:
         update_disk_data = update_stateful_disks_dict[disk_name]
         source = update_disk_data.get('source')
         mode = update_disk_data.get('mode')
+        auto_delete = update_disk_data.get('auto-delete')
         if not (source or mode):
           raise exceptions.InvalidArgumentException(
               parameter_name='--update-stateful-disk',
@@ -93,9 +102,19 @@ class Update(base.UpdateCommand):
           preserved_disk.source = source
         if mode:
           preserved_disk.mode = instance_configs_messages.GetMode(
-              messages=messages, mode=mode, preserved_state_mode=True)
+              messages=messages, mode=mode)
+        if auto_delete:
+          preserved_disk.autoDelete = auto_delete.GetAutoDeleteEnumValue(
+              messages.PreservedStatePreservedDisk.AutoDeleteValueValuesEnum)
         del update_stateful_disks_dict[disk_name]
       new_stateful_disks.append(current_stateful_disk)
+    unremoved_stateful_disks = (
+        remove_stateful_disks_set.difference(removed_stateful_disks_set))
+    if unremoved_stateful_disks:
+      raise exceptions.InvalidArgumentException(
+          parameter_name='--remove-stateful-disk',
+          message=('The following are invalid stateful disks: `{0}`'
+                   .format(','.join(unremoved_stateful_disks))))
     for update_stateful_disk in update_stateful_disks_dict.values():
       new_stateful_disks.append(
           instance_configs_messages.MakePreservedStateDiskEntry(
@@ -133,13 +152,6 @@ class Update(base.UpdateCommand):
             for key, value in sorted(six.iteritems(new_stateful_metadata))]
     )
     per_instance_config.preservedState = preserved_state
-
-    # Create overrides (only if required)
-    if per_instance_config.override:
-      per_instance_config.override = \
-          instance_configs_messages.MakeOverridesFromPreservedState(
-              messages, preserved_state)
-      per_instance_config.override.reset('origin')
     return per_instance_config
 
   @staticmethod
@@ -171,7 +183,7 @@ class Update(base.UpdateCommand):
             parser, operation_type='update per instance config for')
     instance_groups_flags.AddMigStatefulFlagsForInstanceConfigs(
         parser, for_update=True)
-    instance_groups_flags.AddMigStatefulForceInstanceUpdateFlag(parser)
+    instance_groups_flags.AddMigStatefulUpdateInstanceFlag(parser)
 
   def Run(self, args):
     instance_groups_flags.ValidateMigStatefulFlagsForInstanceConfigs(
@@ -218,10 +230,12 @@ class Update(base.UpdateCommand):
     update_result = waiter.WaitFor(operation_poller, operation_ref,
                                    'Updating instance config.')
 
-    if args.force_instance_update:
+    if args.update_instance:
       apply_operation_ref = (
           instance_configs_messages.CallApplyUpdatesToInstances)(
-              holder=holder, igm_ref=igm_ref, instances=[str(instance_ref)])
+              holder=holder,
+              igm_ref=igm_ref,
+              instances=[six.text_type(instance_ref)])
       return waiter.WaitFor(operation_poller, apply_operation_ref,
                             'Applying updates to instances.')
 

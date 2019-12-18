@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -37,6 +37,20 @@ class SetDiskAutoDelete(base.UpdateCommand):
   auto-delete is on, the persistent disk is deleted when the
   instance it is attached to is deleted.
   """
+
+  detailed_help = {
+      'EXAMPLES': """
+          To enable auto-delete for a disk named 'my-disk' on an instance
+          named 'my-instance', run:
+
+            $ {command} my-instance --auto-delete --disk=my-disk
+
+          To enable auto-delete for a device named 'my-device' on an instance
+          named 'my-instance', run:
+
+            $ {command} my-instance --auto-delete --device-name=my-device
+          """,
+  }
 
   @staticmethod
   def Args(parser):
@@ -111,7 +125,8 @@ class SetDiskAutoDelete(base.UpdateCommand):
           })
 
       for disk in replacement.disks:
-        if disk.source == disk_ref.SelfLink():
+        disk_rel_name = resources.ParseURL(disk.source).RelativeName()
+        if disk_rel_name == disk_ref.RelativeName():
           disk.autoDelete = args.auto_delete
           disk_found = True
 

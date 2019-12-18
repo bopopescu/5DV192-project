@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2016 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,7 +24,10 @@ from googlecloudsdk.calliope import base
 from googlecloudsdk.calliope import exceptions
 from googlecloudsdk.calliope.concepts import concepts
 from googlecloudsdk.command_lib.util import completers
+from googlecloudsdk.command_lib.util.apis import yaml_data
+from googlecloudsdk.command_lib.util.args import resource_args
 from googlecloudsdk.command_lib.util.concepts import concept_parsers
+from googlecloudsdk.command_lib.util.concepts import presentation_specs
 from googlecloudsdk.core.util import text
 
 
@@ -43,6 +46,15 @@ class InstanceCompleter(completers.ListCommandCompleter):
     super(InstanceCompleter, self).__init__(
         collection='bigtableadmin.projects.instances',
         list_command='beta bigtable instances list --uri',
+        **kwargs)
+
+
+class TableCompleter(completers.ListCommandCompleter):
+
+  def __init__(self, **kwargs):
+    super(TableCompleter, self).__init__(
+        collection='bigtableadmin.projects.instances.tables',
+        list_command='beta bigtable instances tables list --uri',
         **kwargs)
 
 
@@ -89,10 +101,7 @@ class ArgAdder(object):
     self.parser = parser
 
   def AddAsync(self):
-    self.parser.add_argument(
-        '--async',
-        help='Return immediately, without waiting for operation to complete.',
-        action='store_true')
+    base.ASYNC_FLAG.AddToParser(self.parser)
     return self
 
   def AddCluster(self):
@@ -154,6 +163,15 @@ class ArgAdder(object):
       args['required'] = required
 
     self.parser.add_argument(name, **args)
+    return self
+
+  def AddTable(self):
+    """Add table argument."""
+    self.parser.add_argument(
+        '--table',
+        completer=TableCompleter,
+        help='ID of the table.',
+        required=True)
     return self
 
   def AddAppProfileRouting(self, required=True):
@@ -228,20 +246,28 @@ class ArgAdder(object):
 
 def InstanceAttributeConfig():
   return concepts.ResourceParameterAttributeConfig(
-      name='instance',
-      help_text='The Cloud Bigtable instance for the {resource}.')
+      name='instance', help_text='Cloud Bigtable instance for the {resource}.')
+
+
+def TableAttributeConfig():
+  return concepts.ResourceParameterAttributeConfig(
+      name='table', help_text='Cloud Bigtable table for the {resource}.')
 
 
 def ClusterAttributeConfig():
   return concepts.ResourceParameterAttributeConfig(
-      name='cluster',
-      help_text='The Cloud Bigtable cluster for the {resource}.')
+      name='cluster', help_text='Cloud Bigtable cluster for the {resource}.')
 
 
 def AppProfileAttributeConfig():
   return concepts.ResourceParameterAttributeConfig(
       name='app profile',
-      help_text='The Cloud Bigtable application profile for the {resource}.')
+      help_text='Cloud Bigtable application profile for the {resource}.')
+
+
+def BackupAttributeConfig():
+  return concepts.ResourceParameterAttributeConfig(
+      name='backup', help_text='Cloud Bigtable backup for the {resource}.')
 
 
 def GetInstanceResourceSpec():
@@ -249,6 +275,17 @@ def GetInstanceResourceSpec():
   return concepts.ResourceSpec(
       'bigtableadmin.projects.instances',
       resource_name='instance',
+      instancesId=InstanceAttributeConfig(),
+      projectsId=concepts.DEFAULT_PROJECT_ATTRIBUTE_CONFIG,
+      disable_auto_completers=False)
+
+
+def GetTableResourceSpec():
+  """Return the resource specification for a Bigtable table."""
+  return concepts.ResourceSpec(
+      'bigtableadmin.projects.instances.tables',
+      resource_name='table',
+      tablesId=TableAttributeConfig(),
       instancesId=InstanceAttributeConfig(),
       projectsId=concepts.DEFAULT_PROJECT_ATTRIBUTE_CONFIG,
       disable_auto_completers=False)
@@ -269,7 +306,7 @@ def GetAppProfileResourceSpec():
   """Return the resource specification for a Bigtable app profile."""
   return concepts.ResourceSpec(
       'bigtableadmin.projects.instances.appProfiles',
-      resource_name='app-profile',
+      resource_name='app profile',
       instancesId=InstanceAttributeConfig(),
       projectsId=concepts.DEFAULT_PROJECT_ATTRIBUTE_CONFIG,
       disable_auto_completers=False)
@@ -285,12 +322,22 @@ def AddInstancesResourceArg(parser, verb, positional=False):
       plural=True).AddToParser(parser)
 
 
-def AddInstanceResourceArg(parser, verb, positional=False):
+def AddInstanceResourceArg(parser, verb, positional=False, required=True):
   """Add --instance resource argument to the parser."""
   concept_parsers.ConceptParser.ForResource(
       'instance' if positional else '--instance',
       GetInstanceResourceSpec(),
       'The instance {}.'.format(verb),
+      required=required,
+      plural=False).AddToParser(parser)
+
+
+def AddTableResourceArg(parser, verb, positional=False):
+  """Add --table resource argument to the parser."""
+  concept_parsers.ConceptParser.ForResource(
+      'table' if positional else '--table',
+      GetTableResourceSpec(),
+      'The table {}.'.format(verb),
       required=True,
       plural=False).AddToParser(parser)
 
@@ -311,3 +358,41 @@ def AddAppProfileResourceArg(parser, verb):
       GetAppProfileResourceSpec(),
       'The app profile {}.'.format(verb),
       required=True).AddToParser(parser)
+
+
+def AddBackupResourceArg(parser, verb):
+  """Add backup positional resource argument to the parser."""
+  concept_parsers.ConceptParser(
+      [presentation_specs.ResourcePresentationSpec(
+          '--instance',
+          GetInstanceResourceSpec(),
+          'The instance {}.'.format(verb),
+          required=False),
+       presentation_specs.ResourcePresentationSpec(
+           '--cluster',
+           GetClusterResourceSpec(),
+           'The cluster {}.'.format(verb),
+           required=False,
+           flag_name_overrides={'instance': ''})]).AddToParser(parser)
+
+
+def AddTableRestoreResourceArg(parser):
+  """Add Table resource args (source, destination) for restore command."""
+  table_spec_data = yaml_data.ResourceYAMLData.FromPath('bigtable.table')
+  backup_spec_data = yaml_data.ResourceYAMLData.FromPath('bigtable.backup')
+
+  arg_specs = [
+      resource_args.GetResourcePresentationSpec(
+          verb='to copy from', name='source', required=True, prefixes=True,
+          attribute_overrides={'table': 'source'}, positional=False,
+          resource_data=backup_spec_data.GetData()),
+      resource_args.GetResourcePresentationSpec(
+          verb='to copy to', name='destination',
+          required=True, prefixes=True,
+          attribute_overrides={'table': 'destination'}, positional=False,
+          resource_data=table_spec_data.GetData())]
+  fallthroughs = {
+      '--source.instance': ['--destination.instance'],
+      '--destination.instance': ['--source.instance']
+  }
+  concept_parsers.ConceptParser(arg_specs, fallthroughs).AddToParser(parser)

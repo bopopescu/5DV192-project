@@ -129,7 +129,7 @@ class ComposerProjectsLocationsEnvironmentsPatchRequest(_messages.Message):
       form and the "labels" mask.</td>  </tr>  <tr>  <td>config.nodeCount</td>
       <td>Horizontally scale the number of nodes in the environment. An
       integer  greater than or equal to 3 must be provided in the
-      `config.nodeCount` field.  </td>  </tr>  <tr>
+      `config.nodeCount`  field.  </td>  </tr>  <tr>
       <td>config.softwareConfig.airflowConfigOverrides</td>  <td>Replace all
       Apache Airflow config overrides. If a replacement config  overrides map
       is not included in `environment`, all config overrides  are cleared.  It
@@ -333,6 +333,8 @@ class EnvironmentConfig(_messages.Message):
     nodeConfig: The configuration used for the Kubernetes Engine cluster.
     nodeCount: The number of nodes in the Kubernetes Engine cluster that will
       be used to run this environment.
+    privateEnvironmentConfig: The configuration used for the Private IP Cloud
+      Composer environment.
     softwareConfig: The configuration settings for software inside the
       environment.
   """
@@ -342,7 +344,51 @@ class EnvironmentConfig(_messages.Message):
   gkeCluster = _messages.StringField(3)
   nodeConfig = _messages.MessageField('NodeConfig', 4)
   nodeCount = _messages.IntegerField(5, variant=_messages.Variant.INT32)
-  softwareConfig = _messages.MessageField('SoftwareConfig', 6)
+  privateEnvironmentConfig = _messages.MessageField('PrivateEnvironmentConfig', 6)
+  softwareConfig = _messages.MessageField('SoftwareConfig', 7)
+
+
+class IPAllocationPolicy(_messages.Message):
+  r"""Configuration for controlling how IPs are allocated in the GKE cluster.
+
+  Fields:
+    clusterIpv4CidrBlock: Optional. The IP address range used to allocate IP
+      addresses to pods in the cluster.  This field is applicable only when
+      `use_ip_aliases` is true.  Set to blank to have GKE choose a range with
+      the default size.  Set to /netmask (e.g. `/14`) to have GKE choose a
+      range with a specific netmask.  Set to a
+      [CIDR](http://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing)
+      notation (e.g. `10.96.0.0/14`) from the RFC-1918 private networks (e.g.
+      `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`) to pick a specific
+      range to use. Specify `cluster_secondary_range_name` or
+      `cluster_ipv4_cidr_block` but not both.
+    clusterSecondaryRangeName: Optional. The name of the cluster's secondary
+      range used to allocate IP addresses to pods. Specify either
+      `cluster_secondary_range_name` or `cluster_ipv4_cidr_block` but not
+      both.  This field is applicable only when `use_ip_aliases` is true.
+    servicesIpv4CidrBlock: Optional. The IP address range of the services IP
+      addresses in this cluster.  This field is applicable only when
+      `use_ip_aliases` is true.  Set to blank to have GKE choose a range with
+      the default size.  Set to /netmask (e.g. `/14`) to have GKE choose a
+      range with a specific netmask.  Set to a
+      [CIDR](http://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing)
+      notation (e.g. `10.96.0.0/14`) from the RFC-1918 private networks (e.g.
+      `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`) to pick a specific
+      range to use. Specify `services_secondary_range_name` or
+      `services_ipv4_cidr_block` but not both.
+    servicesSecondaryRangeName: Optional. The name of the services' secondary
+      range used to allocate IP addresses to the cluster. Specify either
+      `services_secondary_range_name` or `services_ipv4_cidr_block` but not
+      both.  This field is applicable only when `use_ip_aliases` is true.
+    useIpAliases: Optional. Whether or not to enable Alias IPs in the GKE
+      cluster. If `true`, a VPC-native cluster is created.
+  """
+
+  clusterIpv4CidrBlock = _messages.StringField(1)
+  clusterSecondaryRangeName = _messages.StringField(2)
+  servicesIpv4CidrBlock = _messages.StringField(3)
+  servicesSecondaryRangeName = _messages.StringField(4)
+  useIpAliases = _messages.BooleanField(5)
 
 
 class ImageVersion(_messages.Message):
@@ -408,6 +454,8 @@ class NodeConfig(_messages.Message):
   Fields:
     diskSizeGb: Optional. The disk size in GB used for node VMs. Minimum size
       is 20GB. If unspecified, defaults to 100GB. Cannot be updated.
+    ipAllocationPolicy: Optional. The IPAllocationPolicy fields for the GKE
+      cluster.
     location: Optional. The Compute Engine [zone](/compute/docs/regions-zones)
       in which to deploy the VMs used to run the Apache Airflow software,
       specified as a [relative resource
@@ -433,8 +481,10 @@ class NodeConfig(_messages.Message):
       corresponding to the Cloud Composer location, and propagate that choice
       to both fields. If exactly one of this field and `nodeConfig.location`
       is specified, the location information from the specified field will be
-      propagated to the unspecified field.  If this field is unspecified, the
-      `machineTypeId` defaults to "n1-standard-1".
+      propagated to the unspecified field.  The `machineTypeId` must not be a
+      [shared-core machine type](/compute/docs/machine-types#sharedcore).  If
+      this field is unspecified, the `machineTypeId` defaults to
+      "n1-standard-1".
     network: Optional. The Compute Engine network to be used for machine
       communications, specified as a [relative resource
       name](/apis/design/resource_names#relative_resource_name). For example:
@@ -445,9 +495,8 @@ class NodeConfig(_messages.Message):
       VPC](/vpc/docs/shared-vpc) subnetwork requirements, see
       `nodeConfig.subnetwork`.
     oauthScopes: Optional. The set of Google API scopes to be made available
-      on all node VMs. Defaults to ["https://www.googleapis.com/auth/cloud-
-      platform"] and must be included in the list of specified scopes. Cannot
-      be updated.
+      on all node VMs. If `oauth_scopes` is empty, defaults to
+      ["https://www.googleapis.com/auth/cloud-platform"]. Cannot be updated.
     serviceAccount: Optional. The Google Cloud Platform Service Account to be
       used by the node VMs. If a service account is not specified, the
       "default" Compute Engine service account is used. Cannot be updated.
@@ -456,10 +505,8 @@ class NodeConfig(_messages.Message):
       name](/apis/design/resource_names#relative_resource_name). For example:
       "projects/{projectId}/regions/{regionId}/subnetworks/{subnetworkId}"  If
       a subnetwork is provided, `nodeConfig.network` must also be provided,
-      and the subnetwork must belong to the same project as the network.  For
-      Shared VPC, you must configure the subnetwork with secondary ranges
-      named <strong>composer-pods</strong> and <strong>composer-
-      services</strong> to support Alias IPs.
+      and the subnetwork must belong to the enclosing environment's project
+      and location.
     tags: Optional. The list of instance tags applied to all node VMs. Tags
       are used to identify valid sources or targets for network firewalls.
       Each tag within the list must comply with
@@ -467,13 +514,14 @@ class NodeConfig(_messages.Message):
   """
 
   diskSizeGb = _messages.IntegerField(1, variant=_messages.Variant.INT32)
-  location = _messages.StringField(2)
-  machineType = _messages.StringField(3)
-  network = _messages.StringField(4)
-  oauthScopes = _messages.StringField(5, repeated=True)
-  serviceAccount = _messages.StringField(6)
-  subnetwork = _messages.StringField(7)
-  tags = _messages.StringField(8, repeated=True)
+  ipAllocationPolicy = _messages.MessageField('IPAllocationPolicy', 2)
+  location = _messages.StringField(3)
+  machineType = _messages.StringField(4)
+  network = _messages.StringField(5)
+  oauthScopes = _messages.StringField(6, repeated=True)
+  serviceAccount = _messages.StringField(7)
+  subnetwork = _messages.StringField(8)
+  tags = _messages.StringField(9, repeated=True)
 
 
 class Operation(_messages.Message):
@@ -507,7 +555,8 @@ class Operation(_messages.Message):
       if any.
     name: The server-assigned name, which is only unique within the same
       service that originally returns it. If you use the default HTTP mapping,
-      the `name` should have the format of `operations/some/unique/name`.
+      the `name` should be a resource name ending with
+      `operations/{unique_id}`.
     response: The normal response of the operation in case of success.  If the
       original method returns no data on success, such as `Delete`, the
       response is `google.protobuf.Empty`.  If the original method is standard
@@ -639,6 +688,41 @@ class OperationMetadata(_messages.Message):
   resource = _messages.StringField(4)
   resourceUuid = _messages.StringField(5)
   state = _messages.EnumField('StateValueValuesEnum', 6)
+
+
+class PrivateClusterConfig(_messages.Message):
+  r"""Configuration options for the private GKE cluster in a Cloud Composer
+  environment.
+
+  Fields:
+    enablePrivateEndpoint: Optional. If `true`, access to the public endpoint
+      of the GKE cluster is denied.
+    masterIpv4CidrBlock: The IP range in CIDR notation to use for the hosted
+      master network. This range is used for assigning internal IP addresses
+      to the cluster master or set of masters and to the internal load
+      balancer virtual IP. This range must not overlap with any other ranges
+      in use within the cluster's network. If left blank, the default value of
+      '172.16.0.0/28' is used.
+  """
+
+  enablePrivateEndpoint = _messages.BooleanField(1)
+  masterIpv4CidrBlock = _messages.StringField(2)
+
+
+class PrivateEnvironmentConfig(_messages.Message):
+  r"""The configuration information for configuring a Private IP Cloud
+  Composer environment.
+
+  Fields:
+    enablePrivateEnvironment: Optional. If `true`, a Private IP Cloud Composer
+      environment is created. If this field is true, `use_ip_aliases` must be
+      true.
+    privateClusterConfig: Optional. Configuration for the private GKE cluster
+      for a Private IP Cloud Composer environment.
+  """
+
+  enablePrivateEnvironment = _messages.BooleanField(1)
+  privateClusterConfig = _messages.MessageField('PrivateClusterConfig', 2)
 
 
 class SoftwareConfig(_messages.Message):
@@ -903,37 +987,10 @@ class StandardQueryParameters(_messages.Message):
 class Status(_messages.Message):
   r"""The `Status` type defines a logical error model that is suitable for
   different programming environments, including REST APIs and RPC APIs. It is
-  used by [gRPC](https://github.com/grpc). The error model is designed to be:
-  - Simple to use and understand for most users - Flexible enough to meet
-  unexpected needs  # Overview  The `Status` message contains three pieces of
-  data: error code, error message, and error details. The error code should be
-  an enum value of google.rpc.Code, but it may accept additional error codes
-  if needed.  The error message should be a developer-facing English message
-  that helps developers *understand* and *resolve* the error. If a localized
-  user-facing error message is needed, put the localized message in the error
-  details or localize it in the client. The optional error details may contain
-  arbitrary information about the error. There is a predefined set of error
-  detail types in the package `google.rpc` that can be used for common error
-  conditions.  # Language mapping  The `Status` message is the logical
-  representation of the error model, but it is not necessarily the actual wire
-  format. When the `Status` message is exposed in different client libraries
-  and different wire protocols, it can be mapped differently. For example, it
-  will likely be mapped to some exceptions in Java, but more likely mapped to
-  some error codes in C.  # Other uses  The error model and the `Status`
-  message can be used in a variety of environments, either with or without
-  APIs, to provide a consistent developer experience across different
-  environments.  Example uses of this error model include:  - Partial errors.
-  If a service needs to return partial errors to the client,     it may embed
-  the `Status` in the normal response to indicate the partial     errors.  -
-  Workflow errors. A typical workflow has multiple steps. Each step may
-  have a `Status` message for error reporting.  - Batch operations. If a
-  client uses batch request and batch response, the     `Status` message
-  should be used directly inside batch response, one for     each error sub-
-  response.  - Asynchronous operations. If an API call embeds asynchronous
-  operation     results in its response, the status of those operations should
-  be     represented directly using the `Status` message.  - Logging. If some
-  API errors are stored in logs, the message `Status` could     be used
-  directly after any stripping needed for security/privacy reasons.
+  used by [gRPC](https://github.com/grpc). Each `Status` message contains
+  three pieces of data: error code, error message, and error details.  You can
+  find out more about this error model and how to work with it in the [API
+  Design Guide](https://cloud.google.com/apis/design/errors).
 
   Messages:
     DetailsValueListEntry: A DetailsValueListEntry object.

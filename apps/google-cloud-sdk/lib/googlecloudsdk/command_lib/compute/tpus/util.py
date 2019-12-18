@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
-
+import os
 from apitools.base.py import exceptions as apitools_exceptions
 from googlecloudsdk.api_lib.services import exceptions
 from googlecloudsdk.api_lib.services import peering
@@ -105,7 +105,7 @@ def CreateValidateVPCHook(ref, args, request):
 
       lookup_result = peering.ListConnections(
           network_project_number, 'servicenetworking.googleapis.com',
-          args.network)
+          os.path.basename(args.network))
     except (exceptions.ListConnectionsPermissionDeniedException,
             apitools_exceptions.HttpError) as e:
       raise ServiceNetworkingException(

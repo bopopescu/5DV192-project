@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2019 Google Inc. All Rights Reserved.
+# Copyright 2019 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ def _SetValuesForTrack(obj, track):
         del obj[track_key]
     # Recursively update all children.
     # Remove them if they don't exist for the track.
-    for key, child in obj.items():
+    for key, child in list(obj.items()):
       try:
         _SetValuesForTrack(child, track)
       except DoesNotExistForTrackError:
@@ -97,7 +97,7 @@ def SeparateDeclarativeCommandTracks(command_impls):
     command_impls = [command_impls]
   for impl in command_impls:
     release_tracks = impl.get(RELEASE_TRACKS, [])
-    if len(release_tracks) <= 1:
+    if not release_tracks:
       yield impl
     else:
       for track in release_tracks:

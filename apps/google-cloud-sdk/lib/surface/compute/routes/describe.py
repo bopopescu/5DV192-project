@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,10 +25,17 @@ from googlecloudsdk.command_lib.compute.routes import flags
 
 
 class Describe(base.DescribeCommand):
-  """Describe a route.
+  r"""Describe a route.
 
   *{command}* displays all data associated with a Google Compute
   Engine route in a project.
+
+  ## EXAMPLES
+
+  To describe a route with the name 'route-name', run:
+
+    $ {command} route-name
+
   """
 
   ROUTE_ARG = None

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
+import json
 from googlecloudsdk.api_lib.util import exceptions as exceptions_util
 from googlecloudsdk.core import exceptions
 
@@ -49,6 +50,11 @@ class DockerVersionError(exceptions.Error):
 
 class AmbiguousContainerError(exceptions.Error):
   """More than one container fits our criteria, we do not know which to run."""
+  pass
+
+
+class CloudSQLError(exceptions.Error):
+  """Malformed instances string for CloudSQL."""
   pass
 
 
@@ -91,16 +97,8 @@ class DomainMappingCreationError(exceptions.Error):
   """An error was encountered during the creation of a domain mapping."""
 
 
-class BadImageError(exceptions_util.HttpException):
-  """Invalid image provided in the revision template."""
-
-  # The relevant field that'll have a violation.
-  IMAGE_ERROR_FIELD = 'spec.revisionTemplate.spec.container.image'
-
-  def __init__(self, http_exception):
-    super(BadImageError, self).__init__(
-        http_exception,
-        '{{field_violations.{}}}'.format(self.IMAGE_ERROR_FIELD))
+class PlatformError(exceptions.Error):
+  """Command not supported for the platform."""
 
 
 class NoTLSError(exceptions.Error):
@@ -110,3 +108,98 @@ class NoTLSError(exceptions.Error):
   to version 2.7.9 or greater; for Python3, please upgrade to version 3.4 or
   greater.
   """
+
+
+class HttpError(exceptions_util.HttpException):
+  """More prettily prints apitools HttpError."""
+
+  def __init__(self, error):
+    super(HttpError, self).__init__(error)
+    if self.payload.field_violations:
+      self.error_format = '\n'.join([
+          '{{field_violations.{}}}'.format(k)
+          for k in self.payload.field_violations.keys()
+      ])
+
+
+class KubernetesError(exceptions.Error):
+  """A generic kubernetes error was encountered."""
+
+
+class UnsupportedOperationError(exceptions.Error):
+  """The requested operation is not supported."""
+  pass
+
+
+class KubernetesExceptionParser(object):
+  """Converts a kubernetes exception to an object."""
+
+  def __init__(self, http_error):
+    """Wraps a generic http error returned by kubernetes.
+
+    Args:
+      http_error: apitools.base.py.exceptions.HttpError, The error to wrap.
+    """
+    self._wrapped_error = http_error
+    self._content = json.loads(http_error.content)
+
+  @property
+  def status_code(self):
+    try:
+      return self._wrapped_error.status_code
+    except KeyError:
+      return None
+
+  @property
+  def url(self):
+    return self._wrapped_error.url
+
+  @property
+  def api_version(self):
+    try:
+      return self._content['apiVersion']
+    except KeyError:
+      return None
+
+  @property
+  def api_name(self):
+    try:
+      return self._content['details']['group']
+    except KeyError:
+      return None
+
+  @property
+  def resource_name(self):
+    try:
+      return self._content['details']['name']
+    except KeyError:
+      return None
+
+  @property
+  def resource_kind(self):
+    try:
+      return self._content['details']['kind']
+    except KeyError:
+      return None
+
+  @property
+  def default_message(self):
+    try:
+      return self._content['message']
+    except KeyError:
+      return None
+
+  @property
+  def error(self):
+    return self._wrapped_error
+
+  @property
+  def causes(self):
+    """Returns list of causes uniqued by the message."""
+    try:
+      messages = {
+          c['message']: c for c in self._content['details'][
+              'causes']}
+      return [messages[k] for k in sorted(messages)]
+    except KeyError:
+      return []

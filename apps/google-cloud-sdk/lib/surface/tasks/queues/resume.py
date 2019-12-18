@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,6 +28,16 @@ from googlecloudsdk.core import log
 
 class Resume(base.Command):
   """Request to resume a paused or disabled queue."""
+  detailed_help = {
+      'DESCRIPTION': """\
+          {description}
+          """,
+      'EXAMPLES': """\
+          To resume a queue:
+
+              $ {command} my-queue
+         """,
+  }
 
   @staticmethod
   def Args(parser):

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
+from googlecloudsdk.command_lib.util.apis.arg_utils import ChoiceToEnumName
+
 
 def ParseNodeTemplate(resources, name, project=None, region=None):
   """Parses a node template resource and returns a resource reference.
@@ -34,3 +36,15 @@ def ParseNodeTemplate(resources, name, project=None, region=None):
   return resources.Parse(
       name, {'project': project, 'region': region},
       collection='compute.nodeTemplates')
+
+
+def BuildAutoscaling(args, messages):
+  """Build NodeGroupAutoscalingPolicy object from args."""
+
+  autoscaling_policy = messages.NodeGroupAutoscalingPolicy(
+      mode=(messages.NodeGroupAutoscalingPolicy.ModeValueValuesEnum(
+          ChoiceToEnumName(args.autoscaler_mode))
+            if args.autoscaler_mode else None),
+      minNodes=args.min_nodes if args.IsSpecified('min_nodes') else None,
+      maxNodes=args.max_nodes if args.IsSpecified('max_nodes') else None)
+  return autoscaling_policy

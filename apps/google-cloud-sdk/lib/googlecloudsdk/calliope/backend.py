@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2013 Google Inc. All Rights Reserved.
+# Copyright 2013 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ from __future__ import division
 from __future__ import unicode_literals
 
 import argparse
+import collections
 import re
 import textwrap
 
@@ -37,9 +38,9 @@ from googlecloudsdk.calliope import parser_arguments
 from googlecloudsdk.calliope import parser_errors
 from googlecloudsdk.calliope import parser_extensions
 from googlecloudsdk.calliope import usage_text
+from googlecloudsdk.calliope.concepts import handlers
 from googlecloudsdk.core import log
 from googlecloudsdk.core import metrics
-from googlecloudsdk.core.util import platforms
 from googlecloudsdk.core.util import text
 import six
 
@@ -406,6 +407,19 @@ class CommandCommon(object):
       # Add parent arguments to the list of all arguments.
       for arg in self._parent_group.ai.arguments:
         self.ai.arguments.append(arg)
+      # Add parent concepts to children, if they aren't represented already
+      if self._parent_group.ai.concept_handler:
+        if not self.ai.concept_handler:
+          self.ai.add_concepts(handlers.RuntimeHandler())
+        # pylint: disable=protected-access
+        for concept_details in self._parent_group.ai.concept_handler._all_concepts:
+          try:
+            self.ai.concept_handler.AddConcept(**concept_details)
+          except handlers.RepeatedConceptName:
+            raise parser_errors.ArgumentException(
+                'repeated concept in {command}: {concept_name}'.format(
+                    command=self.dotted_name,
+                    concept_name=concept_details['name']))
       # Add parent flags to children, if they aren't represented already
       for flag in self._parent_group.GetAllAvailableFlags():
         if flag.is_replicated:
@@ -635,16 +649,6 @@ class CommandGroup(CommandCommon):
     Returns:
       _CommandCommon, The loaded sub element, or None if it did not exist.
     """
-    # TODO(b/71714857): Remove once all surfaces support py3.
-    if not self._common_type._allow_py3:  # pylint: disable=protected-access
-      try:
-        platforms.PythonVersion().IsCompatible(
-            allow_py3=False, raise_exception=True)
-      except platforms.Error:
-        raise exceptions.ToolException(
-            'This command is not yet compatible with Python 3.\n' +
-            platforms.PythonVersion.ENV_VAR_MESSAGE)
-
     name = name.replace('-', '_')
 
     # See if this element has already been loaded.
@@ -719,16 +723,24 @@ class CommandGroup(CommandCommon):
 
   def _GroupSubElementsByCategory(self):
     """Returns dictionary mapping each category to its set of subelements."""
+
+    def _GroupSubElementsOfSameTypeByCategory(elements):
+      """Returns dictionary mapping specific to element type."""
+      categorized_dict = collections.defaultdict(set)
+      for element in elements.values():
+        if element.category:
+          categorized_dict[element.category].add(element)
+        else:
+          categorized_dict[base.UNCATEGORIZED_CATEGORY].add(element)
+      return categorized_dict
+
     self.LoadAllSubElements()
     categories = {}
-    for elements in (self.groups, self.commands):
-      for element in elements.values():
-        category = element.category
-        if category is not None:
-          if category not in categories:
-            categories[category] = set([element])
-          else:
-            categories[category].add(element)
+    categories['command'] = (
+        _GroupSubElementsOfSameTypeByCategory(self.commands))
+    categories['command_group'] = (
+        _GroupSubElementsOfSameTypeByCategory(self.groups))
+
     return categories
 
 

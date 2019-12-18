@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,23 +31,13 @@ from googlecloudsdk.command_lib.compute import scope as compute_scope
 from googlecloudsdk.command_lib.compute.instance_groups import flags as instance_groups_flags
 
 
-@base.ReleaseTracks(base.ReleaseTrack.GA, base.ReleaseTrack.BETA)
+@base.ReleaseTracks(base.ReleaseTrack.GA)
 class ListInstances(base.ListCommand):
   """List Google Compute Engine instances present in managed instance group."""
 
   @staticmethod
   def Args(parser):
-    parser.display_info.AddFormat("""\
-        table(instance.basename():label=NAME,
-              instance.scope().segment(0):label=ZONE,
-              instanceStatus:label=STATUS,
-              currentAction:label=ACTION,
-              version.instanceTemplate.basename():label=INSTANCE_TEMPLATE,
-              version.name:label=VERSION_NAME,
-              lastAttempt.errors.errors.map().format(
-                "Error {0}: {1}", code, message).list(separator=", ")
-                :label=LAST_ERROR
-        )""")
+    instance_groups_flags.AddListInstancesOutputFormat(parser)
     parser.display_info.AddUriFunc(
         instance_groups_utils.UriFuncForListInstanceRelatedObjects)
     instance_groups_flags.MULTISCOPE_INSTANCE_GROUP_MANAGER_ARG.AddArgument(
@@ -124,9 +114,26 @@ ListInstances.detailed_help = {
         group `my-group`, including per-instance overrides, run:
 
             $ {command} \\
-                  my-group --format yaml
+                  my-group --format=yaml
         """
 }
+
+
+@base.ReleaseTracks(base.ReleaseTrack.BETA)
+class ListInstancesBeta(ListInstances):
+  """List Google Compute Engine instances present in managed instance group."""
+
+  @staticmethod
+  def Args(parser):
+    instance_groups_flags.AddListInstancesOutputFormat(
+        parser, release_track=base.ReleaseTrack.BETA)
+    parser.display_info.AddUriFunc(
+        instance_groups_utils.UriFuncForListInstanceRelatedObjects)
+    instance_groups_flags.MULTISCOPE_INSTANCE_GROUP_MANAGER_ARG.AddArgument(
+        parser)
+
+
+ListInstancesBeta.detailed_help = ListInstances.detailed_help
 
 
 @base.ReleaseTracks(base.ReleaseTrack.ALPHA)
@@ -135,22 +142,12 @@ class ListInstancesAlpha(ListInstances):
 
   @staticmethod
   def Args(parser):
-    parser.display_info.AddFormat("""\
-        table(instance.basename():label=NAME,
-              instance.scope().segment(0):label=ZONE,
-              instanceStatus:label=STATUS,
-              instanceHealth[0].detailedHealthState:label=HEALTH_STATE,
-              currentAction:label=ACTION,
-              version.instanceTemplate.basename():label=INSTANCE_TEMPLATE,
-              version.name:label=VERSION_NAME,
-              lastAttempt.errors.errors.map().format(
-                "Error {0}: {1}", code, message).list(separator=", ")
-                :label=LAST_ERROR
-        )""")
+    instance_groups_flags.AddListInstancesOutputFormat(
+        parser, release_track=base.ReleaseTrack.ALPHA)
     parser.display_info.AddUriFunc(
         instance_groups_utils.UriFuncForListInstanceRelatedObjects)
     instance_groups_flags.MULTISCOPE_INSTANCE_GROUP_MANAGER_ARG.AddArgument(
         parser)
 
 
-ListInstancesAlpha.detailed_help = ListInstances.detailed_help
+ListInstancesAlpha.detailed_help = ListInstancesBeta.detailed_help

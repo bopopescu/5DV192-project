@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ class List(base.ListCommand):
     parser.display_info.AddFormat("""
           table(
             service,
-            id:label=VERSION,
+            version.id:label=VERSION.ID,
             traffic_split.format("{0:.2f}", .),
             last_deployed_time.date("%Y-%m-%dT%H:%M:%S%Oz", undefined="-")
               :label=LAST_DEPLOYED,

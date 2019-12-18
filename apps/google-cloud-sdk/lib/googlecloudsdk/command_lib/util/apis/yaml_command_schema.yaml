@@ -1,4 +1,4 @@
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -62,12 +62,14 @@ definitions:
     items:
       type: object
       additionalProperties: false
+      required: [arg_value]
       properties:
         # The choice as it appears on the command line
         # (should be lower-kebab-case).
         arg_value: {type: [string, number, boolean]}
         # The string representation of the API enum value that will be used
-        # when this choice is selected.
+        # when this choice is selected. Default is derived from arg_value by
+        # converting to upper case and replacing hyphens with underscores.
         enum_value: {type: string}
         # The help text to show next to the choice on the man page.
         help_text: {type: string}
@@ -307,7 +309,7 @@ required: [request, help_text, arguments]
 properties:
 
   # Determines whether the command is visible in help text or not.
-  is_hidden: {type: boolean}
+  hidden: {type: boolean}
 
   # Determines which release tracks this command implementation will apply to.
   release_tracks:
@@ -365,11 +367,23 @@ properties:
     properties:
       # The full collection name of the resource the command operates on.
       collection: {type: string}
+      # If true, will disable validating that a resource arg is specified if
+      # the collection requires a params from a resource.
+      disable_resource_check: {type: boolean}
+      # The type of the resource the command operates on to be used for logging.
+      display_resource_type: {type: string}
       # The API version to use, defaults to API set as gcloud default.
       api_version: {type: string}
       # The name of the method to call to perform the operation. Optional if
       # your command is one of the supported command types (not Generic).
       method: {type: string}
+      # The module path to a function to call to modify the API method
+      # to call to perform the operation. The provided or default `method`
+      # will be used to parse the arguments, then this function will be called
+      # with two arguments: a resource ref to the parsed resource and the parsed
+      # args namespace. The returned string will be the method used to create
+      # and issue the request.
+      modify_method_hook: {$ref: "#/definitions/python_hook"}
       # A mapping of method parameter to resource reference field (or '', to use
       # the full method name) for references or APIs that use non-standard
       # naming. For example, if a resource ref has a project, location, and
@@ -483,6 +497,9 @@ properties:
       api_version: {type: string}
       # The API method to call to get the operation ('get' by default).
       method: {type: string}
+      # The message to print when the request is issued. The default depends on
+      # the command type.
+      request_issued_message: {type: string}
       # The field in the operation message that corresponds to the operation's
       # full name ('name' by default). Not used by Wait commands.
       response_name_field: {type: string}
@@ -503,6 +520,16 @@ properties:
       # extract_resource_result is False, this is an attribute on the
       # operation, if True it is on the resource itself.
       result_attribute: {$ref: "#/definitions/attribute"}
+      # The module path to a function to call to modify the API request
+      # before it is invoked. All registered arguments will be processed
+      # into the request, before this is called. This is a function
+      # that takes 3 arguments: a resource ref to the parsed resource,
+      # the parsed args namespace, and the created request. It must return
+      # an apitools request message that will be passed to the API method
+      # defined in this section.
+      modify_request_hooks:
+        type: array
+        items: {$ref: "#/definitions/python_hook"}
       state:
         type: object
         additionalProperties: false
@@ -558,6 +585,8 @@ properties:
           # Set to True if the resource spec is for the parent of the request
           # collection instead of for the collection itself.  This allows for
           # create commands that do not require a name for the new resource.
+          # Set the `resource_type` property on `request` to include the
+          # resource type in log messages.
           is_parent_resource: {type: boolean}
           # The name to use for the resource arg. If set this is the name that
           # will be used for the resource arg in the command. If not set,
@@ -609,6 +638,13 @@ properties:
       params:
         type: array
         items: {$ref: "#/definitions/argument"}
+      labels:
+        type: object
+        additionalProperties: false
+        description: Handles resource labels for resource create/update (go/api-label)
+        required: [api_field]
+        properties:
+          api_field: {type: string}
 
   # Information about how to collect input from the user.
   input:
@@ -627,7 +663,8 @@ properties:
     properties:
       # Corresponds to the default output format setting on the command.
       format: {type: string}
-
+      # Corresponds to the default output flatten setting on the command.
+      flatten: {type: array}
 
   # Additional information for handling the IAM Commands.
   iam:
@@ -648,6 +685,10 @@ properties:
       # The indicator for IAM condition. If True, the command can accept condition
       # as part of a IAM policy binding. Default is False.
       enable_condition: {type: boolean}
+      # Override policy version. Default is None.
+      policy_version: {type: number}
+      # Path to the policy_version field for APIs that use non-standard mapping.
+      get_iam_policy_version_path: {type: string}
 
   # Additional information for handling the update commands.
   update:

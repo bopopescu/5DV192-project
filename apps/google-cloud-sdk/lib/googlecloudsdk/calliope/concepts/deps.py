@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -284,7 +284,7 @@ class FullySpecifiedAnchorFallthrough(_FallthroughBase):
             and other.parameter_name == self.parameter_name)
 
   def __hash__(self):
-    return sum(map(hash, [self.fallthrough, str(self.collection_info),
+    return sum(map(hash, [self.fallthrough, six.text_type(self.collection_info),
                           self.parameter_name]))
 
 

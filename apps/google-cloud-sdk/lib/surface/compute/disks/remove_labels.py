@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -37,11 +37,7 @@ class RemoveLabels(base.UpdateCommand):
 
   @classmethod
   def Args(cls, parser):
-    # Regional disk is in Alpha and Beta only.
-    if cls.ReleaseTrack() == base.ReleaseTrack.GA:
-      cls.DISK_ARG = disks_flags.MakeDiskArg(plural=False)
-    else:
-      cls.DISK_ARG = disks_flags.MakeDiskArgZonalOrRegional(plural=False)
+    cls.DISK_ARG = disks_flags.MakeDiskArg(plural=False)
     cls.DISK_ARG.AddArgument(parser)
     labels_flags.AddArgsForRemoveLabels(parser)
 

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -63,6 +63,17 @@ def _Run(args,
                     base.ReleaseTrack.GA)
 class Update(base.UpdateCommand):
   """Update a device registry."""
+
+  detailed_help = {
+      'DESCRIPTION':
+          '{description}',
+      'EXAMPLES':
+          """\
+        The following command updates the device registry 'my-registry' in region 'us-central1'. It enables MQTT and HTTP connections and sets 'pubsub-topic-name' as the Cloud Pub/Sub topic for state notifications.
+
+          $ {command} my-registry --region=us-central1 --enable-http-config --enable-mqtt-config --state-pubsub-topic=pubsub-topic-name
+        """,
+  }
 
   @staticmethod
   def Args(parser):

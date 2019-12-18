@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -156,9 +156,11 @@ class Converter(completion_cache.Completer):
     else:
       collection = None
       is_fully_qualified = True
-    return str(resources.GRI(reversed(parts),
-                             collection=collection,
-                             is_fully_qualified=is_fully_qualified))
+    return six.text_type(
+        resources.GRI(
+            reversed(parts),
+            collection=collection,
+            is_fully_qualified=is_fully_qualified))
 
   def _FLAGS_RowToString(self, row, parameter_info=None):
     parts = [row[self.columns - 1]]

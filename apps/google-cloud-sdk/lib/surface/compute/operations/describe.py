@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -93,22 +93,22 @@ def DetailedHelp():
   """Construct help text based on the command release track."""
   detailed_help = {
       'brief': 'Describe a Google Compute Engine operation',
-      'DESCRIPTION': """\
+      'DESCRIPTION': """
         *{command}* displays all data associated with a Google Compute
         Engine operation in a project.
         """,
-      'EXAMPLES': """\
+      'EXAMPLES': """
         To get details about a global operation, run:
 
           $ {command} OPERATION --global
 
         To get details about a regional operation, run:
 
-          $ {command} OPERATION --region us-central1
+          $ {command} OPERATION --region=us-central1
 
         To get details about a zonal operation, run:
 
-          $ {command} OPERATION --zone us-central1-a
+          $ {command} OPERATION --zone=us-central1-a
         """,
   }
   return detailed_help

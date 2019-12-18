@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ class Update(base.UpdateCommand, dm_base.DmCommand):
       'EXAMPLES': """\
           To update a type provider, run:
 
-            $ {command} my-type-provider --api-options=my-options.yaml --descriptor-url <descriptor URL> --description "My type."
+            $ {command} my-type-provider --api-options-file=my-options.yaml --descriptor-url=<descriptor URL> --description="My type."
           """,
   }
 
@@ -111,6 +111,6 @@ class Update(base.UpdateCommand, dm_base.DmCommand):
                      self.messages,
                      self.resources,
                      update_request,
-                     args.async,
+                     args.async_,
                      self.client.typeProviders.Update,
                      LogResource)

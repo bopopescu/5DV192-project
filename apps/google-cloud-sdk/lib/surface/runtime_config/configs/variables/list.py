@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2016 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -39,12 +39,12 @@ class List(base.ListCommand):
       'EXAMPLES': """\
           To list all variables within the configuration named "my-config", run:
 
-            $ {command} --config-name my-config
+            $ {command} --config-name=my-config
 
           The --filter parameter can be used to filter results based on content.
           For example, to list all variables under the path 'status/', run:
 
-            $ {command} --config-name my-config --filter 'name=status/*'
+            $ {command} --config-name=my-config --filter='name=status/*'
           """,
   }
 

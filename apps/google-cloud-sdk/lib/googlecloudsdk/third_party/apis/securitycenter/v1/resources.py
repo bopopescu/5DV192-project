@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,6 +31,13 @@ class Collections(enum.Enum):
       [u'organizationsId'],
       True
   )
+  ORGANIZATIONS_ASSETS = (
+      'organizations.assets',
+      'organizations/{organizationsId}/assets/{assetsId}',
+      {},
+      [u'organizationsId', u'assetsId'],
+      True
+  )
   ORGANIZATIONS_OPERATIONS = (
       'organizations.operations',
       '{+name}',
@@ -39,6 +46,24 @@ class Collections(enum.Enum):
               'organizations/{organizationsId}/operations/{operationsId}',
       },
       [u'name'],
+      True
+  )
+  ORGANIZATIONS_SOURCES = (
+      'organizations.sources',
+      '{+name}',
+      {
+          '':
+              'organizations/{organizationsId}/sources/{sourcesId}',
+      },
+      [u'name'],
+      True
+  )
+  ORGANIZATIONS_SOURCES_FINDINGS = (
+      'organizations.sources.findings',
+      'organizations/{organizationsId}/sources/{sourcesId}/findings/'
+      '{findingId}',
+      {},
+      [u'organizationsId', u'sourcesId', u'findingId'],
       True
   )
 

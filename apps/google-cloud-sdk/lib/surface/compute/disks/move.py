@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ class Move(base.SilentCommand):
 
   @staticmethod
   def Args(parser):
-    Move.disk_arg = disks_flags.MakeDiskArg(plural=False)
+    Move.disk_arg = disks_flags.MakeDiskArgZonal(plural=False)
     Move.disk_arg.AddArgument(parser)
 
     parser.add_argument(
@@ -79,7 +79,7 @@ class Move(base.SilentCommand):
         },
         collection='compute.globalOperations')
 
-    if args.async:
+    if args.async_:
       log.UpdatedResource(
           operation_ref,
           kind='disk {0}'.format(target_disk.Name()),
@@ -106,16 +106,18 @@ class Move(base.SilentCommand):
 
 Move.detailed_help = {
     'brief': 'Move a disk between zones',
-    'DESCRIPTION': """\
-        *{command}* facilitates moving a Google Compute Engine disk volume from
-        one zone to another. You cannot move a disk if it is attached to a
-        running or stopped instance; use the gcloud compute instances move
-        command instead.
-
-        For example, running:
-
-           $ gcloud compute disks move example-disk-1 --zone us-central1-b --destination-zone us-central1-f
-
-        will move the disk called example-disk-1, currently running in
-        us-central1-b, to us-central1-f.
-    """}
+    'DESCRIPTION': (
+        '*{command}* facilitates moving a Google Compute Engine disk volume '
+        'from one zone to another. You cannot move a disk if it is attached to '
+        'a running or stopped instance; use the gcloud compute instances move '
+        'command instead.\n\n'
+        'The `gcloud compute disks move` command does not support regional '
+        'persistent disks. See '
+        'https://cloud.google.com/compute/docs/disks/regional-persistent-disk '
+        'for more details.\n'),
+    'EXAMPLES': (
+        'To move the disk called example-disk-1 from us-central1-b to '
+        'us-central1-f, run:\n\n'
+        '  $ {command} example-disk-1 --zone=us-central1-b '
+        '--destination-zone=us-central1-f\n')
+}

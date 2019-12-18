@@ -41,8 +41,6 @@ class SpeechV1p1beta1(base_api.BaseApiClient):
     self.projects_locations_models = self.ProjectsLocationsModelsService(self)
     self.projects_locations_operations = self.ProjectsLocationsOperationsService(self)
     self.projects_locations = self.ProjectsLocationsService(self)
-    self.projects_operations_manualRecognitionTasks = self.ProjectsOperationsManualRecognitionTasksService(self)
-    self.projects_operations = self.ProjectsOperationsService(self)
     self.projects = self.ProjectsService(self)
     self.speech = self.SpeechService(self)
 
@@ -573,55 +571,6 @@ purged, call this method 3 days after last recognition call.
         supports_download=False,
     )
 
-  class ProjectsOperationsManualRecognitionTasksService(base_api.BaseApiService):
-    """Service class for the projects_operations_manualRecognitionTasks resource."""
-
-    _NAME = u'projects_operations_manualRecognitionTasks'
-
-    def __init__(self, client):
-      super(SpeechV1p1beta1.ProjectsOperationsManualRecognitionTasksService, self).__init__(client)
-      self._upload_configs = {
-          }
-
-    def Get(self, request, global_params=None):
-      r"""Gets the latest state of a long-running operation.  Clients can use this.
-method to poll the operation result at intervals as recommended by the API
-service.
-
-      Args:
-        request: (SpeechProjectsOperationsManualRecognitionTasksGetRequest) input message
-        global_params: (StandardQueryParameters, default: None) global arguments
-      Returns:
-        (Operation) The response message.
-      """
-      config = self.GetMethodConfig('Get')
-      return self._RunMethod(
-          config, request, global_params=global_params)
-
-    Get.method_config = lambda: base_api.ApiMethodInfo(
-        flat_path=u'v1p1beta1/projects/{projectsId}/operations/manualRecognitionTasks/{manualRecognitionTasksId}',
-        http_method=u'GET',
-        method_id=u'speech.projects.operations.manualRecognitionTasks.get',
-        ordered_params=[u'name'],
-        path_params=[u'name'],
-        query_params=[],
-        relative_path=u'v1p1beta1/{+name}',
-        request_field='',
-        request_type_name=u'SpeechProjectsOperationsManualRecognitionTasksGetRequest',
-        response_type_name=u'Operation',
-        supports_download=False,
-    )
-
-  class ProjectsOperationsService(base_api.BaseApiService):
-    """Service class for the projects_operations resource."""
-
-    _NAME = u'projects_operations'
-
-    def __init__(self, client):
-      super(SpeechV1p1beta1.ProjectsOperationsService, self).__init__(client)
-      self._upload_configs = {
-          }
-
   class ProjectsService(base_api.BaseApiService):
     """Service class for the projects resource."""
 
@@ -647,6 +596,8 @@ service.
 google.longrunning.Operations interface. Returns either an
 `Operation.error` or an `Operation.response` which contains
 a `LongRunningRecognizeResponse` message.
+For more information on asynchronous speech recognition, see the
+[how-to](https://cloud.google.com/speech-to-text/docs/async-recognize).
 
       Args:
         request: (LongRunningRecognizeRequest) input message

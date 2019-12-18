@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2016 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Provides common arguments for the ML Engine command surface."""
+"""Provides common arguments for the AI Platform command surface."""
 
 from __future__ import absolute_import
 from __future__ import division
@@ -33,8 +33,6 @@ from googlecloudsdk.calliope.concepts import concepts
 from googlecloudsdk.command_lib.iam import completers as iam_completers
 from googlecloudsdk.command_lib.ml_engine import models_util
 from googlecloudsdk.command_lib.util.apis import arg_utils
-from googlecloudsdk.command_lib.util.args import repeated
-from googlecloudsdk.command_lib.util.args import update_util
 from googlecloudsdk.command_lib.util.concepts import concept_parsers
 from googlecloudsdk.core import exceptions
 from googlecloudsdk.core import log
@@ -218,32 +216,7 @@ PACKAGES = base.Argument(
 Path to Python archives used for training. These can be local paths
 (absolute or relative), in which case they will be uploaded to the Cloud
 Storage bucket given by `--staging-bucket`, or Cloud Storage URLs
-(`gs://bucket-name/path/to/package.tar.gz`).
-""")
-# As of Alpha/Beta release, the backend service processes this as a string
-# (despite having only 2 valid values). It is a string here since there is no
-# enum validation but can be refactored if that changes before GA.
-MACHINE_TYPE = base.Argument(
-    '--machine-type',
-    required=False,
-    help="""\
-Type of machine on which to serve the model. Currently only applies to
-online prediction. Currently supported machine_types are:
-
-* `mls1-c1-m2` - A virtual machine with 1 core and 2 Gb RAM (default).
-* `mls1-c4-m2` - A virtual machine with 4 core and 2 Gb RAM.
-""")
-ALPHA_MACHINE_TYPE = base.Argument(
-    '--machine-type',
-    required=False,
-    help="""\
-Type of machine on which to serve the model. Currently only applies to
-online prediction. Currently supported machine_types are:
-
-* `mls1-c1-m2` - A virtual machine with 1 core and 2 Gb RAM (default).
-* `mls1-c4-m2` - A virtual machine with 4 core and 2 Gb RAM.
-* `mls1-highmem-1` - A virtual machine with 1 core and 2 Gb RAM (will be deprecated soon).
-* `mls1-highcpu-4` - A virtual machine with 4 core and 2 Gb RAM (will be deprecated soon).
+('gs://bucket-name/path/to/package.tar.gz').
 """)
 
 
@@ -281,10 +254,11 @@ def GetJobDirFlag(upload_help=True, allow_local=False):
 needed for training.
 
 This path will be passed to your TensorFlow program as the `--job_dir` command-line
-arg. The benefit of specifying this field is that Cloud ML Engine will validate
+arg. The benefit of specifying this field is that AI Platform will validate
 the path for use in training.
-""".format(dir_type=('Google Cloud Storage path' +
-                     (' or local_directory' if allow_local else '')))
+""".format(
+    dir_type=('Google Cloud Storage path' +
+              (' or local_directory' if allow_local else '')))
   if upload_help:
     help_ += """\
 
@@ -296,7 +270,7 @@ will be used instead.
     type_ = str
   else:
     type_ = functools.partial(storage_util.ObjectReference.FromArgument,
-                              allow_empty_object=True)  # pytype: disable=wrong-arg-types
+                              allow_empty_object=True)
   return base.Argument('--job-dir', type=type_, help=help_)
 
 
@@ -319,7 +293,7 @@ VERSION_NAME = base.Argument('version', help='Name of the model version.')
 RUNTIME_VERSION = base.Argument(
     '--runtime-version',
     help=(
-        'Google Cloud ML Engine runtime version for this job. Defaults '
+        'AI Platform runtime version for this job. Defaults '
         'to a stable version, which is defined in documentation along '
         'with the list of supported versions: '
         'https://cloud.google.com/ml-engine/docs/tensorflow/runtime-version-list'  # pylint: disable=line-too-long
@@ -356,13 +330,13 @@ FRAMEWORK_MAPPER = arg_utils.ChoiceEnumMapper(
      GoogleCloudMlV1Version.FrameworkValueValuesEnum),
     custom_mappings=_FRAMEWORK_CHOICES,
     help_str=('The ML framework used to train this version of the model. '
-              'If not specified, defaults to `tensorflow`'))
+              'If not specified, defaults to \'tensorflow\''))
 
 
 def AddPythonVersionFlag(parser, context):
   help_str = (
       'Version of Python used {context}. If not set, the default '
-      'version is 2.7. Python 3.5 is available when `runtime_version` is '
+      'version is 2.7. Python 3.5 is available when `--runtime-version` is '
       'set to 1.4 and above. Python 2.7 works with all supported runtime '
       'versions.').format(context=context)
   version = base.Argument(
@@ -485,80 +459,60 @@ def GetVersionResourceSpec():
 
 
 def AddVersionResourceArg(parser, verb):
-  """Add a resource argument for a Cloud ML Engine version."""
+  """Add a resource argument for an AI Platform version."""
   concept_parsers.ConceptParser.ForResource(
       'version',
       GetVersionResourceSpec(),
-      'The Cloud ML Engine model {}.'.format(verb),
+      'The AI Platform model {}.'.format(verb),
       required=True).AddToParser(parser)
 
 
 def AddUserCodeArgs(parser):
   """Add args that configure user prediction code."""
-  user_code_group = base.ArgumentGroup(
-      help="""\
+  user_code_group = base.ArgumentGroup(help="""\
           Configure user code in prediction.
 
-          Cloud ML Engine allows a model to have user-provided prediction
+          AI Platform allows a model to have user-provided prediction
           code; these options configure that code.
           """)
   user_code_group.AddArgument(base.Argument(
-      '--model-class',
+      '--prediction-class',
       help="""\
-          The fully-qualified name of the custom Model class in the package
+          The fully-qualified name of the custom prediction class in the package
           provided for custom prediction.
 
-          For example, `--model-class my_package.SequenceModel`.
+          For example, `--prediction-class=my_package.SequenceModel`.
           """))
   user_code_group.AddArgument(base.Argument(
       '--package-uris',
       type=arg_parsers.ArgList(),
       metavar='PACKAGE_URI',
       help="""\
-          Comma-separated list of Google Cloud Storage URIs (`gs://...`) for
+          Comma-separated list of Google Cloud Storage URIs ('gs://...') for
           user-supplied Python packages to use.
           """))
   user_code_group.AddToParser(parser)
 
 
-def AddUserCodeUpdateArgs(parser):
-  """Add args that configure user prediction code."""
-  user_code_group = parser.add_group(
-      help="""\
-          Configure user code in prediction.
-
-          Cloud ML Engine allows a model to have user-provided prediction
-          code; these options configure that code.
-          """)
-  repeated.AddPrimitiveArgs(
-      user_code_group, 'version', 'package-uris',
-      'user-supplied packages to use for prediction',
-      additional_help=('The values should be given as a comma-separated list '
-                       'of Google Cloud Storage URIs (`gs://...`).'))
-  update_util.AddClearableField(
-      user_code_group, 'model-class', 'custom Model class', 'version',
-      ('The fully-qualified name of the custom Model class in the package '
-       'provided for custom prediction.\n\n'
-       'For example, `my_package.SequenceModel`.'))
-
-
 def GetAcceleratorFlag():
   return base.Argument(
       '--accelerator',
-      type=arg_parsers.ArgDict(spec={
-          'type': str,
-          'count': int,
-      }, required_keys=['type', 'count']),
+      type=arg_parsers.ArgDict(
+          spec={
+              'type': str,
+              'count': int,
+          }, required_keys=['type', 'count']),
       help="""\
 Manage the accelerator config for GPU serving. When deploying a model with the
-new Alpha Google Compute Engine Machine Types, a GPU accelerator may also be selected.
-You can see what accelerators are supported in what location via the
-'gcloud alpha ml-engine locations list' command.
+new Alpha Google Compute Engine Machine Types, a GPU accelerator may also
+be selected. Accelerator config for version creation is currently available
+in us-central1 only.
 
 *type*::: The type of the accelerator. Choices are {}.
 
 *count*::: The number of accelerators to attach to each machine running the job.
-""".format(', '.join(["'{}'".format(c) for c in _ACCELERATOR_TYPE_MAPPER.choices])))
+""".format(', '.join(
+    ["'{}'".format(c) for c in _OP_ACCELERATOR_TYPE_MAPPER.choices])))
 
 
 def ParseAcceleratorFlag(accelerator):
@@ -585,7 +539,43 @@ The count of the accelerator must be greater than 0.
       type=accelerator_type)
 
 
-def AddCustomContainerFlags(parser):
+def AddExplainabilityFlags(parser):
+  """Add args that configure explainability."""
+  base.ChoiceArgument(
+      '--explanation-method',
+      choices=['integrated-gradients', 'sampled-shapley'],
+      required=False,
+      help_str="""\
+          Enable explanations and select the explanation method to use.
+
+          The valid options are:
+            integrated-gradients: Use Integrated Gradients.
+            sampled-shapley: Use Sampled Shapley.
+      """
+  ).AddToParser(parser)
+  base.Argument(
+      '--num-integral-steps',
+      type=arg_parsers.BoundedInt(1, sys.maxsize, unlimited=True),
+      default=50,
+      required=False,
+      help="""\
+          Number of integral steps for Integrated Gradients. Only valid when
+          `--explanation-method=integrated-gradients` is specified.
+      """
+  ).AddToParser(parser)
+  base.Argument(
+      '--num-paths',
+      type=arg_parsers.BoundedInt(1, sys.maxsize, unlimited=True),
+      default=50,
+      required=False,
+      help="""\
+          Number of paths for Sampled Shapley. Only valid when
+          `--explanation-method=sampled-shapley` is specified.
+      """
+  ).AddToParser(parser)
+
+
+def AddCustomContainerFlags(parser, support_tpu_tf_version=False):
   """Add Custom container flags to parser."""
   GetMasterMachineType().AddToParser(parser)
   GetMasterAccelerator().AddToParser(parser)
@@ -596,6 +586,8 @@ def AddCustomContainerFlags(parser):
   GetWorkerMachineConfig().AddToParser(parser)
   GetWorkerAccelerator().AddToParser(parser)
   GetWorkerImageUri().AddToParser(parser)
+  if support_tpu_tf_version:
+    GetTpuTfVersion().AddToParser(parser)
 
 # Custom Container Flags
 _ACCELERATOR_TYPE_MAPPER = arg_utils.ChoiceEnumMapper(
@@ -604,6 +596,14 @@ _ACCELERATOR_TYPE_MAPPER = arg_utils.ChoiceEnumMapper(
     ).GoogleCloudMlV1AcceleratorConfig.TypeValueValuesEnum,
     help_str='The available types of accelerators.',
     include_filter=lambda x: x != 'ACCELERATOR_TYPE_UNSPECIFIED',
+    required=False)
+
+_OP_ACCELERATOR_TYPE_MAPPER = arg_utils.ChoiceEnumMapper(
+    'generic-accelerator',
+    jobs.GetMessagesModule().GoogleCloudMlV1AcceleratorConfig
+    .TypeValueValuesEnum,
+    help_str='The available types of accelerators.',
+    include_filter=lambda x: x.startswith('NVIDIA'),
     required=False)
 
 _ACCELERATOR_TYPE_HELP = """\
@@ -656,7 +656,7 @@ def GetMasterMachineType():
   help_text = """\
   Specifies the type of virtual machine to use for training job's master worker.
 
-  You must set this value when `scaleTier` is set to `CUSTOM`.
+  You must set this value when `--scale-tier` is set to `CUSTOM`.
   """
   return base.Argument(
       '--master-machine-type', required=False, help=help_text)
@@ -676,7 +676,7 @@ def GetMasterImageUri():
       required=False,
       help=('Docker image to run on each master worker. '
             'This image must be in Google Container Registry. Only one of '
-            '`master-image-uri` and `runtimeVersion` must be specified.'))
+            '`--master-image-uri` and `--runtime-version` must be specified.'))
 
 
 def GetParameterServerMachineTypeConfig():
@@ -684,7 +684,7 @@ def GetParameterServerMachineTypeConfig():
   machine_type = base.Argument(
       '--parameter-server-machine-type',
       required=True,
-      help=('Type of virtual machine to use for training job\'s'
+      help=('Type of virtual machine to use for training job\'s '
             'parameter servers. This flag must be specified if any of the '
             'other arguments in this group are specified machine to use for '
             'training job\'s parameter servers.'))
@@ -717,7 +717,7 @@ def GetParameterServerImageUri():
       required=False,
       help=('Docker image to run on each parameter server. '
             'This image must be in Google Container Registry. If not '
-            'specified, the value of `master-image-uri` is used.'))
+            'specified, the value of `--master-image-uri` is used.'))
 
 
 def GetWorkerMachineConfig():
@@ -730,10 +730,10 @@ def GetWorkerMachineConfig():
             'job\'s worker nodes.'))
 
   machine_count = base.Argument(
-      '--worker-server-count',
+      '--worker-count',
       type=arg_parsers.BoundedInt(1, sys.maxsize, unlimited=True),
       required=True,
-      help=('The number of worker nodes to use for the training job.'))
+      help='The number of worker nodes to use for the training job.')
 
   machine_type_group = base.ArgumentGroup(
       required=False,
@@ -757,4 +757,23 @@ def GetWorkerImageUri():
       required=False,
       help=('Docker image to run on each worker node. '
             'This image must be in Google Container Registry. If not '
-            'specified, the value of `master-image-uri` is used.'))
+            'specified, the value of `--master-image-uri` is used.'))
+
+
+def GetTpuTfVersion():
+  """Build tpu-tf-version flag."""
+  return base.Argument(
+      '--tpu-tf-version',
+      required=False,
+      help=('Runtime version of TensorFlow used by the container. This field '
+            'must be specified if a custom container on the TPU worker is '
+            'being used.'))
+
+
+def AddMachineTypeFlagToParser(parser):
+  base.Argument(
+      '--machine-type',
+      help="""\
+Type of machine on which to serve the model. Currently only applies to online prediction. For available machine types,
+see https://cloud.google.com/ml-engine/docs/tensorflow/online-predict#machine-types.
+""").AddToParser(parser)

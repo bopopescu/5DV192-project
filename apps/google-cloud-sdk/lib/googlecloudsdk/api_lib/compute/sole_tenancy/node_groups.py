@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -68,6 +68,18 @@ class NodeGroupsClient(object):
         zone=node_group_ref.zone)
     return self._service.DeleteNodes(request)
 
+  def Patch(self, node_group_ref, args):
+    """Sets the autoscaling policy on a node group."""
+    autoscaling_policy_ref = util.BuildAutoscaling(args, self.messages)
+    set_request = self.messages.NodeGroup(
+        autoscalingPolicy=autoscaling_policy_ref)
+    request = self.messages.ComputeNodeGroupsPatchRequest(
+        nodeGroupResource=set_request,
+        nodeGroup=node_group_ref.Name(),
+        project=node_group_ref.project,
+        zone=node_group_ref.zone)
+    return self._service.Patch(request)
+
   def _GetOperationsRef(self, operation):
     return self.resources.Parse(operation.selfLink,
                                 collection='compute.zoneOperations')
@@ -81,11 +93,13 @@ class NodeGroupsClient(object):
              node_group_ref,
              node_template=None,
              additional_node_count=None,
-             delete_nodes=None):
+             delete_nodes=None,
+             autoscaling_policy_args=None):
     """Updates a Compute Node Group."""
     set_node_template_ref = None
     add_nodes_ref = None
     delete_nodes_ref = None
+    autoscaling_policy_ref = None
 
     if node_template:
       operation = self.SetNodeTemplate(node_group_ref, node_template)
@@ -98,6 +112,10 @@ class NodeGroupsClient(object):
     if delete_nodes:
       operation = self.DeleteNodes(node_group_ref, delete_nodes)
       delete_nodes_ref = self._GetOperationsRef(operation)
+
+    if autoscaling_policy_args:
+      operation = self.Patch(node_group_ref, autoscaling_policy_args)
+      autoscaling_policy_ref = self._GetOperationsRef(operation)
 
     node_group_name = node_group_ref.Name()
     operation_poller = poller.Poller(self._service)
@@ -116,4 +134,21 @@ class NodeGroupsClient(object):
         'Deleting nodes [{0}] in [{1}].'.format(
             deleted_nodes_str, node_group_name)) or result
 
+    autoscaling_policy_str_list = []
+    if autoscaling_policy_args:
+      if autoscaling_policy_args.autoscaler_mode:
+        mode_str = 'autoscaler-mode={0}'.format(
+            autoscaling_policy_args.autoscaler_mode)
+        autoscaling_policy_str_list.append(mode_str)
+      if autoscaling_policy_args.IsSpecified('min_nodes'):
+        min_str = 'min-nodes={0}'.format(autoscaling_policy_args.min_nodes)
+        autoscaling_policy_str_list.append(min_str)
+      if autoscaling_policy_args.IsSpecified('max_nodes'):
+        max_str = 'max-nodes={0}'.format(autoscaling_policy_args.max_nodes)
+        autoscaling_policy_str_list.append(max_str)
+    autoscaling_policy_str = ','.join(autoscaling_policy_str_list)
+    result = self._WaitForResult(
+        operation_poller, autoscaling_policy_ref,
+        'Updating autoscaling policy on [{0}] to [{1}].'.format(
+            node_group_name, autoscaling_policy_str)) or result
     return result

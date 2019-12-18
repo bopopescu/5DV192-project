@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,7 +26,4 @@ from __future__ import unicode_literals
 
 SCRIPTS = (
     # Each element is a (comment, script) tuple.
-    ('Cloud SDK reference documentation consumer survey snippet.',
-     '<script async="" defer="" src="//www.google.com/insights/consumersurveys/'
-     'async_survey?site=szsb56j6kyilrquqs4stl4ugq4"></script>'),
     )

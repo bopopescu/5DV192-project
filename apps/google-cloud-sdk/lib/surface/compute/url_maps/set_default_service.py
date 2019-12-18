@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,16 +20,28 @@ from __future__ import division
 from __future__ import unicode_literals
 
 from apitools.base.py import encoding
-
 from googlecloudsdk.api_lib.compute import base_classes
 from googlecloudsdk.calliope import base
-from googlecloudsdk.command_lib.compute.backend_buckets import (
-    flags as backend_bucket_flags)
-from googlecloudsdk.command_lib.compute.backend_services import (
-    flags as backend_service_flags)
+from googlecloudsdk.command_lib.compute import scope as compute_scope
+from googlecloudsdk.command_lib.compute.backend_buckets import flags as backend_bucket_flags
+from googlecloudsdk.command_lib.compute.backend_services import flags as backend_service_flags
 from googlecloudsdk.command_lib.compute.url_maps import flags
 from googlecloudsdk.command_lib.compute.url_maps import url_maps_utils
 from googlecloudsdk.core import log
+
+
+def _DetailedHelp():
+  return {
+      'brief':
+          'Change the default service or default bucket of a URL map.',
+      'DESCRIPTION':
+          """\
+      *{command}* is used to change the default service or default
+      bucket of a URL map. The default service or default bucket is
+      used for any requests for which there is no mapping in the
+      URL map.
+      """,
+  }
 
 
 def _Args(parser):
@@ -44,96 +56,99 @@ def _Args(parser):
             'URL map has no mappings.'))
 
 
-@base.ReleaseTracks(base.ReleaseTrack.GA, base.ReleaseTrack.BETA)
+def _GetGetRequest(client, url_map_ref):
+  """Returns the request for the existing URL map resource."""
+  return (client.apitools_client.urlMaps, 'Get',
+          client.messages.ComputeUrlMapsGetRequest(
+              urlMap=url_map_ref.Name(), project=url_map_ref.project))
+
+
+def _GetSetRequest(client, url_map_ref, replacement):
+  return (client.apitools_client.urlMaps, 'Update',
+          client.messages.ComputeUrlMapsUpdateRequest(
+              urlMap=url_map_ref.Name(),
+              urlMapResource=replacement,
+              project=url_map_ref.project))
+
+
+def _Modify(resources, args, url_map, url_map_ref, backend_bucket_arg,
+            backend_service_arg):
+  """Returns a modified URL map message."""
+  replacement = encoding.CopyProtoMessage(url_map)
+
+  if args.default_service:
+    default_backend_uri = url_maps_utils.ResolveUrlMapDefaultService(
+        args, backend_service_arg, url_map_ref, resources).SelfLink()
+  else:
+    default_backend_uri = backend_bucket_arg.ResolveAsResource(
+        args, resources).SelfLink()
+
+  replacement.defaultService = default_backend_uri
+
+  return replacement
+
+
+def _GetRegionalGetRequest(client, url_map_ref):
+  """Returns the request to get an existing regional URL map resource."""
+  return (client.apitools_client.regionUrlMaps, 'Get',
+          client.messages.ComputeRegionUrlMapsGetRequest(
+              urlMap=url_map_ref.Name(),
+              project=url_map_ref.project,
+              region=url_map_ref.region))
+
+
+def _GetRegionalSetRequest(client, url_map_ref, replacement):
+  """Returns the request to update an existing regional URL map resource."""
+  return (client.apitools_client.regionUrlMaps, 'Update',
+          client.messages.ComputeRegionUrlMapsUpdateRequest(
+              urlMap=url_map_ref.Name(),
+              urlMapResource=replacement,
+              project=url_map_ref.project,
+              region=url_map_ref.region))
+
+
+def _Run(args, holder, backend_bucket_arg, backend_service_arg, url_map_arg):
+  """Issues requests necessary to set the default service of URL maps."""
+  client = holder.client
+
+  url_map_ref = url_map_arg.ResolveAsResource(
+      args, holder.resources, default_scope=compute_scope.ScopeEnum.GLOBAL)
+  if url_maps_utils.IsRegionalUrlMapRef(url_map_ref):
+    get_request = _GetRegionalGetRequest(client, url_map_ref)
+  else:
+    get_request = _GetGetRequest(client, url_map_ref)
+
+  old_url_map = client.MakeRequests([get_request])
+
+  modified_url_map = _Modify(holder.resources, args, old_url_map[0],
+                             url_map_ref, backend_bucket_arg,
+                             backend_service_arg)
+
+  # If existing object is equal to the proposed object or if
+  # _Modify() returns None, then there is no work to be done, so we
+  # print the resource and return.
+  if old_url_map[0] == modified_url_map:
+    log.status.Print('No change requested; skipping update for [{0}].'.format(
+        old_url_map[0].name))
+    return old_url_map
+
+  if url_maps_utils.IsRegionalUrlMapRef(url_map_ref):
+    set_request = _GetRegionalSetRequest(client, url_map_ref, modified_url_map)
+  else:
+    set_request = _GetSetRequest(client, url_map_ref, modified_url_map)
+
+  return client.MakeRequests([set_request])
+
+
+@base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA,
+                    base.ReleaseTrack.GA)
 class SetDefaultService(base.UpdateCommand):
-  """Change the default service or default bucket of a URL map.
+  """Change the default service or default bucket of a URL map."""
 
-  *{command}* is used to change the default service or default
-  bucket of a URL map. The default service or default bucket is
-  used for any requests for which there is no mapping in the
-  URL map.
-  """
+  # TODO(b/144022508): Remove _include_l7_internal_load_balancing
+  _include_l7_internal_load_balancing = True
 
-  BACKEND_BUCKET_ARG = None
-  BACKEND_SERVICE_ARG = None
-  URL_MAP_ARG = None
-
-  @classmethod
-  def Args(cls, parser):
-    cls.BACKEND_BUCKET_ARG = (
-        backend_bucket_flags.BackendBucketArgumentForUrlMap(required=False))
-    cls.BACKEND_SERVICE_ARG = (
-        backend_service_flags.BackendServiceArgumentForUrlMap(required=False))
-    cls.URL_MAP_ARG = flags.UrlMapArgument()
-    cls.URL_MAP_ARG.AddArgument(parser)
-
-    _Args(parser)
-
-  def _GetGetRequest(self, client, url_map_ref):
-    """Returns the request for the existing URL map resource."""
-    return (client.apitools_client.urlMaps,
-            'Get',
-            client.messages.ComputeUrlMapsGetRequest(
-                urlMap=url_map_ref.Name(),
-                project=url_map_ref.project))
-
-  def _GetSetRequest(self, client, url_map_ref, replacement):
-    return (client.apitools_client.urlMaps,
-            'Update',
-            client.messages.ComputeUrlMapsUpdateRequest(
-                urlMap=url_map_ref.Name(),
-                urlMapResource=replacement,
-                project=url_map_ref.project))
-
-  def Modify(self, resources, args, url_map, url_map_ref):
-    """Returns a modified URL map message."""
-    replacement = encoding.CopyProtoMessage(url_map)
-
-    if args.default_service:
-      default_backend_uri = url_maps_utils.ResolveUrlMapDefaultService(
-          args, self.BACKEND_SERVICE_ARG, url_map_ref, resources).SelfLink()
-    else:
-      default_backend_uri = self.BACKEND_BUCKET_ARG.ResolveAsResource(
-          args, resources).SelfLink()
-
-    replacement.defaultService = default_backend_uri
-
-    return replacement
-
-  def Run(self, args):
-    holder = base_classes.ComputeApiHolder(self.ReleaseTrack())
-    client = holder.client
-
-    url_map_ref = self.URL_MAP_ARG.ResolveAsResource(args, holder.resources)
-    get_request = self._GetGetRequest(client, url_map_ref)
-
-    objects = client.MakeRequests([get_request])
-
-    new_object = self.Modify(holder.resources, args, objects[0], url_map_ref)
-
-    # If existing object is equal to the proposed object or if
-    # Modify() returns None, then there is no work to be done, so we
-    # print the resource and return.
-    if objects[0] == new_object:
-      log.status.Print(
-          'No change requested; skipping update for [{0}].'.format(
-              objects[0].name))
-      return objects
-
-    return client.MakeRequests(
-        [self._GetSetRequest(client, url_map_ref, new_object)])
-
-
-@base.ReleaseTracks(base.ReleaseTrack.ALPHA)
-class SetDefaultServiceAlpha(SetDefaultService):
-  """Change the default service or default bucket of a URL map.
-
-  *{command}* is used to change the default service or default
-  bucket of a URL map. The default service or default bucket is
-  used for any requests for which there is no mapping in the
-  URL map.
-  """
-
+  detailed_help = _DetailedHelp()
   BACKEND_BUCKET_ARG = None
   BACKEND_SERVICE_ARG = None
   URL_MAP_ARG = None
@@ -144,56 +159,17 @@ class SetDefaultServiceAlpha(SetDefaultService):
         backend_bucket_flags.BackendBucketArgumentForUrlMap(required=False))
     cls.BACKEND_SERVICE_ARG = (
         backend_service_flags.BackendServiceArgumentForUrlMap(
-            required=False, include_alpha=True))
-    cls.URL_MAP_ARG = flags.UrlMapArgument(include_alpha=True)
+            required=False,
+            include_l7_internal_load_balancing=cls
+            ._include_l7_internal_load_balancing))
+    cls.URL_MAP_ARG = flags.UrlMapArgument(
+        include_l7_internal_load_balancing=cls
+        ._include_l7_internal_load_balancing)
     cls.URL_MAP_ARG.AddArgument(parser)
 
     _Args(parser)
 
-  def _GetRegionalGetRequest(self, client, url_map_ref):
-    """Returns the request to get an existing regional URL map resource."""
-    return (client.apitools_client.regionUrlMaps, 'Get',
-            client.messages.ComputeRegionUrlMapsGetRequest(
-                urlMap=url_map_ref.Name(),
-                project=url_map_ref.project,
-                region=url_map_ref.region))
-
-  def _GetRegionalSetRequest(self, client, url_map_ref, replacement):
-    """Returns the request to update an existing regional URL map resource."""
-    return (client.apitools_client.regionUrlMaps, 'Update',
-            client.messages.ComputeRegionUrlMapsUpdateRequest(
-                urlMap=url_map_ref.Name(),
-                urlMapResource=replacement,
-                project=url_map_ref.project,
-                region=url_map_ref.region))
-
   def Run(self, args):
     holder = base_classes.ComputeApiHolder(self.ReleaseTrack())
-    client = holder.client
-
-    url_map_ref = self.URL_MAP_ARG.ResolveAsResource(args, holder.resources)
-    if url_maps_utils.IsRegionalUrlMapRef(url_map_ref):
-      get_request = self._GetRegionalGetRequest(client, url_map_ref)
-    else:
-      get_request = self._GetGetRequest(client, url_map_ref)
-
-    old_url_map = client.MakeRequests([get_request])
-
-    modified_url_map = self.Modify(holder.resources, args, old_url_map[0],
-                                   url_map_ref)
-
-    # If existing object is equal to the proposed object or if
-    # Modify() returns None, then there is no work to be done, so we
-    # print the resource and return.
-    if old_url_map[0] == modified_url_map:
-      log.status.Print('No change requested; skipping update for [{0}].'.format(
-          old_url_map[0].name))
-      return old_url_map
-
-    if url_maps_utils.IsRegionalUrlMapRef(url_map_ref):
-      set_request = self._GetRegionalSetRequest(client, url_map_ref,
-                                                modified_url_map)
-    else:
-      set_request = self._GetSetRequest(client, url_map_ref, modified_url_map)
-
-    return client.MakeRequests([set_request])
+    return _Run(args, holder, self.BACKEND_BUCKET_ARG, self.BACKEND_SERVICE_ARG,
+                self.URL_MAP_ARG)

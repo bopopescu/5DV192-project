@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,12 +20,10 @@ from __future__ import division
 from __future__ import unicode_literals
 
 from googlecloudsdk.api_lib.dataproc import util
-from googlecloudsdk.calliope import base
 from googlecloudsdk.command_lib.dataproc.jobs import spark
 from googlecloudsdk.command_lib.dataproc.jobs import submitter
 
 
-@base.ReleaseTracks(base.ReleaseTrack.GA)
 class Spark(spark.SparkBase, submitter.JobSubmitter):
   # pylint: disable=line-too-long
   r"""Submit a Spark job to a cluster.
@@ -36,18 +34,18 @@ class Spark(spark.SparkBase, submitter.JobSubmitter):
 
   To submit a Spark job that runs the main class of a jar, run:
 
-    $ {command} --cluster my_cluster --jar my_jar.jar -- arg1 arg2
+    $ {command} --cluster=my_cluster --region=us-central1 --jar=my_jar.jar -- arg1 arg2
 
   To submit a Spark job that runs a specific class of a jar, run:
 
-    $ {command} --cluster my_cluster --class org.my.main.Class \
-        --jars my_jar1.jar,my_jar2.jar -- arg1 arg2
+    $ {command} --cluster=my_cluster --region=us-central1 --class=org.my.main.Class \
+        --jars=my_jar1.jar,my_jar2.jar -- arg1 arg2
 
   To submit a Spark job that runs a jar that is already on the cluster, run:
 
-    $ {command} --cluster my_cluster \
-        --class org.apache.spark.examples.SparkPi \
-        --jars file:///usr/lib/spark/examples/jars/spark-examples.jar \
+    $ {command} --cluster=my_cluster --region=us-central1 \
+        --class=org.apache.spark.examples.SparkPi \
+        --jars=file:///usr/lib/spark/examples/jars/spark-examples.jar \
         -- 1000
   """
   # pylint: enable=line-too-long
@@ -64,40 +62,3 @@ class Spark(spark.SparkBase, submitter.JobSubmitter):
                                  self.BuildLoggingConfig(
                                      messages, args.driver_log_levels), args)
     submitter.JobSubmitter.ConfigureJob(messages, job, args)
-
-
-@base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA)
-class SparkBeta(spark.SparkBase, submitter.JobSubmitterBeta):
-  # pylint: disable=line-too-long
-  """Submit a Spark job to a cluster.
-
-  Submit a Spark job to a cluster.
-
-  ## EXAMPLES
-
-  To submit a Spark job that runs the main class of a jar, run:
-
-    $ {command} --cluster my_cluster --jar my_jar.jar arg1 arg2
-
-  To submit a Spark job that runs a specific class of a jar, run:
-
-    $ {command} --cluster my_cluster --class org.my.main.Class --jars my_jar1.jar,my_jar2.jar arg1 arg2
-
-  To submit a Spark job that runs a jar that is already on the cluster, run:
-
-    $ {command} --cluster my_cluster --class org.apache.spark.examples.SparkPi --jars file:///usr/lib/spark/examples/jars/spark-examples.jar -- 1000
-  """
-  # pylint: enable=line-too-long
-
-  @staticmethod
-  def Args(parser):
-    spark.SparkBase.Args(parser)
-    submitter.JobSubmitterBeta.Args(parser)
-    driver_group = parser.add_argument_group(required=True, mutex=True)
-    util.AddJvmDriverFlags(driver_group)
-
-  def ConfigureJob(self, messages, job, args):
-    spark.SparkBase.ConfigureJob(messages, job, self.files_by_type,
-                                 self.BuildLoggingConfig(
-                                     messages, args.driver_log_levels), args)
-    submitter.JobSubmitterBeta.ConfigureJob(messages, job, args)

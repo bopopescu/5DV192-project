@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2016 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ DETAILED_HELP = {
         To turn on node auto repair in "node-pool-1" in the cluster
         "sample-cluster", run:
 
-          $ {command} node-pool-1 --cluster=example-cluster --enable-autoupgrade
+          $ {command} node-pool-1 --cluster=sample-cluster --enable-autoupgrade
         """,
 }
 
@@ -67,15 +67,23 @@ class Update(base.UpdateCommand):
   @staticmethod
   def Args(parser):
     _Args(parser)
-    node_management_group = parser.add_argument_group(
-        'Node management', required=True)
+    group = parser.add_mutually_exclusive_group(required=True)
+
+    node_management_group = group.add_argument_group('Node management')
     flags.AddEnableAutoRepairFlag(node_management_group, for_node_pool=True)
     flags.AddEnableAutoUpgradeFlag(node_management_group, for_node_pool=True)
+
+    autoscaling_group = flags.AddClusterAutoscalingFlags(group, hidden=False)
+    flags.AddNodePoolAutoprovisioningFlag(autoscaling_group, hidden=False)
 
   def ParseUpdateNodePoolOptions(self, args):
     return api_adapter.UpdateNodePoolOptions(
         enable_autorepair=args.enable_autorepair,
-        enable_autoupgrade=args.enable_autoupgrade)
+        enable_autoupgrade=args.enable_autoupgrade,
+        enable_autoscaling=args.enable_autoscaling,
+        max_nodes=args.max_nodes,
+        min_nodes=args.min_nodes,
+        enable_autoprovisioning=args.enable_autoprovisioning)
 
   def Run(self, args):
     """This is what gets called when the user runs this command.
@@ -101,10 +109,6 @@ class Update(base.UpdateCommand):
           messages.AutoUpdateUpgradeRepairMessage(options.enable_autorepair,
                                                   'autorepair'))
 
-    if options.enable_autoupgrade is not None:
-      log.status.Print(
-          messages.AutoUpdateUpgradeRepairMessage(options.enable_autoupgrade,
-                                                  'autoupgrade'))
     try:
       operation_ref = adapter.UpdateNodePool(pool_ref, options)
 
@@ -128,20 +132,35 @@ class UpdateBeta(Update):
   def Args(parser):
     _Args(parser)
     group = parser.add_mutually_exclusive_group(required=True)
+
     node_management_group = group.add_argument_group('Node management')
     flags.AddEnableAutoRepairFlag(node_management_group, for_node_pool=True)
     flags.AddEnableAutoUpgradeFlag(node_management_group, for_node_pool=True)
+
     autoscaling_group = flags.AddClusterAutoscalingFlags(group, hidden=False)
-    flags.AddNodePoolAutoprovisioningFlag(autoscaling_group, hidden=True)
+    flags.AddNodePoolAutoprovisioningFlag(autoscaling_group, hidden=False)
+
+    surge_upgrade_group = group.add_argument_group('Upgrade settings')
+    flags.AddSurgeUpgradeFlag(surge_upgrade_group, for_node_pool=True)
+    flags.AddMaxUnavailableUpgradeFlag(surge_upgrade_group, for_node_pool=True)
+
+    flags.AddWorkloadMetadataFromNodeFlag(group)
+
+    flags.AddNodePoolLocationsFlag(group)
 
   def ParseUpdateNodePoolOptions(self, args):
+    flags.ValidateSurgeUpgradeSettings(args)
     ops = api_adapter.UpdateNodePoolOptions(
         enable_autorepair=args.enable_autorepair,
         enable_autoupgrade=args.enable_autoupgrade,
         enable_autoscaling=args.enable_autoscaling,
         max_nodes=args.max_nodes,
         min_nodes=args.min_nodes,
-        enable_autoprovisioning=args.enable_autoprovisioning)
+        enable_autoprovisioning=args.enable_autoprovisioning,
+        workload_metadata_from_node=args.workload_metadata_from_node,
+        node_locations=args.node_locations,
+        max_surge_upgrade=args.max_surge_upgrade,
+        max_unavailable_upgrade=args.max_unavailable_upgrade)
     return ops
 
 
@@ -153,20 +172,35 @@ class UpdateAlpha(Update):
   def Args(parser):
     _Args(parser)
     group = parser.add_mutually_exclusive_group(required=True)
+
     node_management_group = group.add_argument_group('Node management')
     flags.AddEnableAutoRepairFlag(node_management_group, for_node_pool=True)
     flags.AddEnableAutoUpgradeFlag(node_management_group, for_node_pool=True)
+
     autoscaling_group = flags.AddClusterAutoscalingFlags(group, hidden=False)
-    flags.AddNodePoolAutoprovisioningFlag(autoscaling_group, hidden=True)
+    flags.AddNodePoolAutoprovisioningFlag(autoscaling_group, hidden=False)
+
+    surge_upgrade_group = group.add_argument_group('Upgrade settings')
+    flags.AddSurgeUpgradeFlag(surge_upgrade_group, for_node_pool=True)
+    flags.AddMaxUnavailableUpgradeFlag(surge_upgrade_group, for_node_pool=True)
+
+    flags.AddWorkloadMetadataFromNodeFlag(group)
+
+    flags.AddNodePoolLocationsFlag(group)
 
   def ParseUpdateNodePoolOptions(self, args):
+    flags.ValidateSurgeUpgradeSettings(args)
     ops = api_adapter.UpdateNodePoolOptions(
         enable_autorepair=args.enable_autorepair,
         enable_autoupgrade=args.enable_autoupgrade,
         enable_autoscaling=args.enable_autoscaling,
         max_nodes=args.max_nodes,
         min_nodes=args.min_nodes,
-        enable_autoprovisioning=args.enable_autoprovisioning)
+        enable_autoprovisioning=args.enable_autoprovisioning,
+        workload_metadata_from_node=args.workload_metadata_from_node,
+        node_locations=args.node_locations,
+        max_surge_upgrade=args.max_surge_upgrade,
+        max_unavailable_upgrade=args.max_unavailable_upgrade)
     return ops
 
 

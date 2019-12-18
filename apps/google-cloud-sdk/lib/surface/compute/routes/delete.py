@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,9 +27,21 @@ from googlecloudsdk.command_lib.compute.routes import flags
 
 
 class Delete(base.DeleteCommand):
-  """Delete routes.
+  r"""Delete routes.
 
   *{command}* deletes one or more Google Compute Engine routes.
+
+  ## EXAMPLES
+
+  To delete a route with the name 'route-name', run:
+
+    $ {command} route-name
+
+  To delete two routes with the names 'route-name1' and 'route-name2',
+  run:
+
+    $ {command} route-name1 route-name2
+
   """
 
   ROUTE_ARG = None

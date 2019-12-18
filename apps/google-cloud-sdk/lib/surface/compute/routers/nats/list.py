@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -55,4 +55,10 @@ AlphaList.detailed_help = {
         textwrap.dedent("""\
         *{command}* is used to list the NATs on a Google Compute Engine router.
      """),
+    'EXAMPLES':
+    """\
+    To list all NATs in router ``r1'' in region ``us-central1'', run:
+
+        $ {command} --router=r1 --region=us-central1.
+    """
 }

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ from __future__ import division
 from __future__ import unicode_literals
 
 from googlecloudsdk.api_lib.dataproc import dataproc as dp
-from googlecloudsdk.api_lib.dataproc import util
 from googlecloudsdk.calliope import base
 from googlecloudsdk.command_lib.dataproc import flags
 from googlecloudsdk.command_lib.iam import iam_util
@@ -36,9 +35,10 @@ class SetIamPolicy(base.Command):
 
   detailed_help = iam_util.GetDetailedHelpForSetIamPolicy('job')
 
-  @staticmethod
-  def Args(parser):
-    flags.AddJobFlag(parser, 'set the policy on')
+  @classmethod
+  def Args(cls, parser):
+    dataproc = dp.Dataproc(cls.ReleaseTrack())
+    flags.AddJobResourceArg(parser, 'set the policy on', dataproc.api_version)
     iam_util.AddArgForPolicyFile(parser)
 
   def Run(self, args):
@@ -48,7 +48,7 @@ class SetIamPolicy(base.Command):
     policy = iam_util.ParsePolicyFile(args.policy_file, msgs.Policy)
     set_iam_policy_request = msgs.SetIamPolicyRequest(policy=policy)
 
-    job = util.ParseJob(args.job, dataproc)
+    job = args.CONCEPTS.job.Parse()
     request = msgs.DataprocProjectsRegionsJobsSetIamPolicyRequest(
         resource=job.RelativeName(),
         setIamPolicyRequest=set_iam_policy_request)

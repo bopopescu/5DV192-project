@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2016 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -44,11 +44,11 @@ class Report(base.Command):
 
   To report an error, run:
 
-    $ {command} --service service-name --message error-message
+    $ {command} --service=SERVICE_NAME --message="Error message"
 
   or:
 
-    $ {command} --service service-name --message-file error-message.ext.
+    $ {command} --service=SERVICE_NAME --message-file=ERROR_MESSAGE.EXT
   """
 
   @staticmethod

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,8 +14,6 @@
 # limitations under the License.
 
 """A class for parsing a resource projection expression."""
-# TODO(b/113319639): Temporary skip to get pytype enabled.
-# pytype: skip-file
 
 from __future__ import absolute_import
 from __future__ import division
@@ -139,18 +137,18 @@ class Parser(object):
         options = ', [{0}]'.format('|'.join(option))
       else:
         options = ''
-      return (
-          '({flag}, {order}, {label}, {align}, {active}, {wrap},'
-          ' {transform}{options})'.format(
-              flag=self.flag,
-              order=('UNORDERED' if self.order is None else str(self.order)),
-              label=(self.label if self.label is None
-                     else "'" + self.label + "'"),
-              align=self.align,
-              active=self.transform.active if self.transform else None,
-              wrap=self.wrap,
-              transform=self.transform,
-              options=options))
+      return ('({flag}, {order}, {label}, {align}, {active}, {wrap},'
+              ' {transform}{options})'.format(
+                  flag=self.flag,
+                  order=('UNORDERED'
+                         if self.order is None else six.text_type(self.order)),
+                  label=(self.label if self.label is None else "'" +
+                         self.label + "'"),
+                  align=self.align,
+                  active=self.transform.active if self.transform else None,
+                  wrap=self.wrap,
+                  transform=self.transform,
+                  options=options))
 
   def _AngrySnakeCase(self, key):
     """Returns an ANGRY_SNAKE_CASE string representation of a parsed key.
@@ -318,7 +316,7 @@ class Parser(object):
       ExpressionSyntaxError: The expression has a syntax error.
     """
     while True:
-      name = self._lex.Token('=:,)', space=False)  # type: str
+      name = self._lex.Token('=:,)', space=False)
       here = self._lex.GetPosition()
       if self._lex.IsCharacter('=', eoi_ok=True):
         boolean_value = False
@@ -383,7 +381,7 @@ class Parser(object):
       add_transform = self._lex.Transform(key.pop(), self._projection.active)
     else:
       add_transform = None
-    if attribute and not key:
+    if attribute:
       attribute = copy.copy(attribute)
     else:
       attribute = self._Attribute(self._projection.PROJECT)
@@ -446,7 +444,7 @@ class Parser(object):
       ExpressionSyntaxError: The expression has a syntax error.
     """
     while True:
-      name = self._lex.Token('=,])', space=False)  # type: str
+      name = self._lex.Token('=,])', space=False)
       if name:
         if self._lex.IsCharacter('='):
           value = self._lex.Token(',])', space=False, convert=True)
@@ -503,7 +501,7 @@ class Parser(object):
           self.__key_order_offset = 0
         else:
           here = self._lex.GetPosition()
-          name = self._lex.Token(':([')  # type: str
+          name = self._lex.Token(':([')
           if not name.isalpha():
             raise resource_exceptions.ExpressionSyntaxError(
                 'Name expected [{0}].'.format(self._lex.Annotate(here)))

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -59,5 +59,11 @@ AlphaDescribe.detailed_help = {
     'DESCRIPTION':
         textwrap.dedent("""
         *{command}* is used to describe a NAT in a Google Compute Engine router.
-    """)
+    """),
+    'EXAMPLES':
+    """\
+    To describe NAT 'n1' in router 'r1', run:
+
+      $ {command} n1 --router=r1 --region=us-central1
+    """
 }

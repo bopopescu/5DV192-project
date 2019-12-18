@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2016 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -55,6 +55,7 @@ from googlecloudsdk.core.configurations import named_configs
 from googlecloudsdk.core.console import console_io
 from googlecloudsdk.core.console import progress_tracker
 from googlecloudsdk.core.util import files
+import six
 
 
 _TASK_CONSOLE_LINK = """\
@@ -69,6 +70,11 @@ ORIGINAL_RUNTIME_RE = re.compile(ORIGINAL_RUNTIME_RE_STRING + r'\Z')
 
 # Max App Engine file size; see https://cloud.google.com/appengine/docs/quotas
 _MAX_FILE_SIZE_STANDARD = 32 * 1024 * 1024
+
+# 1rst gen runtimes that still need the _MAX_FILE_SIZE_STANDARD check:
+_RUNTIMES_WITH_FILE_SIZE_LIMITS = [
+    'java7', 'java8', 'java8g', 'python27', 'go19', 'php55'
+]
 
 
 class Error(core_exceptions.Error):
@@ -301,7 +307,7 @@ class ServiceDeployer(object):
             all_services, new_version, self.api_client,
             self.deploy_options.stop_previous_version)
       except apitools_exceptions.HttpError as err:
-        err_str = str(core_api_exceptions.HttpException(err))
+        err_str = six.text_type(core_api_exceptions.HttpException(err))
         raise VersionPromotionError(err_str)
     elif self.deploy_options.stop_previous_version:
       log.info('Not stopping previous version because new version was '
@@ -338,7 +344,8 @@ class ServiceDeployer(object):
         (flex_image_build_option == FlexImageBuildOptions.ON_SERVER or
          not service_info.is_hermetic)):
       limit = None
-      if service_info.env == env.STANDARD:
+      if (service_info.env == env.STANDARD and
+          service_info.runtime in _RUNTIMES_WITH_FILE_SIZE_LIMITS):
         limit = _MAX_FILE_SIZE_STANDARD
       manifest = deploy_app_command_util.CopyFilesToCodeBucket(
           upload_dir, source_files, code_bucket_ref, max_file_size=limit)
@@ -352,7 +359,8 @@ class ServiceDeployer(object):
              all_services,
              gcr_domain,
              disable_build_cache,
-             flex_image_build_option=FlexImageBuildOptions.ON_CLIENT):
+             flex_image_build_option=FlexImageBuildOptions.ON_CLIENT,
+             ignore_file=None):
     """Deploy the given service.
 
     Performs all deployment steps for the given service (if applicable):
@@ -381,6 +389,8 @@ class ServiceDeployer(object):
       flex_image_build_option: FlexImageBuildOptions, whether a flex deployment
         should upload files so that the server can build the image or build the
         image on client.
+      ignore_file: custom ignore_file name.
+                Override .gcloudignore file to customize files to be skipped.
     """
     log.status.Print('Beginning deployment of service [{service}]...'
                      .format(service=new_version.service))
@@ -397,7 +407,7 @@ class ServiceDeployer(object):
         service_info.parsed.skip_files.regex,
         service_info.HasExplicitSkipFiles(),
         service_info.runtime,
-        service_info.env, service.source)
+        service_info.env, service.source, ignore_file=ignore_file)
 
     # Tar-based upload for flex
     build = self._PossiblyBuildAndPush(
@@ -433,6 +443,7 @@ def ArgsDeploy(parser):
   flags.SERVER_FLAG.AddToParser(parser)
   flags.IGNORE_CERTS_FLAG.AddToParser(parser)
   flags.DOCKER_BUILD_FLAG.AddToParser(parser)
+  flags.IGNORE_FILE_FLAG.AddToParser(parser)
   parser.add_argument(
       '--version', '-v', type=flags.VERSION_TYPE,
       help='The version of the app that will be created or replaced by this '
@@ -455,12 +466,15 @@ def ArgsDeploy(parser):
       '--stop-previous-version',
       action=actions.StoreBooleanProperty(
           properties.VALUES.app.stop_previous_version),
-      help='Stop the previously running version when deploying a new version '
-           'that receives all traffic. Note that if the version is running on '
-           'an instance of an auto-scaled service, using '
-           '`--stop-previous-version` will not work and the previous version '
-           'will continue to run because auto-scaled service instances are '
-           'always running.')
+      help="""\
+      Stop the previously running version when deploying a new version that
+      receives all traffic.
+
+      Note that if the version is running on an instance
+      of an auto-scaled service in the App Engine Standard
+      environment, using `--stop-previous-version` will not work
+      and the previous version will continue to run because auto-scaled service
+      instances are always running.""")
   parser.add_argument(
       '--image-url',
       help='Deploy with a specific Docker image.  Docker url must be from one '
@@ -580,7 +594,10 @@ def RunDeploy(
 
     app = _PossiblyCreateApp(api_client, project)
     _RaiseIfStopped(api_client, app)
-    app = _PossiblyRepairApp(api_client, app)
+
+    # Call _PossiblyRepairApp when --bucket param is unspecified
+    if not args.bucket:
+      app = _PossiblyRepairApp(api_client, app)
 
     # Tell the user what is going to happen, and ask them to confirm.
     version_id = args.version or util.GenerateVersionId()
@@ -621,7 +638,8 @@ def RunDeploy(
           all_services,
           app.gcrDomain,
           disable_build_cache=disable_build_cache,
-          flex_image_build_option=flex_image_build_option)
+          flex_image_build_option=flex_image_build_option,
+          ignore_file=args.ignore_file)
       new_versions.append(new_version)
       log.status.Print('Deployed service [{0}] to [{1}]'.format(
           service.service_id, deployed_urls[service.service_id]))

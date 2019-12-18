@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -126,20 +126,25 @@ def _ErrorFromInvalidMatrix(matrix):
           'The test APK declares no instrumentation tags in the manifest',
       enum_values.NO_SIGNATURE:
           'At least one supplied APK file has a missing or invalid signature',
-      enum_values.INSTRUMENTATION_ORCHESTRATOR_INCOMPATIBLE: (
-          "The test runner class specified by the user or the test APK's "
-          'manifest file is not compatible with Android Test Orchestrator. '
-          'Please use AndroidJUnitRunner version 1.0 or higher'),
-      enum_values.NO_TEST_RUNNER_CLASS: (
-          'The test APK does not contain the test runner class specified by '
-          'the user or the manifest file. The test runner class name may be '
-          'incorrect, or the class may be mislocated in the app APK.'),
+      enum_values.INSTRUMENTATION_ORCHESTRATOR_INCOMPATIBLE:
+          ("The test runner class specified by the user or the test APK's "
+           'manifest file is not compatible with Android Test Orchestrator. '
+           'Please use AndroidJUnitRunner version 1.0 or higher'),
+      enum_values.NO_TEST_RUNNER_CLASS:
+          ('The test APK does not contain the test runner class specified by '
+           'the user or the manifest file. The test runner class name may be '
+           'incorrect, or the class may be mislocated in the app APK.'),
       enum_values.NO_LAUNCHER_ACTIVITY:
           'The app APK does not specify a main launcher activity',
       enum_values.FORBIDDEN_PERMISSIONS:
           'The app declares one or more permissions that are not allowed',
       enum_values.INVALID_ROBO_DIRECTIVES:
           'Cannot have multiple robo-directives with the same resource name',
+      enum_values.INVALID_DIRECTIVE_ACTION:
+          'Robo Directive includes at least one invalid action definition.',
+      enum_values.INVALID_RESOURCE_NAME:
+          'Robo Directive resource name contains invalid characters: ":" '
+          ' (colon) or " " (space)',
       enum_values.TEST_LOOP_INTENT_FILTER_NOT_FOUND:
           'The app does not have a correctly formatted game-loop intent filter',
       enum_values.SCENARIO_LABEL_NOT_DECLARED:
@@ -179,6 +184,13 @@ def _ErrorFromInvalidMatrix(matrix):
       enum_values.INVALID_PACKAGE_NAME:
           'The APK application ID (aka package name) is invalid. See also '
           'https://developer.android.com/studio/build/application-id',
+      enum_values.MALFORMED_IPA:
+          'The app IPA is not a valid iOS application',
+      enum_values.MISSING_URL_SCHEME:
+          'The iOS game loop application does not register the custom URL '
+          'scheme',
+      enum_values.MALFORMED_APP_BUNDLE:
+          'The iOS application bundle (.app) is invalid',
   }
   details_enum = matrix.invalidMatrixDetails
   if details_enum in error_dict:

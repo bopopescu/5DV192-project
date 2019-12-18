@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2016 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ class Link(base.Command):
           To link a billing account `0X0X0X-0X0X0X-0X0X0X` with a project
           `my-project`, run:
 
-            $ {command} my-project --billing-account 0X0X0X-0X0X0X-0X0X0X
+            $ {command} my-project --billing-account=0X0X0X-0X0X0X-0X0X0X
           """
   }
 

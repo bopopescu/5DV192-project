@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,11 +26,11 @@ from googlecloudsdk.command_lib.compute.target_vpn_gateways import flags
 
 
 class Create(base.CreateCommand):
-  """Create a target VPN Gateway.
+  """Create a Cloud VPN Classic Target VPN Gateway.
 
-    *{command}* is used to create a target VPN Gateway. A target VPN
-  Gateway can reference one or more VPN tunnels that connect it to
-  external VPN gateways. A VPN Gateway may also be referenced by
+    *{command}* is used to create a Cloud VPN Classic Target VPN Gateway. A
+  Target VPN Gateway can reference one or more VPN tunnels that connect it to
+  the remote tunnel endpoint. A Target VPN Gateway may also be referenced by
   one or more forwarding rules that define which packets the
   gateway is responsible for routing.
   """

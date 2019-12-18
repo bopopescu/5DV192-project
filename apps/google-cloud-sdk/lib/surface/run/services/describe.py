@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,10 +23,15 @@ from googlecloudsdk.command_lib.run import connection_context
 from googlecloudsdk.command_lib.run import flags
 from googlecloudsdk.command_lib.run import resource_args
 from googlecloudsdk.command_lib.run import serverless_operations
+from googlecloudsdk.command_lib.run import service_printer
 from googlecloudsdk.command_lib.util.concepts import concept_parsers
 from googlecloudsdk.command_lib.util.concepts import presentation_specs
+from googlecloudsdk.core.resource import resource_printer
 
 
+@base.ReleaseTracks(base.ReleaseTrack.ALPHA,
+                    base.ReleaseTrack.BETA,
+                    base.ReleaseTrack.GA)
 class Describe(base.Command):
   """Obtain details about a given service."""
 
@@ -38,27 +43,37 @@ class Describe(base.Command):
           To obtain details about a given service:
 
               $ {command} <service-name>
+
+          To get those details in the Knative yaml format:
+
+              $ {command} <service-name> --format=yaml
           """,
   }
 
   @staticmethod
-  def Args(parser):
-    flags.AddRegionArg(parser)
+  def CommonArgs(parser):
     service_presentation = presentation_specs.ResourcePresentationSpec(
         'SERVICE',
         resource_args.GetServiceResourceSpec(),
         'Service to describe.',
         required=True,
         prefixes=False)
-    concept_parsers.ConceptParser([
-        resource_args.CLUSTER_PRESENTATION,
-        service_presentation]).AddToParser(parser)
-    parser.display_info.AddFormat(
-        'yaml(apiVersion, kind, metadata, spec, status)')
+    concept_parsers.ConceptParser([service_presentation]).AddToParser(parser)
+
+  @staticmethod
+  def Args(parser):
+    Describe.CommonArgs(parser)
 
   def Run(self, args):
     """Obtain details about a given service."""
-    conn_context = connection_context.GetConnectionContext(args)
+    # TODO(b/143898356) Begin code that should be in Args
+    resource_printer.RegisterFormatter(
+        service_printer.SERVICE_PRINTER_FORMAT,
+        service_printer.ServicePrinter)
+    args.GetDisplayInfo().AddFormat('service')
+    # End code that should be in Args
+    conn_context = connection_context.GetConnectionContext(
+        args, product=connection_context.Product.RUN)
     service_ref = flags.GetService(args)
     with serverless_operations.Connect(conn_context) as client:
       serv = client.GetService(service_ref)

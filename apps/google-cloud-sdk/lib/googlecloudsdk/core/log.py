@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2013 Google Inc. All Rights Reserved.
+# Copyright 2013 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -665,7 +665,7 @@ class _LogManager(object):
                                       DAY_DIR_FORMAT)
 
   def AddLogsDir(self, logs_dir):
-    """Adds a new logging directory to the logging config.
+    """Adds a new logging directory and configures file logging.
 
     Args:
       logs_dir: str, Path to a directory to store log files under.  This method
@@ -674,19 +674,25 @@ class _LogManager(object):
     """
     if not logs_dir or logs_dir in self._logs_dirs:
       return
-    self._logs_dirs.append(logs_dir)
 
+    self._logs_dirs.append(logs_dir)
     # If logs cleanup has been enabled, try to delete old log files
     # in the given directory. Continue normally if we try to delete log files
     # that do not exist. This can happen when two gcloud instances are cleaning
     # up logs in parallel.
     self._CleanUpLogs(logs_dir)
 
+    # If the user has disabled file logging, return early here to avoid setting
+    # up the file handler. Note that this should happen after cleaning up the
+    # logs directory so that log retention settings are still respected.
+    if properties.VALUES.core.disable_file_logging.GetBool():
+      return
+
     # A handler to write DEBUG and above to log files in the given directory
     try:
       log_file = self._SetupLogsDir(logs_dir)
       file_handler = logging.FileHandler(
-          log_file, encoding=LOG_FILE_ENCODING)  # pytype: disable=wrong-arg-types
+          log_file, encoding=LOG_FILE_ENCODING)
     except (OSError, IOError, files.Error) as exp:
       warning('Could not setup log file in {0}, ({1}: {2})'
               .format(logs_dir, type(exp).__name__, exp))
@@ -1104,7 +1110,7 @@ def _PrintResourceChange(operation,
   if kind:
     msg.append(kind)
   if resource:
-    msg.append('[{0}]'.format(str(resource)))
+    msg.append('[{0}]'.format(six.text_type(resource)))
   if details:
     msg.append(details)
   if failed:

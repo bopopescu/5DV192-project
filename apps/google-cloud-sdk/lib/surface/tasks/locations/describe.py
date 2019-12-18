@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,6 +25,16 @@ from googlecloudsdk.command_lib.tasks import parsers
 
 class Describe(base.DescribeCommand):
   """Show details about a location."""
+  detailed_help = {
+      'DESCRIPTION': """\
+          {description}
+          """,
+      'EXAMPLES': """\
+          To describe a location:
+
+              $ {command} my-location
+         """,
+  }
 
   @staticmethod
   def Args(parser):

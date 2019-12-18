@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ class Describe(base.DescribeCommand):
 
   def Run(self, args):
     """Run the describe command."""
-    location_ref = args.CONCEPTS.location.Parse()
+    location_ref = args.CONCEPTS.zone.Parse().RelativeName()
     client = filestore_client.FilestoreClient(version=self._API_VERSION)
     return client.GetLocation(location_ref)
 

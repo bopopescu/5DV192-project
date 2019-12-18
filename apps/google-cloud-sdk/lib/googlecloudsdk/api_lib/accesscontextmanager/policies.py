@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,8 +29,8 @@ from googlecloudsdk.core import resources
 class Client(object):
   """Client for Access Context Manager Access Policies service."""
 
-  def __init__(self, client=None, messages=None):
-    self.client = client or util.GetClient()
+  def __init__(self, client=None, messages=None, version=None):
+    self.client = client or util.GetClient(version=version)
     self.messages = messages or self.client.MESSAGES_MODULE
 
   def List(self, organization_ref, limit=None):

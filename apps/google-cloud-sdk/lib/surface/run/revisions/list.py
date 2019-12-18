@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ from __future__ import division
 from __future__ import unicode_literals
 
 from googlecloudsdk.calliope import base
+from googlecloudsdk.command_lib.run import commands
 from googlecloudsdk.command_lib.run import connection_context
 from googlecloudsdk.command_lib.run import flags
 from googlecloudsdk.command_lib.run import pretty_print
@@ -26,9 +27,11 @@ from googlecloudsdk.command_lib.run import resource_args
 from googlecloudsdk.command_lib.run import serverless_operations
 from googlecloudsdk.command_lib.util.concepts import concept_parsers
 from googlecloudsdk.command_lib.util.concepts import presentation_specs
+from googlecloudsdk.core import log
 
 
-class List(base.ListCommand):
+@base.ReleaseTracks(base.ReleaseTrack.BETA, base.ReleaseTrack.GA)
+class List(commands.List):
   """List available revisions."""
 
   detailed_help = {
@@ -38,34 +41,66 @@ class List(base.ListCommand):
       'EXAMPLES': """\
           To list all revisions for the provided service:
 
-              $ {command} --service foo
+              $ {command} --service=foo
          """,
   }
 
-  @staticmethod
-  def Args(parser):
-    flags.AddServiceFlag(parser)
+  @classmethod
+  def CommonArgs(cls, parser):
+    # Flags specific to connecting to a cluster
+    cluster_group = flags.GetClusterArgGroup(parser)
     namespace_presentation = presentation_specs.ResourcePresentationSpec(
         '--namespace',
         resource_args.GetNamespaceResourceSpec(),
-        'Namespace to list services in.',
+        'Namespace to list revisions in.',
         required=True,
         prefixes=False)
-    flags.AddRegionArgWithDefault(parser)
-    concept_parsers.ConceptParser([
-        resource_args.CLUSTER_PRESENTATION,
-        namespace_presentation]).AddToParser(parser)
+    concept_parsers.ConceptParser(
+        [namespace_presentation]).AddToParser(cluster_group)
+
+    # Flags not specific to any platform
+    flags.AddServiceFlag(parser)
+
     parser.display_info.AddFormat(
         'table('
         '{ready_column},'
-        'name:label=REVISION,service_name:label=SERVICE,author,'
-        'creation_timestamp.date("%Y-%m-%d %H:%M:%S %Z"):label=CREATED)'.format(
+        'name:label=REVISION,'
+        'active.yesno(yes="yes", no=""),'
+        'service_name:label=SERVICE:sort=1,'
+        'creation_timestamp.date("%Y-%m-%d %H:%M:%S %Z"):'
+        'label=DEPLOYED:sort=2:reverse,'
+        'author:label="DEPLOYED BY")'.format(
             ready_column=pretty_print.READY_COLUMN))
+    parser.display_info.AddUriFunc(cls._GetResourceUri)
+
+  @classmethod
+  def Args(cls, parser):
+    cls.CommonArgs(parser)
 
   def Run(self, args):
     """List available revisions."""
     service_name = args.service
-    conn_context = connection_context.GetConnectionContext(args)
+    conn_context = connection_context.GetConnectionContext(
+        args, product=connection_context.Product.RUN)
     namespace_ref = args.CONCEPTS.namespace.Parse()
     with serverless_operations.Connect(conn_context) as client:
-      return client.ListRevisions(namespace_ref, service_name)
+      self.SetCompleteApiEndpoint(conn_context.endpoint)
+      if flags.GetPlatform() != flags.PLATFORM_MANAGED:
+        location_msg = ' in [{}]'.format(conn_context.cluster_location)
+        log.status.Print('For cluster [{cluster}]{zone}:'.format(
+            cluster=conn_context.cluster_name,
+            zone=location_msg if conn_context.cluster_location else ''))
+      for rev in client.ListRevisions(namespace_ref, service_name,
+                                      args.limit, args.page_size):
+        yield rev
+
+
+@base.ReleaseTracks(base.ReleaseTrack.ALPHA)
+class AlphaList(List):
+  """List available revisions."""
+
+  @classmethod
+  def Args(cls, parser):
+    cls.CommonArgs(parser)
+
+AlphaList.__doc__ = List.__doc__

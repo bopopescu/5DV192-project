@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ from collections import OrderedDict
 import re
 
 from apitools.base.protorpclite import messages
-import enum  # pylint: disable=unused-import, for pytype
+from apitools.base.py import encoding
 from googlecloudsdk.calliope import arg_parsers
 from googlecloudsdk.calliope import base
 from googlecloudsdk.core import properties
@@ -47,8 +47,17 @@ class UnknownFieldError(Error):
   def __init__(self, field_name, message):
     super(UnknownFieldError, self).__init__(
         'Field [{}] not found in message [{}]. Available fields: [{}]'
-        .format(field_name, message.__name__,
+        .format(field_name, message.__class__.__name__,
                 ', '.join(f.name for f in message.all_fields())))
+
+
+class InvalidFieldPathError(Error):
+  """The referenced field path could not be found in the message object."""
+
+  def __init__(self, field_path, message, reason):
+    super(InvalidFieldPathError, self).__init__(
+        'Invalid field path [{}] for message [{}]. Details: [{}]'
+        .format(field_path, message.__class__.__name__, reason))
 
 
 class ArgumentGenerationError(Error):
@@ -61,16 +70,16 @@ class ArgumentGenerationError(Error):
 
 
 def GetFieldFromMessage(message, field_path):
-  """Digs into the given message to extract the dotted field.
+  """Extract the field object from the message using a dotted field path.
 
-  If the field does not exist, and error is logged.
+  If the field does not exist, an error is logged.
 
   Args:
     message: The apitools message to dig into.
     field_path: str, The dotted path of attributes and sub-attributes.
 
   Returns:
-    The Field type.
+    The Field object.
   """
   fields = field_path.split('.')
   for f in fields[:-1]:
@@ -78,8 +87,66 @@ def GetFieldFromMessage(message, field_path):
   return _GetField(message, fields[-1])
 
 
+def GetFieldValueFromMessage(message, field_path):
+  """Extract the value of the field given a dotted field path.
+
+  If the field_path does not exist, an error is logged.
+
+  Args:
+    message: The apitools message to dig into.
+    field_path: str, The dotted path of attributes and sub-attributes.
+
+  Raises:
+    InvalidFieldPathError: When the path is invalid.
+
+  Returns:
+    The value or if not set, None.
+  """
+  root_message = message
+  fields = field_path.split('.')
+  for i, f in enumerate(fields):
+    index_found = re.match(r'(.+)\[(\d+)\]$', f)
+    if index_found:
+      # Split field path segment (e.g. abc[1]) into abc and 1.
+      f, index = index_found.groups()
+      index = int(index)
+
+    try:
+      field = message.field_by_name(f)
+    except KeyError:
+      raise InvalidFieldPathError(field_path, root_message,
+                                  UnknownFieldError(f, message))
+    if index_found:
+      if not field.repeated:
+        raise InvalidFieldPathError(
+            field_path, root_message,
+            'Index cannot be specified for non-repeated field [{}]'.format(f))
+    else:
+      if field.repeated and i < len(fields) - 1:
+        raise InvalidFieldPathError(
+            field_path, root_message,
+            'Index needs to be specified for repeated field [{}]'.format(f))
+
+    message = getattr(message, f)
+    if message and index_found:
+      message = message[index] if index < len(message) else None
+
+    if not message and i < len(fields) - 1:
+      if isinstance(field, messages.MessageField):
+        # Create an instance of the message so we can continue down the path, to
+        # verify if the path is valid.
+        message = field.type()
+      else:
+        raise InvalidFieldPathError(
+            field_path, root_message,
+            '[{}] is not a valid field on field [{}]'
+            .format(f, field.type.__name__))
+
+  return message
+
+
 def SetFieldInMessage(message, field_path, value):
-  """Sets the given field field in the message object.
+  """Sets the given field in the message object.
 
   Args:
     message: A constructed apitools message object to inject the value into.
@@ -96,6 +163,13 @@ def SetFieldInMessage(message, field_path, value):
         sub_message = [sub_message]
       setattr(message, f, sub_message)
     message = sub_message[0] if is_repeated else sub_message
+  field_type = _GetField(message, fields[-1]).type
+  if isinstance(value, dict):
+    value = encoding.PyValueToMessage(field_type, value)
+  if isinstance(value, list):
+    for i, item in enumerate(value):
+      if isinstance(item, dict):
+        value[i] = encoding.PyValueToMessage(field_type, item)
   setattr(message, fields[-1], value)
 
 
@@ -128,14 +202,15 @@ def GetFromNamespace(namespace, arg_name, fallback=None, use_defaults=False):
 
 def Limit(method, namespace):
   """Gets the value of the limit flag (if present)."""
-  if method.IsPageableList() and method.ListItemField():
+  if (hasattr(namespace, 'limit') and method.IsPageableList() and
+      method.ListItemField()):
     return getattr(namespace, 'limit')
 
 
 def PageSize(method, namespace):
   """Gets the value of the page size flag (if present)."""
-  if (method.IsPageableList() and method.ListItemField() and
-      method.BatchPageSizeField()):
+  if (hasattr(namespace, 'page_size') and method.IsPageableList() and
+      method.ListItemField() and method.BatchPageSizeField()):
     return getattr(namespace, 'page_size')
 
 
@@ -408,27 +483,33 @@ def ParseExistingMessageIntoMessage(message, existing_message, method):
   if type(existing_message) == type(message):  # pylint: disable=unidiomatic-typecheck
     return existing_message
 
-  # For read-modify-update api calls, the field name would be the same level
-  # or the next level of the request.
-  # TODO(b/111069150): refactor this part, don't hard code.
-  existing_message_name = type(existing_message).__name__
-  field_name = existing_message_name[0].lower() + existing_message_name[1:]
-  field_path = ''
-  if method.request_field != field_name:
-    field_path += method.request_field
-    field_path += '.'
-  field_path += field_name
+  # For read-modify-update API calls, the field to modify will exist either in
+  # the request message itself, or in a nested message one level below the
+  # request. Assume at first that it exists in the request message itself:
+  field_path = method.request_field
+  field = message.field_by_name(method.request_field)
+  # If this is not the case, then the field must be nested one level below.
+  if field.message_type != type(existing_message):
+    # We don't know what the name of the field is in the nested message, so we
+    # look through all of them until we find one with the right type.
+    nested_message = field.message_type()
+    for nested_field in nested_message.all_fields():
+      try:
+        if nested_field.message_type == type(existing_message):
+          field_path += '.' + nested_field.name
+          break
+      except AttributeError:  # Ignore non-message fields.
+        pass
 
   SetFieldInMessage(message, field_path, existing_message)
   return message
 
 
 def ChoiceToEnum(choice, enum_type, item_type='choice', valid_choices=None):
-  # type: (str, enum.Enum, list) -> enum.Enum
   """Converts the typed choice into an apitools Enum value."""
   if choice is None:
     return None
-  name = choice.replace('-', '_').upper()
+  name = ChoiceToEnumName(choice)
   valid_choices = (valid_choices or
                    [EnumNameToChoice(n) for n in enum_type.names()])
   try:
@@ -439,6 +520,11 @@ def ChoiceToEnum(choice, enum_type, item_type='choice', valid_choices=None):
             item=item_type,
             selection=EnumNameToChoice(name),
             values=', '.join(c for c in sorted(valid_choices))))
+
+
+def ChoiceToEnumName(choice):
+  """Converts a typeable choice to the string representation of the Enum."""
+  return choice.replace('-', '_').upper()
 
 
 def EnumNameToChoice(name):
@@ -724,7 +810,7 @@ class ChoiceEnumMapper(object):
 
   def GetChoiceForEnum(self, enum_value):
     """Converts an enum value to a choice argument value."""
-    return self._enum_to_choice.get(str(enum_value))
+    return self._enum_to_choice.get(six.text_type(enum_value))
 
   def GetEnumForChoice(self, choice_value):
     """Converts a mapped string choice value to an enum."""

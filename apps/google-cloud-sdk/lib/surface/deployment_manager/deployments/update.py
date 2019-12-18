@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -52,44 +52,44 @@ class Update(base.UpdateCommand, dm_base.DmCommand):
   """
 
   detailed_help = {
-      'EXAMPLES': """\
-          To update an existing deployment with a new config yaml file, run:
+      'EXAMPLES': """
+To update an existing deployment with a new config YAML file, run:
 
-            $ {command} my-deployment --config new_config.yaml
+  $ {command} my-deployment --config=new_config.yaml
 
-          To update an existing deployment with a new config template file, run:
+To update an existing deployment with a new config template file, run:
 
-            $ {command} my-deployment --template new_config.{jinja|py}
+  $ {command} my-deployment --template=new_config.{jinja|py}
 
-          To update an existing deployment with a composite type as a new config, run:
+To update an existing deployment with a composite type as a new config, run:
 
-            $ {command} my-deployment --composite-type <project-id>/composite:<new-config>
+  $ {command} my-deployment --composite-type=<project-id>/composite:<new-config>
 
 
-          To preview an update to an existing deployment without actually modifying the resources, run:
+To preview an update to an existing deployment without actually modifying the resources, run:
 
-            $ {command} my-deployment --config new_config.yaml --preview
+  $ {command} my-deployment --config=new_config.yaml --preview
 
-          To apply an update that has been previewed, provide the name of the previewed deployment, and no config file:
+To apply an update that has been previewed, provide the name of the previewed deployment, and no config file:
 
-            $ {command} my-deployment
+  $ {command} my-deployment
 
-          To specify different create, update, or delete policies, include any subset of the following flags;
+To specify different create, update, or delete policies, include any subset of the following flags:
 
-            $ {command} my-deployment --config new_config.yaml --create-policy acquire --delete-policy abandon
+  $ {command} my-deployment --config=new_config.yaml --create-policy=acquire --delete-policy=abandon
 
-          To perform an update without waiting for the operation to complete, run:
+To perform an update without waiting for the operation to complete, run:
 
-            $ {command} my-deployment --config new_config.yaml --async
+  $ {command} my-deployment --config=new_config.yaml --async
 
-          To update an existing deployment with a new config file and a fingerprint, run:
+To update an existing deployment with a new config file and a fingerprint, run:
 
-            $ {command} my-deployment --config new_config.yaml --fingerprint deployment-fingerprint
+  $ {command} my-deployment --config=new_config.yaml --fingerprint=deployment-fingerprint
 
-          Either the --config, --template, or --composite-type flag is required unless launching an already-previewed update to a deployment.
+Either the `--config`, `--template`, or `--composite-type` flag is required unless launching an already-previewed update to a deployment. If you want to update a deployment's metadata, such as the labels or description, you must run a separate command with `--update-labels`, `--remove-labels`, or `--description`, as applicable.
 
-          More information is available at https://cloud.google.com/deployment-manager/docs/configuration/.
-          """,
+More information is available at https://cloud.google.com/deployment-manager/docs/deployments/updating-deployments.
+""",
   }
 
   _delete_policy_flag_map = flags.GetDeleteFlagEnumMap(
@@ -145,7 +145,7 @@ class Update(base.UpdateCommand, dm_base.DmCommand):
 
     parser.add_argument(
         '--preview',
-        help='Preview the requested update without making any changes to the'
+        help='Preview the requested update without making any changes to the '
         'underlying resources. (default=False)',
         dest='preview',
         default=False,
@@ -190,7 +190,7 @@ class Update(base.UpdateCommand, dm_base.DmCommand):
         args.deployment_name,
         params={'project': properties.VALUES.core.project.GetOrFail},
         collection='deploymentmanager.deployments')
-    if not args.IsSpecified('format') and args.async:
+    if not args.IsSpecified('format') and args.async_:
       args.format = flags.OPERATION_FORMAT
 
     patch_request = False
@@ -290,7 +290,7 @@ class Update(base.UpdateCommand, dm_base.DmCommand):
           self.client, self.messages, dm_base.GetProject(),
           deployment_ref.deployment)
       if patch_request:
-        if args.async:
+        if args.async_:
           log.warning(
               'Updating Deployment metadata is synchronous, --async flag '
               'is ignored.')
@@ -299,7 +299,7 @@ class Update(base.UpdateCommand, dm_base.DmCommand):
       dm_util.PrintFingerprint(updated_deployment.fingerprint)
     except apitools_exceptions.HttpError as error:
       raise exceptions.HttpException(error, dm_api_util.HTTP_ERROR_FORMAT)
-    if args.async:
+    if args.async_:
       return operation
     else:
       op_name = operation.name

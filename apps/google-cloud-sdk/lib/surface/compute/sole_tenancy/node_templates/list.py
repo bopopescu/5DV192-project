@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,7 +24,16 @@ from googlecloudsdk.calliope import base
 
 
 class List(base.ListCommand):
-  """List Google Compute Engine node templates."""
+  """List Compute Engine node templates."""
+
+  detailed_help = {
+      'brief': 'List Compute Engine node templates.',
+      'EXAMPLES': """
+         To list node templates, run:
+
+           $ {command}
+       """
+  }
 
   @staticmethod
   def Args(parser):

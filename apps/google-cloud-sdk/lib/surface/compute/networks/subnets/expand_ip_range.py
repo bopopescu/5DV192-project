@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2016 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -91,7 +91,7 @@ class ExpandIpRange(base.SilentCommand):
     # ipaddress only allows unicode input
     network = ipaddress.IPv4Network(six.text_type(unmasked_new_ip_range),
                                     strict=False)
-    return str(network)
+    return six.text_type(network)
 
   def _PromptToConfirm(
       self, subnetwork_name, original_ip_cidr_range, new_ip_cidr_range):
@@ -130,12 +130,12 @@ class ExpandIpRange(base.SilentCommand):
 
 ExpandIpRange.detailed_help = {
     'brief': 'Expand the IP range of a Google Compute Engine subnetwork',
-    'DESCRIPTION': """\
-        *{command}* is used to expand the IP range of a subnetwork.
-        """,
-    'EXAMPLES': """\
-        To expand the IP range of ``SUBNET'' to /16, run:
+    'DESCRIPTION': """
+*{command}* is used to expand the IP range of a subnetwork.
+""",
+    'EXAMPLES': """
+To expand the IP range of ``SUBNET'' to /16, run:
 
-          $ {command} SUBNET --region us-central1 --prefix-length 16
-        """,
+  $ {command} SUBNET --region=us-central1 --prefix-length=16
+""",
 }

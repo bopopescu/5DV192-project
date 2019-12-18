@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,8 +29,6 @@ string tuple
 
 where only one of the three elements need be present.
 """
-# Pytype fails to check this file.
-# type: ignore
 
 from __future__ import absolute_import
 from __future__ import division
@@ -117,6 +115,7 @@ class Displayer(object):
           symbols=display_info.transforms,
           aliases=display_info.aliases)
       self._format = display_info.format
+      self._flatten = display_info.flatten
       self._filter = display_info.filter
     self._transform_uri = self._defaults.symbols.get(
         'uri', resource_transform.TransformUri)
@@ -132,6 +131,10 @@ class Displayer(object):
     Returns:
       The flag value or None if it is unknown or unset.
     """
+    if flag_name == 'async':
+      # The async flag has a special destination since 'async' is a reserved
+      # keyword as of Python 3.7.
+      return getattr(self._args, 'async_', None)
     return getattr(self._args, flag_name, None)
 
   def _AddUriCacheTap(self):
@@ -275,7 +278,7 @@ class Displayer(object):
       # the flattened keys to the left.
       self._resources = peek_iterable.Tapper(self._resources, tap)
 
-    keys = self._GetFlag('flatten')
+    keys = self._GetFlatten()
     if not keys:
       return
     for key in keys:
@@ -355,6 +358,13 @@ class Displayer(object):
     else:
       return flag_filter
 
+  def _GetFlatten(self):
+    flag_flatten = self._GetFlag('flatten')
+    if flag_flatten is None:
+      return self._flatten
+    else:
+      return flag_flatten
+
   def GetFormat(self):
     """Determines the display format.
 
@@ -433,6 +443,21 @@ class Displayer(object):
         printer=self._printer,
         defaults=self._defaults)
 
+  def _AddDisplayTaps(self):
+    """Adds each of the standard display taps, if needed.
+
+       The taps must be included in this order in order to generate the correct
+       results. For example, limiting should not happen until after filtering is
+       complete, and pagination should only happen on the fully trimmed results.
+    """
+    self._AddUriCacheTap()
+    self._AddFlattenTap()
+    self._AddFilterTap()
+    self._AddSortByTap()
+    self._AddLimitTap()
+    self._AddPageTap()
+    self._AddUriReplaceTap()
+
   def Display(self):
     """The default display method."""
 
@@ -449,26 +474,7 @@ class Displayer(object):
     # Initialize the printer.
     self._InitPrinter()
 
-    # Add a URI cache update tap if needed.
-    self._AddUriCacheTap()
-
-    # Add a resource page tap if needed.
-    self._AddPageTap()
-
-    # Add a resource flatten tap if needed.
-    self._AddFlattenTap()
-
-    # Add a sort tap if needed.
-    self._AddSortByTap()
-
-    # Add a resource filter tap if needed.
-    self._AddFilterTap()
-
-    # Add a resource limit tap if needed.
-    self._AddLimitTap()
-
-    # Add the URI replace tap if needed.
-    self._AddUriReplaceTap()
+    self._AddDisplayTaps()
 
     resources_were_displayed = True
     if self._printer:

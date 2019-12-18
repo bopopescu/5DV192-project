@@ -155,7 +155,7 @@
           "$ref": "Status"
         },
         "response": {
-          "description": "If importing ReadGroupSets, an ImportReadGroupSetsResponse is returned. If importing Variants, an ImportVariantsResponse is returned. For pipelines and exports, an Empty response is returned.",
+          "description": "An Empty object.",
           "type": "object",
           "additionalProperties": {
             "type": "any",
@@ -166,7 +166,7 @@
     },
     "Status": {
       "id": "Status",
-      "description": "The `Status` type defines a logical error model that is suitable for different\nprogramming environments, including REST APIs and RPC APIs. It is used by\n[gRPC](https:\/\/github.com\/grpc). The error model is designed to be:\n\n- Simple to use and understand for most users\n- Flexible enough to meet unexpected needs\n\n# Overview\n\nThe `Status` message contains three pieces of data: error code, error message,\nand error details. The error code should be an enum value of\ngoogle.rpc.Code, but it may accept additional error codes if needed.  The\nerror message should be a developer-facing English message that helps\ndevelopers *understand* and *resolve* the error. If a localized user-facing\nerror message is needed, put the localized message in the error details or\nlocalize it in the client. The optional error details may contain arbitrary\ninformation about the error. There is a predefined set of error detail types\nin the package `google.rpc` that can be used for common error conditions.\n\n# Language mapping\n\nThe `Status` message is the logical representation of the error model, but it\nis not necessarily the actual wire format. When the `Status` message is\nexposed in different client libraries and different wire protocols, it can be\nmapped differently. For example, it will likely be mapped to some exceptions\nin Java, but more likely mapped to some error codes in C.\n\n# Other uses\n\nThe error model and the `Status` message can be used in a variety of\nenvironments, either with or without APIs, to provide a\nconsistent developer experience across different environments.\n\nExample uses of this error model include:\n\n- Partial errors. If a service needs to return partial errors to the client,\n    it may embed the `Status` in the normal response to indicate the partial\n    errors.\n\n- Workflow errors. A typical workflow has multiple steps. Each step may\n    have a `Status` message for error reporting.\n\n- Batch operations. If a client uses batch request and batch response, the\n    `Status` message should be used directly inside batch response, one for\n    each error sub-response.\n\n- Asynchronous operations. If an API call embeds asynchronous operation\n    results in its response, the status of those operations should be\n    represented directly using the `Status` message.\n\n- Logging. If some API errors are stored in logs, the message `Status` could\n    be used directly after any stripping needed for security\/privacy reasons.",
+      "description": "The `Status` type defines a logical error model that is suitable for\ndifferent programming environments, including REST APIs and RPC APIs. It is\nused by [gRPC](https:\/\/github.com\/grpc). Each `Status` message contains\nthree pieces of data: error code, error message, and error details.\n\nYou can find out more about this error model and how to work with it in the\n[API Design Guide](https:\/\/cloud.google.com\/apis\/design\/errors).",
       "type": "object",
       "properties": {
         "code": {
@@ -211,7 +211,7 @@
       "type": "object",
       "properties": {
         "pipeline": {
-          "description": "The description of the pipeline to run.",
+          "description": "Required. The description of the pipeline to run.",
           "$ref": "Pipeline"
         },
         "labels": {
@@ -259,11 +259,11 @@
       "type": "object",
       "properties": {
         "name": {
-          "description": "An optional name for the container. The container hostname will be set to\nthis name, making it useful for inter-container communication. The name\nmust contain only upper and lowercase alphanumeric characters and hypens\nand cannot start with a hypen.",
+          "description": "An optional name for the container. The container hostname will be set to\nthis name, making it useful for inter-container communication. The name\nmust contain only upper and lowercase alphanumeric characters and hypens\nand cannot start with a hyphen.",
           "type": "string"
         },
         "imageUri": {
-          "description": "The URI to pull the container image from. Note that all images referenced\nby actions in the pipeline are pulled before the first action runs. If\nmultiple actions reference the same image, it is only pulled once,\nensuring that the same image is used for all actions in a single pipeline.",
+          "description": "Required. The URI to pull the container image from. Note that all images referenced\nby actions in the pipeline are pulled before the first action runs. If\nmultiple actions reference the same image, it is only pulled once,\nensuring that the same image is used for all actions in a single pipeline.\n\nThe image URI can be either a complete host and image specification (e.g.,\nquay.io\/biocontainers\/samtools), a library and image name (e.g.,\ngoogle\/cloud-sdk) or a bare image name ('bash') to pull from the default\nlibrary.  No schema is required in any of these cases.\n\nIf the specified image is not public, the service account specified for\nthe Virtual Machine must have access to pull the images from GCR, or\nappropriate credentials must be specified in the\ngoogle.genomics.v2alpha1.Action.credentials field.",
           "type": "string"
         },
         "commands": {
@@ -278,7 +278,7 @@
           "type": "string"
         },
         "environment": {
-          "description": "The environment to pass into the container. This environment is merged\nwith any values specified in the `Pipeline` message. These values\noverwrite any in the `Pipeline` message.\n\nIn addition to the values passed here, a few other values are\nautomatically injected into the environment. These cannot be hidden or\noverwritten.\n\n`GOOGLE_PIPELINE_FAILED` will be set to \"1\" if the pipeline failed\nbecause an action has exited with a non-zero status (and did not have the\n`IGNORE_EXIT_STATUS` flag set). This can be used to determine if additional\ndebug or logging actions should execute.\n\n`GOOGLE_LAST_EXIT_STATUS` will be set to the exit status of the last\nnon-background action that executed. This can be used by workflow engine\nauthors to determine whether an individual action has succeeded or failed.",
+          "description": "The environment to pass into the container. This environment is merged\nwith values specified in the google.genomics.v2alpha1.Pipeline\nmessage, overwriting any duplicate values.\n\nIn addition to the values passed here, a few other values are\nautomatically injected into the environment. These cannot be hidden or\noverwritten.\n\n`GOOGLE_PIPELINE_FAILED` will be set to \"1\" if the pipeline failed\nbecause an action has exited with a non-zero status (and did not have the\n`IGNORE_EXIT_STATUS` flag set). This can be used to determine if additional\ndebug or logging actions should execute.\n\n`GOOGLE_LAST_EXIT_STATUS` will be set to the exit status of the last\nnon-background action that executed. This can be used by workflow engine\nauthors to determine whether an individual action has succeeded or failed.",
           "type": "object",
           "additionalProperties": {
             "type": "string"
@@ -294,7 +294,7 @@
             "Unspecified flag.",
             "Normally, a non-zero exit status causes the pipeline to fail. This flag\nallows execution of other actions to continue instead.",
             "This flag allows an action to continue running in the background while\nexecuting subsequent actions. This is useful to provide services to\nother actions (or to provide debugging support tools like SSH servers).",
-            "By default, after an action fails, no further actions are run. This flag\nindicates that this action must be run even if the pipeline has already\nfailed. This is useful for actions that copy output files off of the VM\nor for debugging.",
+            "By default, after an action fails, no further actions are run. This flag\nindicates that this action must be run even if the pipeline has already\nfailed. This is useful for actions that copy output files off of the VM\nor for debugging. Note that no actions will be run if image\nprefetching fails.",
             "Enable access to the FUSE device for this action. Filesystems can then\nbe mounted into disks shared with other actions. The other actions do\nnot need the `ENABLE_FUSE` flag to access the mounted filesystem.\n\nThis has the effect of causing the container to be executed with\n`CAP_SYS_ADMIN` and exposes `\/dev\/fuse` to the container, so use it only\nfor containers you trust.",
             "Exposes all ports specified by `EXPOSE` statements in the container. To\ndiscover the host side port numbers, consult the `ACTION_STARTED` event\nin the operation metadata.",
             "All container images are typically downloaded before any actions are\nexecuted. This helps prevent typos in URIs or issues like lack of disk\nspace from wasting large amounts of compute resources.\n\nIf set, this flag prevents the worker from downloading the image until\njust before the action is executed.",
@@ -417,7 +417,7 @@
       "type": "object",
       "properties": {
         "machineType": {
-          "description": "The machine type of the virtual machine to create. Must be the short name\nof a standard machine type (such as \"n1-standard-1\") or a custom machine\ntype (such as \"custom-1-4096\", where \"1\" indicates the number of vCPUs and\n\"4096\" indicates the memory in MB). See\n[Creating an instance with a custom machine\ntype](https:\/\/cloud.google.com\/compute\/docs\/instances\/creating-instance-with-custom-machine-type#create)\nfor more specifications on creating a custom machine type.",
+          "description": "Required. The machine type of the virtual machine to create. Must be the short name\nof a standard machine type (such as \"n1-standard-1\") or a custom machine\ntype (such as \"custom-1-4096\", where \"1\" indicates the number of vCPUs and\n\"4096\" indicates the memory in MB). See\n[Creating an instance with a custom machine\ntype](https:\/\/cloud.google.com\/compute\/docs\/instances\/creating-instance-with-custom-machine-type#create)\nfor more specifications on creating a custom machine type.",
           "type": "string"
         },
         "preemptible": {
@@ -425,7 +425,7 @@
           "type": "boolean"
         },
         "labels": {
-          "description": "Optional set of labels to apply to the VM and any attached disk resources.\nThese labels must adhere to the name and value restrictions on VM labels\nimposed by Compute Engine.\n\nLabels applied at creation time to the VM. Applied on a best-effort basis\nto attached disk resources shortly after VM creation.",
+          "description": "Optional set of labels to apply to the VM and any attached disk resources.\nThese labels must adhere to the [name and value\nrestrictions](https:\/\/cloud.google.com\/compute\/docs\/labeling-resources) on\nVM labels imposed by Compute Engine.\n\nLabels keys with the prefix 'google-' are reserved for use by Google.\n\nLabels applied at creation time to the VM. Applied on a best-effort basis\nto attached disk resources shortly after VM creation.",
           "type": "object",
           "additionalProperties": {
             "type": "string"
@@ -469,6 +469,10 @@
         "nvidiaDriverVersion": {
           "description": "The NVIDIA driver version to use when attaching an NVIDIA GPU accelerator.\nThe version specified here must be compatible with the GPU libraries\ncontained in the container being executed, and must be one of the drivers\nhosted in the `nvidia-drivers-us-public` bucket on Google Cloud Storage.",
           "type": "string"
+        },
+        "enableStackdriverMonitoring": {
+          "description": "Whether Stackdriver monitoring should be enabled on the VM.",
+          "type": "boolean"
         }
       }
     },
@@ -478,7 +482,7 @@
       "type": "object",
       "properties": {
         "name": {
-          "description": "A user-supplied name for the disk. Used when mounting the disk into\nactions. The name must contain only upper and lowercase alphanumeric\ncharacters and hypens and cannot start with a hypen.",
+          "description": "A user-supplied name for the disk. Used when mounting the disk into\nactions. The name must contain only upper and lowercase alphanumeric\ncharacters and hypens and cannot start with a hyphen.",
           "type": "string"
         },
         "sizeGb": {
@@ -541,7 +545,7 @@
           "type": "string"
         },
         "scopes": {
-          "description": "List of scopes to be enabled for this service account on the VM, in\naddition to the Cloud Genomics API scope.",
+          "description": "List of scopes to be enabled for this service account on the VM, in\naddition to the cloud-platform API scope that will be added by default.",
           "type": "array",
           "items": {
             "type": "string"
@@ -554,6 +558,13 @@
       "description": "The parameters to the CheckIn method.",
       "type": "object",
       "properties": {
+        "events": {
+          "description": "A list of timestamped events.",
+          "type": "array",
+          "items": {
+            "$ref": "TimestampedEvent"
+          }
+        },
         "event": {
           "description": "A workflow specific event occurred.",
           "type": "object",
@@ -573,6 +584,26 @@
         "workerStatus": {
           "description": "Data about the status of the worker VM.",
           "$ref": "WorkerStatus"
+        }
+      }
+    },
+    "TimestampedEvent": {
+      "id": "TimestampedEvent",
+      "description": "An event that occured in the operation assigned to the\nworker and the time of occurance.",
+      "type": "object",
+      "properties": {
+        "data": {
+          "description": "The event data.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "any",
+            "description": "Properties of the object. Contains field @type with type URL."
+          }
+        },
+        "timestamp": {
+          "description": "The time when the event happened.",
+          "type": "string",
+          "format": "google-datetime"
         }
       }
     },
@@ -643,34 +674,6 @@
           "description": "The deadline by which the worker must request an extension.  The backend\nwill allow for network transmission time and other delays, but the worker\nmust attempt to transmit the extension request no later than the deadline.",
           "type": "string",
           "format": "google-datetime"
-        }
-      }
-    },
-    "ImportReadGroupSetsResponse": {
-      "id": "ImportReadGroupSetsResponse",
-      "description": "The read group set import response.",
-      "type": "object",
-      "properties": {
-        "readGroupSetIds": {
-          "description": "IDs of the read group sets that were created.",
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    "ImportVariantsResponse": {
-      "id": "ImportVariantsResponse",
-      "description": "The variant data import response.",
-      "type": "object",
-      "properties": {
-        "callSetIds": {
-          "description": "IDs of the call sets created during the import.",
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
         }
       }
     },
@@ -914,7 +917,7 @@
             "The operation was attempted past the valid range.  E.g., seeking or\nreading past end-of-file.\n\nUnlike `INVALID_ARGUMENT`, this error indicates a problem that may\nbe fixed if the system state changes. For example, a 32-bit file\nsystem will generate `INVALID_ARGUMENT` if asked to read at an\noffset that is not in the range [0,2^32-1], but it will generate\n`OUT_OF_RANGE` if asked to read from an offset past the current\nfile size.\n\nThere is a fair bit of overlap between `FAILED_PRECONDITION` and\n`OUT_OF_RANGE`.  We recommend using `OUT_OF_RANGE` (the more specific\nerror) when it applies so that callers who are iterating through\na space can easily look for an `OUT_OF_RANGE` error to detect when\nthey are done.\n\nHTTP Mapping: 400 Bad Request",
             "The operation is not implemented or is not supported\/enabled in this\nservice.\n\nHTTP Mapping: 501 Not Implemented",
             "Internal errors.  This means that some invariants expected by the\nunderlying system have been broken.  This error code is reserved\nfor serious errors.\n\nHTTP Mapping: 500 Internal Server Error",
-            "The service is currently unavailable.  This is most likely a\ntransient condition, which can be corrected by retrying with\na backoff.\n\nSee the guidelines above for deciding between `FAILED_PRECONDITION`,\n`ABORTED`, and `UNAVAILABLE`.\n\nHTTP Mapping: 503 Service Unavailable",
+            "The service is currently unavailable.  This is most likely a\ntransient condition, which can be corrected by retrying with\na backoff. Note that it is not always safe to retry\nnon-idempotent operations.\n\nSee the guidelines above for deciding between `FAILED_PRECONDITION`,\n`ABORTED`, and `UNAVAILABLE`.\n\nHTTP Mapping: 503 Service Unavailable",
             "Unrecoverable data loss or corruption.\n\nHTTP Mapping: 500 Internal Server Error"
           ],
           "type": "string",
@@ -1041,6 +1044,10 @@
         },
         "instance": {
           "description": "The worker's instance name.",
+          "type": "string"
+        },
+        "machineType": {
+          "description": "The machine type that was assigned for the worker.",
           "type": "string"
         }
       }
@@ -1188,7 +1195,7 @@
             "https://www.googleapis.com/auth/cloud-platform",
             "https://www.googleapis.com/auth/genomics"
           ],
-          "description": "Runs a pipeline.\n\n**Note:** Before you can use this method, the Genomics Service Agent\nmust have access to your project. This is done automatically when the\nCloud Genomics API is first enabled, but if you delete this permission,\nor if you enabled the Cloud Genomics API before the v2alpha1 API\nlaunch, you must disable and re-enable the API to grant the Genomics\nService Agent the required permissions.\nAuthorization requires the following [Google\nIAM](https:\/\/cloud.google.com\/iam\/) permission:\n\n* `genomics.operations.create`\n\n[1]: \/genomics\/gsa"
+          "description": "Runs a pipeline.  The returned Operation's metadata field will contain a\ngoogle.genomics.v2alpha1.Metadata object describing the status of the\npipeline execution.  The [response] field will contain a\ngoogle.genomics.v2alpha1.RunPipelineResponse object if the pipeline\ncompletes successfully.\n\n**Note:** Before you can use this method, the Genomics Service Agent\nmust have access to your project. This is done automatically when the\nCloud Genomics API is first enabled, but if you delete this permission,\nor if you enabled the Cloud Genomics API before the v2alpha1 API\nlaunch, you must disable and re-enable the API to grant the Genomics\nService Agent the required permissions.\nAuthorization requires the following [Google\nIAM](https:\/\/cloud.google.com\/iam\/) permission:\n\n* `genomics.operations.create`\n\n[1]: \/genomics\/gsa"
         }
       }
     },

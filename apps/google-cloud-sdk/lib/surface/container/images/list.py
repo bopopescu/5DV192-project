@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2016 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ class List(base.ListCommand):
 
           List images with names prefixed with 'test-project':
 
-            $ {command} --filter "name:test-project"
+            $ {command} --filter="name:test-project"
 
       """,
   }

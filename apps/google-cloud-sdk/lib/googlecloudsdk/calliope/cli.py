@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2013 Google Inc. All Rights Reserved.
+# Copyright 2013 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ from googlecloudsdk.calliope import command_loading
 from googlecloudsdk.calliope import exceptions
 from googlecloudsdk.calliope import parser_errors
 from googlecloudsdk.calliope import parser_extensions
+from googlecloudsdk.core import argv_utils
 from googlecloudsdk.core import config
 from googlecloudsdk.core import log
 from googlecloudsdk.core import metrics
@@ -113,7 +114,7 @@ def _AddFlagsFileFlags(inject, flags_file, parent_locations=None):
     for arg, obj in six.iteritems(member.value):
 
       line_col = obj.lc
-      value = obj.value
+      value = yaml.strip_locations(obj)
 
       if arg == flag:
         # The flags-file YAML arg value can be a path or list of paths.
@@ -466,7 +467,7 @@ class CLILoader(object):
         # Mount each registered sub group under each release track that exists.
         for track, track_root_group in six.iteritems(loaded_release_tracks):
           # pylint: disable=line-too-long
-          parent_group = self.__FindParentGroup(track_root_group, root)  # type: backend.CommandGroup
+          parent_group = self.__FindParentGroup(track_root_group, root)
           # pylint: enable=line-too-long
           exception_if_present = None
           if not parent_group:
@@ -591,7 +592,7 @@ class CLILoader(object):
         help="""\
         The configuration to use for this command invocation. For more
         information on how to use configurations, run:
-        `gcloud topic configurations`.  You can also use the [{0}] environment
+        `gcloud topic configurations`.  You can also use the {0} environment
         variable to set the equivalent of this flag for a terminal
         session.""".format(config.CLOUDSDK_ACTIVE_CONFIG_NAME))
 
@@ -600,9 +601,7 @@ class CLILoader(object):
         choices=log.OrderedVerbosityNames(),
         default=log.DEFAULT_VERBOSITY_STRING,
         category=calliope_base.COMMONLY_USED_FLAGS,
-        help=('Override the default verbosity for this command with any of the '
-              'supported standard verbosity levels: {}.'.format(', '.join(
-                  ['`' + name + '`' for name in log.OrderedVerbosityNames()]))),
+        help='Override the default verbosity for this command.',
         action=actions.StoreProperty(properties.VALUES.core.verbosity))
 
     # This should be a pure Boolean flag, but the alternate true/false explicit
@@ -837,7 +836,6 @@ def _SubParsersActionCall(self, parser, namespace, values, option_string=None):
   del option_string
 
   # pylint: disable=protected-access
-  # pytype: disable=module-attr
 
   parser_name = values[0]
   arg_strings = values[1:]
@@ -862,7 +860,6 @@ def _SubParsersActionCall(self, parser, namespace, values, option_string=None):
     vars(namespace).setdefault(argparse._UNRECOGNIZED_ARGS_ATTR, [])
     getattr(namespace, argparse._UNRECOGNIZED_ARGS_ATTR).extend(arg_strings)
 
-  # pytype: enable=module-attr
   # pylint: enable=protected-access
 
 
@@ -929,14 +926,14 @@ class CLI(object):
     argparse.str = six.text_type
     # We need the argparse 1.2.1 patch in _SubParsersActionCall.
     # TODO(b/77288697) delete after py3 tests use non-hermetic python
-    if argparse.__version__ == '1.1':  # pytype: disable=module-attr
+    if argparse.__version__ == '1.1':
       argparse._SubParsersAction.__call__ = _SubParsersActionCall  # pylint: disable=protected-access
 
     if call_arg_complete:
       _ArgComplete(self.__top_element.ai)
 
     if not args:
-      args = sys.argv[1:]
+      args = argv_utils.GetDecodedArgv()[1:]
 
     # Look for a --configuration flag and update property state based on
     # that before proceeding to the main argparse parse step.

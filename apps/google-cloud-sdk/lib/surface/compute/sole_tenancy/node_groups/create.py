@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,13 +21,24 @@ from __future__ import unicode_literals
 from googlecloudsdk.api_lib.compute import base_classes
 from googlecloudsdk.api_lib.compute import utils as compute_utils
 from googlecloudsdk.calliope import base
+from googlecloudsdk.calliope import exceptions
 from googlecloudsdk.command_lib.compute import flags as compute_flags
 from googlecloudsdk.command_lib.compute.sole_tenancy.node_groups import flags
 from googlecloudsdk.command_lib.compute.sole_tenancy.node_groups import util
 
 
+@base.ReleaseTracks(base.ReleaseTrack.GA)
 class Create(base.CreateCommand):
-  """Creates a Google Compute Engine node group."""
+  """Create a Compute Engine node group."""
+
+  detailed_help = {
+      'brief': 'Create a Compute Engine node group.',
+      'EXAMPLES': """
+         To create a node group, run:
+
+           $ {command} my-node-group --node-template=example-template --target-size=4
+       """,
+  }
 
   @staticmethod
   def Args(parser):
@@ -52,6 +63,19 @@ class Create(base.CreateCommand):
         name=node_group_ref.Name(),
         description=args.description,
         nodeTemplate=node_template_ref.SelfLink())
+
+    if hasattr(args, 'maintenance_policy'):
+      mapper = flags.GetMaintenancePolicyEnumMapper(messages)
+      maintenance_policy = mapper.GetEnumForChoice(args.maintenance_policy)
+      node_group.maintenancePolicy = maintenance_policy
+
+    if hasattr(args, 'autoscaler_mode') and args.autoscaler_mode:
+      if args.autoscaler_mode != 'off' and args.max_nodes is None:
+        raise exceptions.RequiredArgumentException('--max-nodes',
+                                                   '--autoscaler-mode is on')
+      autoscaling_policy = util.BuildAutoscaling(args, messages)
+      node_group.autoscalingPolicy = autoscaling_policy
+
     request = messages.ComputeNodeGroupsInsertRequest(
         nodeGroup=node_group,
         initialNodeCount=args.target_size,
@@ -60,3 +84,20 @@ class Create(base.CreateCommand):
 
     service = holder.client.apitools_client.nodeGroups
     return client.MakeRequests([(service, 'Insert', request)])[0]
+
+
+@base.ReleaseTracks(base.ReleaseTrack.BETA)
+class CreateBeta(Create):
+  """Create a Compute Engine node group."""
+
+  @staticmethod
+  def Args(parser):
+    flags.MakeNodeGroupArg().AddArgument(parser)
+    flags.AddCreateArgsToParser(parser)
+    flags.AddMaintenancePolicyArgToParser(parser)
+    flags.AddAutoscalingPolicyArgToParser(parser, required_mode=True)
+
+
+@base.ReleaseTracks(base.ReleaseTrack.ALPHA)
+class CreateAlpha(CreateBeta):
+  """Create a Compute Engine node group."""

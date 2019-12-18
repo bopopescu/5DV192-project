@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2016 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -43,17 +43,27 @@ class _Result(object):
     self.old = old
 
 
-def _PrintAndConfirmWarningMessage(args):
+def _PrintAndConfirmWarningMessage(args, database_version):
   """Print and confirm warning indicating the effect of applying the patch."""
   continue_msg = None
-  if any([
-      args.tier, args.database_flags, args.clear_database_flags,
-      args.enable_database_replication is not None
-  ]):
+  if any([args.tier, args.enable_database_replication is not None]):
     continue_msg = (
         'WARNING: This patch modifies a value that requires '
         'your instance to be restarted. Submitting this patch '
         'will immediately restart your instance if it\'s running.')
+  elif any([args.database_flags, args.clear_database_flags]):
+    database_type_fragment = 'mysql'
+    if api_util.InstancesV1Beta4.IsPostgresDatabaseVersion(database_version):
+      database_type_fragment = 'postgres'
+    elif api_util.InstancesV1Beta4.IsSqlServerDatabaseVersion(database_version):
+      database_type_fragment = 'sqlserver'
+    flag_docs_url = 'https://cloud.google.com/sql/docs/{}/flags'.format(
+        database_type_fragment)
+    continue_msg = (
+        'WARNING: This patch modifies database flag values, which may require '
+        'your instance to be restarted. Check the list of supported flags - '
+        '{} - to see if your instance will be restarted when this patch '
+        'is submitted.'.format(flag_docs_url))
   else:
     if any([args.follow_gae_app, args.gce_zone]):
       continue_msg = ('WARNING: This patch modifies the zone your instance '
@@ -65,7 +75,7 @@ def _PrintAndConfirmWarningMessage(args):
     raise exceptions.CancelledError('canceled by the user.')
 
 
-def _GetConfirmedClearedFields(args, patch_instance):
+def _GetConfirmedClearedFields(args, patch_instance, original_instance):
   """Clear fields according to args and confirm with user."""
   cleared_fields = []
 
@@ -82,7 +92,7 @@ def _GetConfirmedClearedFields(args, patch_instance):
       encoding.MessageToJson(patch_instance, include_fields=cleared_fields) +
       '\n')
 
-  _PrintAndConfirmWarningMessage(args)
+  _PrintAndConfirmWarningMessage(args, original_instance.databaseVersion)
 
   return cleared_fields
 
@@ -91,11 +101,8 @@ def AddBaseArgs(parser):
   """Adds base args and flags to the parser."""
   # TODO(b/35705305): move common flags to command_lib.sql.flags
   flags.AddActivationPolicy(parser)
-  flags.AddAssignIp(parser, show_negated_in_help=True)
-  parser.add_argument(
-      '--async',
-      action='store_true',
-      help='Do not wait for the operation to complete.')
+  flags.AddAssignIp(parser)
+  base.ASYNC_FLAG.AddToParser(parser)
   gae_apps_group = parser.add_mutually_exclusive_group()
   flags.AddAuthorizedGAEApps(gae_apps_group, update=True)
   gae_apps_group.add_argument(
@@ -235,7 +242,8 @@ def RunBasePatchCommand(args, release_track):
   if api_util.IsInstanceV1(original_instance_resource):
     command_util.ShowV1DeprecationWarning()
 
-  cleared_fields = _GetConfirmedClearedFields(args, patch_instance)
+  cleared_fields = _GetConfirmedClearedFields(args, patch_instance,
+                                              original_instance_resource)
   # beta only
   if args.maintenance_window_any:
     cleared_fields.append('settings.maintenanceWindow')
@@ -252,7 +260,7 @@ def RunBasePatchCommand(args, release_track):
       operation=result_operation.name,
       project=instance_ref.project)
 
-  if args.async:
+  if args.async_:
     return sql_client.operations.Get(
         sql_messages.SqlOperationsGetRequest(
             project=operation_ref.project, operation=operation_ref.operation))

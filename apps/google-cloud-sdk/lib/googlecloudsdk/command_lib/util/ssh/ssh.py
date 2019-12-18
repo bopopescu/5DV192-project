@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2016 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import errno
 import getpass
 import os
 import re
+import string
 import enum
 
 from googlecloudsdk.api_lib.oslogin import client as oslogin_client
@@ -80,6 +81,10 @@ class InvalidConfigurationError(core_exceptions.Error):
     super(InvalidConfigurationError, self).__init__(
         msg + '  Got sources: {}, destination: {}'
         .format(sources, destination))
+
+
+class BadCharacterError(core_exceptions.Error):
+  """Indicates a character was found that couldn't be escaped."""
 
 
 class Suite(enum.Enum):
@@ -143,7 +148,6 @@ class Environment(object):
     """
     self.suite = suite
     self.bin_path = bin_path
-    # So pytype is aware of attributes.
     self.ssh = None
     self.ssh_term = None
     self.scp = None
@@ -308,11 +312,10 @@ class Keys(object):
     private_key_file = os.path.realpath(files.ExpandHomeDir(key_file))
     self.dir = os.path.dirname(private_key_file)
     self.env = env or Environment.Current()
-    # TODO(b/71388306): Enums aren't handled well by pytype.
     self.keys = {
         _KeyFileKind.PRIVATE: self.KeyFileData(private_key_file),
         _KeyFileKind.PUBLIC: self.KeyFileData(private_key_file + '.pub')
-    }  # type: dict[enum.Enum, Keys.KeyFileData]
+    }
     if self.env.suite is Suite.PUTTY:
       self.keys[_KeyFileKind.PPK] = self.KeyFileData(private_key_file + '.ppk')
 
@@ -341,13 +344,13 @@ class Keys(object):
     status_padding = 0
     for kind in self.keys:
       data = self.keys[kind]
-      key_padding = max(key_padding, len(kind.value))  # pytype: disable=attribute-error
-      status_padding = max(status_padding, len(data.status.value))  # pytype: disable=attribute-error
+      key_padding = max(key_padding, len(kind.value))
+      status_padding = max(status_padding, len(data.status.value))
     for kind in self.keys:
       data = self.keys[kind]
       messages.append('{} {} [{}]\n'.format(
-          (kind.value + ' key').ljust(key_padding + 4),  # pytype: disable=attribute-error
-          ('(' + data.status.value + ')') .ljust(status_padding + 2),  # pytype: disable=attribute-error
+          (kind.value + ' key').ljust(key_padding + 4),
+          ('(' + data.status.value + ')') .ljust(status_padding + 2),
           data.filename))
     messages.sort()
     return ''.join(messages)
@@ -366,7 +369,7 @@ class Keys(object):
     """
     def ValidateFile(kind):
       status_or_line = self._WarnOrReadFirstKeyLine(self.keys[kind].filename,
-                                                    kind.value)  # pytype: disable=attribute-error
+                                                    kind.value)
       if isinstance(status_or_line, KeyFileStatus):
         return status_or_line
       else:  # returned line - present
@@ -467,7 +470,6 @@ class Keys(object):
     return status
 
   def GetPublicKey(self):
-    # type: () -> Keys.PublicKey
     """Returns the public key verbatim from file as a string.
 
     Precondition: The public key must exist. Run Keys.EnsureKeysExist() prior.
@@ -521,6 +523,27 @@ class Keys(object):
 
       cmd = KeygenCommand(self.key_file, allow_passphrase=allow_passphrase)
       cmd.Run(self.env)
+
+    if self.env.suite is Suite.PUTTY:
+      # This is to fix an encoding issue with PPK's we generated that was
+      # ignored in versions of PuTTY <=0.70, but became invalid in version 0.71.
+      # Since this only affects the PPK, we don't need to generate a new key; we
+      # can just correct the encoding of the PPK if necessary. We use a sentinel
+      # file in the config dir to check if the encoding is already correct.
+      valid_ppk_sentinel = config.Paths().valid_ppk_sentinel_file
+      if not os.path.exists(valid_ppk_sentinel):
+        if key_files_validity is KeyFileStatus.PRESENT:  # Initial validity
+          cmd = KeygenCommand(
+              self.key_file, allow_passphrase=False, reencode_ppk=True)
+          cmd.Run(self.env)
+        try:
+          files.WriteFileContents(valid_ppk_sentinel, '')
+        except files.Error as e:
+          # It's possible that writing the sentinel file fails, which means
+          # we'll potentially have to re-encode the PPK again the next time an
+          # SSH/SCP command is run. But we shouldn't let this prevent the user
+          # from running their current command.
+          log.debug('Failed to create sentinel file: [{}]'.format(e))
 
 
 class KnownHosts(object):
@@ -609,6 +632,42 @@ class KnownHosts(object):
     else:
       self.known_hosts.append(new_key_entry)
 
+  def AddMultiple(self, hostname, host_keys, overwrite=False):
+    """Add or update multiple entries for the given hostname.
+
+    If there is no entry for the given hostname, the keys will be added. If
+    there is an entry already, and overwrite keys is False, nothing will be
+    changed. If there is an entry and overwrite_keys is True, all  current
+    entries for the given hostname will be removed and the new keys added.
+
+    Args:
+      hostname: str, The hostname for the known_hosts entry.
+      host_keys: list, A list of host keys for the given hostname.
+      overwrite: bool, If true, will overwrite the entries corresponding to
+        hostname with the new host_key if it already exists. If false and an
+        entry already exists for hostname, will ignore the new host_key values.
+    Returns:
+      bool, True if new keys were added.
+    """
+    new_keys_added = False
+    new_key_entries = ['{0} {1}'.format(hostname, host_key)
+                       for host_key in host_keys]
+    if not new_key_entries:
+      return new_keys_added
+    existing_entries = [key for key in self.known_hosts
+                        if key.startswith(hostname)]
+    if existing_entries:
+      if overwrite:
+        self.known_hosts = [key for key in self.known_hosts
+                            if not key.startswith(hostname)]
+        self.known_hosts.extend(new_key_entries)
+        new_keys_added = True
+    else:
+      self.known_hosts.extend(new_key_entries)
+      new_keys_added = True
+
+    return new_keys_added
+
   def Write(self):
     """Writes the file to disk."""
     files.WriteFileContents(
@@ -663,7 +722,7 @@ def _MetadataHasOsloginEnable(metadata):
 
 
 def CheckForOsloginAndGetUser(instance, project, requested_user, public_key,
-                              release_track):
+                              expiration_time, release_track):
   """Check instance/project metadata for oslogin and return updated username.
 
   Check to see if OS Login is enabled in metadata and if it is, return
@@ -675,6 +734,10 @@ def CheckForOsloginAndGetUser(instance, project, requested_user, public_key,
     project: project, The object representing the current project.
     requested_user: str, The default or requested username to connect as.
     public_key: str, The public key of the user connecting.
+    expiration_time: int, Microseconds after epoch when the ssh key should
+      expire. If None, an existing key will not be modified and a new key will
+      not be set to expire.  If not None, an existing key may be modified
+      with the new expiry.
     release_track: release_track, The object representing the release track.
 
   Returns:
@@ -702,14 +765,21 @@ def CheckForOsloginAndGetUser(instance, project, requested_user, public_key,
     return requested_user, use_oslogin
   user_email = properties.VALUES.core.account.Get()
 
-  # Check to see if public key is already in profile, and import if not.
+  # Check to see if public key is already in profile and POSIX information
+  # exists associated with the project. If either are not set, import an SSH
+  # public key. Otherwise update the expiration time if needed.
   login_profile = oslogin.GetLoginProfile(user_email, project.name)
   keys = oslogin_utils.GetKeyDictionaryFromProfile(
       user_email, oslogin, profile=login_profile)
   fingerprint = oslogin_utils.FindKeyInKeyList(public_key, keys)
-  if not fingerprint:
-    import_response = oslogin.ImportSshPublicKey(user_email, public_key)
+  if not fingerprint or not login_profile.posixAccounts:
+    import_response = oslogin.ImportSshPublicKey(user_email, public_key,
+                                                 expiration_time)
     login_profile = import_response.loginProfile
+  elif expiration_time:
+    oslogin.UpdateSshPublicKey(user_email, fingerprint, keys[fingerprint],
+                               'expirationTimeUsec',
+                               expiration_time=expiration_time)
   use_oslogin = True
 
   # Get the username for the oslogin user. If the username is the same as the
@@ -723,12 +793,13 @@ def CheckForOsloginAndGetUser(instance, project, requested_user, public_key,
     elif pa.primary:
       oslogin_user = pa.username
 
-  log.warning('Using OS Login user [{0}] instead of default user [{1}]'
-              .format(oslogin_user, requested_user))
+  log.info('Using OS Login user [{0}] instead of default user [{1}]'.format(
+      oslogin_user, requested_user))
   return oslogin_user, use_oslogin
 
 
-def ParseAndSubstituteSSHFlags(args, remote, ip_address):
+def ParseAndSubstituteSSHFlags(args, remote, instance_address,
+                               internal_address):
   """Obtain extra flags from the command arguments."""
   extra_flags = []
   if args.ssh_flag:
@@ -736,7 +807,8 @@ def ParseAndSubstituteSSHFlags(args, remote, ip_address):
       for flag_part in flag.split():  # We want grouping here
         dereferenced_flag = (
             flag_part.replace('%USER%', remote.user)
-            .replace('%INSTANCE%', ip_address))
+            .replace('%INSTANCE%', instance_address)
+            .replace('%INTERNAL%', internal_address))
         extra_flags.append(dereferenced_flag)
   return extra_flags
 
@@ -817,6 +889,147 @@ class Remote(object):
     return self.ToArg()
 
 
+def _EscapeProxyCommandArg(s, env):
+  """Returns s escaped such that it can be a ProxyCommand arg.
+
+  Args:
+    s: str, Argument to escape. Must be non-empty.
+    env: Environment, data about the ssh client.
+  Raises:
+    BadCharacterError: If s contains a bad character.
+  """
+  for c in s:
+    if not 0x20 <= ord(c) < 0x7f:
+      # For ease of implementation we ban control characters and non-ASCII.
+      raise BadCharacterError(
+          ('Special character %r (part of %r) couldn\'t be escaped for '
+           'ProxyCommand') % (c, s))
+  if env.suite is Suite.PUTTY:
+    # When using proxycmd with putty or plink, 3 unescapes happen:
+    # 1 putty/plink does command line -> argv unescape.
+    # 2 putty/plink does backslash and percent unescape.
+    # 3 Inner gcloud python binary does command line -> argv unescape.
+    #
+    # We reverse this, doing escapes in reverse order, doing 3, 2.
+    # We don't do the 1 escape here because that's done later inside the
+    # subprocess.Popen() function.
+    s = _EscapeWindowsArgvElement(s)
+    s = _EscapePuttyBackslashPercent(s)
+    return s
+  # When using ProxyCommand with OpenSSH, 2 unescapes happen:
+  # 1 OpenSSH does percent unescape.
+  # 2 bash does unescape.
+  # We do the corresponding escapes in reverse.
+  return _EscapeForBash(s).replace('%', '%%')
+
+
+def _EscapeWindowsArgvElement(s):
+  """Returns s escaped such that it can be passed to a windows executable.
+
+  Args:
+    s: str, What to escape. Must be ASCII and non-control.
+  """
+  # Each Windows binary can unescape its commandline arguments to argv how it
+  # wants, but they tend to behave like this:
+  # https://docs.microsoft.com/en-us/cpp/cpp/parsing-cpp-command-line-arguments?view=vs-2017
+  # We escape in that format because that format is similar to how python (of
+  # the inner gcloud) does it. The primary difference is what happens when
+  # inside a doublequoted string there is an even number of backslashes
+  # (possibly 0) then at least 2 doublequotes. This function never returns a
+  # string like that, so it avoids the ambiguity.
+  #
+  # We escape in reverse, because that's easiest.
+  result = []
+  # Whether (in the reversed input) we are following a non-broken chain of
+  # backslashes (possibly 0-length) after a doublequote.
+  # The final output will have a doublequote appended to the end, so the first
+  # character of the reversed input is considered to follow a doublequote.
+  following_quote = True
+  for c in s[::-1]:
+    if c == '"':
+      result.append('"\\')
+      following_quote = True
+    elif c == '\\':
+      if following_quote:
+        result.append('\\\\')
+      else:
+        result.append('\\')
+    else:
+      result.append(c)
+      following_quote = False
+  return '"' + ''.join(result)[::-1] + '"'
+
+
+def _EscapePuttyBackslashPercent(s):
+  # s must be ASCII and non-control.
+  # The putty unescaping is documented at
+  # https://the.earth.li/~sgtatham/putty/0.70/htmldoc/Chapter4.html#config-proxy-command
+  return s.replace('\\', '\\\\').replace('%', '%%')
+
+
+def _EscapeForBash(s):
+  """Returns s escaped so it can be used as a single bash argument.
+
+  Args:
+    s: str, What to escape. Must be ASCII, non-control, and non-empty.
+  """
+  # From https://stackoverflow.com/q/15783701
+  good_chars = set(string.ascii_letters + string.digits + '%+-./:=@_')
+  result = []
+  for c in s:
+    if c in good_chars:
+      result.append(c)
+    else:
+      result.append('\\' + c)
+  return ''.join(result)
+
+
+def _BuildIapTunnelProxyCommandArgs(iap_tunnel_args, env):
+  """Calculate the ProxyCommand flags for IAP Tunnel if necessary.
+
+  IAP Tunnel with ssh runs an second inner version of gcloud by passing a
+  command to do so as a ProxyCommand argument to OpenSSH/Putty.
+
+  Args:
+    iap_tunnel_args: iap_tunnel.SshTunnelArgs or None, options about IAP Tunnel.
+    env: Environment, data about the ssh client.
+  Returns:
+    [str], the additional arguments for OpenSSH or Putty.
+  """
+  if not iap_tunnel_args:
+    return []
+
+  gcloud_command = execution_utils.ArgsForGcloud()
+  # Applying _EscapeProxyCommandArg to the first item (the python executable
+  # path) doesn't make 100% sense on Windows, because the full unescaping only
+  # happens to arguments, not to the executable path. But this escaping will be
+  # correct as long as the python executable path doesn't contain a doublequote
+  # or end with a backslash, which should never happen.
+  gcloud_command = [_EscapeProxyCommandArg(x, env) for x in gcloud_command]
+  # track, project, zone, instance, verbosity should only contain
+  # characters that don't need escaping, so don't bother escaping them.
+  if iap_tunnel_args.track:
+    gcloud_command.append(iap_tunnel_args.track)
+  port_token = '%port' if env.suite is Suite.PUTTY else '%p'
+  gcloud_command.extend([
+      'compute', 'start-iap-tunnel', iap_tunnel_args.instance, port_token,
+      '--listen-on-stdin',
+      '--project=' + iap_tunnel_args.project,
+      '--zone=' + iap_tunnel_args.zone])
+  for arg in iap_tunnel_args.pass_through_args:
+    gcloud_command.append(_EscapeProxyCommandArg(arg, env))
+
+  verbosity = log.GetVerbosityName()
+  if verbosity:
+    gcloud_command.append('--verbosity=' + verbosity)
+
+  if env.suite is Suite.PUTTY:
+    return ['-proxycmd', ' '.join(gcloud_command)]
+  else:
+    return ['-o', ' '.join(['ProxyCommand'] + gcloud_command),
+            '-o', 'ProxyUseFdpass=no']
+
+
 class KeygenCommand(object):
   """Platform independent SSH client key generation command.
 
@@ -838,12 +1051,16 @@ class KeygenCommand(object):
       - Running in an OpenSSH environment (Linux and Mac)
       - Running in interactive mode (from an actual TTY)
       - Prompts are enabled in gcloud
+    reencode_ppk: bool, If True, reencode the PPK file if it was generated with
+      a bad encoding, instead of generating a new key. This is only valid for
+      PuTTY.
   """
 
-  def __init__(self, identity_file, allow_passphrase=True):
+  def __init__(self, identity_file, allow_passphrase=True, reencode_ppk=False):
     """Construct a suite independent `ssh-keygen` command."""
     self.identity_file = identity_file
     self.allow_passphrase = allow_passphrase
+    self.reencode_ppk = reencode_ppk
 
   def Build(self, env=None):
     """Construct the actual command according to the given environment.
@@ -868,6 +1085,8 @@ class KeygenCommand(object):
         args.extend(['-N', ''])  # Empty passphrase
       args.extend(['-t', 'rsa', '-f', self.identity_file])
     else:
+      if self.reencode_ppk:
+        args.append('--reencode-ppk')
       args.append(self.identity_file)
 
     return args
@@ -911,7 +1130,7 @@ class SSHCommand(object):
 
   def __init__(self, remote, port=None, identity_file=None,
                options=None, extra_flags=None, remote_command=None, tty=None,
-               remainder=None):
+               iap_tunnel_args=None, remainder=None):
     """Construct a suite independent SSH command.
 
     Note that `extra_flags` and `remote_command` arguments are lists of strings:
@@ -929,6 +1148,8 @@ class SSHCommand(object):
       remote_command: [str], command to run remotely.
       tty: bool, launch a terminal. If None, determine automatically based on
         presence of remote command.
+      iap_tunnel_args: iap_tunnel.SshTunnelArgs or None, options about IAP
+        Tunnel.
       remainder: [str], NOT RECOMMENDED. Arguments to be appended directly to
         the native tool invocation, after the `[user@]host` part but prior to
         the remote command. On PuTTY, this can only be a remote command. On
@@ -943,6 +1164,7 @@ class SSHCommand(object):
     self.extra_flags = extra_flags or []
     self.remote_command = remote_command or []
     self.tty = tty
+    self.iap_tunnel_args = iap_tunnel_args
     self.remainder = remainder
 
   def Build(self, env=None):
@@ -978,6 +1200,8 @@ class SSHCommand(object):
       # Always, always deterministic order
       for key, value in sorted(six.iteritems(self.options)):
         args.extend(['-o', '{k}={v}'.format(k=key, v=value)])
+
+    args.extend(_BuildIapTunnelProxyCommandArgs(self.iap_tunnel_args, env))
     args.extend(self.extra_flags)
     args.append(self.remote.ToArg())
 
@@ -987,9 +1211,11 @@ class SSHCommand(object):
       args.extend(self.remainder)
 
     if self.remote_command:
-      if env.suite is Suite.OPENSSH:  # Putty doesn't like double dash
+      if env.suite is Suite.OPENSSH:
         args.append('--')
-      args.extend(self.remote_command)
+        args.extend(self.remote_command)
+      else:
+        args.append(' '.join(self.remote_command))
     return args
 
   def Run(self, env=None, force_connect=False,
@@ -1057,7 +1283,8 @@ class SCPCommand(object):
   """
 
   def __init__(self, sources, destination, recursive=False, compress=False,
-               port=None, identity_file=None, options=None, extra_flags=None):
+               port=None, identity_file=None, options=None, extra_flags=None,
+               iap_tunnel_args=None):
     """Construct a suite independent SCP command.
 
     Args:
@@ -1073,6 +1300,8 @@ class SCPCommand(object):
       options: {str: str}, options (`-o`) for OpenSSH, see `ssh_config(5)`.
       extra_flags: [str], extra flags to append to scp invocation. Both binary
         style flags `['-b']` and flags with values `['-k', 'v']` are accepted.
+      iap_tunnel_args: iap_tunnel.SshTunnelArgs or None, options about IAP
+        Tunnel.
     """
     self.sources = [sources] if isinstance(sources, FileReference) else sources
     self.destination = destination
@@ -1082,6 +1311,7 @@ class SCPCommand(object):
     self.identity_file = identity_file
     self.options = options or {}
     self.extra_flags = extra_flags or []
+    self.iap_tunnel_args = iap_tunnel_args
 
   @classmethod
   def Verify(cls, sources, destination, single_remote=False, env=None):
@@ -1170,6 +1400,7 @@ class SCPCommand(object):
       for key, value in sorted(six.iteritems(self.options)):
         args.extend(['-o', '{k}={v}'.format(k=key, v=value)])
 
+    args.extend(_BuildIapTunnelProxyCommandArgs(self.iap_tunnel_args, env))
     args.extend(self.extra_flags)
 
     # Positionals
@@ -1216,7 +1447,7 @@ class SSHPoller(object):
 
   def __init__(self, remote, port=None, identity_file=None,
                options=None, extra_flags=None, max_wait_ms=60*1000,
-               sleep_ms=5*1000):
+               sleep_ms=5*1000, iap_tunnel_args=None):
     """Construct a poller for an SSH connection.
 
     Args:
@@ -1228,10 +1459,13 @@ class SSHPoller(object):
         style flags `['-b']` and flags with values `['-k', 'v']` are accepted.
       max_wait_ms: int, number of ms to wait before raising.
       sleep_ms: int, time between trials.
+      iap_tunnel_args: iap_tunnel.SshTunnelArgs or None, information about IAP
+        Tunnel.
     """
     self.ssh_command = SSHCommand(
         remote, port=port, identity_file=identity_file, options=options,
-        extra_flags=extra_flags, remote_command=['true'], tty=False)
+        extra_flags=extra_flags, remote_command=['true'], tty=False,
+        iap_tunnel_args=iap_tunnel_args)
     self._sleep_ms = sleep_ms
     self._retryer = retry.Retryer(max_wait_ms=max_wait_ms, jitter_ms=0)
 

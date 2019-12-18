@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,13 +23,26 @@ from googlecloudsdk.api_lib.compute import base_classes
 from googlecloudsdk.calliope import base
 from googlecloudsdk.command_lib.compute.instances import flags
 
+DETAILED_HELP = {
+    'brief': 'Reset a virtual machine instance.',
+    'DESCRIPTION':
+        """\
+          *{command}* is used to perform a hard reset on a Google
+        Compute Engine virtual machine.
+
+        This will not perform a clean shutdown of the guest OS on the instance.
+        """,
+    'EXAMPLES':
+        """\
+        To reset an instance named ``test-instance'', run:
+
+          $ {command} test-instance
+        """
+}
+
 
 class Reset(base.SilentCommand):
-  """Reset a virtual machine instance.
-
-    *{command}* is used to perform a hard reset on a Google
-  Compute Engine virtual machine.
-  """
+  """Reset a virtual machine instance."""
 
   @staticmethod
   def Args(parser):
@@ -51,3 +64,6 @@ class Reset(base.SilentCommand):
 
       request_list.append((client.apitools_client.instances, 'Reset', request))
     return client.MakeRequests(request_list)
+
+
+Reset.detailed_help = DETAILED_HELP

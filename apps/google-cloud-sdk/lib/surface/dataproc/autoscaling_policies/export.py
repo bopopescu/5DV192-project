@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2019 Google Inc. All Rights Reserved.
+# Copyright 2019 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,11 +34,20 @@ class Export(base.Command):
   export omits output only fields, such as the policy id and resource name. This
   is to allow piping the output of export directly into import, which requires
   that output only fields are omitted.
+
+  ## EXAMPLES
+
+  The following command saves the contents of autoscaling policy
+  `example-autoscaling-policy` to a file so that it can be imported later:
+
+    $ {command} example-autoscaling-policy --destination=saved-policy.yaml
   """
 
-  @staticmethod
-  def Args(parser):
-    flags.AddExportArgs(parser, 'export', 'v1beta2', 'AutoscalingPolicy')
+  @classmethod
+  def Args(cls, parser):
+    dataproc = dp.Dataproc(cls.ReleaseTrack())
+    flags.AddExportArgs(parser, 'export', dataproc.api_version,
+                        'AutoscalingPolicy')
 
   def Run(self, args):
     dataproc = dp.Dataproc(self.ReleaseTrack())

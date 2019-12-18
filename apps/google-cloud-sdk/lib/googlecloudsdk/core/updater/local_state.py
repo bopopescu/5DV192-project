@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2013 Google Inc. All Rights Reserved.
+# Copyright 2013 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,8 +19,6 @@ This tracks the installed modules along with the files they created.  It also
 provides functionality like extracting tar files into the installation and
 tracking when we check for updates.
 """
-# TODO(b/70520907): remove the attribute-error disable.
-# pytype: disable=attribute-error
 
 from __future__ import absolute_import
 from __future__ import division
@@ -103,7 +101,7 @@ def _RaisesPermissionsError(func):
 
   def _TryFunc(*args, **kwargs):
     try:
-      return func(*args, **kwargs)  # pytype: disable=missing-parameter
+      return func(*args, **kwargs)
     except shutil.Error as e:
       args = e.args[0][0]
       # unfortunately shutil.Error *only* has formatted strings to inspect.
@@ -117,8 +115,9 @@ def _RaisesPermissionsError(func):
     except (OSError, IOError) as e:
       if e.errno == errno.EACCES:
         exceptions.reraise(
-            PermissionsError(message=e.strerror,
-                             path=os.path.abspath(e.filename)))
+            PermissionsError(
+                message=encoding.Decode(e.strerror),
+                path=encoding.Decode(os.path.abspath(e.filename))))
       raise
   return _TryFunc
 
@@ -612,7 +611,11 @@ class InstallationState(object):
       for d in to_compile:
         # Using rx to skip unused Python3 directory vendored with gsutil's copy
         # of httplib2.
-        compileall.compile_dir(d, rx=re.compile('python3'), quiet=True)
+        # Using 2 for quiet, in python 2.7 this value is used as a bool in the
+        # implementation and bool(2) is True. Starting in python 3.5 this
+        # parameter was changed to a multilevel value, where 1 hides files
+        # being processed and 2 suppresses output.
+        compileall.compile_dir(d, rx=re.compile('python3'), quiet=2)
 
 
 class InstallationManifest(object):

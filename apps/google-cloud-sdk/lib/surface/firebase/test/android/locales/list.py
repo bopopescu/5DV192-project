@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ class List(base.ListCommand):
   """List all Android locales available for testing internationalized apps."""
 
   detailed_help = {
-      'EXAMPLES': """\
+      'EXAMPLES': """
           To list all available locales which can be used for testing
           internationalized Android applications, run:
 
@@ -35,7 +35,7 @@ class List(base.ListCommand):
 
           To filter the locales to see only Spanish-speaking regions, run:
 
-            $ {command} --filter Spanish
+            $ {command} --filter=Spanish
           """,
   }
 

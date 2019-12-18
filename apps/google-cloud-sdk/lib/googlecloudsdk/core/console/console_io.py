@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2013 Google Inc. All Rights Reserved.
+# Copyright 2013 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,8 +14,6 @@
 # limitations under the License.
 
 """General console printing utilities used by the Cloud SDK."""
-# TODO(b/71388306): Unskip pytype on this file.
-# pytype: skip-file
 
 from __future__ import absolute_import
 from __future__ import division
@@ -451,7 +449,8 @@ def _PrintOptions(options, write, limit=None):
   """
   limited_options = options if limit is None else options[:limit]
   for i, option in enumerate(limited_options):
-    write(' [{index}] {option}\n'.format(index=i + 1, option=str(option)))
+    write(' [{index}] {option}\n'.format(
+        index=i + 1, option=six.text_type(option)))
 
 
 # This defines the point at which, in a PromptChoice, the options
@@ -466,8 +465,8 @@ def PromptChoice(options, default=None, message=None,
   """Prompt the user to select a choice from a list of items.
 
   Args:
-    options:  [object], A list of objects to print as choices.  Their str()
-      method will be used to display them.
+    options:  [object], A list of objects to print as choices.  Their
+      six.text_type() method will be used to display them.
     default: int, The default index to return if prompting is disabled or if
       they do not enter a choice.
     message: str, An optional message to print before the choices are displayed.

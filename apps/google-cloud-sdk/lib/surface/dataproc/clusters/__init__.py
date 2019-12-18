@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,16 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """The command group for cloud dataproc clusters."""
 
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
-from googlecloudsdk.calliope import actions
 from googlecloudsdk.calliope import base
-from googlecloudsdk.core import properties
 
 
 @base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA,
@@ -35,30 +32,21 @@ class Clusters(base.Group):
 
   To create a cluster, run:
 
-    $ {command} create my_cluster
+    $ {command} create my_cluster --region=us-central1
 
   To resize a cluster, run:
 
-    $ {command} update my_cluster --num_workers 5
+    $ {command} update my_cluster --region=us-central1 --num_workers 5
 
   To delete a cluster, run:
 
-    $ {command} delete my_cluster
+    $ {command} delete my_cluster --region=us-central1
 
   To view the details of a cluster, run:
 
-    $ {command} describe my_cluster
+    $ {command} describe my_cluster --region=us-central1
 
   To see the list of all clusters, run:
 
     $ {command} list
   """
-
-  @classmethod
-  def Args(cls, parser):
-    region_prop = properties.VALUES.dataproc.region
-    parser.add_argument(
-        '--region',
-        help=region_prop.help_text,
-        # Don't set default, because it would override users' property setting.
-        action=actions.StoreProperty(region_prop))

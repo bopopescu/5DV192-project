@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,7 +25,15 @@ from googlecloudsdk.command_lib.container.binauthz import flags
 
 
 class Remove(base.Command):
-  """Remove a public key from an Attestor."""
+  r"""Remove a public key from an Attestor.
+
+  ## EXAMPLES
+
+  To remove a public key from the Attestor `my_attestor`:
+
+    $ {command} 0638AADD940361EA2D7F14C58C124F0E663DA097 \
+        --attestor=my_attestor
+  """
 
   @classmethod
   def Args(cls, parser):
@@ -39,8 +47,8 @@ class Remove(base.Command):
         ),
     )
     parser.add_argument(
-        'public_key_fingerprint',
-        help='The fingerprint of the public key to remove.')
+        'public_key_id',
+        help='The ID of the public key to remove.')
 
   def Run(self, args):
     api_version = apis.GetApiVersion(self.ReleaseTrack())
@@ -48,5 +56,4 @@ class Remove(base.Command):
 
     attestor_ref = args.CONCEPTS.attestor.Parse()
 
-    attestors_client.RemoveKey(
-        attestor_ref, fingerprint_to_remove=args.public_key_fingerprint)
+    attestors_client.RemoveKey(attestor_ref, pubkey_id=args.public_key_id)

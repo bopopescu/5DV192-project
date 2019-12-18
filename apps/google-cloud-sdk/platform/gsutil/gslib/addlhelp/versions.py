@@ -15,6 +15,9 @@
 """Additional help about object versioning."""
 
 from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import division
+from __future__ import unicode_literals
 
 from gslib.help_provider import HelpProvider
 
@@ -43,8 +46,8 @@ _DETAILED_HELP_TEXT = ("""
   (discussed in a later section).
 
   To work with object versioning in gsutil, you can use a flavor of storage URLs
-  that that embed the object generation, which we refer to as version-specific
-  URLs. For example, the version-less object URL:
+  that embed the object generation, which we refer to as version-specific URLs.
+  For example, the version-less object URL:
 
     gs://bucket/object
 

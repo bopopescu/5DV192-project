@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,14 +23,28 @@ from googlecloudsdk.calliope import base
 from googlecloudsdk.command_lib.dataproc import workflow_templates
 from googlecloudsdk.command_lib.dataproc.jobs import pig
 
+DETAILED_HELP = {
+    'EXAMPLES':
+        """\
+      To add a Pig job executing query 'QUERY' to a the workflow template
+      'my-workflow-template' in region 'us-central1' with step-id 'my-step-id'
+      , run:
+
+        $ {command} --step-id=my-step_id -e=QUERY --workflow-template=my-workflow-template --region=us-central1
+      """,
+}
+
 
 class Pig(pig.PigBase, base.Command):
   """Add a Pig job to the workflow template."""
 
-  @staticmethod
-  def Args(parser):
+  detailed_help = DETAILED_HELP
+
+  @classmethod
+  def Args(cls, parser):
     pig.PigBase.Args(parser)
-    workflow_templates.AddWorkflowTemplatesArgs(parser)
+    dataproc = dp.Dataproc(cls.ReleaseTrack())
+    workflow_templates.AddWorkflowTemplatesArgs(parser, dataproc.api_version)
 
   def ConfigureJob(self, messages, job, files_by_type, args):
     pig.PigBase.ConfigureJob(messages, job, files_by_type,

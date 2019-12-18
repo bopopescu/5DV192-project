@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,27 +19,34 @@ from __future__ import division
 from __future__ import unicode_literals
 
 from googlecloudsdk.calliope import exceptions as calliope_exceptions
+from googlecloudsdk.command_lib.compute.networks.subnets import flags
 import six
 
 
-def MakeSubnetworkUpdateRequest(client,
-                                subnet_ref,
-                                enable_private_ip_google_access=None,
-                                add_secondary_ranges=None,
-                                remove_secondary_ranges=None,
-                                enable_flow_logs=None,
-                                aggregation_interval=None,
-                                flow_sampling=None,
-                                metadata=None,
-                                set_role_active=None,
-                                drain_timeout_seconds=None,
-                                enable_private_ipv6_access=None,
-                                private_ipv6_google_access_type=None):
+def MakeSubnetworkUpdateRequest(
+    client,
+    subnet_ref,
+    include_alpha_logging,
+    enable_private_ip_google_access=None,
+    add_secondary_ranges=None,
+    remove_secondary_ranges=None,
+    enable_flow_logs=None,
+    aggregation_interval=None,
+    flow_sampling=None,
+    metadata=None,
+    filter_expr=None,
+    metadata_fields=None,
+    set_role_active=None,
+    drain_timeout_seconds=None,
+    enable_private_ipv6_access=None,
+    private_ipv6_google_access_type=None,
+    private_ipv6_google_access_service_accounts=None):
   """Make the appropriate update request for the args.
 
   Args:
     client: GCE API client
     subnet_ref: Reference to a subnetwork
+    include_alpha_logging: Include alpha-specific logging args.
     enable_private_ip_google_access: Enable/disable access to Google Cloud APIs
       from this subnet for instances without a public ip address.
     add_secondary_ranges: List of secondary IP ranges to add to the subnetwork
@@ -50,6 +57,8 @@ def MakeSubnetworkUpdateRequest(client,
     aggregation_interval: The internal at which to aggregate flow logs.
     flow_sampling: The sampling rate for flow logging in this subnet.
     metadata: Whether metadata fields should be added reported flow logs.
+    filter_expr: custom CEL expression for filtering flow logs
+    metadata_fields: custom metadata fields to be added to flow logs
     set_role_active: Updates the role of a BACKUP subnet to ACTIVE.
     drain_timeout_seconds: The maximum amount of time to drain connections from
       the active subnet to the backup subnet with set_role_active=True.
@@ -57,6 +66,9 @@ def MakeSubnetworkUpdateRequest(client,
       subnet.
     private_ipv6_google_access_type: The private IPv6 google access type for the
       VMs in this subnet.
+    private_ipv6_google_access_service_accounts: The service accounts can be
+      used to selectively turn on Private IPv6 Google Access only on the VMs
+      primary service account matching the value.
 
   Returns:
     response, result of sending the update request for the subnetwork
@@ -113,61 +125,61 @@ def MakeSubnetworkUpdateRequest(client,
     with client.apitools_client.IncludeFields(cleared_fields):
       return client.MakeRequests(
           [CreateSubnetworkPatchRequest(client, subnet_ref, subnetwork)])
-  elif enable_flow_logs is not None:
+  elif (enable_flow_logs is not None or
+        aggregation_interval is not None or
+        flow_sampling is not None or
+        metadata is not None or
+        (include_alpha_logging and filter_expr is not None) or
+        (include_alpha_logging and metadata_fields is not None)):
     subnetwork = client.messages.Subnetwork()
-    subnetwork.fingerprint = client.MakeRequests([
+    original_subnetwork = client.MakeRequests([
         (client.apitools_client.subnetworks, 'Get',
          client.messages.ComputeSubnetworksGetRequest(**subnet_ref.AsDict()))
-    ])[0].fingerprint
+    ])[0]
+    subnetwork.fingerprint = original_subnetwork.fingerprint
 
-    subnetwork.enableFlowLogs = enable_flow_logs
+    log_config = client.messages.SubnetworkLogConfig(enable=enable_flow_logs)
+    if aggregation_interval is not None:
+      log_config.aggregationInterval = flags.GetLoggingAggregationIntervalArg(
+          client.messages).GetEnumForChoice(aggregation_interval)
+    if flow_sampling is not None:
+      log_config.flowSampling = flow_sampling
+    if metadata is not None:
+      if include_alpha_logging:
+        log_config.metadata = flags.GetLoggingMetadataArgAlpha(
+            client.messages).GetEnumForChoice(metadata)
+      else:
+        log_config.metadata = flags.GetLoggingMetadataArg(
+            client.messages).GetEnumForChoice(metadata)
+    if include_alpha_logging and filter_expr is not None:
+      log_config.filterExpr = filter_expr
+    if include_alpha_logging and metadata_fields is not None:
+      log_config.metadataFields = metadata_fields
+    subnetwork.logConfig = log_config
+
     return client.MakeRequests(
         [CreateSubnetworkPatchRequest(client, subnet_ref, subnetwork)])
-  elif aggregation_interval is not None:
-    subnetwork = client.messages.Subnetwork()
-    subnetwork.fingerprint = client.MakeRequests([
-        (client.apitools_client.subnetworks, 'Get',
-         client.messages.ComputeSubnetworksGetRequest(**subnet_ref.AsDict()))
-    ])[0].fingerprint
-
-    subnetwork.aggregationInterval = (
-        client.messages.Subnetwork.AggregationIntervalValueValuesEnum(
-            convert_to_enum(aggregation_interval)))
-    return client.MakeRequests(
-        [CreateSubnetworkPatchRequest(client, subnet_ref, subnetwork)])
-  elif flow_sampling is not None:
-    subnetwork = client.messages.Subnetwork()
-    subnetwork.fingerprint = client.MakeRequests([
-        (client.apitools_client.subnetworks, 'Get',
-         client.messages.ComputeSubnetworksGetRequest(**subnet_ref.AsDict()))
-    ])[0].fingerprint
-
-    subnetwork.flowSampling = flow_sampling
-    return client.MakeRequests(
-        [CreateSubnetworkPatchRequest(client, subnet_ref, subnetwork)])
-  elif metadata is not None:
-    subnetwork = client.messages.Subnetwork()
-    subnetwork.fingerprint = client.MakeRequests([
-        (client.apitools_client.subnetworks, 'Get',
-         client.messages.ComputeSubnetworksGetRequest(**subnet_ref.AsDict()))
-    ])[0].fingerprint
-
-    subnetwork.metadata = client.messages.Subnetwork.MetadataValueValuesEnum(
-        convert_to_enum(metadata))
-    return client.MakeRequests(
-        [CreateSubnetworkPatchRequest(client, subnet_ref, subnetwork)])
-  elif private_ipv6_google_access_type is not None:
+  elif (private_ipv6_google_access_type is not None or
+        private_ipv6_google_access_service_accounts is not None):
     subnetwork = client.MakeRequests([
         (client.apitools_client.subnetworks, 'Get',
          client.messages.ComputeSubnetworksGetRequest(**subnet_ref.AsDict()))
     ])[0]
 
-    subnetwork.privateIpv6GoogleAccess = (
-        client.messages.Subnetwork.PrivateIpv6GoogleAccessValueValuesEnum(
-            ConvertPrivateIpv6GoogleAccess(
-                convert_to_enum(private_ipv6_google_access_type))))
-    return client.MakeRequests(
-        [CreateSubnetworkPatchRequest(client, subnet_ref, subnetwork)])
+    cleared_fields = []
+    if private_ipv6_google_access_type is not None:
+      subnetwork.privateIpv6GoogleAccess = (
+          client.messages.Subnetwork.PrivateIpv6GoogleAccessValueValuesEnum(
+              ConvertPrivateIpv6GoogleAccess(
+                  convert_to_enum(private_ipv6_google_access_type))))
+    if private_ipv6_google_access_service_accounts is not None:
+      subnetwork.privateIpv6GoogleAccessServiceAccounts = (
+          private_ipv6_google_access_service_accounts)
+      if not private_ipv6_google_access_service_accounts:
+        cleared_fields.append('privateIpv6GoogleAccessServiceAccounts')
+    with client.apitools_client.IncludeFields(cleared_fields):
+      return client.MakeRequests(
+          [CreateSubnetworkPatchRequest(client, subnet_ref, subnetwork)])
   elif enable_private_ipv6_access is not None:
     subnetwork = client.MakeRequests([
         (client.apitools_client.subnetworks, 'Get',
@@ -207,9 +219,19 @@ def CreateSubnetworkPatchRequest(client, subnet_ref, subnetwork_resource):
 
 
 def ConvertPrivateIpv6GoogleAccess(choice):
+  """Return PrivateIpv6GoogleAccess enum defined in mixer.
+
+  Args:
+    choice: Enum value of PrivateIpv6GoogleAccess defined in gcloud.
+  """
   choices_to_enum = {
-      'DISABLE': 'DISABLE_GOOGLE_ACCESS',
-      'ENABLE_BIDIRECTIONAL_ACCESS': 'ENABLE_BIDIRECTIONAL_ACCESS_TO_GOOGLE',
-      'ENABLE_OUTBOUND_VM_ACCESS': 'ENABLE_OUTBOUND_VM_ACCESS_TO_GOOGLE'
+      'DISABLE':
+          'DISABLE_GOOGLE_ACCESS',
+      'ENABLE_BIDIRECTIONAL_ACCESS':
+          'ENABLE_BIDIRECTIONAL_ACCESS_TO_GOOGLE',
+      'ENABLE_OUTBOUND_VM_ACCESS':
+          'ENABLE_OUTBOUND_VM_ACCESS_TO_GOOGLE',
+      'ENABLE_OUTBOUND_VM_ACCESS_FOR_SERVICE_ACCOUNTS':
+          'ENABLE_OUTBOUND_VM_ACCESS_TO_GOOGLE_FOR_SERVICE_ACCOUNTS'
   }
   return choices_to_enum.get(choice)

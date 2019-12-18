@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,3 +30,4 @@ class Ssl(base.Group):
   Provide commands for managing client certs and server CA certs of Cloud SQL
   instances.
   """
+  category = base.DATABASES_CATEGORY

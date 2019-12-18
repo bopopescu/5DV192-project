@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,7 +27,16 @@ from googlecloudsdk.command_lib.source import util
 @base.ReleaseTracks(base.ReleaseTrack.GA, base.ReleaseTrack.BETA,
                     base.ReleaseTrack.ALPHA)
 class Update(base.Command):
-  """Update the configuration of a Cloud Source Repository."""
+  r"""Update the configuration of a Cloud Source Repository.
+
+  ## EXAMPLES
+
+  To associate a Cloud Pub/Sub topic to receive repository update notifications,
+  run:
+
+    $ {command} --add-topic=TOPIC_NAME --service-account=SERVICE_ACCOUNT_EMAIL \
+        --message-format=json
+  """
 
   @staticmethod
   def Args(parser):

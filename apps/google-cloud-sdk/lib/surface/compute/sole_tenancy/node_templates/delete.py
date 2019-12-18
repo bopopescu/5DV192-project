@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,7 +26,16 @@ from googlecloudsdk.core.console import console_io
 
 
 class Delete(base.DeleteCommand):
-  """Deletes a Google Compute Engine node template."""
+  """Delete a Compute Engine node template."""
+
+  detailed_help = {
+      'brief': 'Delete a Google Compute Engine node template.',
+      'EXAMPLES': """
+         To delete a node template, run:
+
+           $ {command} my-node-template
+       """
+  }
 
   @staticmethod
   def Args(parser):

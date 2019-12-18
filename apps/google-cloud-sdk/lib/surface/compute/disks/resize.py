@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -119,7 +119,7 @@ class ResizeBeta(Resize):
 
   @classmethod
   def Args(cls, parser):
-    Resize.DISKS_ARG = disks_flags.MakeDiskArgZonalOrRegional(plural=True)
+    Resize.DISKS_ARG = disks_flags.MakeDiskArg(plural=True)
     _CommonArgs(parser)
 
 
@@ -128,7 +128,7 @@ class ResizeAlpha(Resize):
 
   @classmethod
   def Args(cls, parser):
-    Resize.DISKS_ARG = disks_flags.MakeDiskArgZonalOrRegional(plural=True)
+    Resize.DISKS_ARG = disks_flags.MakeDiskArg(plural=True)
     _CommonArgs(parser)
 
 

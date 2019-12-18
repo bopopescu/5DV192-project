@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ class Resources(base.Group):
   that you have access to. Currently, only a limited subset of Cloud resource
   types are supported.
   """
+  category = base.IDENTITY_AND_SECURITY_CATEGORY
 
   def Filter(self, context, args):
     del context, args

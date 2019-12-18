@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.  #
+# Copyright 2017 Google LLC. All Rights Reserved.  #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -31,6 +31,17 @@ class List(base.ListCommand):
   Up to 10 are kept; you may restrict the output to fewer via the `--limit`
   flag.
   """
+
+  detailed_help = {
+      'DESCRIPTION':
+          '{description}',
+      'EXAMPLES':
+          """\
+        To list states for the device 'my-device' in region 'us-central1' and in registry 'my-registry', run:
+
+          $ {command} --device=my-device --region=us-central1 --registry=my-registry
+        """,
+  }
 
   @staticmethod
   def Args(parser):

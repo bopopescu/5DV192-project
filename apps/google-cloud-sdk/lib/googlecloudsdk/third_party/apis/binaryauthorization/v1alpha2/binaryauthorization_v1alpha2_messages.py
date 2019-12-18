@@ -88,6 +88,29 @@ class AdmissionWhitelistPattern(_messages.Message):
   namePattern = _messages.StringField(1)
 
 
+class AttestationOccurrence(_messages.Message):
+  r"""Occurrence that represents a single "attestation". The authenticity of
+  an attestation can be verified using the attached signature. If the verifier
+  trusts the public key of the signer, then verifying the signature is
+  sufficient to establish trust. In this circumstance, the authority to which
+  this attestation is attached is primarily useful for lookup (how to find
+  this attestation if you already know the authority and artifact to be
+  verified) and intent (for which authority this attestation was intended to
+  sign.
+
+  Fields:
+    serializedPayload: Required. The serialized payload that is verified by
+      one or more `signatures`.
+    signatures: One or more signatures over `serialized_payload`.  Verifier
+      implementations should consider this attestation message verified if at
+      least one `signature` verifies `serialized_payload`.  See `Signature` in
+      common.proto for more details on signature structure and verification.
+  """
+
+  serializedPayload = _messages.BytesField(1)
+  signatures = _messages.MessageField('Signature', 2, repeated=True)
+
+
 class Attestor(_messages.Message):
   r"""An attestor that attests to container image artifacts. An existing
   attestor cannot be modified except where indicated.
@@ -109,22 +132,36 @@ class Attestor(_messages.Message):
 
 
 class AttestorPublicKey(_messages.Message):
-  r"""An attestator public key that will be used to verify attestations signed
+  r"""An attestor public key that will be used to verify attestations signed
   by this attestor.
 
   Fields:
     asciiArmoredPgpPublicKey: ASCII-armored representation of a PGP public
       key, as the entire output by the command `gpg --export --armor
-      foo@example.com` (either LF or CRLF line endings).
+      foo@example.com` (either LF or CRLF line endings). When using this
+      field, `id` should be left blank.  The BinAuthz API handlers will
+      calculate the ID and fill it in automatically.  BinAuthz computes this
+      ID as the OpenPGP RFC4880 V4 fingerprint, represented as upper-case hex.
+      If `id` is provided by the caller, it will be overwritten by the API-
+      calculated ID.
     comment: Optional. A descriptive comment. This field may be updated.
-    id: Output only. This field will be overwritten with key ID information,
-      for example, an identifier extracted from a PGP public key. This field
-      may not be updated.
+    id: The ID of this public key. Signatures verified by BinAuthz must
+      include the ID of the public key that can be used to verify them, and
+      that ID must match the contents of this field exactly. Additional
+      restrictions on this field can be imposed based on which public key type
+      is encapsulated. See the documentation on `public_key` cases below for
+      details.
+    pkixPublicKey: A raw PKIX SubjectPublicKeyInfo format public key.  NOTE:
+      `id` may be explicitly provided by the caller when using this type of
+      public key, but it MUST be a valid RFC3986 URI. If `id` is left blank, a
+      default one will be computed based on the digest of the DER encoding of
+      the public key.
   """
 
   asciiArmoredPgpPublicKey = _messages.StringField(1)
   comment = _messages.StringField(2)
   id = _messages.StringField(3)
+  pkixPublicKey = _messages.MessageField('PkixPublicKey', 4)
 
 
 class BinaryauthorizationProjectsAttestorsAttestationsGetIamPolicyRequest(_messages.Message):
@@ -132,12 +169,18 @@ class BinaryauthorizationProjectsAttestorsAttestationsGetIamPolicyRequest(_messa
   object.
 
   Fields:
+    options_requestedPolicyVersion: Optional. The policy format version to be
+      returned.  Valid values are 0, 1, and 3. Requests specifying an invalid
+      value will be rejected.  Requests for policies with any conditional
+      bindings must specify version 3. Policies without any conditional
+      bindings may specify any valid value or leave the field unset.
     resource: REQUIRED: The resource for which the policy is being requested.
       See the operation documentation for the appropriate value for this
       field.
   """
 
-  resource = _messages.StringField(1, required=True)
+  options_requestedPolicyVersion = _messages.IntegerField(1, variant=_messages.Variant.INT32)
+  resource = _messages.StringField(2, required=True)
 
 
 class BinaryauthorizationProjectsAttestorsAttestationsSetIamPolicyRequest(_messages.Message):
@@ -202,12 +245,18 @@ class BinaryauthorizationProjectsAttestorsGetIamPolicyRequest(_messages.Message)
   r"""A BinaryauthorizationProjectsAttestorsGetIamPolicyRequest object.
 
   Fields:
+    options_requestedPolicyVersion: Optional. The policy format version to be
+      returned.  Valid values are 0, 1, and 3. Requests specifying an invalid
+      value will be rejected.  Requests for policies with any conditional
+      bindings must specify version 3. Policies without any conditional
+      bindings may specify any valid value or leave the field unset.
     resource: REQUIRED: The resource for which the policy is being requested.
       See the operation documentation for the appropriate value for this
       field.
   """
 
-  resource = _messages.StringField(1, required=True)
+  options_requestedPolicyVersion = _messages.IntegerField(1, variant=_messages.Variant.INT32)
+  resource = _messages.StringField(2, required=True)
 
 
 class BinaryauthorizationProjectsAttestorsGetRequest(_messages.Message):
@@ -254,6 +303,21 @@ class BinaryauthorizationProjectsAttestorsSetIamPolicyRequest(_messages.Message)
   setIamPolicyRequest = _messages.MessageField('SetIamPolicyRequest', 2)
 
 
+class BinaryauthorizationProjectsAttestorsTestAttestationOccurrenceRequest(_messages.Message):
+  r"""A BinaryauthorizationProjectsAttestorsTestAttestationOccurrenceRequest
+  object.
+
+  Fields:
+    name: Required. The resource name of the Attestor of the occurrence, in
+      the format `projects/*/attestors/*`.
+    testAttestationOccurrenceRequest: A TestAttestationOccurrenceRequest
+      resource to be passed as the request body.
+  """
+
+  name = _messages.StringField(1, required=True)
+  testAttestationOccurrenceRequest = _messages.MessageField('TestAttestationOccurrenceRequest', 2)
+
+
 class BinaryauthorizationProjectsAttestorsTestIamPermissionsRequest(_messages.Message):
   r"""A BinaryauthorizationProjectsAttestorsTestIamPermissionsRequest object.
 
@@ -284,12 +348,18 @@ class BinaryauthorizationProjectsPolicyGetIamPolicyRequest(_messages.Message):
   r"""A BinaryauthorizationProjectsPolicyGetIamPolicyRequest object.
 
   Fields:
+    options_requestedPolicyVersion: Optional. The policy format version to be
+      returned.  Valid values are 0, 1, and 3. Requests specifying an invalid
+      value will be rejected.  Requests for policies with any conditional
+      bindings must specify version 3. Policies without any conditional
+      bindings may specify any valid value or leave the field unset.
     resource: REQUIRED: The resource for which the policy is being requested.
       See the operation documentation for the appropriate value for this
       field.
   """
 
-  resource = _messages.StringField(1, required=True)
+  options_requestedPolicyVersion = _messages.IntegerField(1, variant=_messages.Variant.INT32)
+  resource = _messages.StringField(2, required=True)
 
 
 class BinaryauthorizationProjectsPolicySetIamPolicyRequest(_messages.Message):
@@ -326,19 +396,19 @@ class Binding(_messages.Message):
   r"""Associates `members` with a `role`.
 
   Fields:
-    condition: Unimplemented. The condition that is associated with this
-      binding. NOTE: an unsatisfied condition will not allow user access via
-      current binding. Different bindings, including their conditions, are
-      examined independently.
+    condition: The condition that is associated with this binding. NOTE: An
+      unsatisfied condition will not allow user access via current binding.
+      Different bindings, including their conditions, are examined
+      independently.
     members: Specifies the identities requesting access for a Cloud Platform
       resource. `members` can have the following values:  * `allUsers`: A
       special identifier that represents anyone who is    on the internet;
       with or without a Google account.  * `allAuthenticatedUsers`: A special
       identifier that represents anyone    who is authenticated with a Google
       account or a service account.  * `user:{emailid}`: An email address that
-      represents a specific Google    account. For example, `alice@gmail.com`
-      .   * `serviceAccount:{emailid}`: An email address that represents a
-      service    account. For example, `my-other-
+      represents a specific Google    account. For example,
+      `alice@example.com` .   * `serviceAccount:{emailid}`: An email address
+      that represents a service    account. For example, `my-other-
       app@appspot.gserviceaccount.com`.  * `group:{emailid}`: An email address
       that represents a Google group.    For example, `admins@example.com`.
       * `domain:{domain}`: The G Suite domain (primary) that represents all
@@ -389,26 +459,37 @@ class Expr(_messages.Message):
 class IamPolicy(_messages.Message):
   r"""Defines an Identity and Access Management (IAM) policy. It is used to
   specify access control policies for Cloud Platform resources.   A `Policy`
-  consists of a list of `bindings`. A `binding` binds a list of `members` to a
-  `role`, where the members can be user accounts, Google groups, Google
-  domains, and service accounts. A `role` is a named list of permissions
-  defined by IAM.  **JSON Example**      {       "bindings": [         {
-  "role": "roles/owner",           "members": [
+  is a collection of `bindings`. A `binding` binds one or more `members` to a
+  single `role`. Members can be user accounts, service accounts, Google
+  groups, and domains (such as G Suite). A `role` is a named list of
+  permissions (defined by IAM or configured by users). A `binding` can
+  optionally specify a `condition`, which is a logic expression that further
+  constrains the role binding based on attributes about the request and/or
+  target resource.  **JSON Example**      {       "bindings": [         {
+  "role": "roles/resourcemanager.organizationAdmin",           "members": [
   "user:mike@example.com",             "group:admins@example.com",
-  "domain:google.com",             "serviceAccount:my-other-
-  app@appspot.gserviceaccount.com"           ]         },         {
-  "role": "roles/viewer",           "members": ["user:sean@example.com"]
-  }       ]     }  **YAML Example**      bindings:     - members:       -
-  user:mike@example.com       - group:admins@example.com       -
-  domain:google.com       - serviceAccount:my-other-
-  app@appspot.gserviceaccount.com       role: roles/owner     - members:
-  - user:sean@example.com       role: roles/viewer   For a description of IAM
-  and its features, see the [IAM developer's
+  "domain:google.com",             "serviceAccount:my-project-
+  id@appspot.gserviceaccount.com"           ]         },         {
+  "role": "roles/resourcemanager.organizationViewer",           "members":
+  ["user:eve@example.com"],           "condition": {             "title":
+  "expirable access",             "description": "Does not grant access after
+  Sep 2020",             "expression": "request.time <
+  timestamp('2020-10-01T00:00:00.000Z')",           }         }       ]     }
+  **YAML Example**      bindings:     - members:       - user:mike@example.com
+  - group:admins@example.com       - domain:google.com       - serviceAccount
+  :my-project-id@appspot.gserviceaccount.com       role:
+  roles/resourcemanager.organizationAdmin     - members:       -
+  user:eve@example.com       role: roles/resourcemanager.organizationViewer
+  condition:         title: expirable access         description: Does not
+  grant access after Sep 2020         expression: request.time <
+  timestamp('2020-10-01T00:00:00.000Z')  For a description of IAM and its
+  features, see the [IAM developer's
   guide](https://cloud.google.com/iam/docs).
 
   Fields:
-    bindings: Associates a list of `members` to a `role`. `bindings` with no
-      members will result in an error.
+    bindings: Associates a list of `members` to a `role`. Optionally may
+      specify a `condition` that determines when binding is in effect.
+      `bindings` with no members will result in an error.
     etag: `etag` is used for optimistic concurrency control as a way to help
       prevent simultaneous updates of a policy from overwriting each other. It
       is strongly suggested that systems make use of the `etag` in the read-
@@ -417,8 +498,18 @@ class IamPolicy(_messages.Message):
       systems are expected to put that etag in the request to `setIamPolicy`
       to ensure that their change will be applied to the same version of the
       policy.  If no `etag` is provided in the call to `setIamPolicy`, then
-      the existing policy is overwritten blindly.
-    version: Deprecated.
+      the existing policy is overwritten. Due to blind-set semantics of an
+      etag-less policy, 'setIamPolicy' will not fail even if either of
+      incoming or stored policy does not meet the version requirements.
+    version: Specifies the format of the policy.  Valid values are 0, 1, and
+      3. Requests specifying an invalid value will be rejected.  Operations
+      affecting conditional bindings must specify version 3. This can be
+      either setting a conditional policy, modifying a conditional binding, or
+      removing a conditional binding from the stored conditional policy.
+      Operations on non-conditional policies may specify any valid value or
+      leave the field unset.  If no etag is provided in the call to
+      `setIamPolicy`, any version compliance checks on the incoming and/or
+      stored policy is skipped.
   """
 
   bindings = _messages.MessageField('Binding', 1, repeated=True)
@@ -440,8 +531,77 @@ class ListAttestorsResponse(_messages.Message):
   nextPageToken = _messages.StringField(2)
 
 
+class PkixPublicKey(_messages.Message):
+  r"""A public key in the PkixPublicKey format (see
+  https://tools.ietf.org/html/rfc5280#section-4.1.2.7 for details). Public
+  keys of this type are typically textually encoded using the PEM format.
+
+  Enums:
+    SignatureAlgorithmValueValuesEnum: The signature algorithm used to verify
+      a message against a signature using this key. These signature algorithm
+      must match the structure and any object identifiers encoded in
+      `public_key_pem` (i.e. this algorithm must match that of the public
+      key).
+
+  Fields:
+    publicKeyPem: A PEM-encoded public key, as described in
+      https://tools.ietf.org/html/rfc7468#section-13
+    signatureAlgorithm: The signature algorithm used to verify a message
+      against a signature using this key. These signature algorithm must match
+      the structure and any object identifiers encoded in `public_key_pem`
+      (i.e. this algorithm must match that of the public key).
+  """
+
+  class SignatureAlgorithmValueValuesEnum(_messages.Enum):
+    r"""The signature algorithm used to verify a message against a signature
+    using this key. These signature algorithm must match the structure and any
+    object identifiers encoded in `public_key_pem` (i.e. this algorithm must
+    match that of the public key).
+
+    Values:
+      SIGNATURE_ALGORITHM_UNSPECIFIED: Not specified.
+      RSA_PSS_2048_SHA256: RSASSA-PSS 2048 bit key with a SHA256 digest.
+      RSA_PSS_3072_SHA256: RSASSA-PSS 3072 bit key with a SHA256 digest.
+      RSA_PSS_4096_SHA256: RSASSA-PSS 4096 bit key with a SHA256 digest.
+      RSA_PSS_4096_SHA512: RSASSA-PSS 4096 bit key with a SHA512 digest.
+      RSA_SIGN_PKCS1_2048_SHA256: RSASSA-PKCS1-v1_5 with a 2048 bit key and a
+        SHA256 digest.
+      RSA_SIGN_PKCS1_3072_SHA256: RSASSA-PKCS1-v1_5 with a 3072 bit key and a
+        SHA256 digest.
+      RSA_SIGN_PKCS1_4096_SHA256: RSASSA-PKCS1-v1_5 with a 4096 bit key and a
+        SHA256 digest.
+      RSA_SIGN_PKCS1_4096_SHA512: RSASSA-PKCS1-v1_5 with a 4096 bit key and a
+        SHA512 digest.
+      ECDSA_P256_SHA256: ECDSA on the NIST P-256 curve with a SHA256 digest.
+      ECDSA_P384_SHA384: ECDSA on the NIST P-384 curve with a SHA384 digest.
+      ECDSA_P521_SHA512: ECDSA on the NIST P-521 curve with a SHA512 digest.
+    """
+    SIGNATURE_ALGORITHM_UNSPECIFIED = 0
+    RSA_PSS_2048_SHA256 = 1
+    RSA_PSS_3072_SHA256 = 2
+    RSA_PSS_4096_SHA256 = 3
+    RSA_PSS_4096_SHA512 = 4
+    RSA_SIGN_PKCS1_2048_SHA256 = 5
+    RSA_SIGN_PKCS1_3072_SHA256 = 6
+    RSA_SIGN_PKCS1_4096_SHA256 = 7
+    RSA_SIGN_PKCS1_4096_SHA512 = 8
+    ECDSA_P256_SHA256 = 9
+    ECDSA_P384_SHA384 = 10
+    ECDSA_P521_SHA512 = 11
+
+  publicKeyPem = _messages.StringField(1)
+  signatureAlgorithm = _messages.EnumField('SignatureAlgorithmValueValuesEnum', 2)
+
+
 class Policy(_messages.Message):
   r"""A policy for container image binary authorization.
+
+  Enums:
+    GlobalPolicyEvaluationModeValueValuesEnum: Optional. Controls the
+      evaluation of a Google-maintained global admission policy for common
+      system-level images. Images not covered by the global policy will be
+      subject to the project admission policy. This setting has no effect when
+      specified inside a global admission policy.
 
   Messages:
     ClusterAdmissionRulesValue: Optional. Per-cluster admission rules. Cluster
@@ -463,12 +623,34 @@ class Policy(_messages.Message):
       restrictions see https://cloud.google.com/container-
       engine/reference/rest/v1/projects.zones.clusters.
     defaultAdmissionRule: Required. Default admission rule for a cluster
-      without a per-cluster admission rule.
+      without a per-cluster, per- kubernetes-service-account, or per-istio-
+      service-identity admission rule.
     description: Optional. A descriptive comment.
+    globalPolicyEvaluationMode: Optional. Controls the evaluation of a Google-
+      maintained global admission policy for common system-level images.
+      Images not covered by the global policy will be subject to the project
+      admission policy. This setting has no effect when specified inside a
+      global admission policy.
     name: Output only. The resource name, in the format `projects/*/policy`.
       There is at most one policy per project.
     updateTime: Output only. Time when the policy was last updated.
   """
+
+  class GlobalPolicyEvaluationModeValueValuesEnum(_messages.Enum):
+    r"""Optional. Controls the evaluation of a Google-maintained global
+    admission policy for common system-level images. Images not covered by the
+    global policy will be subject to the project admission policy. This
+    setting has no effect when specified inside a global admission policy.
+
+    Values:
+      GLOBAL_POLICY_EVALUATION_MODE_UNSPECIFIED: Not specified: DISABLE is
+        assumed.
+      ENABLE: Enables global policy evaluation.
+      DISABLE: Disables global policy evaluation.
+    """
+    GLOBAL_POLICY_EVALUATION_MODE_UNSPECIFIED = 0
+    ENABLE = 1
+    DISABLE = 2
 
   @encoding.MapUnrecognizedFields('additionalProperties')
   class ClusterAdmissionRulesValue(_messages.Message):
@@ -505,8 +687,9 @@ class Policy(_messages.Message):
   clusterAdmissionRules = _messages.MessageField('ClusterAdmissionRulesValue', 2)
   defaultAdmissionRule = _messages.MessageField('AdmissionRule', 3)
   description = _messages.StringField(4)
-  name = _messages.StringField(5)
-  updateTime = _messages.StringField(6)
+  globalPolicyEvaluationMode = _messages.EnumField('GlobalPolicyEvaluationModeValueValuesEnum', 5)
+  name = _messages.StringField(6)
+  updateTime = _messages.StringField(7)
 
 
 class SetIamPolicyRequest(_messages.Message):
@@ -520,6 +703,52 @@ class SetIamPolicyRequest(_messages.Message):
   """
 
   policy = _messages.MessageField('IamPolicy', 1)
+
+
+class Signature(_messages.Message):
+  r"""Verifiers (e.g. Kritis implementations) MUST verify signatures with
+  respect to the trust anchors defined in policy (e.g. a Kritis policy).
+  Typically this means that the verifier has been configured with a map from
+  `public_key_id` to public key material (and any required parameters, e.g.
+  signing algorithm).  In particular, verification implementations MUST NOT
+  treat the signature `public_key_id` as anything more than a key lookup hint.
+  The `public_key_id` DOES NOT validate or authenticate a public key; it only
+  provides a mechanism for quickly selecting a public key ALREADY CONFIGURED
+  on the verifier through a trusted channel. Verification implementations MUST
+  reject signatures in any of the following circumstances:   * The
+  `public_key_id` is not recognized by the verifier.   * The public key that
+  `public_key_id` refers to does not verify the     signature with respect to
+  the payload.  The `signature` contents SHOULD NOT be "attached" (where the
+  payload is included with the serialized `signature` bytes). Verifiers MUST
+  ignore any "attached" payload and only verify signatures with respect to
+  explicitly provided payload (e.g. a `payload` field on the proto message
+  that holds this Signature, or the canonical serialization of the proto
+  message that holds this signature).
+
+  Fields:
+    publicKeyId: The identifier for the public key that verifies this
+      signature.   * The `public_key_id` is required.   * The `public_key_id`
+      MUST be an RFC3986 conformant URI.   * When possible, the
+      `public_key_id` SHOULD be an immutable reference,     such as a
+      cryptographic digest.  Examples of valid `public_key_id`s:  OpenPGP V4
+      public key fingerprint:   *
+      "openpgp4fpr:74FAF3B861BDA0870C7B6DEF607E48D2A663AEEA" See
+      https://www.iana.org/assignments/uri-schemes/prov/openpgp4fpr for more
+      details on this scheme.  RFC6920 digest-named SubjectPublicKeyInfo
+      (digest of the DER serialization):   *
+      "ni:///sha-256;cD9o9Cq6LG3jD0iKXqEi_vdjJGecm_iXkbqVoScViaU"   * "nih:///
+      sha-256;703f68f42aba2c6de30f488a5ea122fef76324679c9bf89791ba95a1271589a5
+      "
+    signature: The content of the signature, an opaque bytestring. The payload
+      that this signature verifies MUST be unambiguously provided with the
+      Signature during verification. A wrapper message might provide the
+      payload explicitly. Alternatively, a message might have a canonical
+      serialization that can always be unambiguously computed to derive the
+      payload.
+  """
+
+  publicKeyId = _messages.StringField(1)
+  signature = _messages.BytesField(2)
 
 
 class StandardQueryParameters(_messages.Message):
@@ -583,6 +812,54 @@ class StandardQueryParameters(_messages.Message):
   trace = _messages.StringField(10)
   uploadType = _messages.StringField(11)
   upload_protocol = _messages.StringField(12)
+
+
+class TestAttestationOccurrenceRequest(_messages.Message):
+  r"""Request message for ValidationHelperV1Alpha2.TestAttestationOccurrence.
+
+  Fields:
+    attestation: Required. An AttestationOccurrence to be checked that it can
+      be verified by the Attestor. It does not have to be an existing entity
+      in Container Analysis. It must otherwise be a valid
+      AttestationOccurrence.
+    occurrenceNoteName: Required. The resource name of the Note to which the
+      containing Occurrence is associated.
+    occurrenceResourceUri: Required. The URI of the artifact (e.g. container
+      image) that is the subject of the containing Occurrence.
+  """
+
+  attestation = _messages.MessageField('AttestationOccurrence', 1)
+  occurrenceNoteName = _messages.StringField(2)
+  occurrenceResourceUri = _messages.StringField(3)
+
+
+class TestAttestationOccurrenceResponse(_messages.Message):
+  r"""Response message for ValidationHelperV1Alpha2.TestAttestationOccurrence.
+
+  Enums:
+    ResultValueValuesEnum: The result of the Attestation validation.
+
+  Fields:
+    denialReason: The reason for denial if the Attestation couldn't be
+      validated.
+    result: The result of the Attestation validation.
+  """
+
+  class ResultValueValuesEnum(_messages.Enum):
+    r"""The result of the Attestation validation.
+
+    Values:
+      RESULT_UNSPECIFIED: Unspecified.
+      VERIFIED: The Attestation was able to verified by the Attestor.
+      ATTESTATION_NOT_VERIFIABLE: The Attestation was not able to verified by
+        the Attestor.
+    """
+    RESULT_UNSPECIFIED = 0
+    VERIFIED = 1
+    ATTESTATION_NOT_VERIFIABLE = 2
+
+  denialReason = _messages.StringField(1)
+  result = _messages.EnumField('ResultValueValuesEnum', 2)
 
 
 class TestIamPermissionsRequest(_messages.Message):

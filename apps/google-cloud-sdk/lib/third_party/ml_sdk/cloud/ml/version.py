@@ -19,11 +19,11 @@ __version__ = '0.1-alpha'
 
 required_install_packages = [
     'oauth2client >= 2.2.0',
-    'six == 1.10.0',
+    'six >= 1.10.0, < 2.0',
     'bs4 >= 0.0.1, < 1.0',
     'numpy >= 1.10.4',  # Don't pin numpy, as it requires a recompile.
     'crcmod >= 1.7, < 2.0',
-    'nltk >= 3.2.1, < 4.0',
+    'nltk >= 3.2.1, <= 3.4',
     'pyyaml >= 3.11, < 4.0',
     'protobuf >= 3.1.0, < 4.0',
     'enum34 >= 1.1',

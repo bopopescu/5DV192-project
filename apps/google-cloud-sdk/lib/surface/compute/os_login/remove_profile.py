@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -33,7 +33,8 @@ class RemoveProfile(base.Command):
 
   def Run(self, args):
     oslogin_client = client.OsloginClient(self.ReleaseTrack())
-    account = properties.VALUES.core.account.GetOrFail()
+    account = (properties.VALUES.auth.impersonate_service_account.Get()
+               or properties.VALUES.core.account.GetOrFail())
     project = properties.VALUES.core.project.Get(required=True)
     project_ref = resources.REGISTRY.Parse(project, params={'user': account},
                                            collection='oslogin.users.projects')
@@ -73,10 +74,21 @@ class RemoveProfileAlpha(RemoveProfile):
 
 RemoveProfile.detailed_help = {
     'brief': 'Remove the posix account information for the current user.',
-    'DESCRIPTION': """\
+    'DESCRIPTION': """
       *{command}* removes the posix account information for the current
       user where the account ID field is set to the current project ID.
       Posix account entries for G Suite users do not set the account ID
       field and can only be modified by a domain administrator.
+      """,
+    'EXAMPLES': """
+      To remove all POSIX accounts associated with the current user and
+      project, run:
+
+        $ {command}
+
+      To remove all POSIX accounts associated with the current user in the
+      project named `example-project`, run:
+
+        $ {command} --project=example-project
       """
 }

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2013 Google Inc. All Rights Reserved.
+# Copyright 2013 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,33 +27,26 @@ from googlecloudsdk.core import log
 class List(base.ListCommand):
   """List the status of all Cloud SDK components.
 
-  List all components in the Cloud SDK and provide information such as whether
-  the component is installed on the local workstation, whether a newer version
-  is available, the size of the component, and the ID used to refer to the
-  component in commands.
+  This command lists all the available components in the Cloud SDK. For
+  each component, the command lists the following information:
+
+  * Status on your local workstation: not installed, installed (and
+    up to date), and update available (installed, but not up to date)
+  * Name of the component (a description)
+  * ID of the component (used to refer to the component in other
+    [{parent_command}] commands)
+  * Size of the component
+
+  ## EXAMPLES
+  To list the status of all Cloud SDK components, run:
+
+    $ {command}
+
+  To show the currently installed version (if any) and the latest available
+  version of each component, run:
+
+    $ {command} --show-versions
   """
-  detailed_help = {
-      'DESCRIPTION': """\
-          This command lists all the available components in the Cloud SDK. For
-          each component, the command lists the following information:
-
-          * Status on your local workstation: not installed, installed (and
-            up to date), and update available (installed, but not up to date)
-          * Name of the component (a description)
-          * ID of the component (used to refer to the component in other
-            [{parent_command}] commands)
-          * Size of the component
-
-          In addition, if the `--show-versions` flag is specified, the command
-          lists the currently installed version (if any) and the latest
-          available version of each individual component.
-      """,
-      'EXAMPLES': """\
-            $ {command}
-
-            $ {command} --show-versions
-      """,
-  }
 
   @staticmethod
   def Args(parser):

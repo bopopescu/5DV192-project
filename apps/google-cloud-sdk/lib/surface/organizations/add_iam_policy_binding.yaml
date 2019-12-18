@@ -14,7 +14,7 @@ help_text:
     To add an IAM policy binding for the role of 'roles/editor' to the service account
     'test-proj1@example.domain.com', run:
 
-        $ {command} test-proj1@example.domain.com --member='serviceAccount:test-proj1@example.domain.com' --role='roles/editor'
+        $ {command} example-organization-id-1 --member='serviceAccount:test-proj1@example.domain.com' --role='roles/editor'
 
     To add an IAM policy binding for the role of 'roles/editor' for all authenticated users on an
     organization with identifier 'example-organization-id-1', run:
@@ -31,6 +31,10 @@ arguments:
   resource:
     help_text: The organization to add the IAM policy binding.
     spec: !REF googlecloudsdk.command_lib.organizations.resources:organization
+
+iam:
+  policy_version: 3
+  get_iam_policy_version_path: getIamPolicyRequest.options.requestedPolicyVersion
 
 ALPHA:
   help_text:
@@ -66,3 +70,5 @@ ALPHA:
 
   iam:
     enable_condition: true
+    policy_version: 3
+    get_iam_policy_version_path: getIamPolicyRequest.options.requestedPolicyVersion

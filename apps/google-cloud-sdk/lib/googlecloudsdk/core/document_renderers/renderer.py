@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -107,7 +107,7 @@ class TableAttributes(object):
 
 
 @six.add_metaclass(abc.ABCMeta)
-class Renderer(object):  # pytype: disable=ignored-abstractmethod
+class Renderer(object):
   r"""Markdown renderer base class.
 
   The member functions provide an abstract document model that matches markdown

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,6 +22,14 @@ from __future__ import unicode_literals
 from googlecloudsdk.api_lib.firebase.test import exceptions
 from googlecloudsdk.api_lib.firebase.test import util
 from googlecloudsdk.calliope import base
+
+DETAILED_HELP = {
+    'EXAMPLES': """
+      To see the attributes of the android model 'my-model', run:
+
+        $ {command} my-model
+    """,
+}
 
 
 class Describe(base.DescribeCommand):
@@ -56,3 +64,6 @@ class Describe(base.DescribeCommand):
       if model.id == args.model_id:
         return model
     raise exceptions.ModelNotFoundError(args.model_id)
+
+
+Describe.detailed_help = DETAILED_HELP

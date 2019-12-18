@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2013 Google Inc. All Rights Reserved.
+# Copyright 2013 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import stat
 import sys
 import tempfile
 import time
-import traceback
 
 from googlecloudsdk.core import exceptions
 from googlecloudsdk.core.util import encoding as encoding_util
@@ -45,7 +44,7 @@ NUM_RETRIES = 10
 # WindowsError only exists when running on Windows
 try:
   # pylint: disable=invalid-name, We are not defining this name.
-  WindowsError  # pytype: disable=name-error
+  WindowsError
 except NameError:
   # pylint: disable=invalid-name, We are not defining this name.
   WindowsError = None
@@ -164,12 +163,13 @@ def _ShouldRetryOperation(func, exc_info):
   Returns:
     True if the error can be retried or false if we should just fail.
   """
-  if not (func == os.remove or func == os.rmdir):
+  # os.unlink is the same as os.remove
+  if not (func == os.remove or func == os.rmdir or func == os.unlink):
     return False
-  if not WindowsError or exc_info[0] != WindowsError:
+  if not WindowsError:
     return False
   e = exc_info[1]
-  return e.winerror in RETRY_ERROR_CODES
+  return getattr(e, 'winerror', None) in RETRY_ERROR_CODES
 
 
 def _RetryOperation(exc_info, func, args,
@@ -218,7 +218,11 @@ def _HandleRemoveError(func, failed_path, exc_info):
 
   # Access denied on Windows. This happens when trying to delete a readonly
   # file. Change the permissions and retry the delete.
-  if exc_info[0] == WindowsError and exc_info[1].winerror == 5:
+  #
+  # In python 3.3+, WindowsError is an alias of OSError and exc_info[0] can be
+  # a subclass of OSError.
+  if (WindowsError and issubclass(exc_info[0], WindowsError) and
+      getattr(exc_info[1], 'winerror', None) == 5):
     os.chmod(failed_path, stat.S_IWUSR)
 
   # Don't remove the trailing comma in the passed arg tuple.  It indicates that
@@ -574,17 +578,9 @@ class TemporaryDirectory(object):
     try:
       self.Close()
     except:  # pylint: disable=bare-except
-      if not prev_exc_type:
-        raise
-      message = (
-          'Got exception {0}'
-          'while another exception was active {1} [{2}]'
-          .format(
-              encoding_util.Decode(traceback.format_exc()),
-              prev_exc_type,
-              encoding_util.Decode(prev_exc_val)))
-      exceptions.reraise(prev_exc_type(message), tb=prev_exc_trace)
-    # always return False so any exceptions will be re-raised
+      exceptions.RaiseWithContext(
+          prev_exc_type, prev_exc_val, prev_exc_trace, *sys.exc_info())
+    # Always return False so any previous exception will be re-raised.
     return False
 
   def Close(self):
@@ -606,15 +602,15 @@ class Checksum(object):
     self.__files = set()
 
   def AddContents(self, contents):
-    """Adds the given string contents to the checksum.
+    """Adds the given contents to the checksum.
 
     Args:
-      contents: str, The contents to add.
+      contents: str or bytes, The contents to add.
 
     Returns:
       self, For method chaining.
     """
-    self.__hash.update(contents)
+    self.__hash.update(six.ensure_binary(contents))
     return self
 
   def AddFileContents(self, file_path):
@@ -844,7 +840,6 @@ class FileLock(object):
     return False
 
 
-# pytype: disable=import-error
 # Imports fcntl, which is only available on POSIX.
 class _PosixLocking(object):
   """Exclusive, non-blocking file locking on POSIX systems."""
@@ -910,11 +905,10 @@ def _FileInBinaryMode(file_obj):
       old_mode = msvcrt.setmode(fd, os.O_BINARY)
       yield
     finally:
-      msvcrt.setmode(fd, old_mode)  # pytype: disable=name-error
+      msvcrt.setmode(fd, old_mode)
   else:
     # On non-Windows platforms, text mode == binary mode, so just yield.
     yield
-# pytype: enable=import-error
 
 
 def WriteStreamBytes(stream, contents):
@@ -998,16 +992,56 @@ def WriteFileAtomically(file_name, contents):
 
 
 def GetTreeSizeBytes(path, predicate=None):
-  """Returns sum of sizes of not-ingnored files under given path, in bytes."""
+  """Returns sum of sizes of not-ignored files under given path, in bytes."""
   result = 0
   if predicate is None:
     predicate = lambda x: True
-  for directory in os.walk(path):
+  for directory in os.walk(six.text_type(path)):
     for file_name in directory[2]:
       file_path = os.path.join(directory[0], file_name)
       if predicate(file_path):
         result += os.path.getsize(file_path)
   return result
+
+
+def GetDirectoryTreeListing(path,
+                            include_dirs=False,
+                            file_predicate=None,
+                            dir_sort_func=None,
+                            file_sort_func=None):
+  """Yields a generator that list all the files in a directory tree.
+
+  Walks directory tree from path and yeilds all files that it finds. Will expand
+  paths relative to home dir e.g. those that start with '~'.
+
+  Args:
+    path: string, base of file tree to walk.
+    include_dirs: bool, if true will yield directory names in addition to files.
+    file_predicate: function, boolean function to determine which files should
+      be included in the output. Default is all files.
+    dir_sort_func: function, function that will determine order directories are
+      processed. Default is lexical ordering.
+    file_sort_func:  function, function that will determine order directories
+      are processed. Default is lexical ordering.
+  Yields:
+    Generator: yields all files and directory paths matching supplied criteria.
+  """
+  if not file_sort_func:
+    file_sort_func = sorted
+  if file_predicate is None:
+    file_predicate = lambda x: True
+  if dir_sort_func is None:
+    dir_sort_func = lambda x: x.sort()
+
+  for root, dirs, files in os.walk(ExpandHomeDir(six.text_type(path))):
+    dir_sort_func(dirs)
+    if include_dirs:
+      for dirname in dirs:
+        yield dirname
+    for file_name in file_sort_func(files):
+      file_path = os.path.join(root, file_name)
+      if file_predicate(file_path):
+        yield file_path
 
 
 def ReadFileContents(path):
@@ -1128,7 +1162,7 @@ def BinaryFileReader(path):
   Returns:
     A file-like object opened for read in binary mode.
   """
-  return _FileOpener(path, 'rb', 'read')
+  return _FileOpener(encoding_util.Encode(path, encoding='utf-8'), 'rb', 'read')
 
 
 def FileWriter(path, private=False, append=False):

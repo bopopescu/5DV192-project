@@ -1,6 +1,12 @@
 - help_text:
     brief: Create a Cloud Scheduler job that triggers an action via HTTP.
     description: Create a Cloud Scheduler job that triggers an action via HTTP.
+    examples: |
+      The following command creates a job that sends a HTTP GET request to
+      'http://example.com/path' every 3 hours:
+
+        $ {command} my-job --schedule="0 */3 * * *"
+          --uri="http://example.com/path" --http-method=GET
 
   request:
     collection: cloudscheduler.projects.locations.jobs
@@ -14,8 +20,16 @@
       spec: !REF googlecloudsdk.command_lib.scheduler.resources:job
       removed_flags: [location]
     params:
-    - _REF_googlecloudsdk.command_lib.scheduler.flags:args
-    - _REF_googlecloudsdk.command_lib.scheduler.flags:retry_args
+    - _REF_: googlecloudsdk.command_lib.scheduler.flags:schedule
+      required: true
+    - _REF_: googlecloudsdk.command_lib.scheduler.flags:timezone
+    - _REF_: googlecloudsdk.command_lib.scheduler.flags:description
+    - _REF_: googlecloudsdk.command_lib.scheduler.flags:attempt_deadline
+    - _REF_: googlecloudsdk.command_lib.scheduler.flags:retry_attempts
+    - _REF_: googlecloudsdk.command_lib.scheduler.flags:retry_duration
+    - _REF_: googlecloudsdk.command_lib.scheduler.flags:min_backoff
+    - _REF_: googlecloudsdk.command_lib.scheduler.flags:max_backoff
+    - _REF_: googlecloudsdk.command_lib.scheduler.flags:max_doublings
     - api_field: job.httpTarget.uri
       arg_name: uri
       required: true
@@ -70,8 +84,16 @@
         - api_field: job.httpTarget.body
           arg_name: message-body-from-file
           type:
-            googlecloudsdk.calliope.arg_parsers:BufferedFileInput:binary=True
+            googlecloudsdk.calliope.arg_parsers:FileContents:binary=True
           help_text: |
             Path to file containing the data payload to be included as the
             body of the HTTP request. May only be given with compatible HTTP
             methods (PUT or POST).
+    - group:
+        help_text: |
+          How the request sent to the target when executing the job should be
+          authenticated.
+        mutex: true
+        params:
+        - _REF_: googlecloudsdk.command_lib.scheduler.flags:auth_token_openid
+        - _REF_: googlecloudsdk.command_lib.scheduler.flags:auth_token_oauth

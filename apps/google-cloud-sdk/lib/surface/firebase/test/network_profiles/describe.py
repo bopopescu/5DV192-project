@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,11 +24,23 @@ from googlecloudsdk.calliope import base
 
 
 class Describe(base.DescribeCommand):
-  """Describe a network profile.
+  """Describe a network profile."""
 
-  Run `$ {parent_command} --help` for descriptions of the network profile
-  parameters.
-  """
+  detailed_help = {
+      'DESCRIPTION': """Describe a network profile.
+
+Run `$ {parent_command} --help` for descriptions of the network profile
+parameters.
+""",
+      'EXAMPLES': """To describe a network profile, run:
+
+  {command} GSM
+
+To describe a network profiles in JSON format, run:
+
+  {command} GSM --format=json
+"""
+  }
 
   @staticmethod
   def Args(parser):

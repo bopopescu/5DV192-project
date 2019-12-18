@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ from googlecloudsdk.core import log
 from googlecloudsdk.core.console import console_io
 
 
+@base.ReleaseTracks(base.ReleaseTrack.BETA, base.ReleaseTrack.GA)
 class Delete(base.Command):
   """Delete a service."""
 
@@ -44,21 +45,23 @@ class Delete(base.Command):
   }
 
   @staticmethod
-  def Args(parser):
-    flags.AddRegionArg(parser)
+  def CommonArgs(parser):
     service_presentation = presentation_specs.ResourcePresentationSpec(
         'SERVICE',
         resource_args.GetServiceResourceSpec(),
         'Service to delete.',
         required=True,
         prefixes=False)
-    concept_parsers.ConceptParser([
-        resource_args.CLUSTER_PRESENTATION,
-        service_presentation]).AddToParser(parser)
+    concept_parsers.ConceptParser([service_presentation]).AddToParser(parser)
+
+  @staticmethod
+  def Args(parser):
+    Delete.CommonArgs(parser)
 
   def Run(self, args):
     """Delete a service."""
-    conn_context = connection_context.GetConnectionContext(args)
+    conn_context = connection_context.GetConnectionContext(
+        args, product=connection_context.Product.RUN)
     service_ref = flags.GetService(args)
     console_io.PromptContinue(
         message='Service [{service}] will be deleted.'.format(
@@ -69,3 +72,14 @@ class Delete(base.Command):
     with serverless_operations.Connect(conn_context) as client:
       client.DeleteService(service_ref)
     log.DeletedResource(service_ref.servicesId, 'service')
+
+
+@base.ReleaseTracks(base.ReleaseTrack.ALPHA)
+class AlphaDelete(Delete):
+  """Delete a service."""
+
+  @staticmethod
+  def Args(parser):
+    Delete.CommonArgs(parser)
+
+AlphaDelete.__doc__ = Delete.__doc__

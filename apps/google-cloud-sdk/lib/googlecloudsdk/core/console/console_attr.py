@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*- #
 
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -445,6 +445,16 @@ class ConsoleAttr(object):
     if italic:
       codes.append(self._font_italic)
     return '{csi}{codes}m'.format(csi=self._csi, codes=';'.join(codes))
+
+  def Emphasize(self, s, bold=True, italic=False):
+    """Returns a string emphasized."""
+    if self._csi:
+      s = s.replace(
+          self._csi + self._ANSI_COLOR_RESET,
+          self._csi + self._ANSI_COLOR_RESET + self.GetFontCode(bold, italic))
+    return ('{start}' + s + '{end}').format(
+        start=self.GetFontCode(bold, italic),
+        end=self.GetFontCode())
 
   def GetRawKey(self):
     """Reads one key press from stdin with no echo.

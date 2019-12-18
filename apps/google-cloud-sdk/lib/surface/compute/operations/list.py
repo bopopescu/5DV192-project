@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -111,7 +111,7 @@ class List(base.ListCommand):
                      project=list(request_data.scope_set)[0].project)))
       if args.regions is not None:
         args_region_names = [
-            compute_holder.resources.Parse(
+            compute_holder.resources.Parse(  # pylint:disable=g-complex-comprehension
                 region,
                 params={'project': properties.VALUES.core.project.GetOrFail},
                 collection='compute.regions').Name()
@@ -119,7 +119,7 @@ class List(base.ListCommand):
         # If no regions were provided by the user, fetch a list.
         errors = []
         region_names = (
-            args_region_names or [res.name for res in lister.GetGlobalResources(
+            args_region_names or [res.name for res in lister.GetGlobalResources(  # pylint:disable=g-complex-comprehension
                 service=compute_client.apitools_client.regions,
                 project=properties.VALUES.core.project.GetOrFail(),
                 filter_expr=None,
@@ -142,7 +142,7 @@ class List(base.ListCommand):
                        project=list(request_data.scope_set)[0].project)))
       if args.zones is not None:
         args_zone_names = [
-            compute_holder.resources.Parse(
+            compute_holder.resources.Parse(  # pylint:disable=g-complex-comprehension
                 zone,
                 params={
                     'project': properties.VALUES.core.project.GetOrFail,
@@ -152,7 +152,7 @@ class List(base.ListCommand):
         # If no zones were provided by the user, fetch a list.
         errors = []
         zone_names = (
-            args_zone_names or [res.name for res in lister.GetGlobalResources(
+            args_zone_names or [res.name for res in lister.GetGlobalResources(  # pylint:disable=g-complex-comprehension
                 service=compute_client.apitools_client.zones,
                 project=properties.VALUES.core.project.GetOrFail(),
                 filter_expr=None,
@@ -198,7 +198,7 @@ class ListBeta(List):
 List.detailed_help = base_classes.GetGlobalRegionalListerHelp('operations')
 ListBeta.detailed_help = {
     'brief': 'List Google Compute Engine operations',
-    'DESCRIPTION': """\
+    'DESCRIPTION': """
         *{command}* displays all Google Compute Engine operations in a
         project.
 
@@ -209,7 +209,7 @@ ListBeta.detailed_help = {
         Note: *{command}* displays operations fewer than 14 days old, up to a
         maximum of 5000.
         """,
-    'EXAMPLES': """\
+    'EXAMPLES': """
         To list all operations in a project in table form, run:
 
           $ {command}
@@ -221,7 +221,7 @@ ListBeta.detailed_help = {
         To list all operations in zones us-central1-b and
         europe-west1-d, run:
 
-           $ {command} --zones us-central1-b,europe-west1-d
+           $ {command} --zones=us-central1-b,europe-west1-d
 
         To list all global operations in a project, run:
 
@@ -229,7 +229,7 @@ ListBeta.detailed_help = {
 
         To list all regional operations in a project, run:
 
-           $ {command} --regions ""
+           $ {command} --regions=""
 
         To list all operations with names prefixed with `operation`, run:
 
@@ -238,7 +238,7 @@ ListBeta.detailed_help = {
         To list all operations in the us-central1 and europe-west1
         regions and all operations in the us-central1-a zone, run:
 
-           $ {command} --zones us-central1-a --regions us-central1,europe-west1
+           $ {command} --zones=us-central1-a --regions=us-central1,europe-west1
 
         To list all operations with a specified target, filter on the targetLink
         field (run `{command} --format=json` to see a full, well-structured list

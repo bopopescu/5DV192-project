@@ -23,10 +23,31 @@ class DlpInfoTypesListRequest(_messages.Message):
     languageCode: Optional BCP-47 language code for localized infoType
       friendly names. If omitted, or if localized strings are not available,
       en-US strings will be returned.
+    locationId: The geographic location to list info types. Reserved for
+      future extensions.
   """
 
   filter = _messages.StringField(1)
   languageCode = _messages.StringField(2)
+  locationId = _messages.StringField(3)
+
+
+class DlpLocationsInfoTypesListRequest(_messages.Message):
+  r"""A DlpLocationsInfoTypesListRequest object.
+
+  Fields:
+    filter: Optional filter to only return infoTypes supported by certain
+      parts of the API. Defaults to supported_by=INSPECT.
+    languageCode: Optional BCP-47 language code for localized infoType
+      friendly names. If omitted, or if localized strings are not available,
+      en-US strings will be returned.
+    locationId: The geographic location to list info types. Reserved for
+      future extensions.
+  """
+
+  filter = _messages.StringField(1)
+  languageCode = _messages.StringField(2)
+  locationId = _messages.StringField(3, required=True)
 
 
 class DlpOrganizationsDeidentifyTemplatesCreateRequest(_messages.Message):
@@ -36,8 +57,8 @@ class DlpOrganizationsDeidentifyTemplatesCreateRequest(_messages.Message):
     googlePrivacyDlpV2CreateDeidentifyTemplateRequest: A
       GooglePrivacyDlpV2CreateDeidentifyTemplateRequest resource to be passed
       as the request body.
-    parent: The parent resource name, for example projects/my-project-id or
-      organizations/my-org-id.
+    parent: Required. The parent resource name, for example projects/my-
+      project-id or organizations/my-org-id.
   """
 
   googlePrivacyDlpV2CreateDeidentifyTemplateRequest = _messages.MessageField('GooglePrivacyDlpV2CreateDeidentifyTemplateRequest', 1)
@@ -48,8 +69,8 @@ class DlpOrganizationsDeidentifyTemplatesDeleteRequest(_messages.Message):
   r"""A DlpOrganizationsDeidentifyTemplatesDeleteRequest object.
 
   Fields:
-    name: Resource name of the organization and deidentify template to be
-      deleted, for example
+    name: Required. Resource name of the organization and deidentify template
+      to be deleted, for example
       `organizations/433245324/deidentifyTemplates/432452342` or projects
       /project-id/deidentifyTemplates/432452342.
   """
@@ -61,8 +82,8 @@ class DlpOrganizationsDeidentifyTemplatesGetRequest(_messages.Message):
   r"""A DlpOrganizationsDeidentifyTemplatesGetRequest object.
 
   Fields:
-    name: Resource name of the organization and deidentify template to be
-      read, for example
+    name: Required. Resource name of the organization and deidentify template
+      to be read, for example
       `organizations/433245324/deidentifyTemplates/432452342` or projects
       /project-id/deidentifyTemplates/432452342.
   """
@@ -74,6 +95,9 @@ class DlpOrganizationsDeidentifyTemplatesListRequest(_messages.Message):
   r"""A DlpOrganizationsDeidentifyTemplatesListRequest object.
 
   Fields:
+    locationId: The geographic location where deidentifications templates will
+      be retrieved from. Use `-` for all locations. Reserved for future
+      extensions.
     orderBy: Optional comma separated list of fields to order by, followed by
       `asc` or `desc` postfix. This list is case-insensitive, default sorting
       order is ascending, redundant space characters are insignificant.
@@ -86,14 +110,15 @@ class DlpOrganizationsDeidentifyTemplatesListRequest(_messages.Message):
       server returns a page of max size 100.
     pageToken: Optional page token to continue retrieval. Comes from previous
       call to `ListDeidentifyTemplates`.
-    parent: The parent resource name, for example projects/my-project-id or
-      organizations/my-org-id.
+    parent: Required. The parent resource name, for example projects/my-
+      project-id or organizations/my-org-id.
   """
 
-  orderBy = _messages.StringField(1)
-  pageSize = _messages.IntegerField(2, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(3)
-  parent = _messages.StringField(4, required=True)
+  locationId = _messages.StringField(1)
+  orderBy = _messages.StringField(2)
+  pageSize = _messages.IntegerField(3, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(4)
+  parent = _messages.StringField(5, required=True)
 
 
 class DlpOrganizationsDeidentifyTemplatesPatchRequest(_messages.Message):
@@ -103,9 +128,10 @@ class DlpOrganizationsDeidentifyTemplatesPatchRequest(_messages.Message):
     googlePrivacyDlpV2UpdateDeidentifyTemplateRequest: A
       GooglePrivacyDlpV2UpdateDeidentifyTemplateRequest resource to be passed
       as the request body.
-    name: Resource name of organization and deidentify template to be updated,
-      for example `organizations/433245324/deidentifyTemplates/432452342` or
-      projects/project-id/deidentifyTemplates/432452342.
+    name: Required. Resource name of organization and deidentify template to
+      be updated, for example
+      `organizations/433245324/deidentifyTemplates/432452342` or projects
+      /project-id/deidentifyTemplates/432452342.
   """
 
   googlePrivacyDlpV2UpdateDeidentifyTemplateRequest = _messages.MessageField('GooglePrivacyDlpV2UpdateDeidentifyTemplateRequest', 1)
@@ -119,8 +145,8 @@ class DlpOrganizationsInspectTemplatesCreateRequest(_messages.Message):
     googlePrivacyDlpV2CreateInspectTemplateRequest: A
       GooglePrivacyDlpV2CreateInspectTemplateRequest resource to be passed as
       the request body.
-    parent: The parent resource name, for example projects/my-project-id or
-      organizations/my-org-id.
+    parent: Required. The parent resource name, for example projects/my-
+      project-id or organizations/my-org-id.
   """
 
   googlePrivacyDlpV2CreateInspectTemplateRequest = _messages.MessageField('GooglePrivacyDlpV2CreateInspectTemplateRequest', 1)
@@ -131,9 +157,10 @@ class DlpOrganizationsInspectTemplatesDeleteRequest(_messages.Message):
   r"""A DlpOrganizationsInspectTemplatesDeleteRequest object.
 
   Fields:
-    name: Resource name of the organization and inspectTemplate to be deleted,
-      for example `organizations/433245324/inspectTemplates/432452342` or
-      projects/project-id/inspectTemplates/432452342.
+    name: Required. Resource name of the organization and inspectTemplate to
+      be deleted, for example
+      `organizations/433245324/inspectTemplates/432452342` or projects
+      /project-id/inspectTemplates/432452342.
   """
 
   name = _messages.StringField(1, required=True)
@@ -143,9 +170,10 @@ class DlpOrganizationsInspectTemplatesGetRequest(_messages.Message):
   r"""A DlpOrganizationsInspectTemplatesGetRequest object.
 
   Fields:
-    name: Resource name of the organization and inspectTemplate to be read,
-      for example `organizations/433245324/inspectTemplates/432452342` or
-      projects/project-id/inspectTemplates/432452342.
+    name: Required. Resource name of the organization and inspectTemplate to
+      be read, for example
+      `organizations/433245324/inspectTemplates/432452342` or projects
+      /project-id/inspectTemplates/432452342.
   """
 
   name = _messages.StringField(1, required=True)
@@ -155,6 +183,9 @@ class DlpOrganizationsInspectTemplatesListRequest(_messages.Message):
   r"""A DlpOrganizationsInspectTemplatesListRequest object.
 
   Fields:
+    locationId: The geographic location where inspection templates will be
+      retrieved from. Use `-` for all locations. Reserved for future
+      extensions.
     orderBy: Optional comma separated list of fields to order by, followed by
       `asc` or `desc` postfix. This list is case-insensitive, default sorting
       order is ascending, redundant space characters are insignificant.
@@ -167,14 +198,15 @@ class DlpOrganizationsInspectTemplatesListRequest(_messages.Message):
       server returns a page of max size 100.
     pageToken: Optional page token to continue retrieval. Comes from previous
       call to `ListInspectTemplates`.
-    parent: The parent resource name, for example projects/my-project-id or
-      organizations/my-org-id.
+    parent: Required. The parent resource name, for example projects/my-
+      project-id or organizations/my-org-id.
   """
 
-  orderBy = _messages.StringField(1)
-  pageSize = _messages.IntegerField(2, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(3)
-  parent = _messages.StringField(4, required=True)
+  locationId = _messages.StringField(1)
+  orderBy = _messages.StringField(2)
+  pageSize = _messages.IntegerField(3, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(4)
+  parent = _messages.StringField(5, required=True)
 
 
 class DlpOrganizationsInspectTemplatesPatchRequest(_messages.Message):
@@ -184,8 +216,9 @@ class DlpOrganizationsInspectTemplatesPatchRequest(_messages.Message):
     googlePrivacyDlpV2UpdateInspectTemplateRequest: A
       GooglePrivacyDlpV2UpdateInspectTemplateRequest resource to be passed as
       the request body.
-    name: Resource name of organization and inspectTemplate to be updated, for
-      example `organizations/433245324/inspectTemplates/432452342` or projects
+    name: Required. Resource name of organization and inspectTemplate to be
+      updated, for example
+      `organizations/433245324/inspectTemplates/432452342` or projects
       /project-id/inspectTemplates/432452342.
   """
 
@@ -193,49 +226,237 @@ class DlpOrganizationsInspectTemplatesPatchRequest(_messages.Message):
   name = _messages.StringField(2, required=True)
 
 
-class DlpOrganizationsStoredInfoTypesCreateRequest(_messages.Message):
-  r"""A DlpOrganizationsStoredInfoTypesCreateRequest object.
+class DlpOrganizationsLocationsDeidentifyTemplatesCreateRequest(_messages.Message):
+  r"""A DlpOrganizationsLocationsDeidentifyTemplatesCreateRequest object.
+
+  Fields:
+    googlePrivacyDlpV2CreateDeidentifyTemplateRequest: A
+      GooglePrivacyDlpV2CreateDeidentifyTemplateRequest resource to be passed
+      as the request body.
+    locationId: The geographic location to store the deidentification
+      template. Reserved for future extensions.
+    parent: Required. The parent resource name, for example projects/my-
+      project-id or organizations/my-org-id.
+  """
+
+  googlePrivacyDlpV2CreateDeidentifyTemplateRequest = _messages.MessageField('GooglePrivacyDlpV2CreateDeidentifyTemplateRequest', 1)
+  locationId = _messages.StringField(2, required=True)
+  parent = _messages.StringField(3, required=True)
+
+
+class DlpOrganizationsLocationsDeidentifyTemplatesDeleteRequest(_messages.Message):
+  r"""A DlpOrganizationsLocationsDeidentifyTemplatesDeleteRequest object.
+
+  Fields:
+    name: Required. Resource name of the organization and deidentify template
+      to be deleted, for example
+      `organizations/433245324/deidentifyTemplates/432452342` or projects
+      /project-id/deidentifyTemplates/432452342.
+  """
+
+  name = _messages.StringField(1, required=True)
+
+
+class DlpOrganizationsLocationsDeidentifyTemplatesGetRequest(_messages.Message):
+  r"""A DlpOrganizationsLocationsDeidentifyTemplatesGetRequest object.
+
+  Fields:
+    name: Required. Resource name of the organization and deidentify template
+      to be read, for example
+      `organizations/433245324/deidentifyTemplates/432452342` or projects
+      /project-id/deidentifyTemplates/432452342.
+  """
+
+  name = _messages.StringField(1, required=True)
+
+
+class DlpOrganizationsLocationsDeidentifyTemplatesListRequest(_messages.Message):
+  r"""A DlpOrganizationsLocationsDeidentifyTemplatesListRequest object.
+
+  Fields:
+    locationId: The geographic location where deidentifications templates will
+      be retrieved from. Use `-` for all locations. Reserved for future
+      extensions.
+    orderBy: Optional comma separated list of fields to order by, followed by
+      `asc` or `desc` postfix. This list is case-insensitive, default sorting
+      order is ascending, redundant space characters are insignificant.
+      Example: `name asc,update_time, create_time desc`  Supported fields are:
+      - `create_time`: corresponds to time the template was created. -
+      `update_time`: corresponds to time the template was last updated. -
+      `name`: corresponds to template's name. - `display_name`: corresponds to
+      template's display name.
+    pageSize: Optional size of the page, can be limited by server. If zero
+      server returns a page of max size 100.
+    pageToken: Optional page token to continue retrieval. Comes from previous
+      call to `ListDeidentifyTemplates`.
+    parent: Required. The parent resource name, for example projects/my-
+      project-id or organizations/my-org-id.
+  """
+
+  locationId = _messages.StringField(1, required=True)
+  orderBy = _messages.StringField(2)
+  pageSize = _messages.IntegerField(3, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(4)
+  parent = _messages.StringField(5, required=True)
+
+
+class DlpOrganizationsLocationsDeidentifyTemplatesPatchRequest(_messages.Message):
+  r"""A DlpOrganizationsLocationsDeidentifyTemplatesPatchRequest object.
+
+  Fields:
+    googlePrivacyDlpV2UpdateDeidentifyTemplateRequest: A
+      GooglePrivacyDlpV2UpdateDeidentifyTemplateRequest resource to be passed
+      as the request body.
+    name: Required. Resource name of organization and deidentify template to
+      be updated, for example
+      `organizations/433245324/deidentifyTemplates/432452342` or projects
+      /project-id/deidentifyTemplates/432452342.
+  """
+
+  googlePrivacyDlpV2UpdateDeidentifyTemplateRequest = _messages.MessageField('GooglePrivacyDlpV2UpdateDeidentifyTemplateRequest', 1)
+  name = _messages.StringField(2, required=True)
+
+
+class DlpOrganizationsLocationsInspectTemplatesCreateRequest(_messages.Message):
+  r"""A DlpOrganizationsLocationsInspectTemplatesCreateRequest object.
+
+  Fields:
+    googlePrivacyDlpV2CreateInspectTemplateRequest: A
+      GooglePrivacyDlpV2CreateInspectTemplateRequest resource to be passed as
+      the request body.
+    locationId: The geographic location to store the inspection template.
+      Reserved for future extensions.
+    parent: Required. The parent resource name, for example projects/my-
+      project-id or organizations/my-org-id.
+  """
+
+  googlePrivacyDlpV2CreateInspectTemplateRequest = _messages.MessageField('GooglePrivacyDlpV2CreateInspectTemplateRequest', 1)
+  locationId = _messages.StringField(2, required=True)
+  parent = _messages.StringField(3, required=True)
+
+
+class DlpOrganizationsLocationsInspectTemplatesDeleteRequest(_messages.Message):
+  r"""A DlpOrganizationsLocationsInspectTemplatesDeleteRequest object.
+
+  Fields:
+    name: Required. Resource name of the organization and inspectTemplate to
+      be deleted, for example
+      `organizations/433245324/inspectTemplates/432452342` or projects
+      /project-id/inspectTemplates/432452342.
+  """
+
+  name = _messages.StringField(1, required=True)
+
+
+class DlpOrganizationsLocationsInspectTemplatesGetRequest(_messages.Message):
+  r"""A DlpOrganizationsLocationsInspectTemplatesGetRequest object.
+
+  Fields:
+    name: Required. Resource name of the organization and inspectTemplate to
+      be read, for example
+      `organizations/433245324/inspectTemplates/432452342` or projects
+      /project-id/inspectTemplates/432452342.
+  """
+
+  name = _messages.StringField(1, required=True)
+
+
+class DlpOrganizationsLocationsInspectTemplatesListRequest(_messages.Message):
+  r"""A DlpOrganizationsLocationsInspectTemplatesListRequest object.
+
+  Fields:
+    locationId: The geographic location where inspection templates will be
+      retrieved from. Use `-` for all locations. Reserved for future
+      extensions.
+    orderBy: Optional comma separated list of fields to order by, followed by
+      `asc` or `desc` postfix. This list is case-insensitive, default sorting
+      order is ascending, redundant space characters are insignificant.
+      Example: `name asc,update_time, create_time desc`  Supported fields are:
+      - `create_time`: corresponds to time the template was created. -
+      `update_time`: corresponds to time the template was last updated. -
+      `name`: corresponds to template's name. - `display_name`: corresponds to
+      template's display name.
+    pageSize: Optional size of the page, can be limited by server. If zero
+      server returns a page of max size 100.
+    pageToken: Optional page token to continue retrieval. Comes from previous
+      call to `ListInspectTemplates`.
+    parent: Required. The parent resource name, for example projects/my-
+      project-id or organizations/my-org-id.
+  """
+
+  locationId = _messages.StringField(1, required=True)
+  orderBy = _messages.StringField(2)
+  pageSize = _messages.IntegerField(3, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(4)
+  parent = _messages.StringField(5, required=True)
+
+
+class DlpOrganizationsLocationsInspectTemplatesPatchRequest(_messages.Message):
+  r"""A DlpOrganizationsLocationsInspectTemplatesPatchRequest object.
+
+  Fields:
+    googlePrivacyDlpV2UpdateInspectTemplateRequest: A
+      GooglePrivacyDlpV2UpdateInspectTemplateRequest resource to be passed as
+      the request body.
+    name: Required. Resource name of organization and inspectTemplate to be
+      updated, for example
+      `organizations/433245324/inspectTemplates/432452342` or projects
+      /project-id/inspectTemplates/432452342.
+  """
+
+  googlePrivacyDlpV2UpdateInspectTemplateRequest = _messages.MessageField('GooglePrivacyDlpV2UpdateInspectTemplateRequest', 1)
+  name = _messages.StringField(2, required=True)
+
+
+class DlpOrganizationsLocationsStoredInfoTypesCreateRequest(_messages.Message):
+  r"""A DlpOrganizationsLocationsStoredInfoTypesCreateRequest object.
 
   Fields:
     googlePrivacyDlpV2CreateStoredInfoTypeRequest: A
       GooglePrivacyDlpV2CreateStoredInfoTypeRequest resource to be passed as
       the request body.
-    parent: The parent resource name, for example projects/my-project-id or
-      organizations/my-org-id.
+    locationId: The geographic location to store the stored infoType. Reserved
+      for future extensions.
+    parent: Required. The parent resource name, for example projects/my-
+      project-id or organizations/my-org-id.
   """
 
   googlePrivacyDlpV2CreateStoredInfoTypeRequest = _messages.MessageField('GooglePrivacyDlpV2CreateStoredInfoTypeRequest', 1)
-  parent = _messages.StringField(2, required=True)
+  locationId = _messages.StringField(2, required=True)
+  parent = _messages.StringField(3, required=True)
 
 
-class DlpOrganizationsStoredInfoTypesDeleteRequest(_messages.Message):
-  r"""A DlpOrganizationsStoredInfoTypesDeleteRequest object.
+class DlpOrganizationsLocationsStoredInfoTypesDeleteRequest(_messages.Message):
+  r"""A DlpOrganizationsLocationsStoredInfoTypesDeleteRequest object.
 
   Fields:
-    name: Resource name of the organization and storedInfoType to be deleted,
-      for example `organizations/433245324/storedInfoTypes/432452342` or
+    name: Required. Resource name of the organization and storedInfoType to be
+      deleted, for example `organizations/433245324/storedInfoTypes/432452342`
+      or projects/project-id/storedInfoTypes/432452342.
+  """
+
+  name = _messages.StringField(1, required=True)
+
+
+class DlpOrganizationsLocationsStoredInfoTypesGetRequest(_messages.Message):
+  r"""A DlpOrganizationsLocationsStoredInfoTypesGetRequest object.
+
+  Fields:
+    name: Required. Resource name of the organization and storedInfoType to be
+      read, for example `organizations/433245324/storedInfoTypes/432452342` or
       projects/project-id/storedInfoTypes/432452342.
   """
 
   name = _messages.StringField(1, required=True)
 
 
-class DlpOrganizationsStoredInfoTypesGetRequest(_messages.Message):
-  r"""A DlpOrganizationsStoredInfoTypesGetRequest object.
+class DlpOrganizationsLocationsStoredInfoTypesListRequest(_messages.Message):
+  r"""A DlpOrganizationsLocationsStoredInfoTypesListRequest object.
 
   Fields:
-    name: Resource name of the organization and storedInfoType to be read, for
-      example `organizations/433245324/storedInfoTypes/432452342` or projects
-      /project-id/storedInfoTypes/432452342.
-  """
-
-  name = _messages.StringField(1, required=True)
-
-
-class DlpOrganizationsStoredInfoTypesListRequest(_messages.Message):
-  r"""A DlpOrganizationsStoredInfoTypesListRequest object.
-
-  Fields:
+    locationId: The geographic location where stored infoTypes will be
+      retrieved from. Use `-` for all locations. Reserved for future
+      extensions.
     orderBy: Optional comma separated list of fields to order by, followed by
       `asc` or `desc` postfix. This list is case-insensitive, default sorting
       order is ascending, redundant space characters are insignificant.
@@ -248,14 +469,100 @@ class DlpOrganizationsStoredInfoTypesListRequest(_messages.Message):
       server returns a page of max size 100.
     pageToken: Optional page token to continue retrieval. Comes from previous
       call to `ListStoredInfoTypes`.
-    parent: The parent resource name, for example projects/my-project-id or
-      organizations/my-org-id.
+    parent: Required. The parent resource name, for example projects/my-
+      project-id or organizations/my-org-id.
   """
 
-  orderBy = _messages.StringField(1)
-  pageSize = _messages.IntegerField(2, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(3)
-  parent = _messages.StringField(4, required=True)
+  locationId = _messages.StringField(1, required=True)
+  orderBy = _messages.StringField(2)
+  pageSize = _messages.IntegerField(3, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(4)
+  parent = _messages.StringField(5, required=True)
+
+
+class DlpOrganizationsLocationsStoredInfoTypesPatchRequest(_messages.Message):
+  r"""A DlpOrganizationsLocationsStoredInfoTypesPatchRequest object.
+
+  Fields:
+    googlePrivacyDlpV2UpdateStoredInfoTypeRequest: A
+      GooglePrivacyDlpV2UpdateStoredInfoTypeRequest resource to be passed as
+      the request body.
+    name: Required. Resource name of organization and storedInfoType to be
+      updated, for example `organizations/433245324/storedInfoTypes/432452342`
+      or projects/project-id/storedInfoTypes/432452342.
+  """
+
+  googlePrivacyDlpV2UpdateStoredInfoTypeRequest = _messages.MessageField('GooglePrivacyDlpV2UpdateStoredInfoTypeRequest', 1)
+  name = _messages.StringField(2, required=True)
+
+
+class DlpOrganizationsStoredInfoTypesCreateRequest(_messages.Message):
+  r"""A DlpOrganizationsStoredInfoTypesCreateRequest object.
+
+  Fields:
+    googlePrivacyDlpV2CreateStoredInfoTypeRequest: A
+      GooglePrivacyDlpV2CreateStoredInfoTypeRequest resource to be passed as
+      the request body.
+    parent: Required. The parent resource name, for example projects/my-
+      project-id or organizations/my-org-id.
+  """
+
+  googlePrivacyDlpV2CreateStoredInfoTypeRequest = _messages.MessageField('GooglePrivacyDlpV2CreateStoredInfoTypeRequest', 1)
+  parent = _messages.StringField(2, required=True)
+
+
+class DlpOrganizationsStoredInfoTypesDeleteRequest(_messages.Message):
+  r"""A DlpOrganizationsStoredInfoTypesDeleteRequest object.
+
+  Fields:
+    name: Required. Resource name of the organization and storedInfoType to be
+      deleted, for example `organizations/433245324/storedInfoTypes/432452342`
+      or projects/project-id/storedInfoTypes/432452342.
+  """
+
+  name = _messages.StringField(1, required=True)
+
+
+class DlpOrganizationsStoredInfoTypesGetRequest(_messages.Message):
+  r"""A DlpOrganizationsStoredInfoTypesGetRequest object.
+
+  Fields:
+    name: Required. Resource name of the organization and storedInfoType to be
+      read, for example `organizations/433245324/storedInfoTypes/432452342` or
+      projects/project-id/storedInfoTypes/432452342.
+  """
+
+  name = _messages.StringField(1, required=True)
+
+
+class DlpOrganizationsStoredInfoTypesListRequest(_messages.Message):
+  r"""A DlpOrganizationsStoredInfoTypesListRequest object.
+
+  Fields:
+    locationId: The geographic location where stored infoTypes will be
+      retrieved from. Use `-` for all locations. Reserved for future
+      extensions.
+    orderBy: Optional comma separated list of fields to order by, followed by
+      `asc` or `desc` postfix. This list is case-insensitive, default sorting
+      order is ascending, redundant space characters are insignificant.
+      Example: `name asc, display_name, create_time desc`  Supported fields
+      are:  - `create_time`: corresponds to time the most recent version of
+      the resource was created. - `state`: corresponds to the state of the
+      resource. - `name`: corresponds to resource name. - `display_name`:
+      corresponds to info type's display name.
+    pageSize: Optional size of the page, can be limited by server. If zero
+      server returns a page of max size 100.
+    pageToken: Optional page token to continue retrieval. Comes from previous
+      call to `ListStoredInfoTypes`.
+    parent: Required. The parent resource name, for example projects/my-
+      project-id or organizations/my-org-id.
+  """
+
+  locationId = _messages.StringField(1)
+  orderBy = _messages.StringField(2)
+  pageSize = _messages.IntegerField(3, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(4)
+  parent = _messages.StringField(5, required=True)
 
 
 class DlpOrganizationsStoredInfoTypesPatchRequest(_messages.Message):
@@ -265,9 +572,9 @@ class DlpOrganizationsStoredInfoTypesPatchRequest(_messages.Message):
     googlePrivacyDlpV2UpdateStoredInfoTypeRequest: A
       GooglePrivacyDlpV2UpdateStoredInfoTypeRequest resource to be passed as
       the request body.
-    name: Resource name of organization and storedInfoType to be updated, for
-      example `organizations/433245324/storedInfoTypes/432452342` or projects
-      /project-id/storedInfoTypes/432452342.
+    name: Required. Resource name of organization and storedInfoType to be
+      updated, for example `organizations/433245324/storedInfoTypes/432452342`
+      or projects/project-id/storedInfoTypes/432452342.
   """
 
   googlePrivacyDlpV2UpdateStoredInfoTypeRequest = _messages.MessageField('GooglePrivacyDlpV2UpdateStoredInfoTypeRequest', 1)
@@ -309,7 +616,7 @@ class DlpProjectsContentReidentifyRequest(_messages.Message):
     googlePrivacyDlpV2ReidentifyContentRequest: A
       GooglePrivacyDlpV2ReidentifyContentRequest resource to be passed as the
       request body.
-    parent: The parent resource name.
+    parent: Required. The parent resource name.
   """
 
   googlePrivacyDlpV2ReidentifyContentRequest = _messages.MessageField('GooglePrivacyDlpV2ReidentifyContentRequest', 1)
@@ -323,8 +630,8 @@ class DlpProjectsDeidentifyTemplatesCreateRequest(_messages.Message):
     googlePrivacyDlpV2CreateDeidentifyTemplateRequest: A
       GooglePrivacyDlpV2CreateDeidentifyTemplateRequest resource to be passed
       as the request body.
-    parent: The parent resource name, for example projects/my-project-id or
-      organizations/my-org-id.
+    parent: Required. The parent resource name, for example projects/my-
+      project-id or organizations/my-org-id.
   """
 
   googlePrivacyDlpV2CreateDeidentifyTemplateRequest = _messages.MessageField('GooglePrivacyDlpV2CreateDeidentifyTemplateRequest', 1)
@@ -335,8 +642,8 @@ class DlpProjectsDeidentifyTemplatesDeleteRequest(_messages.Message):
   r"""A DlpProjectsDeidentifyTemplatesDeleteRequest object.
 
   Fields:
-    name: Resource name of the organization and deidentify template to be
-      deleted, for example
+    name: Required. Resource name of the organization and deidentify template
+      to be deleted, for example
       `organizations/433245324/deidentifyTemplates/432452342` or projects
       /project-id/deidentifyTemplates/432452342.
   """
@@ -348,8 +655,8 @@ class DlpProjectsDeidentifyTemplatesGetRequest(_messages.Message):
   r"""A DlpProjectsDeidentifyTemplatesGetRequest object.
 
   Fields:
-    name: Resource name of the organization and deidentify template to be
-      read, for example
+    name: Required. Resource name of the organization and deidentify template
+      to be read, for example
       `organizations/433245324/deidentifyTemplates/432452342` or projects
       /project-id/deidentifyTemplates/432452342.
   """
@@ -361,6 +668,9 @@ class DlpProjectsDeidentifyTemplatesListRequest(_messages.Message):
   r"""A DlpProjectsDeidentifyTemplatesListRequest object.
 
   Fields:
+    locationId: The geographic location where deidentifications templates will
+      be retrieved from. Use `-` for all locations. Reserved for future
+      extensions.
     orderBy: Optional comma separated list of fields to order by, followed by
       `asc` or `desc` postfix. This list is case-insensitive, default sorting
       order is ascending, redundant space characters are insignificant.
@@ -373,14 +683,15 @@ class DlpProjectsDeidentifyTemplatesListRequest(_messages.Message):
       server returns a page of max size 100.
     pageToken: Optional page token to continue retrieval. Comes from previous
       call to `ListDeidentifyTemplates`.
-    parent: The parent resource name, for example projects/my-project-id or
-      organizations/my-org-id.
+    parent: Required. The parent resource name, for example projects/my-
+      project-id or organizations/my-org-id.
   """
 
-  orderBy = _messages.StringField(1)
-  pageSize = _messages.IntegerField(2, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(3)
-  parent = _messages.StringField(4, required=True)
+  locationId = _messages.StringField(1)
+  orderBy = _messages.StringField(2)
+  pageSize = _messages.IntegerField(3, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(4)
+  parent = _messages.StringField(5, required=True)
 
 
 class DlpProjectsDeidentifyTemplatesPatchRequest(_messages.Message):
@@ -390,9 +701,10 @@ class DlpProjectsDeidentifyTemplatesPatchRequest(_messages.Message):
     googlePrivacyDlpV2UpdateDeidentifyTemplateRequest: A
       GooglePrivacyDlpV2UpdateDeidentifyTemplateRequest resource to be passed
       as the request body.
-    name: Resource name of organization and deidentify template to be updated,
-      for example `organizations/433245324/deidentifyTemplates/432452342` or
-      projects/project-id/deidentifyTemplates/432452342.
+    name: Required. Resource name of organization and deidentify template to
+      be updated, for example
+      `organizations/433245324/deidentifyTemplates/432452342` or projects
+      /project-id/deidentifyTemplates/432452342.
   """
 
   googlePrivacyDlpV2UpdateDeidentifyTemplateRequest = _messages.MessageField('GooglePrivacyDlpV2UpdateDeidentifyTemplateRequest', 1)
@@ -406,7 +718,7 @@ class DlpProjectsDlpJobsCancelRequest(_messages.Message):
     googlePrivacyDlpV2CancelDlpJobRequest: A
       GooglePrivacyDlpV2CancelDlpJobRequest resource to be passed as the
       request body.
-    name: The name of the DlpJob resource to be cancelled.
+    name: Required. The name of the DlpJob resource to be cancelled.
   """
 
   googlePrivacyDlpV2CancelDlpJobRequest = _messages.MessageField('GooglePrivacyDlpV2CancelDlpJobRequest', 1)
@@ -420,7 +732,8 @@ class DlpProjectsDlpJobsCreateRequest(_messages.Message):
     googlePrivacyDlpV2CreateDlpJobRequest: A
       GooglePrivacyDlpV2CreateDlpJobRequest resource to be passed as the
       request body.
-    parent: The parent resource name, for example projects/my-project-id.
+    parent: Required. The parent resource name, for example projects/my-
+      project-id.
   """
 
   googlePrivacyDlpV2CreateDlpJobRequest = _messages.MessageField('GooglePrivacyDlpV2CreateDlpJobRequest', 1)
@@ -431,7 +744,7 @@ class DlpProjectsDlpJobsDeleteRequest(_messages.Message):
   r"""A DlpProjectsDlpJobsDeleteRequest object.
 
   Fields:
-    name: The name of the DlpJob resource to be deleted.
+    name: Required. The name of the DlpJob resource to be deleted.
   """
 
   name = _messages.StringField(1, required=True)
@@ -441,7 +754,7 @@ class DlpProjectsDlpJobsGetRequest(_messages.Message):
   r"""A DlpProjectsDlpJobsGetRequest object.
 
   Fields:
-    name: The name of the DlpJob resource.
+    name: Required. The name of the DlpJob resource.
   """
 
   name = _messages.StringField(1, required=True)
@@ -461,13 +774,19 @@ class DlpProjectsDlpJobsListRequest(_messages.Message):
       `<field> <operator> <value>`. * Supported fields/values for inspect
       jobs:     - `state` - PENDING|RUNNING|CANCELED|FINISHED|FAILED     -
       `inspected_storage` - DATASTORE|CLOUD_STORAGE|BIGQUERY     -
-      `trigger_name` - The resource name of the trigger that created job. *
-      Supported fields for risk analysis jobs:     - `state` -
-      RUNNING|CANCELED|FINISHED|FAILED * The operator must be `=` or `!=`.
-      Examples:  * inspected_storage = cloud_storage AND state = done *
+      `trigger_name` - The resource name of the trigger that created job.
+      - 'end_time` - Corresponds to time the job finished.     - 'start_time`
+      - Corresponds to time the job finished. * Supported fields for risk
+      analysis jobs:     - `state` - RUNNING|CANCELED|FINISHED|FAILED     -
+      'end_time` - Corresponds to time the job finished.     - 'start_time` -
+      Corresponds to time the job finished. * The operator must be `=` or
+      `!=`.  Examples:  * inspected_storage = cloud_storage AND state = done *
       inspected_storage = cloud_storage OR inspected_storage = bigquery *
       inspected_storage = cloud_storage AND (state = done OR state = canceled)
-      The length of this field should be no more than 500 characters.
+      * end_time > \"2017-12-12T00:00:00+00:00\"  The length of this field
+      should be no more than 500 characters.
+    locationId: The geographic location where jobs will be retrieved from. Use
+      `-` for all locations. Reserved for future extensions.
     orderBy: Optional comma separated list of fields to order by, followed by
       `asc` or `desc` postfix. This list is case-insensitive, default sorting
       order is ascending, redundant space characters are insignificant.
@@ -477,7 +796,8 @@ class DlpProjectsDlpJobsListRequest(_messages.Message):
       job's name. - `state`: corresponds to `state`
     pageSize: The standard list page size.
     pageToken: The standard list page token.
-    parent: The parent resource name, for example projects/my-project-id.
+    parent: Required. The parent resource name, for example projects/my-
+      project-id.
     type: The type of job. Defaults to `DlpJobType.INSPECT`
   """
 
@@ -494,11 +814,12 @@ class DlpProjectsDlpJobsListRequest(_messages.Message):
     RISK_ANALYSIS_JOB = 2
 
   filter = _messages.StringField(1)
-  orderBy = _messages.StringField(2)
-  pageSize = _messages.IntegerField(3, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(4)
-  parent = _messages.StringField(5, required=True)
-  type = _messages.EnumField('TypeValueValuesEnum', 6)
+  locationId = _messages.StringField(2)
+  orderBy = _messages.StringField(3)
+  pageSize = _messages.IntegerField(4, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(5)
+  parent = _messages.StringField(6, required=True)
+  type = _messages.EnumField('TypeValueValuesEnum', 7)
 
 
 class DlpProjectsImageRedactRequest(_messages.Message):
@@ -522,8 +843,8 @@ class DlpProjectsInspectTemplatesCreateRequest(_messages.Message):
     googlePrivacyDlpV2CreateInspectTemplateRequest: A
       GooglePrivacyDlpV2CreateInspectTemplateRequest resource to be passed as
       the request body.
-    parent: The parent resource name, for example projects/my-project-id or
-      organizations/my-org-id.
+    parent: Required. The parent resource name, for example projects/my-
+      project-id or organizations/my-org-id.
   """
 
   googlePrivacyDlpV2CreateInspectTemplateRequest = _messages.MessageField('GooglePrivacyDlpV2CreateInspectTemplateRequest', 1)
@@ -534,9 +855,10 @@ class DlpProjectsInspectTemplatesDeleteRequest(_messages.Message):
   r"""A DlpProjectsInspectTemplatesDeleteRequest object.
 
   Fields:
-    name: Resource name of the organization and inspectTemplate to be deleted,
-      for example `organizations/433245324/inspectTemplates/432452342` or
-      projects/project-id/inspectTemplates/432452342.
+    name: Required. Resource name of the organization and inspectTemplate to
+      be deleted, for example
+      `organizations/433245324/inspectTemplates/432452342` or projects
+      /project-id/inspectTemplates/432452342.
   """
 
   name = _messages.StringField(1, required=True)
@@ -546,9 +868,10 @@ class DlpProjectsInspectTemplatesGetRequest(_messages.Message):
   r"""A DlpProjectsInspectTemplatesGetRequest object.
 
   Fields:
-    name: Resource name of the organization and inspectTemplate to be read,
-      for example `organizations/433245324/inspectTemplates/432452342` or
-      projects/project-id/inspectTemplates/432452342.
+    name: Required. Resource name of the organization and inspectTemplate to
+      be read, for example
+      `organizations/433245324/inspectTemplates/432452342` or projects
+      /project-id/inspectTemplates/432452342.
   """
 
   name = _messages.StringField(1, required=True)
@@ -558,6 +881,9 @@ class DlpProjectsInspectTemplatesListRequest(_messages.Message):
   r"""A DlpProjectsInspectTemplatesListRequest object.
 
   Fields:
+    locationId: The geographic location where inspection templates will be
+      retrieved from. Use `-` for all locations. Reserved for future
+      extensions.
     orderBy: Optional comma separated list of fields to order by, followed by
       `asc` or `desc` postfix. This list is case-insensitive, default sorting
       order is ascending, redundant space characters are insignificant.
@@ -570,14 +896,15 @@ class DlpProjectsInspectTemplatesListRequest(_messages.Message):
       server returns a page of max size 100.
     pageToken: Optional page token to continue retrieval. Comes from previous
       call to `ListInspectTemplates`.
-    parent: The parent resource name, for example projects/my-project-id or
-      organizations/my-org-id.
+    parent: Required. The parent resource name, for example projects/my-
+      project-id or organizations/my-org-id.
   """
 
-  orderBy = _messages.StringField(1)
-  pageSize = _messages.IntegerField(2, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(3)
-  parent = _messages.StringField(4, required=True)
+  locationId = _messages.StringField(1)
+  orderBy = _messages.StringField(2)
+  pageSize = _messages.IntegerField(3, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(4)
+  parent = _messages.StringField(5, required=True)
 
 
 class DlpProjectsInspectTemplatesPatchRequest(_messages.Message):
@@ -587,8 +914,9 @@ class DlpProjectsInspectTemplatesPatchRequest(_messages.Message):
     googlePrivacyDlpV2UpdateInspectTemplateRequest: A
       GooglePrivacyDlpV2UpdateInspectTemplateRequest resource to be passed as
       the request body.
-    name: Resource name of organization and inspectTemplate to be updated, for
-      example `organizations/433245324/inspectTemplates/432452342` or projects
+    name: Required. Resource name of organization and inspectTemplate to be
+      updated, for example
+      `organizations/433245324/inspectTemplates/432452342` or projects
       /project-id/inspectTemplates/432452342.
   """
 
@@ -603,8 +931,8 @@ class DlpProjectsJobTriggersActivateRequest(_messages.Message):
     googlePrivacyDlpV2ActivateJobTriggerRequest: A
       GooglePrivacyDlpV2ActivateJobTriggerRequest resource to be passed as the
       request body.
-    name: Resource name of the trigger to activate, for example `projects/dlp-
-      test-project/jobTriggers/53234423`.
+    name: Required. Resource name of the trigger to activate, for example
+      `projects/dlp-test-project/jobTriggers/53234423`.
   """
 
   googlePrivacyDlpV2ActivateJobTriggerRequest = _messages.MessageField('GooglePrivacyDlpV2ActivateJobTriggerRequest', 1)
@@ -618,7 +946,8 @@ class DlpProjectsJobTriggersCreateRequest(_messages.Message):
     googlePrivacyDlpV2CreateJobTriggerRequest: A
       GooglePrivacyDlpV2CreateJobTriggerRequest resource to be passed as the
       request body.
-    parent: The parent resource name, for example projects/my-project-id.
+    parent: Required. The parent resource name, for example projects/my-
+      project-id.
   """
 
   googlePrivacyDlpV2CreateJobTriggerRequest = _messages.MessageField('GooglePrivacyDlpV2CreateJobTriggerRequest', 1)
@@ -629,8 +958,8 @@ class DlpProjectsJobTriggersDeleteRequest(_messages.Message):
   r"""A DlpProjectsJobTriggersDeleteRequest object.
 
   Fields:
-    name: Resource name of the project and the triggeredJob, for example
-      `projects/dlp-test-project/jobTriggers/53234423`.
+    name: Required. Resource name of the project and the triggeredJob, for
+      example `projects/dlp-test-project/jobTriggers/53234423`.
   """
 
   name = _messages.StringField(1, required=True)
@@ -640,8 +969,8 @@ class DlpProjectsJobTriggersGetRequest(_messages.Message):
   r"""A DlpProjectsJobTriggersGetRequest object.
 
   Fields:
-    name: Resource name of the project and the triggeredJob, for example
-      `projects/dlp-test-project/jobTriggers/53234423`.
+    name: Required. Resource name of the project and the triggeredJob, for
+      example `projects/dlp-test-project/jobTriggers/53234423`.
   """
 
   name = _messages.StringField(1, required=True)
@@ -667,6 +996,8 @@ class DlpProjectsJobTriggersListRequest(_messages.Message):
       inspected_storage = cloud_storage AND (state = PAUSED OR state =
       HEALTHY) * last_run_time > \"2017-12-12T00:00:00+00:00\"  The length of
       this field should be no more than 500 characters.
+    locationId: The geographic location where job triggers will be retrieved
+      from. Use `-` for all locations. Reserved for future extensions.
     orderBy: Optional comma separated list of triggeredJob fields to order by,
       followed by `asc` or `desc` postfix. This list is case-insensitive,
       default sorting order is ascending, redundant space characters are
@@ -681,14 +1012,16 @@ class DlpProjectsJobTriggersListRequest(_messages.Message):
     pageToken: Optional page token to continue retrieval. Comes from previous
       call to ListJobTriggers. `order_by` field must not change for subsequent
       calls.
-    parent: The parent resource name, for example `projects/my-project-id`.
+    parent: Required. The parent resource name, for example `projects/my-
+      project-id`.
   """
 
   filter = _messages.StringField(1)
-  orderBy = _messages.StringField(2)
-  pageSize = _messages.IntegerField(3, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(4)
-  parent = _messages.StringField(5, required=True)
+  locationId = _messages.StringField(2)
+  orderBy = _messages.StringField(3)
+  pageSize = _messages.IntegerField(4, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(5)
+  parent = _messages.StringField(6, required=True)
 
 
 class DlpProjectsJobTriggersPatchRequest(_messages.Message):
@@ -698,57 +1031,545 @@ class DlpProjectsJobTriggersPatchRequest(_messages.Message):
     googlePrivacyDlpV2UpdateJobTriggerRequest: A
       GooglePrivacyDlpV2UpdateJobTriggerRequest resource to be passed as the
       request body.
-    name: Resource name of the project and the triggeredJob, for example
-      `projects/dlp-test-project/jobTriggers/53234423`.
+    name: Required. Resource name of the project and the triggeredJob, for
+      example `projects/dlp-test-project/jobTriggers/53234423`.
   """
 
   googlePrivacyDlpV2UpdateJobTriggerRequest = _messages.MessageField('GooglePrivacyDlpV2UpdateJobTriggerRequest', 1)
   name = _messages.StringField(2, required=True)
 
 
-class DlpProjectsStoredInfoTypesCreateRequest(_messages.Message):
-  r"""A DlpProjectsStoredInfoTypesCreateRequest object.
+class DlpProjectsLocationsContentDeidentifyRequest(_messages.Message):
+  r"""A DlpProjectsLocationsContentDeidentifyRequest object.
+
+  Fields:
+    googlePrivacyDlpV2DeidentifyContentRequest: A
+      GooglePrivacyDlpV2DeidentifyContentRequest resource to be passed as the
+      request body.
+    locationId: The geographic location to process de-identification. Reserved
+      for future extensions.
+    parent: The parent resource name, for example projects/my-project-id.
+  """
+
+  googlePrivacyDlpV2DeidentifyContentRequest = _messages.MessageField('GooglePrivacyDlpV2DeidentifyContentRequest', 1)
+  locationId = _messages.StringField(2, required=True)
+  parent = _messages.StringField(3, required=True)
+
+
+class DlpProjectsLocationsContentInspectRequest(_messages.Message):
+  r"""A DlpProjectsLocationsContentInspectRequest object.
+
+  Fields:
+    googlePrivacyDlpV2InspectContentRequest: A
+      GooglePrivacyDlpV2InspectContentRequest resource to be passed as the
+      request body.
+    locationId: The geographic location to process content inspection.
+      Reserved for future extensions.
+    parent: The parent resource name, for example projects/my-project-id.
+  """
+
+  googlePrivacyDlpV2InspectContentRequest = _messages.MessageField('GooglePrivacyDlpV2InspectContentRequest', 1)
+  locationId = _messages.StringField(2, required=True)
+  parent = _messages.StringField(3, required=True)
+
+
+class DlpProjectsLocationsContentReidentifyRequest(_messages.Message):
+  r"""A DlpProjectsLocationsContentReidentifyRequest object.
+
+  Fields:
+    googlePrivacyDlpV2ReidentifyContentRequest: A
+      GooglePrivacyDlpV2ReidentifyContentRequest resource to be passed as the
+      request body.
+    locationId: The geographic location to process content reidentification.
+      Reserved for future extensions.
+    parent: Required. The parent resource name.
+  """
+
+  googlePrivacyDlpV2ReidentifyContentRequest = _messages.MessageField('GooglePrivacyDlpV2ReidentifyContentRequest', 1)
+  locationId = _messages.StringField(2, required=True)
+  parent = _messages.StringField(3, required=True)
+
+
+class DlpProjectsLocationsDeidentifyTemplatesCreateRequest(_messages.Message):
+  r"""A DlpProjectsLocationsDeidentifyTemplatesCreateRequest object.
+
+  Fields:
+    googlePrivacyDlpV2CreateDeidentifyTemplateRequest: A
+      GooglePrivacyDlpV2CreateDeidentifyTemplateRequest resource to be passed
+      as the request body.
+    locationId: The geographic location to store the deidentification
+      template. Reserved for future extensions.
+    parent: Required. The parent resource name, for example projects/my-
+      project-id or organizations/my-org-id.
+  """
+
+  googlePrivacyDlpV2CreateDeidentifyTemplateRequest = _messages.MessageField('GooglePrivacyDlpV2CreateDeidentifyTemplateRequest', 1)
+  locationId = _messages.StringField(2, required=True)
+  parent = _messages.StringField(3, required=True)
+
+
+class DlpProjectsLocationsDeidentifyTemplatesDeleteRequest(_messages.Message):
+  r"""A DlpProjectsLocationsDeidentifyTemplatesDeleteRequest object.
+
+  Fields:
+    name: Required. Resource name of the organization and deidentify template
+      to be deleted, for example
+      `organizations/433245324/deidentifyTemplates/432452342` or projects
+      /project-id/deidentifyTemplates/432452342.
+  """
+
+  name = _messages.StringField(1, required=True)
+
+
+class DlpProjectsLocationsDeidentifyTemplatesGetRequest(_messages.Message):
+  r"""A DlpProjectsLocationsDeidentifyTemplatesGetRequest object.
+
+  Fields:
+    name: Required. Resource name of the organization and deidentify template
+      to be read, for example
+      `organizations/433245324/deidentifyTemplates/432452342` or projects
+      /project-id/deidentifyTemplates/432452342.
+  """
+
+  name = _messages.StringField(1, required=True)
+
+
+class DlpProjectsLocationsDeidentifyTemplatesListRequest(_messages.Message):
+  r"""A DlpProjectsLocationsDeidentifyTemplatesListRequest object.
+
+  Fields:
+    locationId: The geographic location where deidentifications templates will
+      be retrieved from. Use `-` for all locations. Reserved for future
+      extensions.
+    orderBy: Optional comma separated list of fields to order by, followed by
+      `asc` or `desc` postfix. This list is case-insensitive, default sorting
+      order is ascending, redundant space characters are insignificant.
+      Example: `name asc,update_time, create_time desc`  Supported fields are:
+      - `create_time`: corresponds to time the template was created. -
+      `update_time`: corresponds to time the template was last updated. -
+      `name`: corresponds to template's name. - `display_name`: corresponds to
+      template's display name.
+    pageSize: Optional size of the page, can be limited by server. If zero
+      server returns a page of max size 100.
+    pageToken: Optional page token to continue retrieval. Comes from previous
+      call to `ListDeidentifyTemplates`.
+    parent: Required. The parent resource name, for example projects/my-
+      project-id or organizations/my-org-id.
+  """
+
+  locationId = _messages.StringField(1, required=True)
+  orderBy = _messages.StringField(2)
+  pageSize = _messages.IntegerField(3, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(4)
+  parent = _messages.StringField(5, required=True)
+
+
+class DlpProjectsLocationsDeidentifyTemplatesPatchRequest(_messages.Message):
+  r"""A DlpProjectsLocationsDeidentifyTemplatesPatchRequest object.
+
+  Fields:
+    googlePrivacyDlpV2UpdateDeidentifyTemplateRequest: A
+      GooglePrivacyDlpV2UpdateDeidentifyTemplateRequest resource to be passed
+      as the request body.
+    name: Required. Resource name of organization and deidentify template to
+      be updated, for example
+      `organizations/433245324/deidentifyTemplates/432452342` or projects
+      /project-id/deidentifyTemplates/432452342.
+  """
+
+  googlePrivacyDlpV2UpdateDeidentifyTemplateRequest = _messages.MessageField('GooglePrivacyDlpV2UpdateDeidentifyTemplateRequest', 1)
+  name = _messages.StringField(2, required=True)
+
+
+class DlpProjectsLocationsDlpJobsCancelRequest(_messages.Message):
+  r"""A DlpProjectsLocationsDlpJobsCancelRequest object.
+
+  Fields:
+    googlePrivacyDlpV2CancelDlpJobRequest: A
+      GooglePrivacyDlpV2CancelDlpJobRequest resource to be passed as the
+      request body.
+    name: Required. The name of the DlpJob resource to be cancelled.
+  """
+
+  googlePrivacyDlpV2CancelDlpJobRequest = _messages.MessageField('GooglePrivacyDlpV2CancelDlpJobRequest', 1)
+  name = _messages.StringField(2, required=True)
+
+
+class DlpProjectsLocationsDlpJobsCreateRequest(_messages.Message):
+  r"""A DlpProjectsLocationsDlpJobsCreateRequest object.
+
+  Fields:
+    googlePrivacyDlpV2CreateDlpJobRequest: A
+      GooglePrivacyDlpV2CreateDlpJobRequest resource to be passed as the
+      request body.
+    locationId: The geographic location to store and process the job. Reserved
+      for future extensions.
+    parent: Required. The parent resource name, for example projects/my-
+      project-id.
+  """
+
+  googlePrivacyDlpV2CreateDlpJobRequest = _messages.MessageField('GooglePrivacyDlpV2CreateDlpJobRequest', 1)
+  locationId = _messages.StringField(2, required=True)
+  parent = _messages.StringField(3, required=True)
+
+
+class DlpProjectsLocationsDlpJobsDeleteRequest(_messages.Message):
+  r"""A DlpProjectsLocationsDlpJobsDeleteRequest object.
+
+  Fields:
+    name: Required. The name of the DlpJob resource to be deleted.
+  """
+
+  name = _messages.StringField(1, required=True)
+
+
+class DlpProjectsLocationsDlpJobsGetRequest(_messages.Message):
+  r"""A DlpProjectsLocationsDlpJobsGetRequest object.
+
+  Fields:
+    name: Required. The name of the DlpJob resource.
+  """
+
+  name = _messages.StringField(1, required=True)
+
+
+class DlpProjectsLocationsDlpJobsListRequest(_messages.Message):
+  r"""A DlpProjectsLocationsDlpJobsListRequest object.
+
+  Enums:
+    TypeValueValuesEnum: The type of job. Defaults to `DlpJobType.INSPECT`
+
+  Fields:
+    filter: Optional. Allows filtering.  Supported syntax:  * Filter
+      expressions are made up of one or more restrictions. * Restrictions can
+      be combined by `AND` or `OR` logical operators. A sequence of
+      restrictions implicitly uses `AND`. * A restriction has the form of
+      `<field> <operator> <value>`. * Supported fields/values for inspect
+      jobs:     - `state` - PENDING|RUNNING|CANCELED|FINISHED|FAILED     -
+      `inspected_storage` - DATASTORE|CLOUD_STORAGE|BIGQUERY     -
+      `trigger_name` - The resource name of the trigger that created job.
+      - 'end_time` - Corresponds to time the job finished.     - 'start_time`
+      - Corresponds to time the job finished. * Supported fields for risk
+      analysis jobs:     - `state` - RUNNING|CANCELED|FINISHED|FAILED     -
+      'end_time` - Corresponds to time the job finished.     - 'start_time` -
+      Corresponds to time the job finished. * The operator must be `=` or
+      `!=`.  Examples:  * inspected_storage = cloud_storage AND state = done *
+      inspected_storage = cloud_storage OR inspected_storage = bigquery *
+      inspected_storage = cloud_storage AND (state = done OR state = canceled)
+      * end_time > \"2017-12-12T00:00:00+00:00\"  The length of this field
+      should be no more than 500 characters.
+    locationId: The geographic location where jobs will be retrieved from. Use
+      `-` for all locations. Reserved for future extensions.
+    orderBy: Optional comma separated list of fields to order by, followed by
+      `asc` or `desc` postfix. This list is case-insensitive, default sorting
+      order is ascending, redundant space characters are insignificant.
+      Example: `name asc, end_time asc, create_time desc`  Supported fields
+      are:  - `create_time`: corresponds to time the job was created. -
+      `end_time`: corresponds to time the job ended. - `name`: corresponds to
+      job's name. - `state`: corresponds to `state`
+    pageSize: The standard list page size.
+    pageToken: The standard list page token.
+    parent: Required. The parent resource name, for example projects/my-
+      project-id.
+    type: The type of job. Defaults to `DlpJobType.INSPECT`
+  """
+
+  class TypeValueValuesEnum(_messages.Enum):
+    r"""The type of job. Defaults to `DlpJobType.INSPECT`
+
+    Values:
+      DLP_JOB_TYPE_UNSPECIFIED: <no description>
+      INSPECT_JOB: <no description>
+      RISK_ANALYSIS_JOB: <no description>
+    """
+    DLP_JOB_TYPE_UNSPECIFIED = 0
+    INSPECT_JOB = 1
+    RISK_ANALYSIS_JOB = 2
+
+  filter = _messages.StringField(1)
+  locationId = _messages.StringField(2, required=True)
+  orderBy = _messages.StringField(3)
+  pageSize = _messages.IntegerField(4, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(5)
+  parent = _messages.StringField(6, required=True)
+  type = _messages.EnumField('TypeValueValuesEnum', 7)
+
+
+class DlpProjectsLocationsImageRedactRequest(_messages.Message):
+  r"""A DlpProjectsLocationsImageRedactRequest object.
+
+  Fields:
+    googlePrivacyDlpV2RedactImageRequest: A
+      GooglePrivacyDlpV2RedactImageRequest resource to be passed as the
+      request body.
+    locationId: The geographic location to process the request. Reserved for
+      future extensions.
+    parent: The parent resource name, for example projects/my-project-id.
+  """
+
+  googlePrivacyDlpV2RedactImageRequest = _messages.MessageField('GooglePrivacyDlpV2RedactImageRequest', 1)
+  locationId = _messages.StringField(2, required=True)
+  parent = _messages.StringField(3, required=True)
+
+
+class DlpProjectsLocationsInspectTemplatesCreateRequest(_messages.Message):
+  r"""A DlpProjectsLocationsInspectTemplatesCreateRequest object.
+
+  Fields:
+    googlePrivacyDlpV2CreateInspectTemplateRequest: A
+      GooglePrivacyDlpV2CreateInspectTemplateRequest resource to be passed as
+      the request body.
+    locationId: The geographic location to store the inspection template.
+      Reserved for future extensions.
+    parent: Required. The parent resource name, for example projects/my-
+      project-id or organizations/my-org-id.
+  """
+
+  googlePrivacyDlpV2CreateInspectTemplateRequest = _messages.MessageField('GooglePrivacyDlpV2CreateInspectTemplateRequest', 1)
+  locationId = _messages.StringField(2, required=True)
+  parent = _messages.StringField(3, required=True)
+
+
+class DlpProjectsLocationsInspectTemplatesDeleteRequest(_messages.Message):
+  r"""A DlpProjectsLocationsInspectTemplatesDeleteRequest object.
+
+  Fields:
+    name: Required. Resource name of the organization and inspectTemplate to
+      be deleted, for example
+      `organizations/433245324/inspectTemplates/432452342` or projects
+      /project-id/inspectTemplates/432452342.
+  """
+
+  name = _messages.StringField(1, required=True)
+
+
+class DlpProjectsLocationsInspectTemplatesGetRequest(_messages.Message):
+  r"""A DlpProjectsLocationsInspectTemplatesGetRequest object.
+
+  Fields:
+    name: Required. Resource name of the organization and inspectTemplate to
+      be read, for example
+      `organizations/433245324/inspectTemplates/432452342` or projects
+      /project-id/inspectTemplates/432452342.
+  """
+
+  name = _messages.StringField(1, required=True)
+
+
+class DlpProjectsLocationsInspectTemplatesListRequest(_messages.Message):
+  r"""A DlpProjectsLocationsInspectTemplatesListRequest object.
+
+  Fields:
+    locationId: The geographic location where inspection templates will be
+      retrieved from. Use `-` for all locations. Reserved for future
+      extensions.
+    orderBy: Optional comma separated list of fields to order by, followed by
+      `asc` or `desc` postfix. This list is case-insensitive, default sorting
+      order is ascending, redundant space characters are insignificant.
+      Example: `name asc,update_time, create_time desc`  Supported fields are:
+      - `create_time`: corresponds to time the template was created. -
+      `update_time`: corresponds to time the template was last updated. -
+      `name`: corresponds to template's name. - `display_name`: corresponds to
+      template's display name.
+    pageSize: Optional size of the page, can be limited by server. If zero
+      server returns a page of max size 100.
+    pageToken: Optional page token to continue retrieval. Comes from previous
+      call to `ListInspectTemplates`.
+    parent: Required. The parent resource name, for example projects/my-
+      project-id or organizations/my-org-id.
+  """
+
+  locationId = _messages.StringField(1, required=True)
+  orderBy = _messages.StringField(2)
+  pageSize = _messages.IntegerField(3, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(4)
+  parent = _messages.StringField(5, required=True)
+
+
+class DlpProjectsLocationsInspectTemplatesPatchRequest(_messages.Message):
+  r"""A DlpProjectsLocationsInspectTemplatesPatchRequest object.
+
+  Fields:
+    googlePrivacyDlpV2UpdateInspectTemplateRequest: A
+      GooglePrivacyDlpV2UpdateInspectTemplateRequest resource to be passed as
+      the request body.
+    name: Required. Resource name of organization and inspectTemplate to be
+      updated, for example
+      `organizations/433245324/inspectTemplates/432452342` or projects
+      /project-id/inspectTemplates/432452342.
+  """
+
+  googlePrivacyDlpV2UpdateInspectTemplateRequest = _messages.MessageField('GooglePrivacyDlpV2UpdateInspectTemplateRequest', 1)
+  name = _messages.StringField(2, required=True)
+
+
+class DlpProjectsLocationsJobTriggersActivateRequest(_messages.Message):
+  r"""A DlpProjectsLocationsJobTriggersActivateRequest object.
+
+  Fields:
+    googlePrivacyDlpV2ActivateJobTriggerRequest: A
+      GooglePrivacyDlpV2ActivateJobTriggerRequest resource to be passed as the
+      request body.
+    name: Required. Resource name of the trigger to activate, for example
+      `projects/dlp-test-project/jobTriggers/53234423`.
+  """
+
+  googlePrivacyDlpV2ActivateJobTriggerRequest = _messages.MessageField('GooglePrivacyDlpV2ActivateJobTriggerRequest', 1)
+  name = _messages.StringField(2, required=True)
+
+
+class DlpProjectsLocationsJobTriggersCreateRequest(_messages.Message):
+  r"""A DlpProjectsLocationsJobTriggersCreateRequest object.
+
+  Fields:
+    googlePrivacyDlpV2CreateJobTriggerRequest: A
+      GooglePrivacyDlpV2CreateJobTriggerRequest resource to be passed as the
+      request body.
+    locationId: The geographic location to store the job trigger. Reserved for
+      future extensions.
+    parent: Required. The parent resource name, for example projects/my-
+      project-id.
+  """
+
+  googlePrivacyDlpV2CreateJobTriggerRequest = _messages.MessageField('GooglePrivacyDlpV2CreateJobTriggerRequest', 1)
+  locationId = _messages.StringField(2, required=True)
+  parent = _messages.StringField(3, required=True)
+
+
+class DlpProjectsLocationsJobTriggersDeleteRequest(_messages.Message):
+  r"""A DlpProjectsLocationsJobTriggersDeleteRequest object.
+
+  Fields:
+    name: Required. Resource name of the project and the triggeredJob, for
+      example `projects/dlp-test-project/jobTriggers/53234423`.
+  """
+
+  name = _messages.StringField(1, required=True)
+
+
+class DlpProjectsLocationsJobTriggersGetRequest(_messages.Message):
+  r"""A DlpProjectsLocationsJobTriggersGetRequest object.
+
+  Fields:
+    name: Required. Resource name of the project and the triggeredJob, for
+      example `projects/dlp-test-project/jobTriggers/53234423`.
+  """
+
+  name = _messages.StringField(1, required=True)
+
+
+class DlpProjectsLocationsJobTriggersListRequest(_messages.Message):
+  r"""A DlpProjectsLocationsJobTriggersListRequest object.
+
+  Fields:
+    filter: Optional. Allows filtering.  Supported syntax:  * Filter
+      expressions are made up of one or more restrictions. * Restrictions can
+      be combined by `AND` or `OR` logical operators. A sequence of
+      restrictions implicitly uses `AND`. * A restriction has the form of
+      `<field> <operator> <value>`. * Supported fields/values for inspect
+      jobs:     - `status` - HEALTHY|PAUSED|CANCELLED     -
+      `inspected_storage` - DATASTORE|CLOUD_STORAGE|BIGQUERY     -
+      'last_run_time` - RFC 3339 formatted timestamp, surrounded by
+      quotation marks. Nanoseconds are ignored.     - 'error_count' - Number
+      of errors that have occurred while running. * The operator must be `=`
+      or `!=` for status and inspected_storage.  Examples:  *
+      inspected_storage = cloud_storage AND status = HEALTHY *
+      inspected_storage = cloud_storage OR inspected_storage = bigquery *
+      inspected_storage = cloud_storage AND (state = PAUSED OR state =
+      HEALTHY) * last_run_time > \"2017-12-12T00:00:00+00:00\"  The length of
+      this field should be no more than 500 characters.
+    locationId: The geographic location where job triggers will be retrieved
+      from. Use `-` for all locations. Reserved for future extensions.
+    orderBy: Optional comma separated list of triggeredJob fields to order by,
+      followed by `asc` or `desc` postfix. This list is case-insensitive,
+      default sorting order is ascending, redundant space characters are
+      insignificant.  Example: `name asc,update_time, create_time desc`
+      Supported fields are:  - `create_time`: corresponds to time the
+      JobTrigger was created. - `update_time`: corresponds to time the
+      JobTrigger was last updated. - `last_run_time`: corresponds to the last
+      time the JobTrigger ran. - `name`: corresponds to JobTrigger's name. -
+      `display_name`: corresponds to JobTrigger's display name. - `status`:
+      corresponds to JobTrigger's status.
+    pageSize: Optional size of the page, can be limited by a server.
+    pageToken: Optional page token to continue retrieval. Comes from previous
+      call to ListJobTriggers. `order_by` field must not change for subsequent
+      calls.
+    parent: Required. The parent resource name, for example `projects/my-
+      project-id`.
+  """
+
+  filter = _messages.StringField(1)
+  locationId = _messages.StringField(2, required=True)
+  orderBy = _messages.StringField(3)
+  pageSize = _messages.IntegerField(4, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(5)
+  parent = _messages.StringField(6, required=True)
+
+
+class DlpProjectsLocationsJobTriggersPatchRequest(_messages.Message):
+  r"""A DlpProjectsLocationsJobTriggersPatchRequest object.
+
+  Fields:
+    googlePrivacyDlpV2UpdateJobTriggerRequest: A
+      GooglePrivacyDlpV2UpdateJobTriggerRequest resource to be passed as the
+      request body.
+    name: Required. Resource name of the project and the triggeredJob, for
+      example `projects/dlp-test-project/jobTriggers/53234423`.
+  """
+
+  googlePrivacyDlpV2UpdateJobTriggerRequest = _messages.MessageField('GooglePrivacyDlpV2UpdateJobTriggerRequest', 1)
+  name = _messages.StringField(2, required=True)
+
+
+class DlpProjectsLocationsStoredInfoTypesCreateRequest(_messages.Message):
+  r"""A DlpProjectsLocationsStoredInfoTypesCreateRequest object.
 
   Fields:
     googlePrivacyDlpV2CreateStoredInfoTypeRequest: A
       GooglePrivacyDlpV2CreateStoredInfoTypeRequest resource to be passed as
       the request body.
-    parent: The parent resource name, for example projects/my-project-id or
-      organizations/my-org-id.
+    locationId: The geographic location to store the stored infoType. Reserved
+      for future extensions.
+    parent: Required. The parent resource name, for example projects/my-
+      project-id or organizations/my-org-id.
   """
 
   googlePrivacyDlpV2CreateStoredInfoTypeRequest = _messages.MessageField('GooglePrivacyDlpV2CreateStoredInfoTypeRequest', 1)
-  parent = _messages.StringField(2, required=True)
+  locationId = _messages.StringField(2, required=True)
+  parent = _messages.StringField(3, required=True)
 
 
-class DlpProjectsStoredInfoTypesDeleteRequest(_messages.Message):
-  r"""A DlpProjectsStoredInfoTypesDeleteRequest object.
+class DlpProjectsLocationsStoredInfoTypesDeleteRequest(_messages.Message):
+  r"""A DlpProjectsLocationsStoredInfoTypesDeleteRequest object.
 
   Fields:
-    name: Resource name of the organization and storedInfoType to be deleted,
-      for example `organizations/433245324/storedInfoTypes/432452342` or
+    name: Required. Resource name of the organization and storedInfoType to be
+      deleted, for example `organizations/433245324/storedInfoTypes/432452342`
+      or projects/project-id/storedInfoTypes/432452342.
+  """
+
+  name = _messages.StringField(1, required=True)
+
+
+class DlpProjectsLocationsStoredInfoTypesGetRequest(_messages.Message):
+  r"""A DlpProjectsLocationsStoredInfoTypesGetRequest object.
+
+  Fields:
+    name: Required. Resource name of the organization and storedInfoType to be
+      read, for example `organizations/433245324/storedInfoTypes/432452342` or
       projects/project-id/storedInfoTypes/432452342.
   """
 
   name = _messages.StringField(1, required=True)
 
 
-class DlpProjectsStoredInfoTypesGetRequest(_messages.Message):
-  r"""A DlpProjectsStoredInfoTypesGetRequest object.
+class DlpProjectsLocationsStoredInfoTypesListRequest(_messages.Message):
+  r"""A DlpProjectsLocationsStoredInfoTypesListRequest object.
 
   Fields:
-    name: Resource name of the organization and storedInfoType to be read, for
-      example `organizations/433245324/storedInfoTypes/432452342` or projects
-      /project-id/storedInfoTypes/432452342.
-  """
-
-  name = _messages.StringField(1, required=True)
-
-
-class DlpProjectsStoredInfoTypesListRequest(_messages.Message):
-  r"""A DlpProjectsStoredInfoTypesListRequest object.
-
-  Fields:
+    locationId: The geographic location where stored infoTypes will be
+      retrieved from. Use `-` for all locations. Reserved for future
+      extensions.
     orderBy: Optional comma separated list of fields to order by, followed by
       `asc` or `desc` postfix. This list is case-insensitive, default sorting
       order is ascending, redundant space characters are insignificant.
@@ -761,14 +1582,100 @@ class DlpProjectsStoredInfoTypesListRequest(_messages.Message):
       server returns a page of max size 100.
     pageToken: Optional page token to continue retrieval. Comes from previous
       call to `ListStoredInfoTypes`.
-    parent: The parent resource name, for example projects/my-project-id or
-      organizations/my-org-id.
+    parent: Required. The parent resource name, for example projects/my-
+      project-id or organizations/my-org-id.
   """
 
-  orderBy = _messages.StringField(1)
-  pageSize = _messages.IntegerField(2, variant=_messages.Variant.INT32)
-  pageToken = _messages.StringField(3)
-  parent = _messages.StringField(4, required=True)
+  locationId = _messages.StringField(1, required=True)
+  orderBy = _messages.StringField(2)
+  pageSize = _messages.IntegerField(3, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(4)
+  parent = _messages.StringField(5, required=True)
+
+
+class DlpProjectsLocationsStoredInfoTypesPatchRequest(_messages.Message):
+  r"""A DlpProjectsLocationsStoredInfoTypesPatchRequest object.
+
+  Fields:
+    googlePrivacyDlpV2UpdateStoredInfoTypeRequest: A
+      GooglePrivacyDlpV2UpdateStoredInfoTypeRequest resource to be passed as
+      the request body.
+    name: Required. Resource name of organization and storedInfoType to be
+      updated, for example `organizations/433245324/storedInfoTypes/432452342`
+      or projects/project-id/storedInfoTypes/432452342.
+  """
+
+  googlePrivacyDlpV2UpdateStoredInfoTypeRequest = _messages.MessageField('GooglePrivacyDlpV2UpdateStoredInfoTypeRequest', 1)
+  name = _messages.StringField(2, required=True)
+
+
+class DlpProjectsStoredInfoTypesCreateRequest(_messages.Message):
+  r"""A DlpProjectsStoredInfoTypesCreateRequest object.
+
+  Fields:
+    googlePrivacyDlpV2CreateStoredInfoTypeRequest: A
+      GooglePrivacyDlpV2CreateStoredInfoTypeRequest resource to be passed as
+      the request body.
+    parent: Required. The parent resource name, for example projects/my-
+      project-id or organizations/my-org-id.
+  """
+
+  googlePrivacyDlpV2CreateStoredInfoTypeRequest = _messages.MessageField('GooglePrivacyDlpV2CreateStoredInfoTypeRequest', 1)
+  parent = _messages.StringField(2, required=True)
+
+
+class DlpProjectsStoredInfoTypesDeleteRequest(_messages.Message):
+  r"""A DlpProjectsStoredInfoTypesDeleteRequest object.
+
+  Fields:
+    name: Required. Resource name of the organization and storedInfoType to be
+      deleted, for example `organizations/433245324/storedInfoTypes/432452342`
+      or projects/project-id/storedInfoTypes/432452342.
+  """
+
+  name = _messages.StringField(1, required=True)
+
+
+class DlpProjectsStoredInfoTypesGetRequest(_messages.Message):
+  r"""A DlpProjectsStoredInfoTypesGetRequest object.
+
+  Fields:
+    name: Required. Resource name of the organization and storedInfoType to be
+      read, for example `organizations/433245324/storedInfoTypes/432452342` or
+      projects/project-id/storedInfoTypes/432452342.
+  """
+
+  name = _messages.StringField(1, required=True)
+
+
+class DlpProjectsStoredInfoTypesListRequest(_messages.Message):
+  r"""A DlpProjectsStoredInfoTypesListRequest object.
+
+  Fields:
+    locationId: The geographic location where stored infoTypes will be
+      retrieved from. Use `-` for all locations. Reserved for future
+      extensions.
+    orderBy: Optional comma separated list of fields to order by, followed by
+      `asc` or `desc` postfix. This list is case-insensitive, default sorting
+      order is ascending, redundant space characters are insignificant.
+      Example: `name asc, display_name, create_time desc`  Supported fields
+      are:  - `create_time`: corresponds to time the most recent version of
+      the resource was created. - `state`: corresponds to the state of the
+      resource. - `name`: corresponds to resource name. - `display_name`:
+      corresponds to info type's display name.
+    pageSize: Optional size of the page, can be limited by server. If zero
+      server returns a page of max size 100.
+    pageToken: Optional page token to continue retrieval. Comes from previous
+      call to `ListStoredInfoTypes`.
+    parent: Required. The parent resource name, for example projects/my-
+      project-id or organizations/my-org-id.
+  """
+
+  locationId = _messages.StringField(1)
+  orderBy = _messages.StringField(2)
+  pageSize = _messages.IntegerField(3, variant=_messages.Variant.INT32)
+  pageToken = _messages.StringField(4)
+  parent = _messages.StringField(5, required=True)
 
 
 class DlpProjectsStoredInfoTypesPatchRequest(_messages.Message):
@@ -778,9 +1685,9 @@ class DlpProjectsStoredInfoTypesPatchRequest(_messages.Message):
     googlePrivacyDlpV2UpdateStoredInfoTypeRequest: A
       GooglePrivacyDlpV2UpdateStoredInfoTypeRequest resource to be passed as
       the request body.
-    name: Resource name of organization and storedInfoType to be updated, for
-      example `organizations/433245324/storedInfoTypes/432452342` or projects
-      /project-id/storedInfoTypes/432452342.
+    name: Required. Resource name of organization and storedInfoType to be
+      updated, for example `organizations/433245324/storedInfoTypes/432452342`
+      or projects/project-id/storedInfoTypes/432452342.
   """
 
   googlePrivacyDlpV2UpdateStoredInfoTypeRequest = _messages.MessageField('GooglePrivacyDlpV2UpdateStoredInfoTypeRequest', 1)
@@ -795,15 +1702,20 @@ class GooglePrivacyDlpV2Action(_messages.Message):
     jobNotificationEmails: Enable email notification to project owners and
       editors on job's completion/failure.
     pubSub: Publish a notification to a pubsub topic.
+    publishFindingsToCloudDataCatalog: Publish findings to Cloud Datahub.
     publishSummaryToCscc: Publish summary to Cloud Security Command Center
       (Alpha).
+    publishToStackdriver: Enable Stackdriver metric
+      dlp.googleapis.com/finding_count.
     saveFindings: Save resulting findings in a provided location.
   """
 
   jobNotificationEmails = _messages.MessageField('GooglePrivacyDlpV2JobNotificationEmails', 1)
   pubSub = _messages.MessageField('GooglePrivacyDlpV2PublishToPubSub', 2)
-  publishSummaryToCscc = _messages.MessageField('GooglePrivacyDlpV2PublishSummaryToCscc', 3)
-  saveFindings = _messages.MessageField('GooglePrivacyDlpV2SaveFindings', 4)
+  publishFindingsToCloudDataCatalog = _messages.MessageField('GooglePrivacyDlpV2PublishFindingsToCloudDataCatalog', 3)
+  publishSummaryToCscc = _messages.MessageField('GooglePrivacyDlpV2PublishSummaryToCscc', 4)
+  publishToStackdriver = _messages.MessageField('GooglePrivacyDlpV2PublishToStackdriver', 5)
+  saveFindings = _messages.MessageField('GooglePrivacyDlpV2SaveFindings', 6)
 
 
 class GooglePrivacyDlpV2ActivateJobTriggerRequest(_messages.Message):
@@ -1023,6 +1935,7 @@ class GooglePrivacyDlpV2ByteContentItem(_messages.Message):
       IMAGE_PNG: <no description>
       IMAGE_SVG: <no description>
       TEXT_UTF8: <no description>
+      AVRO: <no description>
     """
     BYTES_TYPE_UNSPECIFIED = 0
     IMAGE = 1
@@ -1031,6 +1944,7 @@ class GooglePrivacyDlpV2ByteContentItem(_messages.Message):
     IMAGE_PNG = 4
     IMAGE_SVG = 5
     TEXT_UTF8 = 6
+    AVRO = 7
 
   data = _messages.BytesField(1)
   type = _messages.EnumField('TypeValueValuesEnum', 2)
@@ -1096,20 +2010,22 @@ class GooglePrivacyDlpV2CharacterMaskConfig(_messages.Message):
 
   Fields:
     charactersToIgnore: When masking a string, items in this list will be
-      skipped when replacing. For example, if your string is 555-555-5555 and
-      you ask us to skip `-` and mask 5 chars with * we would produce
-      ***-*55-5555.
-    maskingCharacter: Character to mask the sensitive values&mdash;for
-      example, "*" for an alphabetic string such as name, or "0" for a numeric
-      string such as ZIP code or credit card number. String must have length
-      1. If not supplied, we will default to "*" for strings, 0 for digits.
+      skipped when replacing characters. For example, if the input string is
+      `555-555-5555` and you instruct Cloud DLP to skip `-` and mask 5
+      characters with `*`, Cloud DLP returns `***-**5-5555`.
+    maskingCharacter: Character to use to mask the sensitive values&mdash;for
+      example, `*` for an alphabetic string such as a name, or `0` for a
+      numeric string such as ZIP code or credit card number. This string must
+      have a length of 1. If not supplied, this value defaults to `*` for
+      strings, and `0` for digits.
     numberToMask: Number of characters to mask. If not set, all matching chars
       will be masked. Skipped characters do not count towards this tally.
     reverseOrder: Mask characters in reverse order. For example, if
-      `masking_character` is '0', number_to_mask is 14, and `reverse_order` is
-      false, then 1234-5678-9012-3456 -> 00000000000000-3456 If
-      `masking_character` is '*', `number_to_mask` is 3, and `reverse_order`
-      is true, then 12345 -> 12***
+      `masking_character` is `0`, `number_to_mask` is `14`, and
+      `reverse_order` is `false`, then the input string `1234-5678-9012-3456`
+      is masked as `00000000000000-3456`. If `masking_character` is `*`,
+      `number_to_mask` is `3`, and `reverse_order` is `true`, then the string
+      `12345` is masked as `12***`.
   """
 
   charactersToIgnore = _messages.MessageField('GooglePrivacyDlpV2CharsToIgnore', 1, repeated=True)
@@ -1201,10 +2117,14 @@ class GooglePrivacyDlpV2CloudStorageOptions(_messages.Message):
       FILE_TYPE_UNSPECIFIED: <no description>
       BINARY_FILE: <no description>
       TEXT_FILE: <no description>
+      IMAGE: <no description>
+      AVRO: <no description>
     """
     FILE_TYPE_UNSPECIFIED = 0
     BINARY_FILE = 1
     TEXT_FILE = 2
+    IMAGE = 3
+    AVRO = 4
 
   class SampleMethodValueValuesEnum(_messages.Enum):
     r"""SampleMethodValueValuesEnum enum type.
@@ -1298,8 +2218,10 @@ class GooglePrivacyDlpV2Color(_messages.Message):
 
 class GooglePrivacyDlpV2Condition(_messages.Message):
   r"""The field type of `value` and `field` do not need to match to be
-  considered equal, but not all comparisons are possible.  A `value` of type:
-  - `string` can be compared against all other types - `boolean` can only be
+  considered equal, but not all comparisons are possible. EQUAL_TO and
+  NOT_EQUAL_TO attempt to compare even with incompatible types, but all other
+  comparisons are invalid with incompatible types. A `value` of type:  -
+  `string` can be compared against all other types - `boolean` can only be
   compared against other booleans - `integer` can be compared against doubles
   or a string if the string value can be parsed as an integer. - `double` can
   be compared against integers or a string if the string can be parsed as a
@@ -1326,8 +2248,9 @@ class GooglePrivacyDlpV2Condition(_messages.Message):
 
     Values:
       RELATIONAL_OPERATOR_UNSPECIFIED: <no description>
-      EQUAL_TO: Equal.
-      NOT_EQUAL_TO: Not equal to.
+      EQUAL_TO: Equal. Attempts to match even with incompatible types.
+      NOT_EQUAL_TO: Not equal to. Attempts to match even with incompatible
+        types.
       GREATER_THAN: Greater than.
       LESS_THAN: Less than.
       GREATER_THAN_OR_EQUALS: Greater than or equals.
@@ -1409,14 +2332,17 @@ class GooglePrivacyDlpV2CreateDeidentifyTemplateRequest(_messages.Message):
 
   Fields:
     deidentifyTemplate: The DeidentifyTemplate to create.
+    locationId: The geographic location to store the deidentification
+      template. Reserved for future extensions.
     templateId: The template id can contain uppercase and lowercase letters,
       numbers, and hyphens; that is, it must match the regular expression:
-      `[a-zA-Z\\d-]+`. The maximum length is 100 characters. Can be empty to
+      `[a-zA-Z\\d-_]+`. The maximum length is 100 characters. Can be empty to
       allow the system to generate one.
   """
 
   deidentifyTemplate = _messages.MessageField('GooglePrivacyDlpV2DeidentifyTemplate', 1)
-  templateId = _messages.StringField(2)
+  locationId = _messages.StringField(2)
+  templateId = _messages.StringField(3)
 
 
 class GooglePrivacyDlpV2CreateDlpJobRequest(_messages.Message):
@@ -1427,14 +2353,17 @@ class GooglePrivacyDlpV2CreateDlpJobRequest(_messages.Message):
     inspectJob: A GooglePrivacyDlpV2InspectJobConfig attribute.
     jobId: The job id can contain uppercase and lowercase letters, numbers,
       and hyphens; that is, it must match the regular expression:
-      `[a-zA-Z\\d-]+`. The maximum length is 100 characters. Can be empty to
+      `[a-zA-Z\\d-_]+`. The maximum length is 100 characters. Can be empty to
       allow the system to generate one.
+    locationId: The geographic location to store and process the job. Reserved
+      for future extensions.
     riskJob: A GooglePrivacyDlpV2RiskAnalysisJobConfig attribute.
   """
 
   inspectJob = _messages.MessageField('GooglePrivacyDlpV2InspectJobConfig', 1)
   jobId = _messages.StringField(2)
-  riskJob = _messages.MessageField('GooglePrivacyDlpV2RiskAnalysisJobConfig', 3)
+  locationId = _messages.StringField(3)
+  riskJob = _messages.MessageField('GooglePrivacyDlpV2RiskAnalysisJobConfig', 4)
 
 
 class GooglePrivacyDlpV2CreateInspectTemplateRequest(_messages.Message):
@@ -1442,14 +2371,17 @@ class GooglePrivacyDlpV2CreateInspectTemplateRequest(_messages.Message):
 
   Fields:
     inspectTemplate: The InspectTemplate to create.
+    locationId: The geographic location to store the inspection template.
+      Reserved for future extensions.
     templateId: The template id can contain uppercase and lowercase letters,
       numbers, and hyphens; that is, it must match the regular expression:
-      `[a-zA-Z\\d-]+`. The maximum length is 100 characters. Can be empty to
+      `[a-zA-Z\\d-_]+`. The maximum length is 100 characters. Can be empty to
       allow the system to generate one.
   """
 
   inspectTemplate = _messages.MessageField('GooglePrivacyDlpV2InspectTemplate', 1)
-  templateId = _messages.StringField(2)
+  locationId = _messages.StringField(2)
+  templateId = _messages.StringField(3)
 
 
 class GooglePrivacyDlpV2CreateJobTriggerRequest(_messages.Message):
@@ -1457,14 +2389,17 @@ class GooglePrivacyDlpV2CreateJobTriggerRequest(_messages.Message):
 
   Fields:
     jobTrigger: The JobTrigger to create.
+    locationId: The geographic location to store the job trigger. Reserved for
+      future extensions.
     triggerId: The trigger id can contain uppercase and lowercase letters,
       numbers, and hyphens; that is, it must match the regular expression:
-      `[a-zA-Z\\d-]+`. The maximum length is 100 characters. Can be empty to
+      `[a-zA-Z\\d-_]+`. The maximum length is 100 characters. Can be empty to
       allow the system to generate one.
   """
 
   jobTrigger = _messages.MessageField('GooglePrivacyDlpV2JobTrigger', 1)
-  triggerId = _messages.StringField(2)
+  locationId = _messages.StringField(2)
+  triggerId = _messages.StringField(3)
 
 
 class GooglePrivacyDlpV2CreateStoredInfoTypeRequest(_messages.Message):
@@ -1472,14 +2407,67 @@ class GooglePrivacyDlpV2CreateStoredInfoTypeRequest(_messages.Message):
 
   Fields:
     config: Configuration of the storedInfoType to create.
+    locationId: The geographic location to store the stored infoType. Reserved
+      for future extensions.
     storedInfoTypeId: The storedInfoType ID can contain uppercase and
       lowercase letters, numbers, and hyphens; that is, it must match the
-      regular expression: `[a-zA-Z\\d-]+`. The maximum length is 100
+      regular expression: `[a-zA-Z\\d-_]+`. The maximum length is 100
       characters. Can be empty to allow the system to generate one.
   """
 
   config = _messages.MessageField('GooglePrivacyDlpV2StoredInfoTypeConfig', 1)
-  storedInfoTypeId = _messages.StringField(2)
+  locationId = _messages.StringField(2)
+  storedInfoTypeId = _messages.StringField(3)
+
+
+class GooglePrivacyDlpV2CryptoDeterministicConfig(_messages.Message):
+  r"""Pseudonymization method that generates deterministic encryption for the
+  given input. Outputs a base64 encoded representation of the encrypted
+  output. Uses AES-SIV based on the RFC https://tools.ietf.org/html/rfc5297.
+
+  Fields:
+    context: Optional. A context may be used for higher security and
+      maintaining referential integrity such that the same identifier in two
+      different contexts will be given a distinct surrogate. The context is
+      appended to plaintext value being encrypted. On decryption the provided
+      context is validated against the value used during encryption. If a
+      context was provided during encryption, same context must be provided
+      during decryption as well.  If the context is not set, plaintext would
+      be used as is for encryption. If the context is set but:  1. there is no
+      record present when transforming a given value or 2. the field is not
+      present when transforming a given value,  plaintext would be used as is
+      for encryption.  Note that case (1) is expected when an
+      `InfoTypeTransformation` is applied to both structured and non-
+      structured `ContentItem`s.
+    cryptoKey: The key used by the encryption function.
+    surrogateInfoType: The custom info type to annotate the surrogate with.
+      This annotation will be applied to the surrogate by prefixing it with
+      the name of the custom info type followed by the number of characters
+      comprising the surrogate. The following scheme defines the format: <info
+      type name>(<surrogate character count>):<surrogate>  For example, if the
+      name of custom info type is 'MY_TOKEN_INFO_TYPE' and the surrogate is
+      'abc', the full replacement value will be: 'MY_TOKEN_INFO_TYPE(3):abc'
+      This annotation identifies the surrogate when inspecting content using
+      the custom info type 'Surrogate'. This facilitates reversal of the
+      surrogate when it occurs in free text.  Note: For record transformations
+      where the entire cell in a table is being transformed, surrogates are
+      optional to use. Surrogates are used to denote the location of the token
+      and are necessary for re-identification in free form text.  In order for
+      inspection to work properly, the name of this info type must not occur
+      naturally anywhere in your data; otherwise, inspection may either  -
+      reverse a surrogate that does not correspond to an actual identifier -
+      be unable to parse the surrogate and result in an error  Therefore,
+      choose your custom info type name carefully after considering what your
+      data looks like. One way to select a name that has a high chance of
+      yielding reliable detection is to include one or more unicode characters
+      that are highly improbable to exist in your data. For example, assuming
+      your data is entered from a regular ASCII keyboard, the symbol with the
+      hex code point 29DD might be used like so: \u29ddMY_TOKEN_TYPE.
+  """
+
+  context = _messages.MessageField('GooglePrivacyDlpV2FieldId', 1)
+  cryptoKey = _messages.MessageField('GooglePrivacyDlpV2CryptoKey', 2)
+  surrogateInfoType = _messages.MessageField('GooglePrivacyDlpV2InfoType', 3)
 
 
 class GooglePrivacyDlpV2CryptoHashConfig(_messages.Message):
@@ -1515,14 +2503,17 @@ class GooglePrivacyDlpV2CryptoKey(_messages.Message):
 
 
 class GooglePrivacyDlpV2CryptoReplaceFfxFpeConfig(_messages.Message):
-  r"""Replaces an identifier with a surrogate using FPE with the FFX mode of
-  operation; however when used in the `ReidentifyContent` API method, it
-  serves the opposite function by reversing the surrogate back into the
-  original identifier. The identifier must be encoded as ASCII. For a given
-  crypto key and context, the same identifier will be replaced with the same
-  surrogate. Identifiers must be at least two characters long. In the case
-  that the identifier is the empty string, it will be skipped. See
-  https://cloud.google.com/dlp/docs/pseudonymization to learn more.
+  r"""Replaces an identifier with a surrogate using Format Preserving
+  Encryption (FPE) with the FFX mode of operation; however when used in the
+  `ReidentifyContent` API method, it serves the opposite function by reversing
+  the surrogate back into the original identifier. The identifier must be
+  encoded as ASCII. For a given crypto key and context, the same identifier
+  will be replaced with the same surrogate. Identifiers must be at least two
+  characters long. In the case that the identifier is the empty string, it
+  will be skipped. See https://cloud.google.com/dlp/docs/pseudonymization to
+  learn more.  Note: We recommend using  CryptoDeterministicConfig for all use
+  cases which do not require preserving the input alphabet space and size,
+  plus warrant referential integrity.
 
   Enums:
     CommonAlphabetValueValuesEnum:
@@ -1545,10 +2536,10 @@ class GooglePrivacyDlpV2CryptoReplaceFfxFpeConfig(_messages.Message):
     customAlphabet: This is supported by mapping these to the alphanumeric
       characters that the FFX mode natively supports. This happens
       before/after encryption/decryption. Each character listed must appear
-      only once. Number of characters must be in the range [2, 62]. This must
+      only once. Number of characters must be in the range [2, 95]. This must
       be encoded as ASCII. The order of characters does not matter.
     radix: The native way to select the alphabet. Must be in the range [2,
-      62].
+      95].
     surrogateInfoType: The custom infoType to annotate the surrogate with.
       This annotation will be applied to the surrogate by prefixing it with
       the name of the custom infoType followed by the number of characters
@@ -1705,11 +2696,12 @@ class GooglePrivacyDlpV2DateShiftConfig(_messages.Message):
 
   Fields:
     context: Points to the field that contains the context, for example, an
-      entity id. If set, must also set method. If set, shift will be
+      entity id. If set, must also set cryptoKey. If set, shift will be
       consistent for the given context.
     cryptoKey: Causes the shift to be computed based on this key and the
       context. This results in the same shift for the same context and
-      crypto_key.
+      crypto_key. If set, must also set context. Can only be applied to table
+      items.
     lowerBoundDays: For example, -5 means shift date to at most 5 days back in
       the past. [Required]
     upperBoundDays: Range of shift in days. Actual shift will be selected at
@@ -1776,10 +2768,14 @@ class GooglePrivacyDlpV2DeidentifyConfig(_messages.Message):
     recordTransformations: Treat the dataset as structured. Transformations
       can be applied to specific locations within structured datasets, such as
       transforming a column within a table.
+    transformationErrorHandling: Mode for handling transformation errors. If
+      left unspecified, the default mode is
+      `TransformationErrorHandling.ThrowError`.
   """
 
   infoTypeTransformations = _messages.MessageField('GooglePrivacyDlpV2InfoTypeTransformations', 1)
   recordTransformations = _messages.MessageField('GooglePrivacyDlpV2RecordTransformations', 2)
+  transformationErrorHandling = _messages.MessageField('GooglePrivacyDlpV2TransformationErrorHandling', 3)
 
 
 class GooglePrivacyDlpV2DeidentifyContentRequest(_messages.Message):
@@ -1802,6 +2798,8 @@ class GooglePrivacyDlpV2DeidentifyContentRequest(_messages.Message):
       corresponding fields in the template. Repeated fields are appended.
       Singular sub-messages and groups are recursively merged.
     item: The item to de-identify. Will be treated as text.
+    locationId: The geographic location to process de-identification. Reserved
+      for future extensions.
   """
 
   deidentifyConfig = _messages.MessageField('GooglePrivacyDlpV2DeidentifyConfig', 1)
@@ -1809,6 +2807,7 @@ class GooglePrivacyDlpV2DeidentifyContentRequest(_messages.Message):
   inspectConfig = _messages.MessageField('GooglePrivacyDlpV2InspectConfig', 3)
   inspectTemplateName = _messages.StringField(4)
   item = _messages.MessageField('GooglePrivacyDlpV2ContentItem', 5)
+  locationId = _messages.StringField(6)
 
 
 class GooglePrivacyDlpV2DeidentifyContentResponse(_messages.Message):
@@ -1824,12 +2823,11 @@ class GooglePrivacyDlpV2DeidentifyContentResponse(_messages.Message):
 
 
 class GooglePrivacyDlpV2DeidentifyTemplate(_messages.Message):
-  r"""The DeidentifyTemplates contains instructions on how to deidentify
-  content. See https://cloud.google.com/dlp/docs/concepts-templates to learn
-  more.
+  r"""DeidentifyTemplates contains instructions on how to de-identify content.
+  See https://cloud.google.com/dlp/docs/concepts-templates to learn more.
 
   Fields:
-    createTime: The creation timestamp of a inspectTemplate, output only
+    createTime: The creation timestamp of an inspectTemplate, output only
       field.
     deidentifyConfig: ///////////// // The core content of the template  //
       ///////////////
@@ -1838,7 +2836,7 @@ class GooglePrivacyDlpV2DeidentifyTemplate(_messages.Message):
     name: The template name. Output only.  The template will have one of the
       following formats: `projects/PROJECT_ID/deidentifyTemplates/TEMPLATE_ID`
       OR `organizations/ORGANIZATION_ID/deidentifyTemplates/TEMPLATE_ID`
-    updateTime: The last update timestamp of a inspectTemplate, output only
+    updateTime: The last update timestamp of an inspectTemplate, output only
       field.
   """
 
@@ -1935,9 +2933,10 @@ class GooglePrivacyDlpV2DeltaPresenceEstimationResult(_messages.Message):
 
 
 class GooglePrivacyDlpV2DetectionRule(_messages.Message):
-  r"""Rule for modifying a CustomInfoType to alter behavior under certain
-  circumstances, depending on the specific details of the rule. Not supported
-  for the `surrogate_type` custom info type.
+  r"""Deprecated; use `InspectionRuleSet` instead. Rule for modifying a
+  `CustomInfoType` to alter behavior under certain circumstances, depending on
+  the specific details of the rule. Not supported for the `surrogate_type`
+  custom infoType.
 
   Fields:
     hotwordRule: Hotword-based detection rule.
@@ -2282,11 +3281,11 @@ class GooglePrivacyDlpV2FindingLimits(_messages.Message):
       specified infoTypes.
     maxFindingsPerItem: Max number of findings that will be returned for each
       item scanned. When set within `InspectDataSourceRequest`, the maximum
-      returned is 1000 regardless if this is set higher. When set within
+      returned is 2000 regardless if this is set higher. When set within
       `InspectContentRequest`, this field is ignored.
     maxFindingsPerRequest: Max number of findings that will be returned per
       request/job. When set within `InspectContentRequest`, the maximum
-      returned is 1000 regardless if this is set higher.
+      returned is 2000 regardless if this is set higher.
   """
 
   maxFindingsPerInfoType = _messages.MessageField('GooglePrivacyDlpV2InfoTypeLimit', 1, repeated=True)
@@ -2509,11 +3508,10 @@ class GooglePrivacyDlpV2InspectConfig(_messages.Message):
       https://cloud.google.com/dlp/docs/infotypes-reference.  When no
       InfoTypes or CustomInfoTypes are specified in a request, the system may
       automatically choose what detectors to run. By default this may be all
-      types, but may change over time as detectors are updated.  The special
-      InfoType name "ALL_BASIC" can be used to trigger all detectors, but may
-      change over time as new InfoTypes are added. If you need precise control
-      and predictability as to what detectors are run you should specify
-      specific InfoTypes listed in the reference.
+      types, but may change over time as detectors are updated.  If you need
+      precise control and predictability as to what detectors are run you
+      should specify specific InfoTypes listed in the reference, otherwise a
+      default list will be used, which may change over time.
     limits: A GooglePrivacyDlpV2FindingLimits attribute.
     minLikelihood: Only returns findings equal or above this threshold. The
       default is POSSIBLE. See https://cloud.google.com/dlp/docs/likelihood to
@@ -2576,11 +3574,14 @@ class GooglePrivacyDlpV2InspectContentRequest(_messages.Message):
       corresponding fields in the template. Repeated fields are appended.
       Singular sub-messages and groups are recursively merged.
     item: The item to inspect.
+    locationId: The geographic location to process content inspection.
+      Reserved for future extensions.
   """
 
   inspectConfig = _messages.MessageField('GooglePrivacyDlpV2InspectConfig', 1)
   inspectTemplateName = _messages.StringField(2)
   item = _messages.MessageField('GooglePrivacyDlpV2ContentItem', 3)
+  locationId = _messages.StringField(4)
 
 
 class GooglePrivacyDlpV2InspectContentResponse(_messages.Message):
@@ -2609,8 +3610,7 @@ class GooglePrivacyDlpV2InspectJobConfig(_messages.Message):
   r"""A GooglePrivacyDlpV2InspectJobConfig object.
 
   Fields:
-    actions: Actions to execute at the completion of the job. Are executed in
-      the order provided.
+    actions: Actions to execute at the completion of the job.
     inspectConfig: How and what to scan for.
     inspectTemplateName: If provided, will be used as the default for all
       values in InspectConfig. `inspect_config` will be merged into the values
@@ -2648,7 +3648,7 @@ class GooglePrivacyDlpV2InspectTemplate(_messages.Message):
   templates to learn more.
 
   Fields:
-    createTime: The creation timestamp of a inspectTemplate, output only
+    createTime: The creation timestamp of an inspectTemplate, output only
       field.
     description: Short description (max 256 chars).
     displayName: Display name (max 256 chars).
@@ -2657,7 +3657,7 @@ class GooglePrivacyDlpV2InspectTemplate(_messages.Message):
     name: The template name. Output only.  The template will have one of the
       following formats: `projects/PROJECT_ID/inspectTemplates/TEMPLATE_ID` OR
       `organizations/ORGANIZATION_ID/inspectTemplates/TEMPLATE_ID`
-    updateTime: The last update timestamp of a inspectTemplate, output only
+    updateTime: The last update timestamp of an inspectTemplate, output only
       field.
   """
 
@@ -2724,7 +3724,7 @@ class GooglePrivacyDlpV2JobTrigger(_messages.Message):
       only field.
     name: Unique resource name for the triggeredJob, assigned by the service
       when the triggeredJob is created, for example `projects/dlp-test-
-      project/triggeredJobs/53234423`.
+      project/jobTriggers/53234423`.
     status: A status for this trigger. [required]
     triggers: A list of triggers which will be OR'ed together. Only one in the
       list needs to trigger for a job to be started. The list may contain only
@@ -2946,9 +3946,10 @@ class GooglePrivacyDlpV2KindExpression(_messages.Message):
 
 
 class GooglePrivacyDlpV2KmsWrappedCryptoKey(_messages.Message):
-  r"""Include to use an existing data crypto key wrapped by KMS. Authorization
-  requires the following IAM permissions when sending a request to perform a
-  crypto transformation using a kms-wrapped crypto key: dlp.kms.encrypt
+  r"""Include to use an existing data crypto key wrapped by KMS. The wrapped
+  key must be a 128/192/256 bit key. Authorization requires the following IAM
+  permissions when sending a request to perform a crypto transformation using
+  a kms-wrapped crypto key: dlp.kms.encrypt
 
   Fields:
     cryptoKeyName: The resource name of the KMS CryptoKey to use for
@@ -3047,6 +4048,26 @@ class GooglePrivacyDlpV2LargeCustomDictionaryConfig(_messages.Message):
   bigQueryField = _messages.MessageField('GooglePrivacyDlpV2BigQueryField', 1)
   cloudStorageFileSet = _messages.MessageField('GooglePrivacyDlpV2CloudStorageFileSet', 2)
   outputPath = _messages.MessageField('GooglePrivacyDlpV2CloudStoragePath', 3)
+
+
+class GooglePrivacyDlpV2LargeCustomDictionaryStats(_messages.Message):
+  r"""Summary statistics of a custom dictionary.
+
+  Fields:
+    approxNumPhrases: Approximate number of distinct phrases in the
+      dictionary.
+  """
+
+  approxNumPhrases = _messages.IntegerField(1)
+
+
+class GooglePrivacyDlpV2LeaveUntransformed(_messages.Message):
+  r"""Skips the data without modifying it if the requested transformation
+  would cause an error. For example, if a `DateShift` transformation were
+  applied an an IP address, this mode would leave the IP address unchanged in
+  the response.
+  """
+
 
 
 class GooglePrivacyDlpV2LikelihoodAdjustment(_messages.Message):
@@ -3328,6 +4349,8 @@ class GooglePrivacyDlpV2PrimitiveTransformation(_messages.Message):
   Fields:
     bucketingConfig: A GooglePrivacyDlpV2BucketingConfig attribute.
     characterMaskConfig: A GooglePrivacyDlpV2CharacterMaskConfig attribute.
+    cryptoDeterministicConfig: A GooglePrivacyDlpV2CryptoDeterministicConfig
+      attribute.
     cryptoHashConfig: A GooglePrivacyDlpV2CryptoHashConfig attribute.
     cryptoReplaceFfxFpeConfig: A GooglePrivacyDlpV2CryptoReplaceFfxFpeConfig
       attribute.
@@ -3343,14 +4366,15 @@ class GooglePrivacyDlpV2PrimitiveTransformation(_messages.Message):
 
   bucketingConfig = _messages.MessageField('GooglePrivacyDlpV2BucketingConfig', 1)
   characterMaskConfig = _messages.MessageField('GooglePrivacyDlpV2CharacterMaskConfig', 2)
-  cryptoHashConfig = _messages.MessageField('GooglePrivacyDlpV2CryptoHashConfig', 3)
-  cryptoReplaceFfxFpeConfig = _messages.MessageField('GooglePrivacyDlpV2CryptoReplaceFfxFpeConfig', 4)
-  dateShiftConfig = _messages.MessageField('GooglePrivacyDlpV2DateShiftConfig', 5)
-  fixedSizeBucketingConfig = _messages.MessageField('GooglePrivacyDlpV2FixedSizeBucketingConfig', 6)
-  redactConfig = _messages.MessageField('GooglePrivacyDlpV2RedactConfig', 7)
-  replaceConfig = _messages.MessageField('GooglePrivacyDlpV2ReplaceValueConfig', 8)
-  replaceWithInfoTypeConfig = _messages.MessageField('GooglePrivacyDlpV2ReplaceWithInfoTypeConfig', 9)
-  timePartConfig = _messages.MessageField('GooglePrivacyDlpV2TimePartConfig', 10)
+  cryptoDeterministicConfig = _messages.MessageField('GooglePrivacyDlpV2CryptoDeterministicConfig', 3)
+  cryptoHashConfig = _messages.MessageField('GooglePrivacyDlpV2CryptoHashConfig', 4)
+  cryptoReplaceFfxFpeConfig = _messages.MessageField('GooglePrivacyDlpV2CryptoReplaceFfxFpeConfig', 5)
+  dateShiftConfig = _messages.MessageField('GooglePrivacyDlpV2DateShiftConfig', 6)
+  fixedSizeBucketingConfig = _messages.MessageField('GooglePrivacyDlpV2FixedSizeBucketingConfig', 7)
+  redactConfig = _messages.MessageField('GooglePrivacyDlpV2RedactConfig', 8)
+  replaceConfig = _messages.MessageField('GooglePrivacyDlpV2ReplaceValueConfig', 9)
+  replaceWithInfoTypeConfig = _messages.MessageField('GooglePrivacyDlpV2ReplaceWithInfoTypeConfig', 10)
+  timePartConfig = _messages.MessageField('GooglePrivacyDlpV2TimePartConfig', 11)
 
 
 class GooglePrivacyDlpV2PrivacyMetric(_messages.Message):
@@ -3388,6 +4412,20 @@ class GooglePrivacyDlpV2Proximity(_messages.Message):
   windowBefore = _messages.IntegerField(2, variant=_messages.Variant.INT32)
 
 
+class GooglePrivacyDlpV2PublishFindingsToCloudDataCatalog(_messages.Message):
+  r"""Publish findings of a DlpJob to Cloud Data Catalog. Labels summarizing
+  the results of the DlpJob will be applied to the entry for the resource
+  scanned in Cloud Data Catalog. Any labels previously written by another
+  DlpJob will be deleted. InfoType naming patterns are strictly enforced when
+  using this feature. Note that the findings will be persisted in Cloud Data
+  Catalog storage and are governed by Data Catalog service-specific policy,
+  see https://cloud.google.com/terms/service-terms Only a single instance of
+  this action can be specified and only allowed if all resources being scanned
+  are BigQuery tables. Compatible with: Inspect
+  """
+
+
+
 class GooglePrivacyDlpV2PublishSummaryToCscc(_messages.Message):
   r"""Publish the result summary of a DlpJob to the Cloud Security Command
   Center (CSCC Alpha). This action is only available for projects which are
@@ -3402,8 +4440,11 @@ class GooglePrivacyDlpV2PublishSummaryToCscc(_messages.Message):
 
 
 class GooglePrivacyDlpV2PublishToPubSub(_messages.Message):
-  r"""Publish the results of a DlpJob to a pub sub channel. Compatible with:
-  Inspect, Risk
+  r"""Publish a message into given Pub/Sub topic when DlpJob has completed.
+  The message contains a single field, `DlpJobName`, which is equal to the
+  finished job's
+  [`DlpJob.name`](/dlp/docs/reference/rest/v2/projects.dlpJobs#DlpJob).
+  Compatible with: Inspect, Risk
 
   Fields:
     topic: Cloud Pub/Sub topic to send notifications to. The topic must have
@@ -3413,6 +4454,15 @@ class GooglePrivacyDlpV2PublishToPubSub(_messages.Message):
   """
 
   topic = _messages.StringField(1)
+
+
+class GooglePrivacyDlpV2PublishToStackdriver(_messages.Message):
+  r"""Enable Stackdriver metric dlp.googleapis.com/finding_count. This will
+  publish a metric to stack driver on each infotype requested and how many
+  findings were found for it. CustomDetectors will be bucketed as 'Custom'
+  under the Stackdriver label 'info_type'.
+  """
+
 
 
 class GooglePrivacyDlpV2QuasiId(_messages.Message):
@@ -3574,12 +4624,15 @@ class GooglePrivacyDlpV2RedactImageRequest(_messages.Message):
     includeFindings: Whether the response should include findings along with
       the redacted image.
     inspectConfig: Configuration for the inspector.
+    locationId: The geographic location to process the request. Reserved for
+      future extensions.
   """
 
   byteItem = _messages.MessageField('GooglePrivacyDlpV2ByteContentItem', 1)
   imageRedactionConfigs = _messages.MessageField('GooglePrivacyDlpV2ImageRedactionConfig', 2, repeated=True)
   includeFindings = _messages.BooleanField(3)
   inspectConfig = _messages.MessageField('GooglePrivacyDlpV2InspectConfig', 4)
+  locationId = _messages.StringField(5)
 
 
 class GooglePrivacyDlpV2RedactImageResponse(_messages.Message):
@@ -3626,6 +4679,8 @@ class GooglePrivacyDlpV2ReidentifyContentRequest(_messages.Message):
       corresponding fields in the template. Repeated fields are appended.
       Singular sub-messages and groups are recursively merged.
     item: The item to re-identify. Will be treated as text.
+    locationId: The geographic location to process content reidentification.
+      Reserved for future extensions.
     reidentifyConfig: Configuration for the re-identification of the content
       item. This field shares the same proto message type that is used for de-
       identification, however its usage here is for the reversal of the
@@ -3633,7 +4688,7 @@ class GooglePrivacyDlpV2ReidentifyContentRequest(_messages.Message):
       the transformations used to de-identify the items and executing the
       reverse. This requires that only reversible transformations be provided
       here. The reversible transformations are:   -
-      `CryptoReplaceFfxFpeConfig`
+      `CryptoDeterministicConfig`  - `CryptoReplaceFfxFpeConfig`
     reidentifyTemplateName: Optional template to use. References an instance
       of `DeidentifyTemplate`. Any configuration directly specified in
       `reidentify_config` or `inspect_config` will override those set in the
@@ -3645,8 +4700,9 @@ class GooglePrivacyDlpV2ReidentifyContentRequest(_messages.Message):
   inspectConfig = _messages.MessageField('GooglePrivacyDlpV2InspectConfig', 1)
   inspectTemplateName = _messages.StringField(2)
   item = _messages.MessageField('GooglePrivacyDlpV2ContentItem', 3)
-  reidentifyConfig = _messages.MessageField('GooglePrivacyDlpV2DeidentifyConfig', 4)
-  reidentifyTemplateName = _messages.StringField(5)
+  locationId = _messages.StringField(4)
+  reidentifyConfig = _messages.MessageField('GooglePrivacyDlpV2DeidentifyConfig', 5)
+  reidentifyTemplateName = _messages.StringField(6)
 
 
 class GooglePrivacyDlpV2ReidentifyContentResponse(_messages.Message):
@@ -3689,7 +4745,8 @@ class GooglePrivacyDlpV2RequestedOptions(_messages.Message):
 
 
 class GooglePrivacyDlpV2Result(_messages.Message):
-  r"""A GooglePrivacyDlpV2Result object.
+  r"""All result fields mentioned below are updated while the job is
+  processing.
 
   Fields:
     infoTypeStats: Statistics of how many instances of each info type were
@@ -3809,7 +4866,9 @@ class GooglePrivacyDlpV2StoredInfoType(_messages.Message):
 
 
 class GooglePrivacyDlpV2StoredInfoTypeConfig(_messages.Message):
-  r"""Configuration for a StoredInfoType.
+  r"""Configuration for stored infoTypes. All fields and subfield are provided
+  by the user. For more information, see https://cloud.google.com/dlp/docs
+  /creating-custom-infotypes.
 
   Fields:
     description: Description of the StoredInfoType (max 256 characters).
@@ -3821,6 +4880,17 @@ class GooglePrivacyDlpV2StoredInfoTypeConfig(_messages.Message):
   description = _messages.StringField(1)
   displayName = _messages.StringField(2)
   largeCustomDictionary = _messages.MessageField('GooglePrivacyDlpV2LargeCustomDictionaryConfig', 3)
+
+
+class GooglePrivacyDlpV2StoredInfoTypeStats(_messages.Message):
+  r"""Statistics for a StoredInfoType.
+
+  Fields:
+    largeCustomDictionary: StoredInfoType where findings are defined by a
+      dictionary of phrases.
+  """
+
+  largeCustomDictionary = _messages.MessageField('GooglePrivacyDlpV2LargeCustomDictionaryStats', 1)
 
 
 class GooglePrivacyDlpV2StoredInfoTypeVersion(_messages.Message):
@@ -3847,6 +4917,7 @@ class GooglePrivacyDlpV2StoredInfoTypeVersion(_messages.Message):
       it, reusing the same `config` if it was not the source of the error.
     state: Stored info type version state. Read-only, updated by the system
       during dictionary creation.
+    stats: Statistics about this storedInfoType version.
   """
 
   class StateValueValuesEnum(_messages.Enum):
@@ -3874,6 +4945,7 @@ class GooglePrivacyDlpV2StoredInfoTypeVersion(_messages.Message):
   createTime = _messages.StringField(2)
   errors = _messages.MessageField('GooglePrivacyDlpV2Error', 3, repeated=True)
   state = _messages.EnumField('StateValueValuesEnum', 4)
+  stats = _messages.MessageField('GooglePrivacyDlpV2StoredInfoTypeStats', 5)
 
 
 class GooglePrivacyDlpV2StoredType(_messages.Message):
@@ -3982,6 +5054,12 @@ class GooglePrivacyDlpV2TaggedField(_messages.Message):
   infoType = _messages.MessageField('GooglePrivacyDlpV2InfoType', 4)
 
 
+class GooglePrivacyDlpV2ThrowError(_messages.Message):
+  r"""Throw an error and fail the request when a transformation error occurs.
+  """
+
+
+
 class GooglePrivacyDlpV2TimePartConfig(_messages.Message):
   r"""For use with `Date`, `Timestamp`, and `TimeOfDay`, extract or preserve a
   portion of the value.
@@ -4002,7 +5080,7 @@ class GooglePrivacyDlpV2TimePartConfig(_messages.Message):
       MONTH: [1-12]
       DAY_OF_MONTH: [1-31]
       DAY_OF_WEEK: [1-7]
-      WEEK_OF_YEAR: [1-52]
+      WEEK_OF_YEAR: [1-53]
       HOUR_OF_DAY: [0-23]
     """
     TIME_PART_UNSPECIFIED = 0
@@ -4041,18 +5119,38 @@ class GooglePrivacyDlpV2TimespanConfig(_messages.Message):
       upper time limit is applied.
     startTime: Exclude files or rows older than this value.
     timestampField: Specification of the field containing the timestamp of
-      scanned items. Used for data sources like Datastore or BigQuery. If not
-      specified for BigQuery, table last modification timestamp is checked
-      against given time span. The valid data types of the timestamp field
-      are: for BigQuery - timestamp, date, datetime; for Datastore -
-      timestamp. Datastore entity will be scanned if the timestamp property
-      does not exist or its value is empty or invalid.
+      scanned items. Used for data sources like Datastore and BigQuery.  For
+      BigQuery: Required to filter out rows based on the given start and end
+      times. If not specified and the table was modified between the given
+      start and end times, the entire table will be scanned. The valid data
+      types of the timestamp field are: `INTEGER`, `DATE`, `TIMESTAMP`, or
+      `DATETIME` BigQuery column.  For Datastore. Valid data types of the
+      timestamp field are: `TIMESTAMP`. Datastore entity will be scanned if
+      the timestamp property does not exist or its value is empty or invalid.
   """
 
   enableAutoPopulationOfTimespanConfig = _messages.BooleanField(1)
   endTime = _messages.StringField(2)
   startTime = _messages.StringField(3)
   timestampField = _messages.MessageField('GooglePrivacyDlpV2FieldId', 4)
+
+
+class GooglePrivacyDlpV2TransformationErrorHandling(_messages.Message):
+  r"""How to handle transformation errors during de-identification. A
+  transformation error occurs when the requested transformation is
+  incompatible with the data. For example, trying to de-identify an IP address
+  using a `DateShift` transformation would result in a transformation error,
+  since date info cannot be extracted from an IP address. Information about
+  any incompatible transformations, and how they were handled, is returned in
+  the response as part of the `TransformationOverviews`.
+
+  Fields:
+    leaveUntransformed: A GooglePrivacyDlpV2LeaveUntransformed attribute.
+    throwError: A GooglePrivacyDlpV2ThrowError attribute.
+  """
+
+  leaveUntransformed = _messages.MessageField('GooglePrivacyDlpV2LeaveUntransformed', 1)
+  throwError = _messages.MessageField('GooglePrivacyDlpV2ThrowError', 2)
 
 
 class GooglePrivacyDlpV2TransformationOverview(_messages.Message):
@@ -4068,7 +5166,7 @@ class GooglePrivacyDlpV2TransformationOverview(_messages.Message):
 
 
 class GooglePrivacyDlpV2TransformationSummary(_messages.Message):
-  r"""Summary of a single tranformation. Only one of 'transformation',
+  r"""Summary of a single transformation. Only one of 'transformation',
   'field_transformation', or 'record_suppress' will be set.
 
   Fields:
@@ -4123,7 +5221,7 @@ class GooglePrivacyDlpV2UnwrappedCryptoKey(_messages.Message):
   the key. Choose another type of key if possible.
 
   Fields:
-    key: The AES 128/192/256 bit key. [required]
+    key: A 128/192/256 bit key. [required]
   """
 
   key = _messages.BytesField(1)
@@ -4270,37 +5368,10 @@ class GoogleProtobufEmpty(_messages.Message):
 class GoogleRpcStatus(_messages.Message):
   r"""The `Status` type defines a logical error model that is suitable for
   different programming environments, including REST APIs and RPC APIs. It is
-  used by [gRPC](https://github.com/grpc). The error model is designed to be:
-  - Simple to use and understand for most users - Flexible enough to meet
-  unexpected needs  # Overview  The `Status` message contains three pieces of
-  data: error code, error message, and error details. The error code should be
-  an enum value of google.rpc.Code, but it may accept additional error codes
-  if needed.  The error message should be a developer-facing English message
-  that helps developers *understand* and *resolve* the error. If a localized
-  user-facing error message is needed, put the localized message in the error
-  details or localize it in the client. The optional error details may contain
-  arbitrary information about the error. There is a predefined set of error
-  detail types in the package `google.rpc` that can be used for common error
-  conditions.  # Language mapping  The `Status` message is the logical
-  representation of the error model, but it is not necessarily the actual wire
-  format. When the `Status` message is exposed in different client libraries
-  and different wire protocols, it can be mapped differently. For example, it
-  will likely be mapped to some exceptions in Java, but more likely mapped to
-  some error codes in C.  # Other uses  The error model and the `Status`
-  message can be used in a variety of environments, either with or without
-  APIs, to provide a consistent developer experience across different
-  environments.  Example uses of this error model include:  - Partial errors.
-  If a service needs to return partial errors to the client,     it may embed
-  the `Status` in the normal response to indicate the partial     errors.  -
-  Workflow errors. A typical workflow has multiple steps. Each step may
-  have a `Status` message for error reporting.  - Batch operations. If a
-  client uses batch request and batch response, the     `Status` message
-  should be used directly inside batch response, one for     each error sub-
-  response.  - Asynchronous operations. If an API call embeds asynchronous
-  operation     results in its response, the status of those operations should
-  be     represented directly using the `Status` message.  - Logging. If some
-  API errors are stored in logs, the message `Status` could     be used
-  directly after any stripping needed for security/privacy reasons.
+  used by [gRPC](https://github.com/grpc). Each `Status` message contains
+  three pieces of data: error code, error message, and error details.  You can
+  find out more about this error model and how to work with it in the [API
+  Design Guide](https://cloud.google.com/apis/design/errors).
 
   Messages:
     DetailsValueListEntry: A DetailsValueListEntry object.

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2016 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ def _PythonConsole():
   except ImportError:
     pass
   else:
-    readline.set_completer(rlcompleter.Completer(globals()).complete)  # pytype: disable=wrong-arg-count
+    readline.set_completer(rlcompleter.Completer(globals()).complete)
     readline.parse_and_bind('tab: complete')
   console = code.InteractiveConsole(globals())
   console.interact(_BANNER)

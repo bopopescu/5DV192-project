@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2016 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
+import textwrap
+
 from apitools.base.py import list_pager
 from googlecloudsdk.api_lib.bigtable import util
 from googlecloudsdk.calliope import base
@@ -31,6 +33,15 @@ def _GetUriFunction(resource):
 
 class ListInstances(base.ListCommand):
   """List existing Bigtable instances."""
+
+  detailed_help = {
+      'EXAMPLES':
+          textwrap.dedent("""\
+          To list all instances, run:
+
+            $ {command}
+          """),
+  }
 
   @staticmethod
   def Args(parser):

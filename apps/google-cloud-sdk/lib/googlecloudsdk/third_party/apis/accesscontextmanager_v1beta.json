@@ -115,7 +115,7 @@
       "type": "object",
       "properties": {
         "name": {
-          "description": "The server-assigned name, which is only unique within the same service that\noriginally returns it. If you use the default HTTP mapping, the\n`name` should have the format of `operations\/some\/unique\/name`.",
+          "description": "The server-assigned name, which is only unique within the same service that\noriginally returns it. If you use the default HTTP mapping, the\n`name` should be a resource name ending with `operations\/{unique_id}`.",
           "type": "string"
         },
         "metadata": {
@@ -146,7 +146,7 @@
     },
     "Status": {
       "id": "Status",
-      "description": "The `Status` type defines a logical error model that is suitable for different\nprogramming environments, including REST APIs and RPC APIs. It is used by\n[gRPC](https:\/\/github.com\/grpc). The error model is designed to be:\n\n- Simple to use and understand for most users\n- Flexible enough to meet unexpected needs\n\n# Overview\n\nThe `Status` message contains three pieces of data: error code, error message,\nand error details. The error code should be an enum value of\ngoogle.rpc.Code, but it may accept additional error codes if needed.  The\nerror message should be a developer-facing English message that helps\ndevelopers *understand* and *resolve* the error. If a localized user-facing\nerror message is needed, put the localized message in the error details or\nlocalize it in the client. The optional error details may contain arbitrary\ninformation about the error. There is a predefined set of error detail types\nin the package `google.rpc` that can be used for common error conditions.\n\n# Language mapping\n\nThe `Status` message is the logical representation of the error model, but it\nis not necessarily the actual wire format. When the `Status` message is\nexposed in different client libraries and different wire protocols, it can be\nmapped differently. For example, it will likely be mapped to some exceptions\nin Java, but more likely mapped to some error codes in C.\n\n# Other uses\n\nThe error model and the `Status` message can be used in a variety of\nenvironments, either with or without APIs, to provide a\nconsistent developer experience across different environments.\n\nExample uses of this error model include:\n\n- Partial errors. If a service needs to return partial errors to the client,\n    it may embed the `Status` in the normal response to indicate the partial\n    errors.\n\n- Workflow errors. A typical workflow has multiple steps. Each step may\n    have a `Status` message for error reporting.\n\n- Batch operations. If a client uses batch request and batch response, the\n    `Status` message should be used directly inside batch response, one for\n    each error sub-response.\n\n- Asynchronous operations. If an API call embeds asynchronous operation\n    results in its response, the status of those operations should be\n    represented directly using the `Status` message.\n\n- Logging. If some API errors are stored in logs, the message `Status` could\n    be used directly after any stripping needed for security\/privacy reasons.",
+      "description": "The `Status` type defines a logical error model that is suitable for\ndifferent programming environments, including REST APIs and RPC APIs. It is\nused by [gRPC](https:\/\/github.com\/grpc). Each `Status` message contains\nthree pieces of data: error code, error message, and error details.\n\nYou can find out more about this error model and how to work with it in the\n[API Design Guide](https:\/\/cloud.google.com\/apis\/design\/errors).",
       "type": "object",
       "properties": {
         "code": {
@@ -328,6 +328,13 @@
           "items": {
             "type": "string"
           }
+        },
+        "regions": {
+          "description": "The request must originate from one of the provided countries\/regions.\nMust be valid ISO 3166-1 alpha-2 codes.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },
@@ -384,6 +391,14 @@
               "COMPLETE"
             ]
           }
+        },
+        "requireAdminApproval": {
+          "description": "Whether the device needs to be approved by the customer admin.",
+          "type": "boolean"
+        },
+        "requireCorpOwned": {
+          "description": "Whether the device needs to be corp owned.",
+          "type": "boolean"
         }
       }
     },
@@ -399,9 +414,7 @@
             "A desktop Mac operating system.",
             "A desktop Windows operating system.",
             "A desktop Linux operating system.",
-            "A desktop ChromeOS operating system.",
-            "An Android operating system.",
-            "An iOS operating system."
+            "A desktop ChromeOS operating system."
           ],
           "type": "string",
           "enum": [
@@ -409,14 +422,16 @@
             "DESKTOP_MAC",
             "DESKTOP_WINDOWS",
             "DESKTOP_LINUX",
-            "DESKTOP_CHROME_OS",
-            "ANDROID",
-            "IOS"
+            "DESKTOP_CHROME_OS"
           ]
         },
         "minimumVersion": {
           "description": "The minimum allowed OS version. If not set, any version of this OS\nsatisfies the constraint. Format: `\"major.minor.patch\"`.\nExamples: `\"10.5.301\"`, `\"9.2.1\"`.",
           "type": "string"
+        },
+        "requireVerifiedChromeOs": {
+          "description": "Only allows requests from devices with a verified Chrome OS.\nVerifications includes requirements that the device is enterprise-managed,\nconformant to domain policies, and the caller has permission to call\nthe API targeted by the request.",
+          "type": "boolean"
         }
       }
     },
@@ -480,6 +495,14 @@
         "status": {
           "description": "Current ServicePerimeter configuration. Specifies sets of resources,\nrestricted\/unrestricted services and access levels that determine perimeter\ncontent and boundaries.",
           "$ref": "ServicePerimeterConfig"
+        },
+        "spec": {
+          "description": "Proposed (or dry run) ServicePerimeter configuration. This configuration\nallows to specify and test ServicePerimeter configuration without enforcing\nactual access restrictions. Only allowed to be set when the \"dry_run\" flag\nis set.",
+          "$ref": "ServicePerimeterConfig"
+        },
+        "dryRun": {
+          "description": "Dry run flag. This flag enables dry run tests for the \"proposed\" Service\nPerimeter configuration. When this flag is enabled, access restrictions\nsuggestions from the proposed(\"spec\") configuration are tested without\nactually enforcing them. This testing is done through analyzing the\ndifferences between currently enforced and suggested restrictions. As of\nnow, dry_run must be set to true if there is any proposed config",
+          "type": "boolean"
         }
       }
     },
@@ -503,17 +526,95 @@
           }
         },
         "unrestrictedServices": {
-          "description": "GCP services that are not subject to the Service Perimeter restrictions.\nMay contain a list of services or a single wildcard \"*\". For example, if\n`logging.googleapis.com` is unrestricted, users can access logs inside the\nperimeter as if the perimeter doesn't exist, and it also means VMs inside\nthe perimeter can access logs outside the perimeter.\n\nThe wildcard means that unless explicitly specified by\n\"restricted_services\" list, any service is treated as unrestricted. One of\nthe fields \"restricted_services\", \"unrestricted_services\" must contain a\nwildcard \"*\", otherwise the Service Perimeter specification is invalid. It\nalso means that both field being empty is invalid as well.\n\"unrestricted_services\" can be empty if and only if \"restricted_services\"\nlist contains a \"*\" wildcard.",
+          "description": "GCP services that are not subject to the Service Perimeter\nrestrictions. Deprecated. Must be set to a single wildcard \"*\".\n\nThe wildcard means that unless explicitly specified by\n\"restricted_services\" list, any service is treated as unrestricted.",
           "type": "array",
           "items": {
             "type": "string"
           }
         },
         "restrictedServices": {
-          "description": "GCP services that are subject to the Service Perimeter restrictions. May\ncontain a list of services or a single wildcard \"*\". For example, if\n`storage.googleapis.com` is specified, access to the storage buckets\ninside the perimeter must meet the perimeter's access restrictions.\n\nWildcard means that unless explicitly specified by \"unrestricted_services\"\nlist, any service is treated as restricted. One of the fields\n\"restricted_services\", \"unrestricted_services\" must contain a wildcard \"*\",\notherwise the Service Perimeter specification is invalid. It also means\nthat both field being empty is invalid as well. \"restricted_services\" can\nbe empty if and only if \"unrestricted_services\" list contains a \"*\"\nwildcard.",
+          "description": "GCP services that are subject to the Service Perimeter restrictions. Must\ncontain a list of services. For example, if\n`storage.googleapis.com` is specified, access to the storage buckets\ninside the perimeter must meet the perimeter's access restrictions.",
           "type": "array",
           "items": {
             "type": "string"
+          }
+        },
+        "vpcServiceRestriction": {
+          "description": "Alpha. Configuration for within Perimeter allowed APIs.",
+          "$ref": "VpcServiceRestriction"
+        }
+      }
+    },
+    "VpcServiceRestriction": {
+      "id": "VpcServiceRestriction",
+      "description": "Alpha. Specifies how APIs are allowed to communicate within the Service\nPerimeter.",
+      "type": "object",
+      "properties": {
+        "enableRestriction": {
+          "description": "Whether to restrict API calls within the Service Perimeter to the list of\nAPIs specified in 'allowed_services'.",
+          "type": "boolean"
+        },
+        "allowedServices": {
+          "description": "The list of APIs usable within the Service Perimeter. Must be empty\nunless 'enable_restriction' is True.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "ReplaceAccessLevelsRequest": {
+      "id": "ReplaceAccessLevelsRequest",
+      "description": "A request to replace all existing Access Levels in an Access Policy with\nthe Access Levels provided. This is done within one transaction.",
+      "type": "object",
+      "properties": {
+        "accessLevels": {
+          "description": "Required. The desired Access Levels that should\nreplace all existing Access Levels in the\nAccess Policy.",
+          "type": "array",
+          "items": {
+            "$ref": "AccessLevel"
+          }
+        }
+      }
+    },
+    "ReplaceServicePerimetersRequest": {
+      "id": "ReplaceServicePerimetersRequest",
+      "description": "A request to replace all existing Service Perimeters in an Access Policy\nwith the Service Perimeters provided. This is done within one transaction.",
+      "type": "object",
+      "properties": {
+        "servicePerimeters": {
+          "description": "Required. The desired Service Perimeters that should\nreplace all existing Service Perimeters in the\nAccess Policy.",
+          "type": "array",
+          "items": {
+            "$ref": "ServicePerimeter"
+          }
+        }
+      }
+    },
+    "ReplaceAccessLevelsResponse": {
+      "id": "ReplaceAccessLevelsResponse",
+      "description": "A response to ReplaceAccessLevelsRequest. This will be put inside of\nOperation.response field.",
+      "type": "object",
+      "properties": {
+        "accessLevels": {
+          "description": "List of the Access Level instances.",
+          "type": "array",
+          "items": {
+            "$ref": "AccessLevel"
+          }
+        }
+      }
+    },
+    "ReplaceServicePerimetersResponse": {
+      "id": "ReplaceServicePerimetersResponse",
+      "description": "A response to ReplaceServicePerimetersRequest. This will be put inside of\nOperation.response field.",
+      "type": "object",
+      "properties": {
+        "servicePerimeters": {
+          "description": "List of the Service Perimeter instances.",
+          "type": "array",
+          "items": {
+            "$ref": "ServicePerimeter"
           }
         }
       }
@@ -816,7 +917,7 @@
                   "type": "string"
                 },
                 "updateMask": {
-                  "description": "Required.  Mask to control which fields get updated. Must be non-empty.",
+                  "description": "Required. Mask to control which fields get updated. Must be non-empty.",
                   "location": "query",
                   "type": "string",
                   "format": "google-fieldmask"
@@ -860,6 +961,34 @@
                 "https://www.googleapis.com/auth/cloud-platform"
               ],
               "description": "Delete an Access Level by resource\nname. The longrunning operation from this RPC will have a successful status\nonce the Access Level has been removed\nfrom long-lasting storage."
+            },
+            "replaceAll": {
+              "id": "accesscontextmanager.accessPolicies.accessLevels.replaceAll",
+              "path": "v1beta/{+parent}/accessLevels:replaceAll",
+              "flatPath": "v1beta/accessPolicies/{accessPoliciesId}/accessLevels:replaceAll",
+              "httpMethod": "POST",
+              "parameters": {
+                "parent": {
+                  "description": "Required. Resource name for the access policy which owns these\nAccess Levels.\n\nFormat: `accessPolicies\/{policy_id}`",
+                  "location": "path",
+                  "required": true,
+                  "pattern": "^accessPolicies\/[^\/]+$",
+                  "type": "string"
+                }
+              },
+              "parameterOrder": [
+                "parent"
+              ],
+              "request": {
+                "$ref": "ReplaceAccessLevelsRequest"
+              },
+              "response": {
+                "$ref": "Operation"
+              },
+              "scopes": [
+                "https://www.googleapis.com/auth/cloud-platform"
+              ],
+              "description": "Replace all existing Access Levels in an Access\nPolicy with the\nAccess Levels\nprovided. This is done within one transaction. The longrunning operation\nfrom this RPC will have a successful status once all replacements have\npropagated to long-lasting storage. Replacements containing errors will\nresult in an error response for the first error encountered and the\ntransaction will be cancelled. Operation.response field will contain\nReplaceAccessLevelsResponse."
             }
           }
         },
@@ -1012,6 +1141,34 @@
                 "https://www.googleapis.com/auth/cloud-platform"
               ],
               "description": "Delete an Service Perimeter by resource\nname. The longrunning operation from this RPC will have a successful status\nonce the Service Perimeter has been\nremoved from long-lasting storage."
+            },
+            "replaceAll": {
+              "id": "accesscontextmanager.accessPolicies.servicePerimeters.replaceAll",
+              "path": "v1beta/{+parent}/servicePerimeters:replaceAll",
+              "flatPath": "v1beta/accessPolicies/{accessPoliciesId}/servicePerimeters:replaceAll",
+              "httpMethod": "POST",
+              "parameters": {
+                "parent": {
+                  "description": "Required. Resource name for the access policy which owns these\nService Perimeters.\n\nFormat: `accessPolicies\/{policy_id}`",
+                  "location": "path",
+                  "required": true,
+                  "pattern": "^accessPolicies\/[^\/]+$",
+                  "type": "string"
+                }
+              },
+              "parameterOrder": [
+                "parent"
+              ],
+              "request": {
+                "$ref": "ReplaceServicePerimetersRequest"
+              },
+              "response": {
+                "$ref": "Operation"
+              },
+              "scopes": [
+                "https://www.googleapis.com/auth/cloud-platform"
+              ],
+              "description": "Replace all existing Service Perimeters in an\nAccess Policy\nwith the Service Perimeters provided.\nThis is done within one transaction. The longrunning operation from this\nRPC will have a successful status once all replacements have propagated to\nlong-lasting storage. Replacements containing errors will result in an\nerror response for the first error encountered and the transaction will be\ncancelled. Operation.response field will contain\nReplaceServicePerimetersResponse. Either all\nService Perimeters' spec fields\nshould be set or all status fields should be set, but not both."
             }
           }
         }

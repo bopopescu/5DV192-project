@@ -40,11 +40,17 @@ class VisionV1(base_api.BaseApiClient):
     self.locations_operations = self.LocationsOperationsService(self)
     self.locations = self.LocationsService(self)
     self.operations = self.OperationsService(self)
+    self.projects_files = self.ProjectsFilesService(self)
+    self.projects_images = self.ProjectsImagesService(self)
+    self.projects_locations_files = self.ProjectsLocationsFilesService(self)
+    self.projects_locations_images = self.ProjectsLocationsImagesService(self)
+    self.projects_locations_operations = self.ProjectsLocationsOperationsService(self)
     self.projects_locations_productSets_products = self.ProjectsLocationsProductSetsProductsService(self)
     self.projects_locations_productSets = self.ProjectsLocationsProductSetsService(self)
     self.projects_locations_products_referenceImages = self.ProjectsLocationsProductsReferenceImagesService(self)
     self.projects_locations_products = self.ProjectsLocationsProductsService(self)
     self.projects_locations = self.ProjectsLocationsService(self)
+    self.projects_operations = self.ProjectsOperationsService(self)
     self.projects = self.ProjectsService(self)
 
   class FilesService(base_api.BaseApiService):
@@ -56,6 +62,38 @@ class VisionV1(base_api.BaseApiClient):
       super(VisionV1.FilesService, self).__init__(client)
       self._upload_configs = {
           }
+
+    def Annotate(self, request, global_params=None):
+      r"""Service that performs image detection and annotation for a batch of files.
+Now only "application/pdf", "image/tiff" and "image/gif" are supported.
+
+This service will extract at most 5 (customers can specify which 5 in
+AnnotateFileRequest.pages) frames (gif) or pages (pdf or tiff) from each
+file provided and perform detection and annotation for each image
+extracted.
+
+      Args:
+        request: (BatchAnnotateFilesRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (BatchAnnotateFilesResponse) The response message.
+      """
+      config = self.GetMethodConfig('Annotate')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Annotate.method_config = lambda: base_api.ApiMethodInfo(
+        http_method=u'POST',
+        method_id=u'vision.files.annotate',
+        ordered_params=[],
+        path_params=[],
+        query_params=[],
+        relative_path=u'v1/files:annotate',
+        request_field='<request>',
+        request_type_name=u'BatchAnnotateFilesRequest',
+        response_type_name=u'BatchAnnotateFilesResponse',
+        supports_download=False,
+    )
 
     def AsyncBatchAnnotate(self, request, global_params=None):
       r"""Run asynchronous image detection and annotation for a list of generic.
@@ -121,6 +159,40 @@ images per page. Progress and results can be retrieved through the
         request_field='<request>',
         request_type_name=u'BatchAnnotateImagesRequest',
         response_type_name=u'BatchAnnotateImagesResponse',
+        supports_download=False,
+    )
+
+    def AsyncBatchAnnotate(self, request, global_params=None):
+      r"""Run asynchronous image detection and annotation for a list of images.
+
+Progress and results can be retrieved through the
+`google.longrunning.Operations` interface.
+`Operation.metadata` contains `OperationMetadata` (metadata).
+`Operation.response` contains `AsyncBatchAnnotateImagesResponse` (results).
+
+This service will write image annotation outputs to json files in customer
+GCS bucket, each json file containing BatchAnnotateImagesResponse proto.
+
+      Args:
+        request: (AsyncBatchAnnotateImagesRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Operation) The response message.
+      """
+      config = self.GetMethodConfig('AsyncBatchAnnotate')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    AsyncBatchAnnotate.method_config = lambda: base_api.ApiMethodInfo(
+        http_method=u'POST',
+        method_id=u'vision.images.asyncBatchAnnotate',
+        ordered_params=[],
+        path_params=[],
+        query_params=[],
+        relative_path=u'v1/images:asyncBatchAnnotate',
+        request_field='<request>',
+        request_type_name=u'AsyncBatchAnnotateImagesRequest',
+        response_type_name=u'Operation',
         supports_download=False,
     )
 
@@ -314,6 +386,339 @@ is the parent resource, without the operations collection id.
         supports_download=False,
     )
 
+  class ProjectsFilesService(base_api.BaseApiService):
+    """Service class for the projects_files resource."""
+
+    _NAME = u'projects_files'
+
+    def __init__(self, client):
+      super(VisionV1.ProjectsFilesService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Annotate(self, request, global_params=None):
+      r"""Service that performs image detection and annotation for a batch of files.
+Now only "application/pdf", "image/tiff" and "image/gif" are supported.
+
+This service will extract at most 5 (customers can specify which 5 in
+AnnotateFileRequest.pages) frames (gif) or pages (pdf or tiff) from each
+file provided and perform detection and annotation for each image
+extracted.
+
+      Args:
+        request: (BatchAnnotateFilesRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (BatchAnnotateFilesResponse) The response message.
+      """
+      config = self.GetMethodConfig('Annotate')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Annotate.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1/projects/{projectsId}/files:annotate',
+        http_method=u'POST',
+        method_id=u'vision.projects.files.annotate',
+        ordered_params=[u'parent'],
+        path_params=[u'parent'],
+        query_params=[],
+        relative_path=u'v1/{+parent}/files:annotate',
+        request_field='<request>',
+        request_type_name=u'BatchAnnotateFilesRequest',
+        response_type_name=u'BatchAnnotateFilesResponse',
+        supports_download=False,
+    )
+
+    def AsyncBatchAnnotate(self, request, global_params=None):
+      r"""Run asynchronous image detection and annotation for a list of generic.
+files, such as PDF files, which may contain multiple pages and multiple
+images per page. Progress and results can be retrieved through the
+`google.longrunning.Operations` interface.
+`Operation.metadata` contains `OperationMetadata` (metadata).
+`Operation.response` contains `AsyncBatchAnnotateFilesResponse` (results).
+
+      Args:
+        request: (AsyncBatchAnnotateFilesRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Operation) The response message.
+      """
+      config = self.GetMethodConfig('AsyncBatchAnnotate')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    AsyncBatchAnnotate.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1/projects/{projectsId}/files:asyncBatchAnnotate',
+        http_method=u'POST',
+        method_id=u'vision.projects.files.asyncBatchAnnotate',
+        ordered_params=[u'parent'],
+        path_params=[u'parent'],
+        query_params=[],
+        relative_path=u'v1/{+parent}/files:asyncBatchAnnotate',
+        request_field='<request>',
+        request_type_name=u'AsyncBatchAnnotateFilesRequest',
+        response_type_name=u'Operation',
+        supports_download=False,
+    )
+
+  class ProjectsImagesService(base_api.BaseApiService):
+    """Service class for the projects_images resource."""
+
+    _NAME = u'projects_images'
+
+    def __init__(self, client):
+      super(VisionV1.ProjectsImagesService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Annotate(self, request, global_params=None):
+      r"""Run image detection and annotation for a batch of images.
+
+      Args:
+        request: (BatchAnnotateImagesRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (BatchAnnotateImagesResponse) The response message.
+      """
+      config = self.GetMethodConfig('Annotate')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Annotate.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1/projects/{projectsId}/images:annotate',
+        http_method=u'POST',
+        method_id=u'vision.projects.images.annotate',
+        ordered_params=[u'parent'],
+        path_params=[u'parent'],
+        query_params=[],
+        relative_path=u'v1/{+parent}/images:annotate',
+        request_field='<request>',
+        request_type_name=u'BatchAnnotateImagesRequest',
+        response_type_name=u'BatchAnnotateImagesResponse',
+        supports_download=False,
+    )
+
+    def AsyncBatchAnnotate(self, request, global_params=None):
+      r"""Run asynchronous image detection and annotation for a list of images.
+
+Progress and results can be retrieved through the
+`google.longrunning.Operations` interface.
+`Operation.metadata` contains `OperationMetadata` (metadata).
+`Operation.response` contains `AsyncBatchAnnotateImagesResponse` (results).
+
+This service will write image annotation outputs to json files in customer
+GCS bucket, each json file containing BatchAnnotateImagesResponse proto.
+
+      Args:
+        request: (AsyncBatchAnnotateImagesRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Operation) The response message.
+      """
+      config = self.GetMethodConfig('AsyncBatchAnnotate')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    AsyncBatchAnnotate.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1/projects/{projectsId}/images:asyncBatchAnnotate',
+        http_method=u'POST',
+        method_id=u'vision.projects.images.asyncBatchAnnotate',
+        ordered_params=[u'parent'],
+        path_params=[u'parent'],
+        query_params=[],
+        relative_path=u'v1/{+parent}/images:asyncBatchAnnotate',
+        request_field='<request>',
+        request_type_name=u'AsyncBatchAnnotateImagesRequest',
+        response_type_name=u'Operation',
+        supports_download=False,
+    )
+
+  class ProjectsLocationsFilesService(base_api.BaseApiService):
+    """Service class for the projects_locations_files resource."""
+
+    _NAME = u'projects_locations_files'
+
+    def __init__(self, client):
+      super(VisionV1.ProjectsLocationsFilesService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Annotate(self, request, global_params=None):
+      r"""Service that performs image detection and annotation for a batch of files.
+Now only "application/pdf", "image/tiff" and "image/gif" are supported.
+
+This service will extract at most 5 (customers can specify which 5 in
+AnnotateFileRequest.pages) frames (gif) or pages (pdf or tiff) from each
+file provided and perform detection and annotation for each image
+extracted.
+
+      Args:
+        request: (BatchAnnotateFilesRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (BatchAnnotateFilesResponse) The response message.
+      """
+      config = self.GetMethodConfig('Annotate')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Annotate.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1/projects/{projectsId}/locations/{locationsId}/files:annotate',
+        http_method=u'POST',
+        method_id=u'vision.projects.locations.files.annotate',
+        ordered_params=[u'parent'],
+        path_params=[u'parent'],
+        query_params=[],
+        relative_path=u'v1/{+parent}/files:annotate',
+        request_field='<request>',
+        request_type_name=u'BatchAnnotateFilesRequest',
+        response_type_name=u'BatchAnnotateFilesResponse',
+        supports_download=False,
+    )
+
+    def AsyncBatchAnnotate(self, request, global_params=None):
+      r"""Run asynchronous image detection and annotation for a list of generic.
+files, such as PDF files, which may contain multiple pages and multiple
+images per page. Progress and results can be retrieved through the
+`google.longrunning.Operations` interface.
+`Operation.metadata` contains `OperationMetadata` (metadata).
+`Operation.response` contains `AsyncBatchAnnotateFilesResponse` (results).
+
+      Args:
+        request: (AsyncBatchAnnotateFilesRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Operation) The response message.
+      """
+      config = self.GetMethodConfig('AsyncBatchAnnotate')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    AsyncBatchAnnotate.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1/projects/{projectsId}/locations/{locationsId}/files:asyncBatchAnnotate',
+        http_method=u'POST',
+        method_id=u'vision.projects.locations.files.asyncBatchAnnotate',
+        ordered_params=[u'parent'],
+        path_params=[u'parent'],
+        query_params=[],
+        relative_path=u'v1/{+parent}/files:asyncBatchAnnotate',
+        request_field='<request>',
+        request_type_name=u'AsyncBatchAnnotateFilesRequest',
+        response_type_name=u'Operation',
+        supports_download=False,
+    )
+
+  class ProjectsLocationsImagesService(base_api.BaseApiService):
+    """Service class for the projects_locations_images resource."""
+
+    _NAME = u'projects_locations_images'
+
+    def __init__(self, client):
+      super(VisionV1.ProjectsLocationsImagesService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Annotate(self, request, global_params=None):
+      r"""Run image detection and annotation for a batch of images.
+
+      Args:
+        request: (BatchAnnotateImagesRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (BatchAnnotateImagesResponse) The response message.
+      """
+      config = self.GetMethodConfig('Annotate')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Annotate.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1/projects/{projectsId}/locations/{locationsId}/images:annotate',
+        http_method=u'POST',
+        method_id=u'vision.projects.locations.images.annotate',
+        ordered_params=[u'parent'],
+        path_params=[u'parent'],
+        query_params=[],
+        relative_path=u'v1/{+parent}/images:annotate',
+        request_field='<request>',
+        request_type_name=u'BatchAnnotateImagesRequest',
+        response_type_name=u'BatchAnnotateImagesResponse',
+        supports_download=False,
+    )
+
+    def AsyncBatchAnnotate(self, request, global_params=None):
+      r"""Run asynchronous image detection and annotation for a list of images.
+
+Progress and results can be retrieved through the
+`google.longrunning.Operations` interface.
+`Operation.metadata` contains `OperationMetadata` (metadata).
+`Operation.response` contains `AsyncBatchAnnotateImagesResponse` (results).
+
+This service will write image annotation outputs to json files in customer
+GCS bucket, each json file containing BatchAnnotateImagesResponse proto.
+
+      Args:
+        request: (AsyncBatchAnnotateImagesRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Operation) The response message.
+      """
+      config = self.GetMethodConfig('AsyncBatchAnnotate')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    AsyncBatchAnnotate.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1/projects/{projectsId}/locations/{locationsId}/images:asyncBatchAnnotate',
+        http_method=u'POST',
+        method_id=u'vision.projects.locations.images.asyncBatchAnnotate',
+        ordered_params=[u'parent'],
+        path_params=[u'parent'],
+        query_params=[],
+        relative_path=u'v1/{+parent}/images:asyncBatchAnnotate',
+        request_field='<request>',
+        request_type_name=u'AsyncBatchAnnotateImagesRequest',
+        response_type_name=u'Operation',
+        supports_download=False,
+    )
+
+  class ProjectsLocationsOperationsService(base_api.BaseApiService):
+    """Service class for the projects_locations_operations resource."""
+
+    _NAME = u'projects_locations_operations'
+
+    def __init__(self, client):
+      super(VisionV1.ProjectsLocationsOperationsService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Get(self, request, global_params=None):
+      r"""Gets the latest state of a long-running operation.  Clients can use this.
+method to poll the operation result at intervals as recommended by the API
+service.
+
+      Args:
+        request: (VisionProjectsLocationsOperationsGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Operation) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1/projects/{projectsId}/locations/{locationsId}/operations/{operationsId}',
+        http_method=u'GET',
+        method_id=u'vision.projects.locations.operations.get',
+        ordered_params=[u'name'],
+        path_params=[u'name'],
+        query_params=[],
+        relative_path=u'v1/{+name}',
+        request_field='',
+        request_type_name=u'VisionProjectsLocationsOperationsGetRequest',
+        response_type_name=u'Operation',
+        supports_download=False,
+    )
+
   class ProjectsLocationsProductSetsProductsService(base_api.BaseApiService):
     """Service class for the projects_locations_productSets_products resource."""
 
@@ -438,10 +843,6 @@ Possible errors:
 ProductSet are not deleted.
 
 The actual image files are not deleted from Google Cloud Storage.
-
-Possible errors:
-
-* Returns NOT_FOUND if the ProductSet does not exist.
 
       Args:
         request: (VisionProjectsLocationsProductSetsDeleteRequest) input message
@@ -604,10 +1005,6 @@ Possible errors:
     def RemoveProduct(self, request, global_params=None):
       r"""Removes a Product from the specified ProductSet.
 
-Possible errors:
-
-* Returns NOT_FOUND If the Product is not found under the ProductSet.
-
       Args:
         request: (VisionProjectsLocationsProductSetsRemoveProductRequest) input message
         global_params: (StandardQueryParameters, default: None) global arguments
@@ -695,10 +1092,6 @@ against ProductSets containing the image may still work until all related
 caches are refreshed.
 
 The actual image files are not deleted from Google Cloud Storage.
-
-Possible errors:
-
-* Returns NOT_FOUND if the reference image does not exist.
 
       Args:
         request: (VisionProjectsLocationsProductsReferenceImagesDeleteRequest) input message
@@ -839,10 +1232,6 @@ Metadata of the product and all its images will be deleted right away, but
 search queries against ProductSets containing the product may still work
 until all related caches are refreshed.
 
-Possible errors:
-
-* Returns NOT_FOUND if the product does not exist.
-
       Args:
         request: (VisionProjectsLocationsProductsDeleteRequest) input message
         global_params: (StandardQueryParameters, default: None) global arguments
@@ -970,6 +1359,56 @@ Possible errors:
         supports_download=False,
     )
 
+    def Purge(self, request, global_params=None):
+      r"""Asynchronous API to delete all Products in a ProductSet or all Products.
+that are in no ProductSet.
+
+If a Product is a member of the specified ProductSet in addition to other
+ProductSets, the Product will still be deleted.
+
+It is recommended to not delete the specified ProductSet until after this
+operation has completed. It is also recommended to not add any of the
+Products involved in the batch delete to a new ProductSet while this
+operation is running because those Products may still end up deleted.
+
+It's not possible to undo the PurgeProducts operation. Therefore, it is
+recommended to keep the csv files used in ImportProductSets (if that was
+how you originally built the Product Set) before starting PurgeProducts, in
+case you need to re-import the data after deletion.
+
+If the plan is to purge all of the Products from a ProductSet and then
+re-use the empty ProductSet to re-import new Products into the empty
+ProductSet, you must wait until the PurgeProducts operation has finished
+for that ProductSet.
+
+The google.longrunning.Operation API can be used to keep track of the
+progress and results of the request.
+`Operation.metadata` contains `BatchOperationMetadata`. (progress)
+
+      Args:
+        request: (VisionProjectsLocationsProductsPurgeRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Operation) The response message.
+      """
+      config = self.GetMethodConfig('Purge')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Purge.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1/projects/{projectsId}/locations/{locationsId}/products:purge',
+        http_method=u'POST',
+        method_id=u'vision.projects.locations.products.purge',
+        ordered_params=[u'parent'],
+        path_params=[u'parent'],
+        query_params=[],
+        relative_path=u'v1/{+parent}/products:purge',
+        request_field=u'purgeProductsRequest',
+        request_type_name=u'VisionProjectsLocationsProductsPurgeRequest',
+        response_type_name=u'Operation',
+        supports_download=False,
+    )
+
   class ProjectsLocationsService(base_api.BaseApiService):
     """Service class for the projects_locations resource."""
 
@@ -979,6 +1418,45 @@ Possible errors:
       super(VisionV1.ProjectsLocationsService, self).__init__(client)
       self._upload_configs = {
           }
+
+  class ProjectsOperationsService(base_api.BaseApiService):
+    """Service class for the projects_operations resource."""
+
+    _NAME = u'projects_operations'
+
+    def __init__(self, client):
+      super(VisionV1.ProjectsOperationsService, self).__init__(client)
+      self._upload_configs = {
+          }
+
+    def Get(self, request, global_params=None):
+      r"""Gets the latest state of a long-running operation.  Clients can use this.
+method to poll the operation result at intervals as recommended by the API
+service.
+
+      Args:
+        request: (VisionProjectsOperationsGetRequest) input message
+        global_params: (StandardQueryParameters, default: None) global arguments
+      Returns:
+        (Operation) The response message.
+      """
+      config = self.GetMethodConfig('Get')
+      return self._RunMethod(
+          config, request, global_params=global_params)
+
+    Get.method_config = lambda: base_api.ApiMethodInfo(
+        flat_path=u'v1/projects/{projectsId}/operations/{operationsId}',
+        http_method=u'GET',
+        method_id=u'vision.projects.operations.get',
+        ordered_params=[u'name'],
+        path_params=[u'name'],
+        query_params=[],
+        relative_path=u'v1/{+name}',
+        request_field='',
+        request_type_name=u'VisionProjectsOperationsGetRequest',
+        response_type_name=u'Operation',
+        supports_download=False,
+    )
 
   class ProjectsService(base_api.BaseApiService):
     """Service class for the projects resource."""

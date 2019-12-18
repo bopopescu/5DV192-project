@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,9 +25,19 @@ from googlecloudsdk.command_lib.functions import flags
 from googlecloudsdk.command_lib.iam import iam_util
 
 
-@base.ReleaseTracks(base.ReleaseTrack.ALPHA)
 class AddIamPolicyBinding(base.Command):
   """Add an IAM policy binding for a Google Cloud Function."""
+
+  detailed_help = {
+      'DESCRIPTION': '{description}',
+      'EXAMPLES':
+          """\
+          To add the iam policy binding for `FUNCTION-1` to role
+          `ROLE-1` for member `MEMBER-1` run:
+
+            $ {command} FUNCTION-1 --member=MEMBER-1 --role=ROLE-1
+          """,
+  }
 
   @staticmethod
   def Args(parser):
@@ -45,16 +55,6 @@ class AddIamPolicyBinding(base.Command):
     Returns:
       The specified function with its description and configured filter.
     """
-    client = util.GetApiClientInstance()
-    messages = client.MESSAGES_MODULE
     function_ref = args.CONCEPTS.name.Parse()
-    policy = client.projects_locations_functions.GetIamPolicy(
-        messages.CloudfunctionsProjectsLocationsFunctionsGetIamPolicyRequest(
-            resource=function_ref.RelativeName()))
-    iam_util.AddBindingToIamPolicy(messages.Binding, policy, args.member,
-                                   args.role)
-    return client.projects_locations_functions.SetIamPolicy(
-        messages.CloudfunctionsProjectsLocationsFunctionsSetIamPolicyRequest(
-            resource=function_ref.RelativeName(),
-            setIamPolicyRequest=messages.SetIamPolicyRequest(
-                policy=policy)))
+    return util.AddFunctionIamPolicyBinding(
+        function_ref.RelativeName(), args.member, args.role)

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -53,6 +53,14 @@ class Collections(enum.Enum):
       [u'projectId', u'historyId', u'executionId', u'clusterId'],
       True
   )
+  PROJECTS_HISTORIES_EXECUTIONS_ENVIRONMENTS = (
+      'projects.histories.executions.environments',
+      'projects/{projectId}/histories/{historyId}/executions/{executionId}/'
+      'environments/{environmentId}',
+      {},
+      [u'projectId', u'historyId', u'executionId', u'environmentId'],
+      True
+  )
   PROJECTS_HISTORIES_EXECUTIONS_STEPS = (
       'projects.histories.executions.steps',
       'projects/{projectId}/histories/{historyId}/executions/{executionId}/'
@@ -67,6 +75,14 @@ class Collections(enum.Enum):
       'steps/{stepId}/perfSampleSeries/{sampleSeriesId}',
       {},
       [u'projectId', u'historyId', u'executionId', u'stepId', u'sampleSeriesId'],
+      True
+  )
+  PROJECTS_HISTORIES_EXECUTIONS_STEPS_TESTCASES = (
+      'projects.histories.executions.steps.testCases',
+      'projects/{projectId}/histories/{historyId}/executions/{executionId}/'
+      'steps/{stepId}/testCases/{testCaseId}',
+      {},
+      [u'projectId', u'historyId', u'executionId', u'stepId', u'testCaseId'],
       True
   )
 

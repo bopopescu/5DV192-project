@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,6 +31,12 @@ def GetProjectFlag(verb):
       help='ID for the project you want to {0}.'.format(verb))
 
 
+SHUT_DOWN_PROJECTS_URL = 'https://cloud.google.com/resource-manager/docs/creating-managing-projects'
+
 CREATE_DELETE_IN_CONSOLE_SEE_ALSO = (
     'See https://support.google.com/cloud/answer/6251787 for information on '
     'creating or deleting projects from the Google Cloud Platform Console.')
+
+SHUT_DOWN_PROJECTS = (
+    'See {0} for information on shutting down projects'
+    .format(SHUT_DOWN_PROJECTS_URL))

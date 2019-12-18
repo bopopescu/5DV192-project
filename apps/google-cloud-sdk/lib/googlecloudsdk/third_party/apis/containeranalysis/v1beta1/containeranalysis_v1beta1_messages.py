@@ -74,78 +74,12 @@ class Attestation(_messages.Message):
   for).
 
   Fields:
+    genericSignedAttestation: A GenericSignedAttestation attribute.
     pgpSignedAttestation: A PGP signed attestation.
   """
 
-  pgpSignedAttestation = _messages.MessageField('PgpSignedAttestation', 1)
-
-
-class AuditConfig(_messages.Message):
-  r"""Specifies the audit configuration for a service. The configuration
-  determines which permission types are logged, and what identities, if any,
-  are exempted from logging. An AuditConfig must have one or more
-  AuditLogConfigs.  If there are AuditConfigs for both `allServices` and a
-  specific service, the union of the two AuditConfigs is used for that
-  service: the log_types specified in each AuditConfig are enabled, and the
-  exempted_members in each AuditLogConfig are exempted.  Example Policy with
-  multiple AuditConfigs:      {       "audit_configs": [         {
-  "service": "allServices"           "audit_log_configs": [             {
-  "log_type": "DATA_READ",               "exempted_members": [
-  "user:foo@gmail.com"               ]             },             {
-  "log_type": "DATA_WRITE",             },             {
-  "log_type": "ADMIN_READ",             }           ]         },         {
-  "service": "fooservice.googleapis.com"           "audit_log_configs": [
-  {               "log_type": "DATA_READ",             },             {
-  "log_type": "DATA_WRITE",               "exempted_members": [
-  "user:bar@gmail.com"               ]             }           ]         }
-  ]     }  For fooservice, this policy enables DATA_READ, DATA_WRITE and
-  ADMIN_READ logging. It also exempts foo@gmail.com from DATA_READ logging,
-  and bar@gmail.com from DATA_WRITE logging.
-
-  Fields:
-    auditLogConfigs: The configuration for logging of each type of permission.
-    service: Specifies a service that will be enabled for audit logging. For
-      example, `storage.googleapis.com`, `cloudsql.googleapis.com`.
-      `allServices` is a special value that covers all services.
-  """
-
-  auditLogConfigs = _messages.MessageField('AuditLogConfig', 1, repeated=True)
-  service = _messages.StringField(2)
-
-
-class AuditLogConfig(_messages.Message):
-  r"""Provides the configuration for logging a type of permissions. Example:
-  {       "audit_log_configs": [         {           "log_type": "DATA_READ",
-  "exempted_members": [             "user:foo@gmail.com"           ]
-  },         {           "log_type": "DATA_WRITE",         }       ]     }
-  This enables 'DATA_READ' and 'DATA_WRITE' logging, while exempting
-  foo@gmail.com from DATA_READ logging.
-
-  Enums:
-    LogTypeValueValuesEnum: The log type that this config enables.
-
-  Fields:
-    exemptedMembers: Specifies the identities that do not cause logging for
-      this type of permission. Follows the same format of Binding.members.
-    logType: The log type that this config enables.
-  """
-
-  class LogTypeValueValuesEnum(_messages.Enum):
-    r"""The log type that this config enables.
-
-    Values:
-      LOG_TYPE_UNSPECIFIED: Default case. Should never be this.
-      ADMIN_READ: Admin reads. Example: CloudIAM getIamPolicy
-      DATA_WRITE: Data writes. Example: CloudSQL Users create
-      DATA_READ: Data reads. Example: CloudSQL Users list
-    """
-    LOG_TYPE_UNSPECIFIED = 0
-    ADMIN_READ = 1
-    DATA_WRITE = 2
-    DATA_READ = 3
-
-  exemptedMembers = _messages.StringField(1, repeated=True)
-  logType = _messages.EnumField('LogTypeValueValuesEnum', 2)
+  genericSignedAttestation = _messages.MessageField('GenericSignedAttestation', 1)
+  pgpSignedAttestation = _messages.MessageField('PgpSignedAttestation', 2)
 
 
 class Authority(_messages.Message):
@@ -185,15 +119,15 @@ class BatchCreateNotesRequest(_messages.Message):
   r"""Request to create notes in batch.
 
   Messages:
-    NotesValue: The notes to create. Max allowed length is 1000.
+    NotesValue: Required. The notes to create. Max allowed length is 1000.
 
   Fields:
-    notes: The notes to create. Max allowed length is 1000.
+    notes: Required. The notes to create. Max allowed length is 1000.
   """
 
   @encoding.MapUnrecognizedFields('additionalProperties')
   class NotesValue(_messages.Message):
-    r"""The notes to create. Max allowed length is 1000.
+    r"""Required. The notes to create. Max allowed length is 1000.
 
     Messages:
       AdditionalProperty: An additional property for a NotesValue object.
@@ -232,7 +166,8 @@ class BatchCreateOccurrencesRequest(_messages.Message):
   r"""Request to create occurrences in batch.
 
   Fields:
-    occurrences: The occurrences to create. Max allowed length is 1000.
+    occurrences: Required. The occurrences to create. Max allowed length is
+      1000.
   """
 
   occurrences = _messages.MessageField('Occurrence', 1, repeated=True)
@@ -252,23 +187,40 @@ class Binding(_messages.Message):
   r"""Associates `members` with a `role`.
 
   Fields:
-    condition: Unimplemented. The condition that is associated with this
-      binding. NOTE: an unsatisfied condition will not allow user access via
-      current binding. Different bindings, including their conditions, are
-      examined independently.
+    condition: The condition that is associated with this binding. NOTE: An
+      unsatisfied condition will not allow user access via current binding.
+      Different bindings, including their conditions, are examined
+      independently.
     members: Specifies the identities requesting access for a Cloud Platform
       resource. `members` can have the following values:  * `allUsers`: A
       special identifier that represents anyone who is    on the internet;
       with or without a Google account.  * `allAuthenticatedUsers`: A special
       identifier that represents anyone    who is authenticated with a Google
       account or a service account.  * `user:{emailid}`: An email address that
-      represents a specific Google    account. For example, `alice@gmail.com`
-      .   * `serviceAccount:{emailid}`: An email address that represents a
-      service    account. For example, `my-other-
+      represents a specific Google    account. For example,
+      `alice@example.com` .   * `serviceAccount:{emailid}`: An email address
+      that represents a service    account. For example, `my-other-
       app@appspot.gserviceaccount.com`.  * `group:{emailid}`: An email address
-      that represents a Google group.    For example, `admins@example.com`.
-      * `domain:{domain}`: A Google Apps domain name that represents all the
-      users of that domain. For example, `google.com` or `example.com`.
+      that represents a Google group.    For example, `admins@example.com`.  *
+      `deleted:user:{emailid}?uid={uniqueid}`: An email address (plus unique
+      identifier) representing a user that has been recently deleted. For
+      example, `alice@example.com?uid=123456789012345678901`. If the user is
+      recovered, this value reverts to `user:{emailid}` and the recovered user
+      retains the role in the binding.  *
+      `deleted:serviceAccount:{emailid}?uid={uniqueid}`: An email address
+      (plus    unique identifier) representing a service account that has been
+      recently    deleted. For example,    `my-other-
+      app@appspot.gserviceaccount.com?uid=123456789012345678901`.    If the
+      service account is undeleted, this value reverts to
+      `serviceAccount:{emailid}` and the undeleted service account retains the
+      role in the binding.  * `deleted:group:{emailid}?uid={uniqueid}`: An
+      email address (plus unique    identifier) representing a Google group
+      that has been recently    deleted. For example,
+      `admins@example.com?uid=123456789012345678901`. If    the group is
+      recovered, this value reverts to `group:{emailid}` and the    recovered
+      group retains the role in the binding.   * `domain:{domain}`: The G
+      Suite domain (primary) that represents all the    users of that domain.
+      For example, `google.com` or `example.com`.
     role: Role that is assigned to `members`. For example, `roles/viewer`,
       `roles/editor`, or `roles/owner`.
   """
@@ -412,6 +364,159 @@ class BuildSignature(_messages.Message):
   signature = _messages.BytesField(4)
 
 
+class CVSSv3(_messages.Message):
+  r"""Common Vulnerability Scoring System version 3. For details, see
+  https://www.first.org/cvss/specification-document
+
+  Enums:
+    AttackComplexityValueValuesEnum:
+    AttackVectorValueValuesEnum: Base Metrics Represents the intrinsic
+      characteristics of a vulnerability that are constant over time and
+      across user environments.
+    AvailabilityImpactValueValuesEnum:
+    ConfidentialityImpactValueValuesEnum:
+    IntegrityImpactValueValuesEnum:
+    PrivilegesRequiredValueValuesEnum:
+    ScopeValueValuesEnum:
+    UserInteractionValueValuesEnum:
+
+  Fields:
+    attackComplexity: A AttackComplexityValueValuesEnum attribute.
+    attackVector: Base Metrics Represents the intrinsic characteristics of a
+      vulnerability that are constant over time and across user environments.
+    availabilityImpact: A AvailabilityImpactValueValuesEnum attribute.
+    baseScore: The base score is a function of the base metric scores.
+    confidentialityImpact: A ConfidentialityImpactValueValuesEnum attribute.
+    exploitabilityScore: A number attribute.
+    impactScore: A number attribute.
+    integrityImpact: A IntegrityImpactValueValuesEnum attribute.
+    privilegesRequired: A PrivilegesRequiredValueValuesEnum attribute.
+    scope: A ScopeValueValuesEnum attribute.
+    userInteraction: A UserInteractionValueValuesEnum attribute.
+  """
+
+  class AttackComplexityValueValuesEnum(_messages.Enum):
+    r"""AttackComplexityValueValuesEnum enum type.
+
+    Values:
+      ATTACK_COMPLEXITY_UNSPECIFIED: <no description>
+      ATTACK_COMPLEXITY_LOW: <no description>
+      ATTACK_COMPLEXITY_HIGH: <no description>
+    """
+    ATTACK_COMPLEXITY_UNSPECIFIED = 0
+    ATTACK_COMPLEXITY_LOW = 1
+    ATTACK_COMPLEXITY_HIGH = 2
+
+  class AttackVectorValueValuesEnum(_messages.Enum):
+    r"""Base Metrics Represents the intrinsic characteristics of a
+    vulnerability that are constant over time and across user environments.
+
+    Values:
+      ATTACK_VECTOR_UNSPECIFIED: <no description>
+      ATTACK_VECTOR_NETWORK: <no description>
+      ATTACK_VECTOR_ADJACENT: <no description>
+      ATTACK_VECTOR_LOCAL: <no description>
+      ATTACK_VECTOR_PHYSICAL: <no description>
+    """
+    ATTACK_VECTOR_UNSPECIFIED = 0
+    ATTACK_VECTOR_NETWORK = 1
+    ATTACK_VECTOR_ADJACENT = 2
+    ATTACK_VECTOR_LOCAL = 3
+    ATTACK_VECTOR_PHYSICAL = 4
+
+  class AvailabilityImpactValueValuesEnum(_messages.Enum):
+    r"""AvailabilityImpactValueValuesEnum enum type.
+
+    Values:
+      IMPACT_UNSPECIFIED: <no description>
+      IMPACT_HIGH: <no description>
+      IMPACT_LOW: <no description>
+      IMPACT_NONE: <no description>
+    """
+    IMPACT_UNSPECIFIED = 0
+    IMPACT_HIGH = 1
+    IMPACT_LOW = 2
+    IMPACT_NONE = 3
+
+  class ConfidentialityImpactValueValuesEnum(_messages.Enum):
+    r"""ConfidentialityImpactValueValuesEnum enum type.
+
+    Values:
+      IMPACT_UNSPECIFIED: <no description>
+      IMPACT_HIGH: <no description>
+      IMPACT_LOW: <no description>
+      IMPACT_NONE: <no description>
+    """
+    IMPACT_UNSPECIFIED = 0
+    IMPACT_HIGH = 1
+    IMPACT_LOW = 2
+    IMPACT_NONE = 3
+
+  class IntegrityImpactValueValuesEnum(_messages.Enum):
+    r"""IntegrityImpactValueValuesEnum enum type.
+
+    Values:
+      IMPACT_UNSPECIFIED: <no description>
+      IMPACT_HIGH: <no description>
+      IMPACT_LOW: <no description>
+      IMPACT_NONE: <no description>
+    """
+    IMPACT_UNSPECIFIED = 0
+    IMPACT_HIGH = 1
+    IMPACT_LOW = 2
+    IMPACT_NONE = 3
+
+  class PrivilegesRequiredValueValuesEnum(_messages.Enum):
+    r"""PrivilegesRequiredValueValuesEnum enum type.
+
+    Values:
+      PRIVILEGES_REQUIRED_UNSPECIFIED: <no description>
+      PRIVILEGES_REQUIRED_NONE: <no description>
+      PRIVILEGES_REQUIRED_LOW: <no description>
+      PRIVILEGES_REQUIRED_HIGH: <no description>
+    """
+    PRIVILEGES_REQUIRED_UNSPECIFIED = 0
+    PRIVILEGES_REQUIRED_NONE = 1
+    PRIVILEGES_REQUIRED_LOW = 2
+    PRIVILEGES_REQUIRED_HIGH = 3
+
+  class ScopeValueValuesEnum(_messages.Enum):
+    r"""ScopeValueValuesEnum enum type.
+
+    Values:
+      SCOPE_UNSPECIFIED: <no description>
+      SCOPE_UNCHANGED: <no description>
+      SCOPE_CHANGED: <no description>
+    """
+    SCOPE_UNSPECIFIED = 0
+    SCOPE_UNCHANGED = 1
+    SCOPE_CHANGED = 2
+
+  class UserInteractionValueValuesEnum(_messages.Enum):
+    r"""UserInteractionValueValuesEnum enum type.
+
+    Values:
+      USER_INTERACTION_UNSPECIFIED: <no description>
+      USER_INTERACTION_NONE: <no description>
+      USER_INTERACTION_REQUIRED: <no description>
+    """
+    USER_INTERACTION_UNSPECIFIED = 0
+    USER_INTERACTION_NONE = 1
+    USER_INTERACTION_REQUIRED = 2
+
+  attackComplexity = _messages.EnumField('AttackComplexityValueValuesEnum', 1)
+  attackVector = _messages.EnumField('AttackVectorValueValuesEnum', 2)
+  availabilityImpact = _messages.EnumField('AvailabilityImpactValueValuesEnum', 3)
+  baseScore = _messages.FloatField(4, variant=_messages.Variant.FLOAT)
+  confidentialityImpact = _messages.EnumField('ConfidentialityImpactValueValuesEnum', 5)
+  exploitabilityScore = _messages.FloatField(6, variant=_messages.Variant.FLOAT)
+  impactScore = _messages.FloatField(7, variant=_messages.Variant.FLOAT)
+  integrityImpact = _messages.EnumField('IntegrityImpactValueValuesEnum', 8)
+  privilegesRequired = _messages.EnumField('PrivilegesRequiredValueValuesEnum', 9)
+  scope = _messages.EnumField('ScopeValueValuesEnum', 10)
+  userInteraction = _messages.EnumField('UserInteractionValueValuesEnum', 11)
+
+
 class CloudRepoSourceContext(_messages.Message):
   r"""A CloudRepoSourceContext denotes a particular revision in a Google Cloud
   Source Repo.
@@ -457,8 +562,8 @@ class ContaineranalysisProjectsNotesBatchCreateRequest(_messages.Message):
   Fields:
     batchCreateNotesRequest: A BatchCreateNotesRequest resource to be passed
       as the request body.
-    parent: The name of the project in the form of `projects/[PROJECT_ID]`,
-      under which the notes are to be created.
+    parent: Required. The name of the project in the form of
+      `projects/[PROJECT_ID]`, under which the notes are to be created.
   """
 
   batchCreateNotesRequest = _messages.MessageField('BatchCreateNotesRequest', 1)
@@ -470,9 +575,9 @@ class ContaineranalysisProjectsNotesCreateRequest(_messages.Message):
 
   Fields:
     note: A Note resource to be passed as the request body.
-    noteId: The ID to use for this note.
-    parent: The name of the project in the form of `projects/[PROJECT_ID]`,
-      under which the note is to be created.
+    noteId: Required. The ID to use for this note.
+    parent: Required. The name of the project in the form of
+      `projects/[PROJECT_ID]`, under which the note is to be created.
   """
 
   note = _messages.MessageField('Note', 1)
@@ -484,7 +589,7 @@ class ContaineranalysisProjectsNotesDeleteRequest(_messages.Message):
   r"""A ContaineranalysisProjectsNotesDeleteRequest object.
 
   Fields:
-    name: The name of the note in the form of
+    name: Required. The name of the note in the form of
       `projects/[PROVIDER_ID]/notes/[NOTE_ID]`.
   """
 
@@ -510,7 +615,7 @@ class ContaineranalysisProjectsNotesGetRequest(_messages.Message):
   r"""A ContaineranalysisProjectsNotesGetRequest object.
 
   Fields:
-    name: The name of the note in the form of
+    name: Required. The name of the note in the form of
       `projects/[PROVIDER_ID]/notes/[NOTE_ID]`.
   """
 
@@ -525,7 +630,7 @@ class ContaineranalysisProjectsNotesListRequest(_messages.Message):
     pageSize: Number of notes to return in the list. Must be positive. Max
       allowed page size is 1000. If not specified, page size defaults to 20.
     pageToken: Token to provide to skip to a particular spot in the list.
-    parent: The name of the project to list notes for in the form of
+    parent: Required. The name of the project to list notes for in the form of
       `projects/[PROJECT_ID]`.
   """
 
@@ -540,8 +645,8 @@ class ContaineranalysisProjectsNotesOccurrencesListRequest(_messages.Message):
 
   Fields:
     filter: The filter expression.
-    name: The name of the note to list occurrences for in the form of
-      `projects/[PROVIDER_ID]/notes/[NOTE_ID]`.
+    name: Required. The name of the note to list occurrences for in the form
+      of `projects/[PROVIDER_ID]/notes/[NOTE_ID]`.
     pageSize: Number of occurrences to return in the list.
     pageToken: Token to provide to skip to a particular spot in the list.
   """
@@ -556,7 +661,7 @@ class ContaineranalysisProjectsNotesPatchRequest(_messages.Message):
   r"""A ContaineranalysisProjectsNotesPatchRequest object.
 
   Fields:
-    name: The name of the note in the form of
+    name: Required. The name of the note in the form of
       `projects/[PROVIDER_ID]/notes/[NOTE_ID]`.
     note: A Note resource to be passed as the request body.
     updateMask: The fields to update.
@@ -603,8 +708,8 @@ class ContaineranalysisProjectsOccurrencesBatchCreateRequest(_messages.Message):
   Fields:
     batchCreateOccurrencesRequest: A BatchCreateOccurrencesRequest resource to
       be passed as the request body.
-    parent: The name of the project in the form of `projects/[PROJECT_ID]`,
-      under which the occurrences are to be created.
+    parent: Required. The name of the project in the form of
+      `projects/[PROJECT_ID]`, under which the occurrences are to be created.
   """
 
   batchCreateOccurrencesRequest = _messages.MessageField('BatchCreateOccurrencesRequest', 1)
@@ -616,8 +721,8 @@ class ContaineranalysisProjectsOccurrencesCreateRequest(_messages.Message):
 
   Fields:
     occurrence: A Occurrence resource to be passed as the request body.
-    parent: The name of the project in the form of `projects/[PROJECT_ID]`,
-      under which the occurrence is to be created.
+    parent: Required. The name of the project in the form of
+      `projects/[PROJECT_ID]`, under which the occurrence is to be created.
   """
 
   occurrence = _messages.MessageField('Occurrence', 1)
@@ -628,7 +733,7 @@ class ContaineranalysisProjectsOccurrencesDeleteRequest(_messages.Message):
   r"""A ContaineranalysisProjectsOccurrencesDeleteRequest object.
 
   Fields:
-    name: The name of the occurrence in the form of
+    name: Required. The name of the occurrence in the form of
       `projects/[PROJECT_ID]/occurrences/[OCCURRENCE_ID]`.
   """
 
@@ -654,7 +759,7 @@ class ContaineranalysisProjectsOccurrencesGetNotesRequest(_messages.Message):
   r"""A ContaineranalysisProjectsOccurrencesGetNotesRequest object.
 
   Fields:
-    name: The name of the occurrence in the form of
+    name: Required. The name of the occurrence in the form of
       `projects/[PROJECT_ID]/occurrences/[OCCURRENCE_ID]`.
   """
 
@@ -665,7 +770,7 @@ class ContaineranalysisProjectsOccurrencesGetRequest(_messages.Message):
   r"""A ContaineranalysisProjectsOccurrencesGetRequest object.
 
   Fields:
-    name: The name of the occurrence in the form of
+    name: Required. The name of the occurrence in the form of
       `projects/[PROJECT_ID]/occurrences/[OCCURRENCE_ID]`.
   """
 
@@ -678,8 +783,8 @@ class ContaineranalysisProjectsOccurrencesGetVulnerabilitySummaryRequest(_messag
 
   Fields:
     filter: The filter expression.
-    parent: The name of the project to get a vulnerability summary for in the
-      form of `projects/[PROJECT_ID]`.
+    parent: Required. The name of the project to get a vulnerability summary
+      for in the form of `projects/[PROJECT_ID]`.
   """
 
   filter = _messages.StringField(1)
@@ -695,8 +800,8 @@ class ContaineranalysisProjectsOccurrencesListRequest(_messages.Message):
       Max allowed page size is 1000. If not specified, page size defaults to
       20.
     pageToken: Token to provide to skip to a particular spot in the list.
-    parent: The name of the project to list occurrences for in the form of
-      `projects/[PROJECT_ID]`.
+    parent: Required. The name of the project to list occurrences for in the
+      form of `projects/[PROJECT_ID]`.
   """
 
   filter = _messages.StringField(1)
@@ -709,7 +814,7 @@ class ContaineranalysisProjectsOccurrencesPatchRequest(_messages.Message):
   r"""A ContaineranalysisProjectsOccurrencesPatchRequest object.
 
   Fields:
-    name: The name of the occurrence in the form of
+    name: Required. The name of the occurrence in the form of
       `projects/[PROJECT_ID]/occurrences/[OCCURRENCE_ID]`.
     occurrence: A Occurrence resource to be passed as the request body.
     updateMask: The fields to update.
@@ -754,7 +859,7 @@ class ContaineranalysisProjectsScanConfigsGetRequest(_messages.Message):
   r"""A ContaineranalysisProjectsScanConfigsGetRequest object.
 
   Fields:
-    name: The name of the scan configuration in the form of
+    name: Required. The name of the scan configuration in the form of
       `projects/[PROJECT_ID]/scanConfigs/[SCAN_CONFIG_ID]`.
   """
 
@@ -765,11 +870,11 @@ class ContaineranalysisProjectsScanConfigsListRequest(_messages.Message):
   r"""A ContaineranalysisProjectsScanConfigsListRequest object.
 
   Fields:
-    filter: The filter expression.
+    filter: Required. The filter expression.
     pageSize: The number of scan configs to return in the list.
     pageToken: Token to provide to skip to a particular spot in the list.
-    parent: The name of the project to list scan configurations for in the
-      form of `projects/[PROJECT_ID]`.
+    parent: Required. The name of the project to list scan configurations for
+      in the form of `projects/[PROJECT_ID]`.
   """
 
   filter = _messages.StringField(1)
@@ -851,7 +956,7 @@ class Derived(_messages.Message):
 
 
 class Detail(_messages.Message):
-  r"""Identifies all occurrences of this vulnerability in the package for a
+  r"""Identifies all appearances of this vulnerability in the package for a
   specific distro/location. For example: glibc in cpe:/o:debian:debian_linux:8
   for versions 2.1 - 2.2
 
@@ -874,6 +979,9 @@ class Detail(_messages.Message):
       node.js packages etc).
     severityName: The severity (eg: distro assigned severity) for this
       vulnerability.
+    sourceUpdateTime: The time this information was last changed at the
+      source. This is an upstream timestamp from the underlying information
+      source - e.g. Ubuntu security tracker.
   """
 
   cpeUri = _messages.StringField(1)
@@ -885,6 +993,7 @@ class Detail(_messages.Message):
   package = _messages.StringField(7)
   packageType = _messages.StringField(8)
   severityName = _messages.StringField(9)
+  sourceUpdateTime = _messages.StringField(10)
 
 
 class Details(_messages.Message):
@@ -1102,7 +1211,7 @@ class Fingerprint(_messages.Message):
 
 
 class FixableTotalByDigest(_messages.Message):
-  r"""Per resource and severity counts of fixable and total vulnerabilites.
+  r"""Per resource and severity counts of fixable and total vulnerabilities.
 
   Enums:
     SeverityValueValuesEnum: The severity for this count. SEVERITY_UNSPECIFIED
@@ -1143,6 +1252,54 @@ class FixableTotalByDigest(_messages.Message):
   totalCount = _messages.IntegerField(4)
 
 
+class GenericSignedAttestation(_messages.Message):
+  r"""An attestation wrapper that uses the Grafeas `Signature` message. This
+  attestation must define the `serialized_payload` that the `signatures`
+  verify and any metadata necessary to interpret that plaintext.  The
+  signatures should always be over the `serialized_payload` bytestring.
+
+  Enums:
+    ContentTypeValueValuesEnum: Type (for example schema) of the attestation
+      payload that was signed. The verifier must ensure that the provided type
+      is one that the verifier supports, and that the attestation payload is a
+      valid instantiation of that type (for example by validating a JSON
+      schema).
+
+  Fields:
+    contentType: Type (for example schema) of the attestation payload that was
+      signed. The verifier must ensure that the provided type is one that the
+      verifier supports, and that the attestation payload is a valid
+      instantiation of that type (for example by validating a JSON schema).
+    serializedPayload: The serialized payload that is verified by one or more
+      `signatures`. The encoding and semantic meaning of this payload must
+      match what is set in `content_type`.
+    signatures: One or more signatures over `serialized_payload`.  Verifier
+      implementations should consider this attestation message verified if at
+      least one `signature` verifies `serialized_payload`.  See `Signature` in
+      common.proto for more details on signature structure and verification.
+  """
+
+  class ContentTypeValueValuesEnum(_messages.Enum):
+    r"""Type (for example schema) of the attestation payload that was signed.
+    The verifier must ensure that the provided type is one that the verifier
+    supports, and that the attestation payload is a valid instantiation of
+    that type (for example by validating a JSON schema).
+
+    Values:
+      CONTENT_TYPE_UNSPECIFIED: `ContentType` is not set.
+      SIMPLE_SIGNING_JSON: Atomic format attestation signature. See https://gi
+        thub.com/containers/image/blob/8a5d2f82a6e3263290c8e0276c3e0f64e77723e
+        7/docs/atomic-signature.md The payload extracted in `plaintext` is a
+        JSON blob conforming to the linked schema.
+    """
+    CONTENT_TYPE_UNSPECIFIED = 0
+    SIMPLE_SIGNING_JSON = 1
+
+  contentType = _messages.EnumField('ContentTypeValueValuesEnum', 1)
+  serializedPayload = _messages.BytesField(2)
+  signatures = _messages.MessageField('Signature', 3, repeated=True)
+
+
 class GerritSourceContext(_messages.Message):
   r"""A SourceContext referring to a Gerrit project.
 
@@ -1162,7 +1319,28 @@ class GerritSourceContext(_messages.Message):
 
 
 class GetIamPolicyRequest(_messages.Message):
-  r"""Request message for `GetIamPolicy` method."""
+  r"""Request message for `GetIamPolicy` method.
+
+  Fields:
+    options: OPTIONAL: A `GetPolicyOptions` object for specifying options to
+      `GetIamPolicy`. This field is only used by Cloud IAM.
+  """
+
+  options = _messages.MessageField('GetPolicyOptions', 1)
+
+
+class GetPolicyOptions(_messages.Message):
+  r"""Encapsulates settings provided to GetIamPolicy.
+
+  Fields:
+    requestedPolicyVersion: Optional. The policy format version to be
+      returned.  Valid values are 0, 1, and 3. Requests specifying an invalid
+      value will be rejected.  Requests for policies with any conditional
+      bindings must specify version 3. Policies without any conditional
+      bindings may specify any valid value or leave the field unset.
+  """
+
+  requestedPolicyVersion = _messages.IntegerField(1, variant=_messages.Variant.INT32)
 
 
 class GitSourceContext(_messages.Message):
@@ -1254,9 +1432,12 @@ class GrafeasV1beta1PackageDetails(_messages.Message):
 
 
 class GrafeasV1beta1VulnerabilityDetails(_messages.Message):
-  r"""Details of a vulnerability occurrence.
+  r"""Details of a vulnerability Occurrence.
 
   Enums:
+    EffectiveSeverityValueValuesEnum: The distro assigned severity for this
+      vulnerability when it is available, and note provider assigned severity
+      when distro has not yet assigned a severity for this vulnerability.
     SeverityValueValuesEnum: Output only. The note provider assigned Severity
       of the vulnerability.
 
@@ -1264,6 +1445,9 @@ class GrafeasV1beta1VulnerabilityDetails(_messages.Message):
     cvssScore: Output only. The CVSS score of this vulnerability. CVSS score
       is on a scale of 0-10 where 0 indicates low severity and 10 indicates
       high severity.
+    effectiveSeverity: The distro assigned severity for this vulnerability
+      when it is available, and note provider assigned severity when distro
+      has not yet assigned a severity for this vulnerability.
     longDescription: Output only. A detailed description of this
       vulnerability.
     packageIssue: Required. The set of affected locations and their fixes (if
@@ -1276,6 +1460,26 @@ class GrafeasV1beta1VulnerabilityDetails(_messages.Message):
     type: The type of package; whether native or non native(ruby gems, node.js
       packages etc)
   """
+
+  class EffectiveSeverityValueValuesEnum(_messages.Enum):
+    r"""The distro assigned severity for this vulnerability when it is
+    available, and note provider assigned severity when distro has not yet
+    assigned a severity for this vulnerability.
+
+    Values:
+      SEVERITY_UNSPECIFIED: Unknown.
+      MINIMAL: Minimal severity.
+      LOW: Low severity.
+      MEDIUM: Medium severity.
+      HIGH: High severity.
+      CRITICAL: Critical severity.
+    """
+    SEVERITY_UNSPECIFIED = 0
+    MINIMAL = 1
+    LOW = 2
+    MEDIUM = 3
+    HIGH = 4
+    CRITICAL = 5
 
   class SeverityValueValuesEnum(_messages.Enum):
     r"""Output only. The note provider assigned Severity of the vulnerability.
@@ -1296,12 +1500,13 @@ class GrafeasV1beta1VulnerabilityDetails(_messages.Message):
     CRITICAL = 5
 
   cvssScore = _messages.FloatField(1, variant=_messages.Variant.FLOAT)
-  longDescription = _messages.StringField(2)
-  packageIssue = _messages.MessageField('PackageIssue', 3, repeated=True)
-  relatedUrls = _messages.MessageField('RelatedUrl', 4, repeated=True)
-  severity = _messages.EnumField('SeverityValueValuesEnum', 5)
-  shortDescription = _messages.StringField(6)
-  type = _messages.StringField(7)
+  effectiveSeverity = _messages.EnumField('EffectiveSeverityValueValuesEnum', 2)
+  longDescription = _messages.StringField(3)
+  packageIssue = _messages.MessageField('PackageIssue', 4, repeated=True)
+  relatedUrls = _messages.MessageField('RelatedUrl', 5, repeated=True)
+  severity = _messages.EnumField('SeverityValueValuesEnum', 6)
+  shortDescription = _messages.StringField(7)
+  type = _messages.StringField(8)
 
 
 class Hash(_messages.Message):
@@ -1359,6 +1564,19 @@ class Installation(_messages.Message):
   name = _messages.StringField(2)
 
 
+class KnowledgeBase(_messages.Message):
+  r"""A KnowledgeBase object.
+
+  Fields:
+    name: The KB name (generally of the form KB[0-9]+ i.e. KB123456).
+    url: A link to the KB in the Windows update catalog -
+      https://www.catalog.update.microsoft.com/
+  """
+
+  name = _messages.StringField(1)
+  url = _messages.StringField(2)
+
+
 class Layer(_messages.Message):
   r"""Layer holds metadata specific to a layer of a Docker image.
 
@@ -1378,23 +1596,23 @@ class Layer(_messages.Message):
 
     Values:
       DIRECTIVE_UNSPECIFIED: Default value for unsupported/missing directive.
-      MAINTAINER: https://docs.docker.com/reference/builder/#maintainer
-      RUN: https://docs.docker.com/reference/builder/#run
-      CMD: https://docs.docker.com/reference/builder/#cmd
-      LABEL: https://docs.docker.com/reference/builder/#label
-      EXPOSE: https://docs.docker.com/reference/builder/#expose
-      ENV: https://docs.docker.com/reference/builder/#env
-      ADD: https://docs.docker.com/reference/builder/#add
-      COPY: https://docs.docker.com/reference/builder/#copy
-      ENTRYPOINT: https://docs.docker.com/reference/builder/#entrypoint
-      VOLUME: https://docs.docker.com/reference/builder/#volume
-      USER: https://docs.docker.com/reference/builder/#user
-      WORKDIR: https://docs.docker.com/reference/builder/#workdir
-      ARG: https://docs.docker.com/reference/builder/#arg
-      ONBUILD: https://docs.docker.com/reference/builder/#onbuild
-      STOPSIGNAL: https://docs.docker.com/reference/builder/#stopsignal
-      HEALTHCHECK: https://docs.docker.com/reference/builder/#healthcheck
-      SHELL: https://docs.docker.com/reference/builder/#shell
+      MAINTAINER: https://docs.docker.com/engine/reference/builder/
+      RUN: https://docs.docker.com/engine/reference/builder/
+      CMD: https://docs.docker.com/engine/reference/builder/
+      LABEL: https://docs.docker.com/engine/reference/builder/
+      EXPOSE: https://docs.docker.com/engine/reference/builder/
+      ENV: https://docs.docker.com/engine/reference/builder/
+      ADD: https://docs.docker.com/engine/reference/builder/
+      COPY: https://docs.docker.com/engine/reference/builder/
+      ENTRYPOINT: https://docs.docker.com/engine/reference/builder/
+      VOLUME: https://docs.docker.com/engine/reference/builder/
+      USER: https://docs.docker.com/engine/reference/builder/
+      WORKDIR: https://docs.docker.com/engine/reference/builder/
+      ARG: https://docs.docker.com/engine/reference/builder/
+      ONBUILD: https://docs.docker.com/engine/reference/builder/
+      STOPSIGNAL: https://docs.docker.com/engine/reference/builder/
+      HEALTHCHECK: https://docs.docker.com/engine/reference/builder/
+      SHELL: https://docs.docker.com/engine/reference/builder/
     """
     DIRECTIVE_UNSPECIFIED = 0
     MAINTAINER = 1
@@ -1589,8 +1807,8 @@ class Occurrence(_messages.Message):
     name: Output only. The name of the occurrence in the form of
       `projects/[PROJECT_ID]/occurrences/[OCCURRENCE_ID]`.
     noteName: Required. Immutable. The analysis note associated with this
-      occurrence, in the form of `projects[PROVIDER_ID]/notes/[NOTE_ID]`. This
-      field can be used as a filter in list requests.
+      occurrence, in the form of `projects/[PROVIDER_ID]/notes/[NOTE_ID]`.
+      This field can be used as a filter in list requests.
     remediation: A description of actions that can be taken to remedy the
       note.
     resource: Required. Immutable. The resource for which the occurrence
@@ -1662,8 +1880,8 @@ class PackageIssue(_messages.Message):
   Fields:
     affectedLocation: Required. The location of the vulnerability.
     fixedLocation: The location of the available fix for vulnerability.
-    severityName: The severity (e.g., distro assigned severity) for this
-      vulnerability.
+    severityName: Deprecated, use Details.effective_severity instead The
+      severity (e.g., distro assigned severity) for this vulnerability.
   """
 
   affectedLocation = _messages.MessageField('VulnerabilityLocation', 1)
@@ -1734,29 +1952,41 @@ class PgpSignedAttestation(_messages.Message):
 
 
 class Policy(_messages.Message):
-  r"""Defines an Identity and Access Management (IAM) policy. It is used to
-  specify access control policies for Cloud Platform resources.   A `Policy`
-  consists of a list of `bindings`. A `binding` binds a list of `members` to a
-  `role`, where the members can be user accounts, Google groups, Google
-  domains, and service accounts. A `role` is a named list of permissions
-  defined by IAM.  **JSON Example**      {       "bindings": [         {
-  "role": "roles/owner",           "members": [
+  r"""An Identity and Access Management (IAM) policy, which specifies access
+  controls for Google Cloud resources.   A `Policy` is a collection of
+  `bindings`. A `binding` binds one or more `members` to a single `role`.
+  Members can be user accounts, service accounts, Google groups, and domains
+  (such as G Suite). A `role` is a named list of permissions; each `role` can
+  be an IAM predefined role or a user-created custom role.  Optionally, a
+  `binding` can specify a `condition`, which is a logical expression that
+  allows access to a resource only if the expression evaluates to `true`. A
+  condition can add constraints based on attributes of the request, the
+  resource, or both.  **JSON example:**      {       "bindings": [         {
+  "role": "roles/resourcemanager.organizationAdmin",           "members": [
   "user:mike@example.com",             "group:admins@example.com",
-  "domain:google.com",             "serviceAccount:my-other-
-  app@appspot.gserviceaccount.com"           ]         },         {
-  "role": "roles/viewer",           "members": ["user:sean@example.com"]
-  }       ]     }  **YAML Example**      bindings:     - members:       -
-  user:mike@example.com       - group:admins@example.com       -
-  domain:google.com       - serviceAccount:my-other-
-  app@appspot.gserviceaccount.com       role: roles/owner     - members:
-  - user:sean@example.com       role: roles/viewer   For a description of IAM
-  and its features, see the [IAM developer's
-  guide](https://cloud.google.com/iam/docs).
+  "domain:google.com",             "serviceAccount:my-project-
+  id@appspot.gserviceaccount.com"           ]         },         {
+  "role": "roles/resourcemanager.organizationViewer",           "members":
+  ["user:eve@example.com"],           "condition": {             "title":
+  "expirable access",             "description": "Does not grant access after
+  Sep 2020",             "expression": "request.time <
+  timestamp('2020-10-01T00:00:00.000Z')",           }         }       ],
+  "etag": "BwWWja0YfJA=",       "version": 3     }  **YAML example:**
+  bindings:     - members:       - user:mike@example.com       -
+  group:admins@example.com       - domain:google.com       - serviceAccount
+  :my-project-id@appspot.gserviceaccount.com       role:
+  roles/resourcemanager.organizationAdmin     - members:       -
+  user:eve@example.com       role: roles/resourcemanager.organizationViewer
+  condition:         title: expirable access         description: Does not
+  grant access after Sep 2020         expression: request.time <
+  timestamp('2020-10-01T00:00:00.000Z')     - etag: BwWWja0YfJA=     -
+  version: 3  For a description of IAM and its features, see the [IAM
+  documentation](https://cloud.google.com/iam/docs/).
 
   Fields:
-    auditConfigs: Specifies cloud audit logging configuration for this policy.
-    bindings: Associates a list of `members` to a `role`. `bindings` with no
-      members will result in an error.
+    bindings: Associates a list of `members` to a `role`. Optionally, may
+      specify a `condition` that determines how and when the `bindings` are
+      applied. Each of the `bindings` must contain at least one member.
     etag: `etag` is used for optimistic concurrency control as a way to help
       prevent simultaneous updates of a policy from overwriting each other. It
       is strongly suggested that systems make use of the `etag` in the read-
@@ -1764,15 +1994,29 @@ class Policy(_messages.Message):
       conditions: An `etag` is returned in the response to `getIamPolicy`, and
       systems are expected to put that etag in the request to `setIamPolicy`
       to ensure that their change will be applied to the same version of the
-      policy.  If no `etag` is provided in the call to `setIamPolicy`, then
-      the existing policy is overwritten blindly.
-    version: Deprecated.
+      policy.  **Important:** If you use IAM Conditions, you must include the
+      `etag` field whenever you call `setIamPolicy`. If you omit this field,
+      then IAM allows you to overwrite a version `3` policy with a version `1`
+      policy, and all of the conditions in the version `3` policy are lost.
+    version: Specifies the format of the policy.  Valid values are `0`, `1`,
+      and `3`. Requests that specify an invalid value are rejected.  Any
+      operation that affects conditional role bindings must specify version
+      `3`. This requirement applies to the following operations:  * Getting a
+      policy that includes a conditional role binding * Adding a conditional
+      role binding to a policy * Changing a conditional role binding in a
+      policy * Removing any role binding, with or without a condition, from a
+      policy   that includes conditions  **Important:** If you use IAM
+      Conditions, you must include the `etag` field whenever you call
+      `setIamPolicy`. If you omit this field, then IAM allows you to overwrite
+      a version `3` policy with a version `1` policy, and all of the
+      conditions in the version `3` policy are lost.  If a policy does not
+      include any conditions, operations on that policy may specify any valid
+      version or leave the field unset.
   """
 
-  auditConfigs = _messages.MessageField('AuditConfig', 1, repeated=True)
-  bindings = _messages.MessageField('Binding', 2, repeated=True)
-  etag = _messages.BytesField(3)
-  version = _messages.IntegerField(4, variant=_messages.Variant.INT32)
+  bindings = _messages.MessageField('Binding', 1, repeated=True)
+  etag = _messages.BytesField(2)
+  version = _messages.IntegerField(3, variant=_messages.Variant.INT32)
 
 
 class ProjectRepoId(_messages.Message):
@@ -1816,10 +2060,10 @@ class Resource(_messages.Message):
   r"""An entity that can have metadata. For example, a Docker image.
 
   Fields:
-    contentHash: The hash of the resource content. For example, the Docker
-      digest.
-    name: The name of the resource. For example, the name of a Docker image -
-      "Debian".
+    contentHash: Deprecated, do not use. Use uri instead.  The hash of the
+      resource content. For example, the Docker digest.
+    name: Deprecated, do not use. Use uri instead.  The name of the resource.
+      For example, the name of a Docker image - "Debian".
     uri: Required. The unique URI of the resource. For example,
       `https://gcr.io/project/image@sha256:foo` for a Docker image.
   """
@@ -1859,14 +2103,55 @@ class SetIamPolicyRequest(_messages.Message):
       size of the policy is limited to a few 10s of KB. An empty policy is a
       valid policy but certain Cloud Platform services (such as Projects)
       might reject them.
-    updateMask: OPTIONAL: A FieldMask specifying which fields of the policy to
-      modify. Only the fields in the mask will be modified. If no mask is
-      provided, the following default mask is used: paths: "bindings, etag"
-      This field is only used by Cloud IAM.
   """
 
   policy = _messages.MessageField('Policy', 1)
-  updateMask = _messages.StringField(2)
+
+
+class Signature(_messages.Message):
+  r"""Verifiers (e.g. Kritis implementations) MUST verify signatures with
+  respect to the trust anchors defined in policy (e.g. a Kritis policy).
+  Typically this means that the verifier has been configured with a map from
+  `public_key_id` to public key material (and any required parameters, e.g.
+  signing algorithm).  In particular, verification implementations MUST NOT
+  treat the signature `public_key_id` as anything more than a key lookup hint.
+  The `public_key_id` DOES NOT validate or authenticate a public key; it only
+  provides a mechanism for quickly selecting a public key ALREADY CONFIGURED
+  on the verifier through a trusted channel. Verification implementations MUST
+  reject signatures in any of the following circumstances:   * The
+  `public_key_id` is not recognized by the verifier.   * The public key that
+  `public_key_id` refers to does not verify the     signature with respect to
+  the payload.  The `signature` contents SHOULD NOT be "attached" (where the
+  payload is included with the serialized `signature` bytes). Verifiers MUST
+  ignore any "attached" payload and only verify signatures with respect to
+  explicitly provided payload (e.g. a `payload` field on the proto message
+  that holds this Signature, or the canonical serialization of the proto
+  message that holds this signature).
+
+  Fields:
+    publicKeyId: The identifier for the public key that verifies this
+      signature.   * The `public_key_id` is required.   * The `public_key_id`
+      MUST be an RFC3986 conformant URI.   * When possible, the
+      `public_key_id` SHOULD be an immutable reference,     such as a
+      cryptographic digest.  Examples of valid `public_key_id`s:  OpenPGP V4
+      public key fingerprint:   *
+      "openpgp4fpr:74FAF3B861BDA0870C7B6DEF607E48D2A663AEEA" See
+      https://www.iana.org/assignments/uri-schemes/prov/openpgp4fpr for more
+      details on this scheme.  RFC6920 digest-named SubjectPublicKeyInfo
+      (digest of the DER serialization):   *
+      "ni:///sha-256;cD9o9Cq6LG3jD0iKXqEi_vdjJGecm_iXkbqVoScViaU"   * "nih:///
+      sha-256;703f68f42aba2c6de30f488a5ea122fef76324679c9bf89791ba95a1271589a5
+      "
+    signature: The content of the signature, an opaque bytestring. The payload
+      that this signature verifies MUST be unambiguously provided with the
+      Signature during verification. A wrapper message might provide the
+      payload explicitly. Alternatively, a message might have a canonical
+      serialization that can always be unambiguously computed to derive the
+      payload.
+  """
+
+  publicKeyId = _messages.StringField(1)
+  signature = _messages.BytesField(2)
 
 
 class Source(_messages.Message):
@@ -2044,37 +2329,10 @@ class StandardQueryParameters(_messages.Message):
 class Status(_messages.Message):
   r"""The `Status` type defines a logical error model that is suitable for
   different programming environments, including REST APIs and RPC APIs. It is
-  used by [gRPC](https://github.com/grpc). The error model is designed to be:
-  - Simple to use and understand for most users - Flexible enough to meet
-  unexpected needs  # Overview  The `Status` message contains three pieces of
-  data: error code, error message, and error details. The error code should be
-  an enum value of google.rpc.Code, but it may accept additional error codes
-  if needed.  The error message should be a developer-facing English message
-  that helps developers *understand* and *resolve* the error. If a localized
-  user-facing error message is needed, put the localized message in the error
-  details or localize it in the client. The optional error details may contain
-  arbitrary information about the error. There is a predefined set of error
-  detail types in the package `google.rpc` that can be used for common error
-  conditions.  # Language mapping  The `Status` message is the logical
-  representation of the error model, but it is not necessarily the actual wire
-  format. When the `Status` message is exposed in different client libraries
-  and different wire protocols, it can be mapped differently. For example, it
-  will likely be mapped to some exceptions in Java, but more likely mapped to
-  some error codes in C.  # Other uses  The error model and the `Status`
-  message can be used in a variety of environments, either with or without
-  APIs, to provide a consistent developer experience across different
-  environments.  Example uses of this error model include:  - Partial errors.
-  If a service needs to return partial errors to the client,     it may embed
-  the `Status` in the normal response to indicate the partial     errors.  -
-  Workflow errors. A typical workflow has multiple steps. Each step may
-  have a `Status` message for error reporting.  - Batch operations. If a
-  client uses batch request and batch response, the     `Status` message
-  should be used directly inside batch response, one for     each error sub-
-  response.  - Asynchronous operations. If an API call embeds asynchronous
-  operation     results in its response, the status of those operations should
-  be     represented directly using the `Status` message.  - Logging. If some
-  API errors are stored in logs, the message `Status` could     be used
-  directly after any stripping needed for security/privacy reasons.
+  used by [gRPC](https://github.com/grpc). Each `Status` message contains
+  three pieces of data: error code, error message, and error details.  You can
+  find out more about this error model and how to work with it in the [API
+  Design Guide](https://cloud.google.com/apis/design/errors).
 
   Messages:
     DetailsValueListEntry: A DetailsValueListEntry object.
@@ -2181,7 +2439,8 @@ class Version(_messages.Message):
 
 
 class Vulnerability(_messages.Message):
-  r"""Vulnerability provides metadata about a security vulnerability.
+  r"""Vulnerability provides metadata about a security vulnerability in a
+  Note.
 
   Enums:
     SeverityValueValuesEnum: Note provider assigned impact of the
@@ -2189,10 +2448,19 @@ class Vulnerability(_messages.Message):
 
   Fields:
     cvssScore: The CVSS score for this vulnerability.
+    cvssV3: The full description of the CVSSv3.
     details: All information about the package to specifically identify this
       vulnerability. One entry per (version range and cpe_uri) the package
       vulnerability has manifested in.
     severity: Note provider assigned impact of the vulnerability.
+    sourceUpdateTime: The time this information was last changed at the
+      source. This is an upstream timestamp from the underlying information
+      source - e.g. Ubuntu security tracker.
+    windowsDetails: Windows details get their own format because the
+      information format and model don't match a normal detail. Specifically
+      Windows updates are done as patches, thus Windows vulnerabilities really
+      are a missing package, rather than a package being at an incorrect
+      version.
   """
 
   class SeverityValueValuesEnum(_messages.Enum):
@@ -2214,8 +2482,11 @@ class Vulnerability(_messages.Message):
     CRITICAL = 5
 
   cvssScore = _messages.FloatField(1, variant=_messages.Variant.FLOAT)
-  details = _messages.MessageField('Detail', 2, repeated=True)
-  severity = _messages.EnumField('SeverityValueValuesEnum', 3)
+  cvssV3 = _messages.MessageField('CVSSv3', 2)
+  details = _messages.MessageField('Detail', 3, repeated=True)
+  severity = _messages.EnumField('SeverityValueValuesEnum', 4)
+  sourceUpdateTime = _messages.StringField(5)
+  windowsDetails = _messages.MessageField('WindowsDetail', 6, repeated=True)
 
 
 class VulnerabilityLocation(_messages.Message):
@@ -2244,6 +2515,28 @@ class VulnerabilityOccurrencesSummary(_messages.Message):
   """
 
   counts = _messages.MessageField('FixableTotalByDigest', 1, repeated=True)
+
+
+class WindowsDetail(_messages.Message):
+  r"""A WindowsDetail object.
+
+  Fields:
+    cpeUri: Required. The CPE URI in [cpe
+      format](https://cpe.mitre.org/specification/) in which the vulnerability
+      manifests. Examples include distro or storage location for vulnerable
+      jar.
+    description: The description of the vulnerability.
+    fixingKbs: Required. The names of the KBs which have hotfixes to mitigate
+      this vulnerability. Note that there may be multiple hotfixes (and thus
+      multiple KBs) that mitigate a given vulnerability. Currently any listed
+      kb's presence is considered a fix.
+    name: Required. The name of the vulnerability.
+  """
+
+  cpeUri = _messages.StringField(1)
+  description = _messages.StringField(2)
+  fixingKbs = _messages.MessageField('KnowledgeBase', 3, repeated=True)
+  name = _messages.StringField(4)
 
 
 encoding.AddCustomJsonFieldMapping(

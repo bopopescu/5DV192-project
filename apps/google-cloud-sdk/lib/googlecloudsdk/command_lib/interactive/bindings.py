@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ class _KeyBinding(object):
   def GetName(self):
     """Returns the binding display name."""
     return re.sub('.*<(.*)>.*', r'\1',
-                  six.text_type(self.key)).replace('C-', 'ctrl-')  # pytype: disable=wrong-arg-types
+                  six.text_type(self.key)).replace('C-', 'ctrl-')
 
   def GetLabel(self, markdown=False):
     """Returns the key binding display label containing the name and value."""

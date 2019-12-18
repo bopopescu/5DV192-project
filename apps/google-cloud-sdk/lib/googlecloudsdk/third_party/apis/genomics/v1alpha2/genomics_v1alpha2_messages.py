@@ -486,7 +486,8 @@ class FailedEvent(_messages.Message):
         for serious errors.  HTTP Mapping: 500 Internal Server Error
       UNAVAILABLE: The service is currently unavailable.  This is most likely
         a transient condition, which can be corrected by retrying with a
-        backoff.  See the guidelines above for deciding between
+        backoff. Note that it is not always safe to retry non-idempotent
+        operations.  See the guidelines above for deciding between
         `FAILED_PRECONDITION`, `ABORTED`, and `UNAVAILABLE`.  HTTP Mapping:
         503 Service Unavailable
       DATA_LOSS: Unrecoverable data loss or corruption.  HTTP Mapping: 500
@@ -629,26 +630,6 @@ class GenomicsPipelinesListRequest(_messages.Message):
   projectId = _messages.StringField(4)
 
 
-class ImportReadGroupSetsResponse(_messages.Message):
-  r"""The read group set import response.
-
-  Fields:
-    readGroupSetIds: IDs of the read group sets that were created.
-  """
-
-  readGroupSetIds = _messages.StringField(1, repeated=True)
-
-
-class ImportVariantsResponse(_messages.Message):
-  r"""The variant data import response.
-
-  Fields:
-    callSetIds: IDs of the call sets created during the import.
-  """
-
-  callSetIds = _messages.StringField(1, repeated=True)
-
-
 class ListOperationsResponse(_messages.Message):
   r"""The response message for Operations.ListOperations.
 
@@ -717,9 +698,7 @@ class Operation(_messages.Message):
   Messages:
     MetadataValue: An OperationMetadata or Metadata object. This will always
       be returned with the Operation.
-    ResponseValue: If importing ReadGroupSets, an ImportReadGroupSetsResponse
-      is returned. If importing Variants, an ImportVariantsResponse is
-      returned. For pipelines and exports, an Empty response is returned.
+    ResponseValue: An Empty object.
 
   Fields:
     done: If the value is `false`, it means the operation is still in
@@ -732,9 +711,7 @@ class Operation(_messages.Message):
     name: The server-assigned name, which is only unique within the same
       service that originally returns it. For example&#58; `operations
       /CJHU7Oi_ChDrveSpBRjfuL-qzoWAgEw`
-    response: If importing ReadGroupSets, an ImportReadGroupSetsResponse is
-      returned. If importing Variants, an ImportVariantsResponse is returned.
-      For pipelines and exports, an Empty response is returned.
+    response: An Empty object.
   """
 
   @encoding.MapUnrecognizedFields('additionalProperties')
@@ -765,9 +742,7 @@ class Operation(_messages.Message):
 
   @encoding.MapUnrecognizedFields('additionalProperties')
   class ResponseValue(_messages.Message):
-    r"""If importing ReadGroupSets, an ImportReadGroupSetsResponse is
-    returned. If importing Variants, an ImportVariantsResponse is returned.
-    For pipelines and exports, an Empty response is returned.
+    r"""An Empty object.
 
     Messages:
       AdditionalProperty: An additional property for a ResponseValue object.
@@ -1421,7 +1396,8 @@ class SetOperationStatusRequest(_messages.Message):
         for serious errors.  HTTP Mapping: 500 Internal Server Error
       UNAVAILABLE: The service is currently unavailable.  This is most likely
         a transient condition, which can be corrected by retrying with a
-        backoff.  See the guidelines above for deciding between
+        backoff. Note that it is not always safe to retry non-idempotent
+        operations.  See the guidelines above for deciding between
         `FAILED_PRECONDITION`, `ABORTED`, and `UNAVAILABLE`.  HTTP Mapping:
         503 Service Unavailable
       DATA_LOSS: Unrecoverable data loss or corruption.  HTTP Mapping: 500
@@ -1518,37 +1494,10 @@ class StandardQueryParameters(_messages.Message):
 class Status(_messages.Message):
   r"""The `Status` type defines a logical error model that is suitable for
   different programming environments, including REST APIs and RPC APIs. It is
-  used by [gRPC](https://github.com/grpc). The error model is designed to be:
-  - Simple to use and understand for most users - Flexible enough to meet
-  unexpected needs  # Overview  The `Status` message contains three pieces of
-  data: error code, error message, and error details. The error code should be
-  an enum value of google.rpc.Code, but it may accept additional error codes
-  if needed.  The error message should be a developer-facing English message
-  that helps developers *understand* and *resolve* the error. If a localized
-  user-facing error message is needed, put the localized message in the error
-  details or localize it in the client. The optional error details may contain
-  arbitrary information about the error. There is a predefined set of error
-  detail types in the package `google.rpc` that can be used for common error
-  conditions.  # Language mapping  The `Status` message is the logical
-  representation of the error model, but it is not necessarily the actual wire
-  format. When the `Status` message is exposed in different client libraries
-  and different wire protocols, it can be mapped differently. For example, it
-  will likely be mapped to some exceptions in Java, but more likely mapped to
-  some error codes in C.  # Other uses  The error model and the `Status`
-  message can be used in a variety of environments, either with or without
-  APIs, to provide a consistent developer experience across different
-  environments.  Example uses of this error model include:  - Partial errors.
-  If a service needs to return partial errors to the client,     it may embed
-  the `Status` in the normal response to indicate the partial     errors.  -
-  Workflow errors. A typical workflow has multiple steps. Each step may
-  have a `Status` message for error reporting.  - Batch operations. If a
-  client uses batch request and batch response, the     `Status` message
-  should be used directly inside batch response, one for     each error sub-
-  response.  - Asynchronous operations. If an API call embeds asynchronous
-  operation     results in its response, the status of those operations should
-  be     represented directly using the `Status` message.  - Logging. If some
-  API errors are stored in logs, the message `Status` could     be used
-  directly after any stripping needed for security/privacy reasons.
+  used by [gRPC](https://github.com/grpc). Each `Status` message contains
+  three pieces of data: error code, error message, and error details.  You can
+  find out more about this error model and how to work with it in the [API
+  Design Guide](https://cloud.google.com/apis/design/errors).
 
   Messages:
     DetailsValueListEntry: A DetailsValueListEntry object.
@@ -1627,11 +1576,13 @@ class WorkerAssignedEvent(_messages.Message):
 
   Fields:
     instance: The worker's instance name.
+    machineType: The machine type that was assigned for the worker.
     zone: The zone the worker is running in.
   """
 
   instance = _messages.StringField(1)
-  zone = _messages.StringField(2)
+  machineType = _messages.StringField(2)
+  zone = _messages.StringField(3)
 
 
 class WorkerReleasedEvent(_messages.Message):

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2016 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ class InvalidStateException(Exception):
 
 
 @six.add_metaclass(abc.ABCMeta)
-class BasePool(object):  # pytype: disable=ignored-abstractmethod
+class BasePool(object):
   """Base class for parallel pools.
 
   Provides a limited subset of the multiprocessing.Pool API.
@@ -136,7 +136,7 @@ class BasePool(object):  # pytype: disable=ignored-abstractmethod
 
 
 @six.add_metaclass(abc.ABCMeta)
-class BaseFuture(object):  # pytype: disable=ignored-abstractmethod
+class BaseFuture(object):
   """A future object containing a value that may not be available yet."""
 
   def Get(self):
@@ -206,7 +206,7 @@ class _Result(object):
     except Exception as err:  # pylint: disable=broad-except
       return _Result(error=pickle.PicklingError(
           "Couldn't pickle result [{0}]: {1}".format(
-              pickleable_result, str(err))))
+              pickleable_result, six.text_type(err))))
     return pickleable_result
 
   def __str__(self):
@@ -265,7 +265,10 @@ class _MultiFuture(BaseFuture):
       next_uncollected_future = []
       for future in uncollected_future:
         if future.Done():
-          yield future.Get()
+          try:
+            yield future.Get()
+          except Exception as err:  # pylint: disable=broad-except
+            yield err
         else:
           next_uncollected_future.append(future)
       uncollected_future = next_uncollected_future

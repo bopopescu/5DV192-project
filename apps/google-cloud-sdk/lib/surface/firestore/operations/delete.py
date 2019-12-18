@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,6 +28,15 @@ from googlecloudsdk.core.console import console_io
 
 class Delete(base.DeleteCommand):
   """Delete a completed Cloud Firestore admin operation."""
+
+  detailed_help = {
+      'EXAMPLES':
+          """\
+          To delete the completed `exampleOperationId` operation, run:
+
+            $ {command} exampleOperationId
+      """
+  }
 
   @staticmethod
   def Args(parser):

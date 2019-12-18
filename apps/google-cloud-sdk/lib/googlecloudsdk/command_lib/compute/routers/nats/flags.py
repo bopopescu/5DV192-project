@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,6 +26,19 @@ from googlecloudsdk.command_lib.compute import flags as compute_flags
 IP_ADDRESSES_ARG = compute_flags.ResourceArgument(
     name='--nat-external-ip-pool',
     short_help='External IP Addresses to use for NAT',
+    resource_name='address',
+    regional_collection='compute.addresses',
+    region_hidden=True,
+    plural=True,
+    required=False)
+
+DRAIN_NAT_IP_ADDRESSES_ARG = compute_flags.ResourceArgument(
+    name='--nat-external-drain-ip-pool',
+    detailed_help=textwrap.dedent("""\
+       External IP Addresses to be drained
+
+       These IPs must be valid external IPs that have been used as NAT IPs
+       """),
     resource_name='address',
     regional_collection='compute.addresses',
     region_hidden=True,
@@ -63,14 +76,16 @@ def AddNatNameArg(parser, operation_type='operate on', plural=False):
   parser.add_argument('name', **params)
 
 
-def AddCommonNatArgs(parser, for_create=False, with_logging=False):
+def AddCommonNatArgs(parser,
+                     for_create=False):
   """Adds common arguments for creating and updating NATs."""
   _AddIpAllocationArgs(parser, for_create)
   _AddSubnetworkArgs(parser, for_create)
   _AddTimeoutsArgs(parser, for_create)
   _AddMinPortsPerVmArg(parser, for_create)
-  if with_logging:
-    _AddLoggingArgs(parser)
+  _AddLoggingArgs(parser)
+  if not for_create:
+    _AddDrainNatIpsArgument(parser)
 
 
 def _AddIpAllocationArgs(parser, for_create=False):
@@ -195,6 +210,16 @@ def _AddLoggingArgs(parser):
       help=enable_logging_help_text)
   parser.add_argument(
       '--log-filter', help=log_filter_help_text, choices=filter_choices)
+
+
+def _AddDrainNatIpsArgument(parser):
+  drain_ips_group = parser.add_mutually_exclusive_group(required=False)
+  DRAIN_NAT_IP_ADDRESSES_ARG.AddArgument(parser, mutex_group=drain_ips_group)
+  drain_ips_group.add_argument(
+      '--clear-nat-external-drain-ip-pool',
+      action='store_true',
+      default=False,
+      help='Clear the drained NAT IPs')
 
 
 def _AddClearableArgument(parser,

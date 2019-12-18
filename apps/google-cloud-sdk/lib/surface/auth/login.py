@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2013 Google Inc. All Rights Reserved.
+# Copyright 2013 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -56,6 +56,12 @@ class Login(base.Command):
 
   For more information on authorization and credential types, see:
   [](https://cloud.google.com/sdk/docs/authorizing).
+
+  ## EXAMPLES
+
+  To obtain access credentials for your user account, run:
+
+    $ {command}
   """
 
   @staticmethod

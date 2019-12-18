@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -71,7 +71,7 @@ def GetCpuRamFromCustomName(name):
   return None, None
 
 
-def GetNameForCustom(custom_cpu, custom_memory_mib, ext=False):
+def GetNameForCustom(custom_cpu, custom_memory_mib, ext=False, vm_type=False):
   """Creates a custom machine type name from the desired CPU and memory specs.
 
   Args:
@@ -79,17 +79,22 @@ def GetNameForCustom(custom_cpu, custom_memory_mib, ext=False):
     custom_memory_mib: the amount of ram desired in MiB for the custom machine
       type instance
     ext: extended custom machine type should be used if true
-
+    vm_type: VM instance generation
   Returns:
     The custom machine type name for the 'instance create' call
   """
-  machine_type = 'custom-{0}-{1}'.format(custom_cpu, custom_memory_mib)
+  if vm_type:
+    machine_type = '{0}-custom-{1}-{2}'.format(vm_type, custom_cpu,
+                                               custom_memory_mib)
+  else:
+    machine_type = 'custom-{0}-{1}'.format(custom_cpu, custom_memory_mib)
   if ext:
     machine_type += '-ext'
   return machine_type
 
 
-def InterpretMachineType(machine_type, custom_cpu, custom_memory, ext=True):
+def InterpretMachineType(machine_type, custom_cpu, custom_memory, ext=True,
+                         vm_type=False):
   """Interprets the machine type for the instance.
 
   Args:
@@ -97,6 +102,7 @@ def InterpretMachineType(machine_type, custom_cpu, custom_memory, ext=True):
     custom_cpu: number of CPU cores for custom machine type,
     custom_memory: amount of RAM memory in bytes for custom machine type,
     ext: extended custom machine type should be used if true,
+    vm_type:  VM instance generation
 
   Returns:
     A string representing the URL naming a machine-type.
@@ -130,7 +136,8 @@ def InterpretMachineType(machine_type, custom_cpu, custom_memory, ext=True):
         custom_cpu,
         # converting from B to MiB.
         custom_memory // (2**20),
-        ext)
+        ext,
+        vm_type)
 
     # Updating the machine type that is set for the URIs
     machine_type_name = custom_type_string
@@ -229,7 +236,7 @@ def CreateOnHostMaintenanceMessage(messages, maintenance_policy):
 
 def CreateSchedulingMessage(
     messages, maintenance_policy, preemptible, restart_on_failure,
-    node_affinities=None):
+    node_affinities=None, min_node_cpu=None, location_hint=None):
   """Create scheduling message for VM."""
   # Note: We always specify automaticRestart=False for preemptible VMs. This
   # makes sense, since no-restart-on-failure is defined as "store-true", and
@@ -249,34 +256,47 @@ def CreateSchedulingMessage(
   if node_affinities:
     scheduling.nodeAffinities = node_affinities
 
+  if min_node_cpu is not None:
+    scheduling.minNodeCpus = int(min_node_cpu)
+
+  if location_hint:
+    scheduling.locationHint = location_hint
   return scheduling
 
 
-def CreateShieldedVmConfigMessage(
+def CreateShieldedInstanceConfigMessage(
     messages, enable_secure_boot, enable_vtpm, enable_integrity_monitoring):
-  """Create shieldedVMConfig message for VM."""
+  """Create shieldedInstanceConfig message for VM."""
 
-  shielded_vm_config = messages.ShieldedVmConfig(
+  shielded_instance_config = messages.ShieldedInstanceConfig(
       enableSecureBoot=enable_secure_boot,
       enableVtpm=enable_vtpm,
       enableIntegrityMonitoring=enable_integrity_monitoring)
 
-  return shielded_vm_config
+  return shielded_instance_config
 
 
-def CreateShieldedVmIntegrityPolicyMessage(messages,
-                                           update_auto_learn_policy=True):
-  """Creates shieldedVmIntegrityPolicy message for VM."""
+def CreateShieldedInstanceIntegrityPolicyMessage(messages,
+                                                 update_auto_learn_policy=True):
+  """Creates shieldedInstanceIntegrityPolicy message for VM."""
 
-  shielded_vm_integrity_policy = messages.ShieldedVmIntegrityPolicy(
+  shielded_instance_integrity_policy = messages.ShieldedInstanceIntegrityPolicy(
       updateAutoLearnPolicy=update_auto_learn_policy)
 
-  return shielded_vm_integrity_policy
+  return shielded_instance_integrity_policy
+
+
+def CreateConfidentialInstanceMessage(messages, enable_confidential_compute):
+  """Create confidentialInstanceConfig message for VM."""
+  confidential_instance_config = messages.ConfidentialInstanceConfig(
+      enableConfidentialCompute=enable_confidential_compute)
+
+  return confidential_instance_config
 
 
 def CreateMachineTypeUris(
     resources, compute_client,
-    machine_type, custom_cpu, custom_memory, ext, instance_refs):
+    machine_type, custom_cpu, custom_memory, vm_type, ext, instance_refs):
   """Create machine type URIs for given args and instance references."""
   # The element at index i is the machine type URI for instance
   # i. We build this list here because we want to delay work that
@@ -288,7 +308,7 @@ def CreateMachineTypeUris(
 
   # Setting the machine type
   machine_type_name = InterpretMachineType(
-      machine_type, custom_cpu, custom_memory, ext)
+      machine_type, custom_cpu, custom_memory, ext, vm_type)
 
   for instance_ref in instance_refs:
     # Check to see if the custom machine type ratio is supported
@@ -538,7 +558,10 @@ def CreatePersistentCreateDiskMessages(compute_client,
                                        resources, csek_keys, create_disks,
                                        instance_ref, enable_kms=False,
                                        enable_snapshots=False,
-                                       container_mount_disk=None):
+                                       container_mount_disk=None,
+                                       resource_policy=False,
+                                       enable_source_snapshot_csek=False,
+                                       enable_image_csek=False):
   """Returns a list of AttachedDisk messages for newly creating disks.
 
   Args:
@@ -552,15 +575,23 @@ def CreatePersistentCreateDiskMessages(compute_client,
              * disk-size - the size of the disk,
              * disk-type - the type of the disk (HDD or SSD),
              * image - the name of the image to initialize from,
+             * image-csek-required - the name of the CSK protected image,
              * image-family - the image family name,
              * image-project - the project name that has the image,
              * auto-delete - whether disks is deleted when VM is deleted,
              * device-name - device name on VM,
-             * source-snapshot - the snapshot to initialize from.
+             * source-snapshot - the snapshot to initialize from,
+             * source-snapshot-csek-required - CSK protected snapshot,
+             * disk-resource-policy - resource policies applied to disk.
+             * enable_source_snapshot_csek - CSK file for snapshot,
+             * enable_image_csek - CSK file for image
     instance_ref: reference to the instance that will own the new disks.
     enable_kms: True if KMS keys are supported for the disk.
     enable_snapshots: True if snapshot initialization is supported for the disk.
     container_mount_disk: list of disks to be mounted to container, if any.
+    resource_policy: True if resource-policies are enabled
+    enable_source_snapshot_csek: True if snapshot CSK files are enabled
+    enable_image_csek: True if image CSK files are enabled
 
   Returns:
     list of API messages for attached disks
@@ -643,6 +674,21 @@ def CreatePersistentCreateDiskMessages(compute_client,
       if attached_snapshot_uri:
         initialize_params.sourceImage = None
         initialize_params.sourceSnapshot = attached_snapshot_uri
+
+    if resource_policy:
+      policies = disk.get('disk-resource-policy')
+      if policies:
+        initialize_params.resourcePolicies = policies
+
+    if enable_image_csek:
+      image_key_file = disk.get('image_csek')
+      if image_key_file:
+        initialize_params.imageKeyFile = image_key_file
+
+    if enable_source_snapshot_csek:
+      snapshot_key_file = disk.get('source_snapshot_csek')
+      if snapshot_key_file:
+        initialize_params.snapshotKeyFile = snapshot_key_file
 
     device_name = GetDiskDeviceName(disk, name, container_mount_disk)
     create_disk = messages.AttachedDisk(
@@ -898,12 +944,19 @@ def GetSkipDefaults(source_instance_template):
   return source_instance_template is not None
 
 
-def GetScheduling(args, client, skip_defaults, support_node_affinity=False):
+def GetScheduling(args, client, skip_defaults, support_node_affinity=False,
+                  support_min_node_cpu=False, support_location_hint=False):
   """Generate a Scheduling Message or None based on specified args."""
   node_affinities = None
   if support_node_affinity:
     node_affinities = sole_tenancy_util.GetSchedulingNodeAffinityListFromArgs(
         args, client.messages)
+  min_node_cpu = None
+  if support_min_node_cpu:
+    min_node_cpu = args.min_node_cpu
+  location_hint = None
+  if support_location_hint:
+    location_hint = args.location_hint
   if (skip_defaults and
       not IsAnySpecified(
           args, 'maintenance_policy', 'preemptible', 'restart_on_failure') and
@@ -914,7 +967,9 @@ def GetScheduling(args, client, skip_defaults, support_node_affinity=False):
       maintenance_policy=args.maintenance_policy,
       preemptible=args.preemptible,
       restart_on_failure=args.restart_on_failure,
-      node_affinities=node_affinities)
+      node_affinities=node_affinities,
+      min_node_cpu=min_node_cpu,
+      location_hint=location_hint)
 
 
 def GetServiceAccounts(args, client, skip_defaults):
@@ -966,6 +1021,15 @@ def GetInstanceRefs(args, client, holder):
   zone_resource_fetcher = zone_utils.ZoneResourceFetcher(client)
   zone_resource_fetcher.WarnForZonalCreation(instance_refs)
   return instance_refs
+
+
+def GetSourceMachineImageKey(args, source_image, compute_client, holder):
+  machine_image_ref = source_image.ResolveAsResource(args, holder.resources)
+  csek_keys = csek_utils.CsekKeyStore.FromFile(
+      args.source_machine_image_csek_key_file, allow_rsa_encrypted=False)
+  disk_key_or_none = csek_utils.MaybeLookupKeyMessage(
+      csek_keys, machine_image_ref, compute_client.apitools_client)
+  return disk_key_or_none
 
 
 def GetNetworkInterfaces(
@@ -1044,6 +1108,7 @@ def GetMachineTypeUris(
       machine_type=args.machine_type,
       custom_cpu=args.custom_cpu,
       custom_memory=args.custom_memory,
+      vm_type=getattr(args, 'custom_vm_type', None),
       ext=getattr(args, 'custom_extensions', None),
       instance_refs=instance_refs)
 
@@ -1148,32 +1213,36 @@ def ResolveSnapshotURI(user_project, snapshot, resource_parser):
   return None
 
 
-def GetAllocationAffinity(args, client):
-  """Returns the message of allocation affinity for the instance."""
-  if args.IsSpecified('allocation_affinity'):
-    type_msgs = (client.messages.
-                 AllocationAffinity.ConsumeAllocationTypeValueValuesEnum)
+def GetReservationAffinity(args, client):
+  """Returns the message of reservation affinity for the instance."""
+  if args.IsSpecified('reservation_affinity'):
+    type_msgs = (
+        client.messages.ReservationAffinity
+        .ConsumeReservationTypeValueValuesEnum)
 
-    if args.allocation_affinity == 'none':
-      allocation_type = type_msgs.NO_ALLOCATION
-      allocation_key = None
-      allocation_values = []
-    elif args.allocation_affinity == 'specific':
-      allocation_type = type_msgs.SPECIFIC_ALLOCATION
-      # Currently, the key is fixed and the value is the name of the allocation.
+    reservation_key = None
+    reservation_values = []
+
+    if args.reservation_affinity == 'none':
+      reservation_type = type_msgs.NO_RESERVATION
+    elif args.reservation_affinity == 'specific':
+      reservation_type = type_msgs.SPECIFIC_RESERVATION
+      # Currently, the key is fixed and the value is the name of the
+      # reservation.
       # The value being a repeated field is reserved for future use when user
-      # can specify more than one allocation names from which the Vm can take
+      # can specify more than one reservation names from which the VM can take
       # capacity from.
-      allocation_key = args.allocation_label.get('key', None)
-      allocation_values = [args.allocation_label.get('value', None)]
+      reservation_key = _RESERVATION_AFFINITY_KEY
+      reservation_values = [args.reservation]
     else:
-      allocation_type = type_msgs.ANY_ALLOCATION
-      allocation_key = None
-      allocation_values = []
+      reservation_type = type_msgs.ANY_RESERVATION
 
-    return client.messages.AllocationAffinity(
-        consumeAllocationType=allocation_type,
-        key=allocation_key,
-        values=allocation_values)
+    return client.messages.ReservationAffinity(
+        consumeReservationType=reservation_type,
+        key=reservation_key or None,
+        values=reservation_values)
 
   return None
+
+
+_RESERVATION_AFFINITY_KEY = 'compute.googleapis.com/reservation-name'

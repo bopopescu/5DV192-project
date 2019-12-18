@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,11 +22,9 @@ import argparse
 
 from apitools.base.py import encoding
 from googlecloudsdk.calliope import arg_parsers
-from googlecloudsdk.calliope import base
 from googlecloudsdk.command_lib.dataproc.jobs import base as job_base
 
 
-@base.ReleaseTracks(base.ReleaseTrack.BETA)
 class SparkRBase(job_base.JobBase):
   """Submit a SparkR job to a cluster."""
 

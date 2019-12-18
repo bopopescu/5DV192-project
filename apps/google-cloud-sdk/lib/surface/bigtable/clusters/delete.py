@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2018 Google Inc. All Rights Reserved.
+# Copyright 2018 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
+import textwrap
+
 from googlecloudsdk.api_lib.bigtable import clusters
 from googlecloudsdk.calliope import base
 from googlecloudsdk.command_lib.bigtable import arguments
@@ -25,9 +27,18 @@ from googlecloudsdk.core import log
 from googlecloudsdk.core.console import console_io
 
 
-@base.ReleaseTracks(base.ReleaseTrack.BETA, base.ReleaseTrack.ALPHA)
 class DeleteCluster(base.DeleteCommand):
   """Delete a bigtable cluster."""
+
+  detailed_help = {
+      'EXAMPLES':
+          textwrap.dedent("""\
+          To delete a cluster, run:
+
+            $ {command} my-cluster-id --instance=my-instance-id
+
+          """),
+  }
 
   @staticmethod
   def Args(parser):

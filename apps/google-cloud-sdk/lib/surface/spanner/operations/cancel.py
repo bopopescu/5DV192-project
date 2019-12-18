@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2016 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
+import textwrap
+
 from googlecloudsdk.api_lib.spanner import database_operations
 from googlecloudsdk.api_lib.spanner import instance_operations
 from googlecloudsdk.calliope import base
@@ -26,6 +28,20 @@ from googlecloudsdk.command_lib.spanner import flags
 
 class Cancel(base.Command):
   """Cancel a Cloud Spanner operation."""
+
+  detailed_help = {
+      'EXAMPLES':
+          textwrap.dedent("""\
+        To cancel an instance operation with ID _auto_12345, run:
+
+          $ {command} _auto_12345 --instance=my-instance-id
+
+        To cancel a database operation with ID _auto_12345, run:
+
+          $ {command}  _auto_12345 --instance=my-instance-id
+              --database=my-database-id
+        """),
+  }
 
   @staticmethod
   def Args(parser):

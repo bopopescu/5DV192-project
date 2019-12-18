@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,8 +24,31 @@ from googlecloudsdk.api_lib.firebase.test import util
 from googlecloudsdk.calliope import base
 
 
+DETAILED_HELP = {
+    'EXAMPLES': """
+    To see attributes of the Android OS version 'my-version', run:
+
+      $ {command} my-version
+    """,
+}
+
+
 class Describe(base.DescribeCommand):
   """Describe an Android OS version."""
+
+  detailed_help = {
+      'DESCRIPTION': 'Describe an Android OS version.',
+      'EXAMPLES': """To describe an Android OS version available for testing,
+run:
+
+  {command} Q
+
+To describe an Android OS version available for testing in JSON format,
+run:
+
+  {command} Q --format=json
+"""
+  }
 
   @staticmethod
   def Args(parser):
@@ -55,3 +78,6 @@ class Describe(base.DescribeCommand):
       if version.id == args.version_id:
         return version
     raise exceptions.VersionNotFoundError(args.version_id)
+
+
+Describe.detailed_help = DETAILED_HELP

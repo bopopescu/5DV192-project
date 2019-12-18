@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,12 +24,24 @@ from googlecloudsdk.calliope import base
 from googlecloudsdk.command_lib.compute import flags as compute_flags
 from googlecloudsdk.command_lib.compute.snapshots import flags
 
+DETAILED_HELP = {
+    'EXAMPLES':
+        """\
+        To delete Google Compute Engine snapshots with the names 'snapshot-1'
+        and 'snapshot-2', run:
+
+          $ {command} snapshot-1 snapshot-2
+        """,
+}
+
 
 class Delete(base.DeleteCommand):
   """Delete Google Compute Engine snapshots.
 
   *{command}* deletes one or more Google Compute Engine snapshots.
   """
+
+  detailed_help = DETAILED_HELP
 
   @staticmethod
   def Args(parser):

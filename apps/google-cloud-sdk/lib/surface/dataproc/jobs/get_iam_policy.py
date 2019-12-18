@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ from __future__ import division
 from __future__ import unicode_literals
 
 from googlecloudsdk.api_lib.dataproc import dataproc as dp
-from googlecloudsdk.api_lib.dataproc import util
 from googlecloudsdk.calliope import base
 from googlecloudsdk.command_lib.dataproc import flags
 
@@ -40,16 +39,18 @@ class GetIamPolicy(base.ListCommand):
     $ {command} example-job
   """
 
-  @staticmethod
-  def Args(parser):
-    flags.AddJobFlag(parser, 'retrieve the policy for')
+  @classmethod
+  def Args(cls, parser):
+    dataproc = dp.Dataproc(cls.ReleaseTrack())
+    flags.AddJobResourceArg(parser, 'retrieve the policy for',
+                            dataproc.api_version)
     base.URI_FLAG.RemoveFromParser(parser)
 
   def Run(self, args):
     dataproc = dp.Dataproc(self.ReleaseTrack())
     msgs = dataproc.messages
 
-    job = util.ParseJob(args.job, dataproc)
+    job = args.CONCEPTS.job.Parse()
     request = msgs.DataprocProjectsRegionsJobsGetIamPolicyRequest(
         resource=job.RelativeName())
 

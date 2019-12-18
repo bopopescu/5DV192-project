@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2014 Google Inc. All Rights Reserved.
+# Copyright 2014 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
+import collections
+import json
 from googlecloudsdk.api_lib.compute import base_classes
 from googlecloudsdk.api_lib.compute import image_utils
 from googlecloudsdk.api_lib.compute import instance_template_utils
@@ -30,10 +32,13 @@ from googlecloudsdk.calliope import exceptions
 from googlecloudsdk.command_lib.compute import completers
 from googlecloudsdk.command_lib.compute import flags
 from googlecloudsdk.command_lib.compute.instance_templates import flags as instance_templates_flags
+from googlecloudsdk.command_lib.compute.instance_templates import mesh_mode_aux_data
 from googlecloudsdk.command_lib.compute.instances import flags as instances_flags
 from googlecloudsdk.command_lib.compute.sole_tenancy import flags as sole_tenancy_flags
 from googlecloudsdk.command_lib.compute.sole_tenancy import util as sole_tenancy_util
 from googlecloudsdk.command_lib.util.args import labels_util
+
+import six
 
 _INSTANTIATE_FROM_VALUES = [
     'attach-read-only',
@@ -45,18 +50,21 @@ _INSTANTIATE_FROM_VALUES = [
 ]
 
 
-def _CommonArgs(parser,
-                release_track,
-                support_source_instance,
-                support_local_ssd_size=False,
-                support_shielded_vms=False,
-                support_kms=False,
-               ):
+def _CommonArgs(
+    parser,
+    release_track,
+    support_source_instance,
+    support_local_ssd_size=False,
+    support_kms=False,
+    support_resource_policy=False,
+    support_min_node_cpu=False
+):
   """Adding arguments applicable for creating instance templates."""
   parser.display_info.AddFormat(instance_templates_flags.DEFAULT_LIST_FORMAT)
   metadata_utils.AddMetadataArgs(parser)
   instances_flags.AddDiskArgs(parser, enable_kms=support_kms)
-  instances_flags.AddCreateDiskArgs(parser, enable_kms=support_kms)
+  instances_flags.AddCreateDiskArgs(parser, enable_kms=support_kms,
+                                    resource_policy=support_resource_policy)
   if support_local_ssd_size:
     instances_flags.AddLocalSsdArgsWithSize(parser)
   else:
@@ -74,12 +82,15 @@ def _CommonArgs(parser,
   instances_flags.AddCustomMachineTypeArgs(parser)
   instances_flags.AddImageArgs(parser)
   instances_flags.AddNetworkArgs(parser)
-  if support_shielded_vms:
-    instances_flags.AddShieldedVMConfigArgs(parser)
+  instances_flags.AddShieldedInstanceConfigArgs(parser)
   labels_util.AddCreateLabelsFlags(parser)
   instances_flags.AddNetworkTierArgs(parser, instance=True)
+  instances_flags.AddPrivateNetworkIpArgs(parser)
 
   sole_tenancy_flags.AddNodeAffinityFlagToParser(parser)
+
+  if support_min_node_cpu:
+    instances_flags.AddMinNodeCpuArg(parser)
 
   flags.AddRegionFlag(
       parser,
@@ -128,15 +139,24 @@ def _CommonArgs(parser,
         """.format(', '.join(_INSTANTIATE_FROM_VALUES)),
     )
 
+  instances_flags.AddReservationAffinityGroup(
+      parser,
+      group_text="""\
+Specifies the reservation for instances created from this template.
+""",
+      affinity_text="""\
+The type of reservation for instances created from this template.
+""")
+
   parser.display_info.AddCacheUpdater(completers.InstanceTemplatesCompleter)
 
 
-def _ValidateInstancesFlags(args, support_kms=False):
+def _ValidateInstancesFlags(args, support_kms=False,):
   """Validate flags for instance template that affects instance creation.
 
   Args:
       args: argparse.Namespace, An object that contains the values for the
-          arguments specified in the .Args() method.
+        arguments specified in the .Args() method.
       support_kms: If KMS is supported.
   """
   instances_flags.ValidateDiskCommonFlags(args)
@@ -146,6 +166,7 @@ def _ValidateInstancesFlags(args, support_kms=False):
   instances_flags.ValidateNicFlags(args)
   instances_flags.ValidateServiceAccountAndScopeArgs(args)
   instances_flags.ValidateAcceleratorArgs(args)
+  instances_flags.ValidateReservationAffinityGroup(args)
 
 
 def _AddSourceInstanceToTemplate(
@@ -181,7 +202,7 @@ def _AddSourceInstanceToTemplate(
   instance_template.properties = None
 
 
-def BuildShieldedVMConfigMessage(messages, args):
+def BuildShieldedInstanceConfigMessage(messages, args):
   """Common routine for creating instance template.
 
   Build a shielded VM config message.
@@ -193,21 +214,21 @@ def BuildShieldedVMConfigMessage(messages, args):
   Returns:
       A shielded VM config message.
   """
-  # Set the default values for ShieldedVmConfig parameters
+  # Set the default values for ShieldedInstanceConfig parameters
 
-  shielded_vm_config_message = None
+  shielded_instance_config_message = None
   enable_secure_boot = None
   enable_vtpm = None
   enable_integrity_monitoring = None
   if not (hasattr(args, 'shielded_vm_secure_boot') or
           hasattr(args, 'shielded_vm_vtpm') or
           hasattr(args, 'shielded_vm_integrity_monitoring')):
-    return shielded_vm_config_message
+    return shielded_instance_config_message
 
   if (not args.IsSpecified('shielded_vm_secure_boot') and
       not args.IsSpecified('shielded_vm_vtpm') and
       not args.IsSpecified('shielded_vm_integrity_monitoring')):
-    return shielded_vm_config_message
+    return shielded_instance_config_message
 
   if args.shielded_vm_secure_boot is not None:
     enable_secure_boot = args.shielded_vm_secure_boot
@@ -216,20 +237,117 @@ def BuildShieldedVMConfigMessage(messages, args):
   if args.shielded_vm_integrity_monitoring is not None:
     enable_integrity_monitoring = args.shielded_vm_integrity_monitoring
   # compute message for shielded VM configuration.
-  shielded_vm_config_message = instance_utils.CreateShieldedVmConfigMessage(
-      messages,
-      enable_secure_boot,
-      enable_vtpm,
-      enable_integrity_monitoring)
+  shielded_instance_config_message = instance_utils.CreateShieldedInstanceConfigMessage(
+      messages, enable_secure_boot, enable_vtpm, enable_integrity_monitoring)
 
-  return shielded_vm_config_message
+  return shielded_instance_config_message
+
+
+def BuildConfidentialInstanceConfigMessage(messages, args):
+  """Build a Confidential Instance Config message.
+
+  Args:
+      messages: The client messages.
+      args: the arguments passed to the test.
+
+  Returns:
+      A Confidential Instance Config message.
+  """
+  confidential_instance_config_message = None
+  enable_confidential_compute = False
+  if not (hasattr(args, 'confidential_compute') and
+          args.IsSpecified('confidential_compute')):
+    return confidential_instance_config_message
+
+  if args.confidential_compute is not None and (isinstance(
+      args.confidential_compute, bool)):
+    enable_confidential_compute = args.confidential_compute
+  confidential_instance_config_message = (
+      instance_utils.CreateConfidentialInstanceMessage(
+          messages, enable_confidential_compute))
+  return confidential_instance_config_message
+
+
+def PackageLabels(labels_cls, labels):
+  # Sorted for test stability
+  return labels_cls(additionalProperties=[
+      labels_cls.AdditionalProperty(key=key, value=value)
+      for key, value in sorted(six.iteritems(labels))])
+
+
+# Function copied from labels_util.
+# Temporary fix for adoption tracking of Managed Envoy.
+# TODO(b/146051298) Remove this fix when structured metadata is available.
+def ParseCreateArgsWithMeshMode(args, labels_cls, labels_dest='labels'):
+  """Initializes labels based on args and the given class."""
+  labels = getattr(args, labels_dest)
+  if getattr(args, 'mesh',
+             False) and args.mesh['mode'] == mesh_mode_aux_data.MeshModes.ON:
+    if labels is None:
+      labels = collections.OrderedDict()
+    labels['mesh-mode'] = 'on'
+
+  if labels is None:
+    return None
+  return PackageLabels(labels_cls, labels)
+
+
+def AddMeshArgsToMetadata(args):
+  """Inserts the Mesh mode arguments provided by the user to the instance metadata.
+
+  Args:
+      args: argparse.Namespace, An object that contains the values for the
+        arguments specified in the .Args() method.
+  """
+  if getattr(args, 'mesh', False):
+    instance_templates_flags.ValidateMeshModeFlags(args)
+
+    mesh_mode_config = collections.OrderedDict()
+
+    # add --mesh flag data to metadata.
+    mesh_mode_config['mode'] = args.mesh['mode']
+    if 'workload-ports' in args.mesh:
+      # convert list of strings to list of integers.
+      workload_ports = list(map(int, args.mesh['workload-ports'].split(';')))
+      # find unique ports by converting list of integers to set of integers.
+      unique_workload_ports = set(workload_ports)
+      # convert it back to list of integers.
+      # this is done to make it JSON serializable.
+      workload_ports = list(unique_workload_ports)
+      mesh_mode_config['service'] = {
+          'workload-ports': workload_ports,
+      }
+
+    # add --mesh_labels flag to metadata as described by go/gce-envoy-gcloud
+    if getattr(args, 'mesh_labels', False):
+      mesh_mode_config['labels'] = args.mesh_labels
+
+    # add --mesh-proxy-config flag to metadata
+    # as described by go/gce-envoy-gcloud
+    if getattr(args, 'mesh_proxy_config', False):
+      mesh_mode_config['proxy-spec'] = {
+          'trafficdirector-config': args.mesh_proxy_config
+      }
+
+    if args.mesh['mode'] == mesh_mode_aux_data.MeshModes.ON:
+      if 'startup-script' not in args.metadata:
+        args.metadata['startup-script'] = mesh_mode_aux_data.startup_script
+      else:
+        args.metadata['startup-script'] = (
+            mesh_mode_aux_data.startup_script + '\n' +
+            args.metadata['startup-script'][mesh_mode_aux_data.shebang_len:])
+
+      args.metadata['enable-guest-attributes'] = 'TRUE'
+
+    args.metadata['gce-mesh'] = json.dumps(mesh_mode_config)
 
 
 def _RunCreate(compute_api,
                args,
                support_source_instance,
-               support_shielded_vms=False,
-               support_kms=False):
+               support_kms=False,
+               support_min_node_cpu=False,
+               support_confidential_compute=False):
   """Common routine for creating instance template.
 
   This is shared between various release tracks.
@@ -237,16 +355,19 @@ def _RunCreate(compute_api,
   Args:
       compute_api: The compute api.
       args: argparse.Namespace, An object that contains the values for the
-          arguments specified in the .Args() method.
+        arguments specified in the .Args() method.
       support_source_instance: indicates whether source instance is supported.
-      support_shielded_vms: Indicate whether a shielded vm config is supported
-      or not.
       support_kms: Indicate whether KMS is integrated or not.
+      support_min_node_cpu: Indicate whether the --min-node-cpu flag for
+        sole tenancy overcommit is supported.
+      support_confidential_compute: Indicate whether confidential compute is
+        supported.
 
   Returns:
       A resource object dispatched by display.Displayer().
   """
-  _ValidateInstancesFlags(args, support_kms=support_kms)
+  _ValidateInstancesFlags(
+      args, support_kms=support_kms)
   instances_flags.ValidateNetworkTierArgs(args)
 
   client = compute_api.client
@@ -257,6 +378,8 @@ def _RunCreate(compute_api,
   instance_template_ref = (
       Create.InstanceTemplateArg.ResolveAsResource(
           args, compute_api.resources))
+
+  AddMeshArgsToMetadata(args)
 
   metadata = metadata_utils.ConstructMetadataMessage(
       client.messages,
@@ -279,6 +402,7 @@ def _RunCreate(compute_api,
             scope_lister=flags.GetDefaultScopeLister(client),
             messages=client.messages,
             network=args.network,
+            private_ip=args.private_network_ip,
             region=args.region,
             subnet=args.subnet,
             address=(instance_template_utils.EPHEMERAL_ADDRESS
@@ -287,21 +411,29 @@ def _RunCreate(compute_api,
             network_tier=network_tier)
     ]
 
-  # Compute the shieldedVmConfig message.
-  if support_shielded_vms:
-    shieldedvm_config_message = BuildShieldedVMConfigMessage(
-        messages=client.messages,
-        args=args)
+  # Compute the shieldedInstanceConfig message.
+  shieldedinstance_config_message = BuildShieldedInstanceConfigMessage(
+      messages=client.messages, args=args)
+
+  if support_confidential_compute:
+    confidential_instance_config_message = (
+        BuildConfidentialInstanceConfigMessage(
+            messages=client.messages, args=args))
 
   node_affinities = sole_tenancy_util.GetSchedulingNodeAffinityListFromArgs(
       args, client.messages)
+
+  min_node_cpu = None
+  if support_min_node_cpu and args.IsSpecified('min_node_cpu'):
+    min_node_cpu = args.min_node_cpu
 
   scheduling = instance_utils.CreateSchedulingMessage(
       messages=client.messages,
       maintenance_policy=args.maintenance_policy,
       preemptible=args.preemptible,
       restart_on_failure=args.restart_on_failure,
-      node_affinities=node_affinities)
+      node_affinities=node_affinities,
+      min_node_cpu=min_node_cpu)
 
   if args.no_service_account:
     service_account = None
@@ -387,7 +519,8 @@ def _RunCreate(compute_api,
       machine_type=args.machine_type,
       custom_cpu=args.custom_cpu,
       custom_memory=args.custom_memory,
-      ext=getattr(args, 'custom_extensions', None))
+      ext=getattr(args, 'custom_extensions', None),
+      vm_type=getattr(args, 'custom_vm_type', None))
 
   guest_accelerators = (
       instance_template_utils.CreateAcceleratorConfigMessages(
@@ -410,14 +543,20 @@ def _RunCreate(compute_api,
       name=instance_template_ref.Name(),
   )
 
-  if support_shielded_vms:
-    instance_template.properties.shieldedVmConfig = shieldedvm_config_message
+  instance_template.properties.shieldedInstanceConfig = shieldedinstance_config_message
+
+  instance_template.properties.reservationAffinity = instance_utils.GetReservationAffinity(
+      args, client)
+
+  if support_confidential_compute:
+    instance_template.properties.confidentialInstanceConfig = (
+        confidential_instance_config_message)
 
   request = client.messages.ComputeInstanceTemplatesInsertRequest(
       instanceTemplate=instance_template,
       project=instance_template_ref.project)
 
-  request.instanceTemplate.properties.labels = labels_util.ParseCreateArgs(
+  request.instanceTemplate.properties.labels = ParseCreateArgsWithMeshMode(
       args, client.messages.InstanceProperties.LabelsValue)
 
   _AddSourceInstanceToTemplate(
@@ -443,6 +582,7 @@ class Create(base.CreateCommand):
   """
   _support_source_instance = True
   _support_kms = True
+  _support_min_node_cpu = False
 
   @classmethod
   def Args(cls, parser):
@@ -450,7 +590,8 @@ class Create(base.CreateCommand):
         parser,
         release_track=base.ReleaseTrack.GA,
         support_source_instance=cls._support_source_instance,
-        support_kms=cls._support_kms
+        support_kms=cls._support_kms,
+        support_min_node_cpu=cls._support_min_node_cpu
     )
     instances_flags.AddMinCpuPlatformArgs(parser, base.ReleaseTrack.GA)
 
@@ -468,7 +609,8 @@ class Create(base.CreateCommand):
         base_classes.ComputeApiHolder(base.ReleaseTrack.GA),
         args,
         support_source_instance=self._support_source_instance,
-        support_kms=self._support_kms
+        support_kms=self._support_kms,
+        support_min_node_cpu=self._support_min_node_cpu
     )
 
 
@@ -487,8 +629,9 @@ class CreateBeta(Create):
   instances in any zone.
   """
   _support_source_instance = True
-  _support_shielded_vms = True
   _support_kms = True
+  _support_resource_policy = True
+  _support_min_node_cpu = True
 
   @classmethod
   def Args(cls, parser):
@@ -497,8 +640,9 @@ class CreateBeta(Create):
         release_track=base.ReleaseTrack.BETA,
         support_local_ssd_size=False,
         support_source_instance=cls._support_source_instance,
-        support_shielded_vms=cls._support_shielded_vms,
-        support_kms=cls._support_kms
+        support_kms=cls._support_kms,
+        support_resource_policy=cls._support_resource_policy,
+        support_min_node_cpu=cls._support_min_node_cpu
     )
     instances_flags.AddMinCpuPlatformArgs(parser, base.ReleaseTrack.BETA)
 
@@ -516,9 +660,8 @@ class CreateBeta(Create):
         base_classes.ComputeApiHolder(base.ReleaseTrack.BETA),
         args=args,
         support_source_instance=self._support_source_instance,
-        support_shielded_vms=self._support_shielded_vms,
-        support_kms=self._support_kms
-    )
+        support_kms=self._support_kms,
+        support_min_node_cpu=self._support_min_node_cpu)
 
 
 @base.ReleaseTracks(base.ReleaseTrack.ALPHA)
@@ -536,8 +679,10 @@ class CreateAlpha(Create):
   instances in any zone.
   """
   _support_source_instance = True
-  _support_shielded_vms = True
   _support_kms = True
+  _support_resource_policy = True
+  _support_min_node_cpu = True
+  _support_confidential_compute = True
 
   @classmethod
   def Args(cls, parser):
@@ -546,11 +691,13 @@ class CreateAlpha(Create):
         release_track=base.ReleaseTrack.ALPHA,
         support_local_ssd_size=True,
         support_source_instance=cls._support_source_instance,
-        support_shielded_vms=cls._support_shielded_vms,
-        support_kms=cls._support_kms
-    )
+        support_kms=cls._support_kms,
+        support_resource_policy=cls._support_resource_policy,
+        support_min_node_cpu=cls._support_min_node_cpu)
     instances_flags.AddLocalNvdimmArgs(parser)
     instances_flags.AddMinCpuPlatformArgs(parser, base.ReleaseTrack.ALPHA)
+    instances_flags.AddConfidentialComputeArgs(parser)
+    instance_templates_flags.AddMeshModeConfigArgs(parser)
 
   def Run(self, args):
     """Creates and runs an InstanceTemplates.Insert request.
@@ -566,6 +713,27 @@ class CreateAlpha(Create):
         base_classes.ComputeApiHolder(base.ReleaseTrack.ALPHA),
         args=args,
         support_source_instance=self._support_source_instance,
-        support_shielded_vms=self._support_shielded_vms,
-        support_kms=self._support_kms
-    )
+        support_kms=self._support_kms,
+        support_min_node_cpu=self._support_min_node_cpu,
+        support_confidential_compute=self._support_confidential_compute)
+
+
+DETAILED_HELP = {
+    'brief':
+        'Create a Compute Engine virtual machine instance template',
+    'DESCRIPTION':
+        '*{command}* facilitates the creation of Google Compute '
+        'Engine virtual machine instance templates. Instance '
+        'templates are global resources, and can be used to create '
+        'instances in any zone.',
+    'EXAMPLES':
+        """\
+        To create an instance template named 'INSTANCE-TEMPLATE' with the 'n2'
+        vm type, '9GB' memory, and 2 CPU cores, run:
+
+          $ {command} INSTANCE-TEMPLATE --custom-vm-type=n2 --custom-cpu=2 --custom-memory=9GB
+        """
+}
+
+
+Create.detailed_help = DETAILED_HELP

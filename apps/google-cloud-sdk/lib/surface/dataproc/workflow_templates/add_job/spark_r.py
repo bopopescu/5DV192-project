@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2015 Google Inc. All Rights Reserved.
+# Copyright 2015 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,15 +23,28 @@ from googlecloudsdk.calliope import base
 from googlecloudsdk.command_lib.dataproc import workflow_templates
 from googlecloudsdk.command_lib.dataproc.jobs import spark_r
 
+DETAILED_HELP = {
+    'EXAMPLES':
+        """\
+      To add a SparkR job executing file 'test.r' to a the workflow template
+      'my-workflow-template' in region 'us-central1' with step-id 'my-step-id'
+      , run:
 
-@base.ReleaseTracks(base.ReleaseTrack.ALPHA, base.ReleaseTrack.BETA)
+        $ {command} test.r --step-id=my-step_id --workflow-template=my-workflow-template --region=us-central1
+      """,
+}
+
+
 class SparkR(spark_r.SparkRBase, base.Command):
   """Add a SparkR job to the workflow template."""
 
-  @staticmethod
-  def Args(parser):
+  detailed_help = DETAILED_HELP
+
+  @classmethod
+  def Args(cls, parser):
     spark_r.SparkRBase.Args(parser)
-    workflow_templates.AddWorkflowTemplatesArgs(parser)
+    dataproc = dp.Dataproc(cls.ReleaseTrack())
+    workflow_templates.AddWorkflowTemplatesArgs(parser, dataproc.api_version)
 
   def ConfigureJob(self, messages, job, files_by_type, args):
     spark_r.SparkRBase.ConfigureJob(

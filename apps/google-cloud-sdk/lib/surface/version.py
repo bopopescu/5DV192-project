@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2013 Google Inc. All Rights Reserved.
+# Copyright 2013 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,11 +28,16 @@ from googlecloudsdk.core.updater import update_manager
 
 @base.ReleaseTracks(base.ReleaseTrack.GA)
 class Version(base.Command):
-  """Print version information for Cloud SDK components.
+  """Print version information for Cloud SDK components."""
 
-  The {command} command prints version information for each installed Cloud SDK
-  components and prints a message if updates are available.
-  """
+  detailed_help = {
+      'EXAMPLES': """
+          To print the version information for each installed Cloud SDK
+          components and print a message if updates are available, run:
+
+            $ {command}
+          """,
+  }
 
   category = base.SDK_TOOLS_CATEGORY
 

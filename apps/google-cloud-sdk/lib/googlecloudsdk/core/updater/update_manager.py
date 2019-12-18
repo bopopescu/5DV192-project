@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2013 Google Inc. All Rights Reserved.
+# Copyright 2013 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import subprocess
 import sys
 import textwrap
 
+from googlecloudsdk.core import argv_utils
 from googlecloudsdk.core import config
 from googlecloudsdk.core import exceptions
 from googlecloudsdk.core import execution_utils
@@ -1248,7 +1249,7 @@ To revert your SDK to the previously installed version, you may run:
 
     backup_has_bundled_python = (
         BUNDLED_PYTHON_COMPONENT in
-        install_state.BackupInstallationState().InstalledComponents())  # pytype: disable=attribute-error
+        install_state.BackupInstallationState().InstalledComponents())
     if self.IsPythonBundled() and not backup_has_bundled_python:
       log.warning(BUNDLED_PYTHON_REMOVAL_WARNING)
 
@@ -1346,7 +1347,7 @@ To revert your SDK to the previously installed version, you may run:
 
     # shell out to install script
     installed_component_ids = sorted(install_state.InstalledComponents().keys())
-    env = dict(os.environ)
+    env = encoding.EncodeEnv(dict(os.environ))
     encoding.SetEncodedValue(env, 'CLOUDSDK_REINSTALL_COMPONENTS',
                              ','.join(installed_component_ids))
     installer_path = os.path.join(staging_state.sdk_root,
@@ -1422,10 +1423,11 @@ prompt, or run:
            components=' '.join(missing_components)))
     except SystemExit:
       # This happens when updating using bundled Python.
-      self.__Write(log.status,
-                   'Installing component in a new window.\n\n'
-                   'Please re-run this command when installation is complete.\n'
-                   '    $ {0}'.format(' '.join(['gcloud'] + sys.argv[1:])))
+      self.__Write(
+          log.status, 'Installing component in a new window.\n\n'
+          'Please re-run this command when installation is complete.\n'
+          '    $ {0}'.format(' '.join(['gcloud'] +
+                                      argv_utils.GetDecodedArgv()[1:])))
       raise
 
     # Restart the original command.
@@ -1552,7 +1554,7 @@ def RestartCommand(command=None, args=None, python=None, block=True):
       terminate before continuing.
   """
   command = command or config.GcloudPath()
-  command_args = args or sys.argv[1:]
+  command_args = args or argv_utils.GetDecodedArgv()[1:]
   args = execution_utils.ArgsForPythonTool(command, *command_args,
                                            python=python)
   args = [encoding.Encode(a) for a in args]

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*- #
-# Copyright 2017 Google Inc. All Rights Reserved.
+# Copyright 2017 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -38,15 +38,15 @@ class Scp(base.Command):
       'EXAMPLES': """\
           To copy one file from a remote instance to the local machine, run:
 
-              $ {command} --service s1 --version v1 i1:remote_file local_file
+              $ {command} --service=s1 --version=v1 i1:remote_file local_file
 
           To copy several local files to a remote instance, run:
 
-              $ {command} --service s1 --version v1 local_1 local_1 i1:remote_dir
+              $ {command} --service=s1 --version=v1 local_1 local_1 i1:remote_dir
 
           To use recursive copy, run:
 
-              $ {command} --service s1 --version v1 --recurse local_dir i1:remote_dir
+              $ {command} --service=s1 --version=v1 --recurse local_dir i1:remote_dir
           """,
   }
 
