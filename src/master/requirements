@@ -11,3 +11,5 @@ google-api-core==1.14.3
 pyasn1==0.4.8
 google-cloud-storage==1.23.0
 google-cloud-logger==0.2.1
+
+fabric==2.5.0

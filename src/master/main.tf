@@ -18,12 +18,30 @@ resource "google_compute_instance" "vm_instance" {
 
   network_interface {
     # A default network is created for all GCP projects
-    network       = "${google_compute_network.vpc_network.self_link}"
+    network       = google_compute_network.vpc_network.self_link
     access_config {
     }
   }
 
 }
+
+resource "google_compute_firewall" "default" {
+  name    = "master-firewall"
+  network = google_compute_network.vpc_network.name
+
+  allow {
+    protocol = "icmp"
+  }
+
+  allow {
+    protocol = "tcp"
+    ports    = ["80", "8080", "800", "1000-2000"]
+  }
+
+  source_tags = ["web"]
+
+}
+
 
 resource "google_compute_network" "vpc_network" {
   name                    = "terraform-network"
