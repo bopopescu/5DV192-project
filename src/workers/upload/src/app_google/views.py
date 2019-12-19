@@ -35,7 +35,7 @@ class GoogleBucket:
 
         client = self.storage_client
         bucket = client.bucket(self.bucket_name)
-        blob = bucket.blob(filename)
+        blob = bucket.blob("uploaded/"+ filename)
 
         blob.upload_from_string(
             file_stream,

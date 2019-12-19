@@ -50,7 +50,7 @@ LOG_CONFIG = {
     }
 }
 
-config.dictConfig(LOG_CONFIG)  # load log config from dict
+#config.dictConfig(LOG_CONFIG)  # load log config from dict
 logger = logging.getLogger("root")  # get root logger instance
 FlaskGoogleCloudLogger(app)
 

@@ -7,11 +7,12 @@ from app_main.utils import json_response
 
 
 
-@app_google.route('/google-bucket/upload', methods=['POST'])
+@app_google.route('/upload', methods=['POST'])
 def form_example():
 
     google_storage = GoogleBucket('umu-5dv192-project-eka')
     print(google_storage.list_buckets_names())
+
 
     if request.method == 'POST':
 
