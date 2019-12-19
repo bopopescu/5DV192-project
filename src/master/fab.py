@@ -1,9 +1,18 @@
-from fabric.api import *
+from fabric import Connection
+import subprocess
 
-env.user = 'nygrenkaj'
-env.hosts = ['35.190.177.143']
-env.use_ssh_config = True
+#
+# config
+#
+HOSTNAME = "master-2"
+ZONE = "europe-north1-a"
+SSH_USERNAME = 'c15knn'
 
-def deploy():
+#
+# runtime script
+#
+host_master = str(subprocess.check_output(['./get-hostname.sh', HOSTNAME, ZONE]).strip().decode("utf-8"))
+master = Connection(host_master, user=SSH_USERNAME)
+result = master.run('hostname')
 
-    run('ls')
+print(result)

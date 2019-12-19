@@ -1,3 +1,7 @@
+/*
+https://collabnix.com/5-minutes-to-run-your-first-docker-container-on-google-cloud-platform-using-terraform/
+*/
+
 provider "google" {
   credentials = "${file("credentials.json")}"
   project     = "testproject-261510"
@@ -7,7 +11,7 @@ provider "google" {
 
 resource "google_compute_instance" "vm_instance" {
 
-  name         = "master-1"
+  name         = "master-2"
   machine_type = "n1-standard-1"
 
   boot_disk {
@@ -23,6 +27,12 @@ resource "google_compute_instance" "vm_instance" {
     }
   }
 
+  metadata = {
+   ssh-keys = "c15knn:${file("~/.ssh/id_rsa.pub")}"
+ }
+
+  metadata_startup_script = "${file("scripts/remote/startup.sh")}"
+
 }
 
 resource "google_compute_firewall" "default" {
@@ -35,10 +45,11 @@ resource "google_compute_firewall" "default" {
 
   allow {
     protocol = "tcp"
-    ports    = ["80", "8080", "800", "1000-2000"]
+    ports    = ["80", "8080", "800", "1000-2000", "22"]
   }
 
   source_tags = ["web"]
+  source_ranges = ["0.0.0.0/0"]
 
 }
 
