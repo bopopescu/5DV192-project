@@ -34,7 +34,7 @@ let create = () => {
         return { headers: {} }
     };
 
-    const transcodeSend = data => api.post("/upload", data, headers());
+    const transcodeSend = data => api.post("/split", data, headers());
 
     return {
         transcodeSend,

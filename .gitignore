@@ -20,4 +20,4 @@ credentials.json
 */credentials.json
 *.mp4
 *.mkv
-
+/google-cloud-sdk/*
