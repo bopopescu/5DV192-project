@@ -35,3 +35,10 @@ class RabbitMQ(object):
     def close_connection(self):
         print("Connection closed")
         self.connection.close()
+
+
+
+# callback example
+# def callback(ch, method, properties, body):
+#     print(" [x] Received %r" % body)
+#     ch.basic_ack(delivery_tag = method.delivery_tag) #delivery ack
