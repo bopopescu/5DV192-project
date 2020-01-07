@@ -2,7 +2,7 @@ import apisauce from "apisauce";
 import Cookie from "universal-cookie";
 
 const API_URL= "http://" + window.location.hostname + ":5000";
-const API_EXTERNAL_URL= "http://" + "34.74.240.103" + ":5000";
+const API_EXTERNAL_URL= "https://35.223.77.15/" + ":5000";
 
 let create = () => {
 
@@ -21,7 +21,7 @@ let create = () => {
     });*/
 
     const api = apisauce.create({
-        baseURL: API_URL,
+        baseURL: API_EXTERNAL_URL,
         headers: {
             Accept: "application/json",
             "Accept-Language": "sv",
