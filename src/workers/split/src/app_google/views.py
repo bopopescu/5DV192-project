@@ -1,4 +1,6 @@
 import os
+from os import listdir
+from os.path import isfile, join
 
 from google.cloud import storage
 
@@ -55,3 +57,29 @@ class GoogleBucket:
         bucket = self.storage_client.get_bucket(self.bucket_name)
         blob = bucket.blob(blob_name)
         return blob.delete()
+
+    def upload_blob(self, bucket_name, source_file_name, destination_blob_name):
+        """Uploads a file to the bucket."""
+        # bucket_name = "your-bucket-name"
+        # source_file_name = "local/path/to/file"
+        # destination_blob_name = "storage-object-name"
+
+        bucket = self.storage_client.bucket(bucket_name)
+        blob = bucket.blob(destination_blob_name)
+
+        blob.upload_from_filename(source_file_name)
+
+        print(
+            "File {} uploaded to {}.".format(
+                source_file_name, destination_blob_name
+            )
+        )
+
+    def upload_folder(self, bucket_name, source_folder, destination_folder):
+        """Upload files to GCP bucket."""
+        bucket = self.storage_client.bucket(bucket_name)
+        files = [f for f in listdir(source_folder) if isfile(join(source_folder, f))]
+        for file in files:
+            local_file = source_folder + "/" + file
+            blob = bucket.blob(destination_folder + "/" + file)
+            blob.upload_from_filename(local_file)
