@@ -57,6 +57,8 @@ def form_example():
         bucket.upload_folder(bucket_name, movie_folder, destination_folder)
         ###
 
+        #bucket.download_blob(bucket_name, "split", "examensguide.pdf", os.path.join(app.root_path, "download_dir"))
+
         listpath = os.path.join(app.root_path, uuid_filename)
         print("\nPATH: " + str(listpath))
         mylist = os.listdir(listpath)
