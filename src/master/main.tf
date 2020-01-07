@@ -11,7 +11,7 @@ provider "google" {
 
 resource "google_compute_instance" "vm_instance" {
 
-  name         = "master-2"
+  name         = "master-1"
   machine_type = "n1-standard-1"
 
   boot_disk {
@@ -31,7 +31,7 @@ resource "google_compute_instance" "vm_instance" {
    ssh-keys = "c15knn:${file("~/.ssh/id_rsa.pub")}"
  }
 
-  metadata_startup_script = "${file("scripts/remote/startup.sh")}"
+  metadata_startup_script = "${file("templates/init.sh")}"
 
 }
 
