@@ -2,6 +2,13 @@
 https://collabnix.com/5-minutes-to-run-your-first-docker-container-on-google-cloud-platform-using-terraform/
 */
 
+/*
+https://stackoverflow.com/questions/45359189/how-to-map-static-ip-to-terraform-google-compute-engine-instance
+access_config {
+      nat_ip = "130.251.4.123" // this adds regional static ip to VM
+    }
+*/
+
 provider "google" {
   credentials = "${file("../../../config/credentials.json")}"
   project     = "testproject-261510"
@@ -11,7 +18,8 @@ provider "google" {
 
 resource "google_compute_instance" "vm_instance" {
 
-  name         = "split"
+  count		   = 3
+  name         = "worker-split-${count.index}"
   machine_type = "n1-standard-1"
 
   boot_disk {
