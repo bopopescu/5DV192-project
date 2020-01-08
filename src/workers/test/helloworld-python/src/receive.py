@@ -5,7 +5,7 @@ import time
 
 
 connection = pika.BlockingConnection(
-    pika.ConnectionParameters(host='34.68.43.153'))
+    pika.ConnectionParameters(host='35.232.13.40'))
 channel = connection.channel()
 
 channel.queue_declare(queue='task_queue', durable=True)  # durable=True -> queue is now marked durable
