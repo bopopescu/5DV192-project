@@ -12,6 +12,8 @@ import logging
 from logging import config
 from flask_google_cloud_logger import FlaskGoogleCloudLogger
 
+
+
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'upload'
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
@@ -61,7 +63,9 @@ def log_request_time(_exception):
         " in {g.request_time:.5f}ms")
 
 
-
-
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=4999)
+
+    #SKAPA EN NY TRÅD INNAN HÄR
+    app.run(debug=True, host='0.0.0.0')
+
+
