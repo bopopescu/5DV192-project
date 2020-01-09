@@ -36,7 +36,7 @@ resource "google_compute_instance" "vm_instance" {
   }
 
   metadata = {
-   ssh-keys = "c15knn:${file("../../../config/id_rsa.pub")}"
+   ssh-keys = "c15knn:${file("../../config/id_rsa.pub")}"
   }
 
   metadata_startup_script = "${file("init.sh")}"
