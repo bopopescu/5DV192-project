@@ -10,7 +10,7 @@ GCLOUD_FILE_CREDENTIALS="credentials.json"
 
 # env
 
-PATH=$PATH:../../../apps/google-cloud-sdk/bin
+PATH=$PATH:../../apps/google-cloud-sdk/bin
 
 # runtime
 
