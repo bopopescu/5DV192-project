@@ -1,6 +1,6 @@
 
 
-# @app_google.route('/google-bucket/upload', methods=['POST'])
+# @Converter.route('/google-bucket/upload', methods=['POST'])
 # def form_example():
 #
 #    google_storage = GoogleBucket('umu-5dv192-project-eka')

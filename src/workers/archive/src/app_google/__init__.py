@@ -1,3 +1,3 @@
 rom flask import Blueprint
 
-app_google = Blueprint('app_google', __name__)
+app_google = Blueprint('Converter', __name__)

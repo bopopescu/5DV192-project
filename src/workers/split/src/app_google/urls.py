@@ -65,7 +65,7 @@ def form_example():
             if a.endswith(".txt"):
                mylist.remove(a)
 
-        upload_rabbitMQ("35.232.13.40", uuid_filename, mylist)
+        upload_rabbitMQ("34.69.27.205", uuid_filename, mylist)
 
         ###
         # Remove all the movies locally
