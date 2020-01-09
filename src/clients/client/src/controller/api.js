@@ -24,7 +24,7 @@ let create = () => {
     });*/
 
     const api = apisauce.create({
-        baseURL: URL,
+        baseURL: API_URL,
         headers: {
             Accept: "application/json",
             "Accept-Language": "sv",
