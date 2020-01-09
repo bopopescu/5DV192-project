@@ -5,7 +5,7 @@ https://collabnix.com/5-minutes-to-run-your-first-docker-container-on-google-clo
 /*
 https://stackoverflow.com/questions/45359189/how-to-map-static-ip-to-terraform-google-compute-engine-instance
 access_config {
-      nat_ip = "130.251.4.123" // this adds regional static ip to VM
+      nat_ip = "35.217.38.57" // this adds regional static ip to VM
     }
 */
 
@@ -32,6 +32,7 @@ resource "google_compute_instance" "vm_instance" {
     # A default network is created for all GCP projects
     network       = google_compute_network.vpc_network.self_link
     access_config {
+      nat_ip = "35.228.95.170"
     }
   }
 
