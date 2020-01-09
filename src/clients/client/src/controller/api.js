@@ -1,12 +1,15 @@
 import apisauce from "apisauce";
 import Cookie from "universal-cookie";
 
-const API_URL= "http://" + window.location.hostname + ":4999";
+const API_URL= "http://" + window.location.hostname + ":5000";
 const API_EXTERNAL_URL= "http://" + "35.228.95.170" + ":5000";
 
 let create = () => {
 
-    console.log(API_EXTERNAL_URL);
+    /* choose api url */
+    const URL = API_EXTERNAL_URL;
+
+    console.log(URL);
 
     new Cookie();
 

@@ -9,8 +9,6 @@ from .views import GoogleBucket
 from app_main.utils import json_response
 import subprocess
 
-RABBITMQ_IP = "35.228.95.170"
-
 
 @app_google.route('/split', methods=['POST', 'GET'])
 def form_example():
@@ -35,15 +33,8 @@ def form_example():
 
         file = request.files['file']
 
-        #bucket_name = "umu-5dv192-project-eka"
-        #bucket = GoogleBucket(bucket_name)
-        #save_path = os.path.join(app.root_path, "download_dir", "0fd667e8-32d8-11ea-aa26-54bf646b5610")
-        #bucket.download_files_in_folder(bucket_name, "split/0fd667e8-32d8-11ea-aa26-54bf646b5610/", save_path)
-        #merge_files_in_folder(upload_folder, save_path + "/0fd667e8-32d8-11ea-aa26-54bf646b5610.txt", save_path + "/0fd667e8-32d8-11ea-aa26-54bf646b5610.mp4")
-
         if file.filename == '':
             return json_response({"error": "invalid file name"}, 201)
-
         file.filename = secure_filename(file.filename)
         save_file_locally(file, upload_folder, file.filename)
 
@@ -67,13 +58,14 @@ def form_example():
         ###
 
 
+        #bucket.download_blob(bucket_name, "split", "examensguide.pdf", os.path.join(app.root_path, "download_dir"))
 
 
         mylist = os.listdir(movie_folder)
         for a in mylist:
             if a.endswith(".txt"):
                mylist.remove(a)
-        answer = upload_rabbitMQ(RABBITMQ_IP, uuid_filename, mylist)
+        answer = upload_rabbitMQ("35.232.13.40", uuid_filename, mylist)
         if answer == 1:
             print("Failed: to upload split to rabbit queue")
         else:
@@ -83,19 +75,8 @@ def form_example():
         # Remove all the movies locally
         path_script = os.path.join(app.root_path, "removeMovies.sh")
         subprocess.check_call([path_script, path_file, movie_folder])
-
         ###
         return json_response({"status": "success"}, 200)
-
-
-
-
-def merge_files_in_folder(upload_folder, merge_file_path, save_file_path):
-    path_script = os.path.join(upload_folder, "merge.sh")
-    subprocess.check_output([path_script, merge_file_path, save_file_path])
-
-
-
 
 
 def save_file_locally(file, folder, filename):

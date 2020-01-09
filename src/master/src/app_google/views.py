@@ -1,7 +1,6 @@
 import os
 from os import listdir
 from os.path import isfile, join
-from twisted.protocols.ftp import FileExistsError
 
 from google.cloud import storage
 
@@ -31,11 +30,6 @@ class GoogleBucket:
         return [bucket.name for bucket in self.storage_client.list_buckets()]
 
     def list_blobs(self):
-        """
-        Blobs = files
-        List all files in bycjet
-        :return:
-        """
         bucket = self.storage_client.get_bucket(self.bucket_name)
         return bucket.list_blobs()
 
@@ -105,22 +99,3 @@ class GoogleBucket:
                 source_object_path, save_path
             )
         )
-
-    def list_files_in_folder(self, bucket_name, folder_path):
-        bucket = self.storage_client.get_bucket(bucket_name)
-        blobs = list(bucket.list_blobs(prefix=folder_path))
-        return blobs
-
-    def download_files_in_folder(self, bucket_name, folder_path, save_path):
-        try:
-            # Create target Directory
-            os.mkdir(save_path)
-            print("Directory ", save_path, " Created ")
-        except FileExistsError:
-            print("Error - Directory ", save_path, " already exists")
-            return
-        blobs = self.list_files_in_folder(bucket_name, folder_path)
-        print(folder_path)
-        for blob in blobs:
-            file_name = blob.name.replace(folder_path, '')
-            blob.download_to_filename(save_path + "/" + file_name)
