@@ -1,4 +1,7 @@
 #!/bin/bash
 sudo apt-get update
-sudo apt-get --yes --force-yes install nginx
-
+sudo curl -sSL https://get.docker.com/ | sh
+sudo systemctl start docker
+#sudo docker run -d -p 80:80 nginx
+sudo docker run -d -p 5000:5000 gcr.io/testproject-261510/master:latest
+sudo docker run -it --rm --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3-management

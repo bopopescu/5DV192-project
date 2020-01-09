@@ -2,6 +2,13 @@
 https://collabnix.com/5-minutes-to-run-your-first-docker-container-on-google-cloud-platform-using-terraform/
 */
 
+/*
+https://stackoverflow.com/questions/45359189/how-to-map-static-ip-to-terraform-google-compute-engine-instance
+access_config {
+      nat_ip = "130.251.4.123" // this adds regional static ip to VM
+    }
+*/
+
 provider "google" {
   credentials = "${file("credentials.json")}"
   project     = "testproject-261510"
@@ -11,7 +18,8 @@ provider "google" {
 
 resource "google_compute_instance" "vm_instance" {
 
-  name         = "master-1"
+  count		   = 1
+  name         = "master-${count.index}"
   machine_type = "n1-standard-1"
 
   boot_disk {
@@ -28,15 +36,15 @@ resource "google_compute_instance" "vm_instance" {
   }
 
   metadata = {
-   ssh-keys = "c15knn:${file("~/.ssh/id_rsa.pub")}"
- }
+   ssh-keys = "c15knn:${file("../../../config/id_rsa.pub")}"
+  }
 
-  metadata_startup_script = "${file("templates/init.sh")}"
+  metadata_startup_script = "${file("init.sh")}"
 
 }
 
 resource "google_compute_firewall" "default" {
-  name    = "master-firewall"
+  name    = "firewall-master"
   network = google_compute_network.vpc_network.name
 
   allow {
@@ -45,7 +53,7 @@ resource "google_compute_firewall" "default" {
 
   allow {
     protocol = "tcp"
-    ports    = ["80", "8080", "800", "1000-2000", "22"]
+    ports    = ["80", "8080", "800", "1000-2000", "5000", "22", "5672", "15672"]
   }
 
   source_tags = ["web"]
@@ -55,6 +63,6 @@ resource "google_compute_firewall" "default" {
 
 
 resource "google_compute_network" "vpc_network" {
-  name                    = "terraform-network"
+  name                    = "network-master"
   auto_create_subnetworks = "true"
 }
