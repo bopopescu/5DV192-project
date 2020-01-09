@@ -4,7 +4,7 @@
 
 GCLOUD_USERNAME="superadmin"
 GCLOUD_PROJECT="testproject-261510"
-GCLOUD_BUILD_NAME="split"
+GCLOUD_BUILD_NAME="master"
 
 GCLOUD_FILE_CREDENTIALS="credentials.json"
 
