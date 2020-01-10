@@ -1,22 +1,71 @@
 import subprocess
+from datetime import timedelta
 
 import pika
 import time
 import os
-
 from merge.views import GoogleBucket
 
 from merge.RabbitMQ import RabbitMQ
+from google.cloud._helpers import UTC
 
 RABBITMQ_IP = "35.228.95.170"
 APP_PATH = os.path.dirname(__file__) + "/../"
 
 class Merge:
 
+
+
+    #Hämta jobb från rabbitMQ
+    #Går det ej att jobba lägg tillbaka i KÖ
+    #Är jobbet ok merge ta sen bort jobb
+    #OM jobbet är förgammal - ta bort från list (delete files?)
+
+    def check_merge(self, bucket_name, uuid_name):
+        bucket = GoogleBucket(bucket_name)
+        folder_path = "merged/" + uuid_name
+        file_name = uuid_name + ".txt"
+        save_path = APP_PATH + "download_dir"
+        bucket.download_blob(bucket_name, folder_path, file_name, save_path)
+        qbfile = open(save_path + "/" + file_name, "r")
+
+        self.file_has_expired(bucket_name, folder_path + "/" + file_name, 60)
+
+
+
+
+        start = "file './"
+        end = "'"
+        for aline in qbfile:
+            temp = aline[aline.find(start) + len(start):aline.rfind(end)]
+            if not bucket.file_exist(bucket_name, folder_path, temp):
+                print("Alla filer för merge finns ej")
+                qbfile.close()
+                return
+        qbfile.close()
+        print("Alla filer för merge finns")
+
+
+
+    def file_has_expired(self,bucket_name, file_path, time_to_live_min):
+        import datetime
+        bucket = GoogleBucket(bucket_name)
+        now = datetime.datetime.utcnow().replace(tzinfo=UTC)
+        g_time = bucket.get_blob_time_created(bucket_name, file_path)
+        expired_time = g_time + timedelta(minutes=time_to_live_min)
+        return expired_time < now
+
+
+
+
     def start_rabbitMQ(self):
         bucket_name = "umu-5dv192-project-eka"
-        upload_folder = os.path.join(APP_PATH, "download_dir")
-        self.merge_movie_from_uuid(bucket_name, upload_folder, "0232c6fc-32f8-11ea-a64d-54bf646b5835")
+        self.check_merge(bucket_name, "0232c6fc-32f8-11ea-a64d-54bf646b5835")
+
+
+
+        #upload_folder = os.path.join(APP_PATH, "download_dir")
+        #self.merge_movie_from_uuid(bucket_name, upload_folder, "0232c6fc-32f8-11ea-a64d-54bf646b5835")
 
         #rabbitMQ = RabbitMQ(RABBITMQ_IP)
         #rabbitMQ.create_channel('task_queue')

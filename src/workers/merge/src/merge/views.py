@@ -1,8 +1,8 @@
 import os
+from datetime import datetime
 from os import listdir
 from os.path import isfile, join
 from twisted.protocols.ftp import FileExistsError
-
 from google.cloud import storage
 
 
@@ -51,7 +51,6 @@ class GoogleBucket:
 
         bucket = self.storage_client.bucket(bucket_name)
         blob = bucket.blob(destination_blob_name)
-
         blob.upload_from_filename(source_file_name)
 
         print(
@@ -84,6 +83,19 @@ class GoogleBucket:
                 source_object_path, save_path
             )
         )
+
+
+
+    def file_exist(self, bucket_name, source_object_path, file_name):
+        bucket = self.storage_client.bucket(bucket_name)
+        blob = bucket.blob(source_object_path + "/" + file_name)
+        return blob.exists()
+
+    def get_blob_time_created(self, bucket_name, folder_path):
+        #returns datetime object
+        bucket = self.storage_client.get_bucket(bucket_name)
+        blob = bucket.get_blob(folder_path)
+        return blob.time_created
 
     def list_files_in_folder(self, bucket_name, folder_path):
         bucket = self.storage_client.get_bucket(bucket_name)
