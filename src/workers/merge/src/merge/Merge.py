@@ -12,14 +12,24 @@ from google.cloud._helpers import UTC
 RABBITMQ_IP = "35.228.95.170"
 APP_PATH = os.path.dirname(__file__) + "/../"
 
-class Merge:
-
-
-
     #Hämta jobb från rabbitMQ
     #Går det ej att jobba lägg tillbaka i KÖ
     #Är jobbet ok merge ta sen bort jobb
     #OM jobbet är förgammal - ta bort från list (delete files?)
+class Merge:
+
+    def start_rabbitMQ(self):
+        bucket_name = "umu-5dv192-project-eka"
+        self.check_merge(bucket_name, "0232c6fc-32f8-11ea-a64d-54bf646b5835")
+
+        # upload_folder = os.path.join(APP_PATH, "download_dir")
+        # self.merge_movie_from_uuid(bucket_name, upload_folder, "0232c6fc-32f8-11ea-a64d-54bf646b5835")
+
+        # rabbitMQ = RabbitMQ(RABBITMQ_IP)
+        # rabbitMQ.create_channel('task_queue')
+        # rabbitMQ.set_callback('task_queue', self.convert_movie)
+        # rabbitMQ.start_queueing()
+
 
     def check_merge(self, bucket_name, uuid_name):
         bucket = GoogleBucket(bucket_name)
@@ -31,19 +41,17 @@ class Merge:
 
         self.file_has_expired(bucket_name, folder_path + "/" + file_name, 60)
 
-
-
-
         start = "file './"
         end = "'"
         for aline in qbfile:
-            temp = aline[aline.find(start) + len(start):aline.rfind(end)]
-            if not bucket.file_exist(bucket_name, folder_path, temp):
-                print("Alla filer för merge finns ej")
+            movie_name = aline[aline.find(start) + len(start):aline.rfind(end)]
+            if not bucket.file_exist(bucket_name, folder_path, movie_name):
+                print("Merge: Missing file in bucket for merge")
                 qbfile.close()
-                return
+                return 1
         qbfile.close()
-        print("Alla filer för merge finns")
+        print("Merge: All files exist in bucket for merge")
+        return 0
 
 
 
@@ -57,30 +65,13 @@ class Merge:
 
 
 
-
-    def start_rabbitMQ(self):
-        bucket_name = "umu-5dv192-project-eka"
-        self.check_merge(bucket_name, "0232c6fc-32f8-11ea-a64d-54bf646b5835")
-
-
-
-        #upload_folder = os.path.join(APP_PATH, "download_dir")
-        #self.merge_movie_from_uuid(bucket_name, upload_folder, "0232c6fc-32f8-11ea-a64d-54bf646b5835")
-
-        #rabbitMQ = RabbitMQ(RABBITMQ_IP)
-        #rabbitMQ.create_channel('task_queue')
-        #rabbitMQ.set_callback('task_queue', self.convert_movie)
-        #rabbitMQ.start_queueing()
-
     def merge_movie_from_uuid(self, bucket_name, upload_folder, uuid_name):
 
         bucket = GoogleBucket(bucket_name)
         save_path = os.path.join(APP_PATH, "download_dir", uuid_name)
         bucket.download_files_in_folder(bucket_name, "split/" + uuid_name + "/", save_path)
-
         text_file_path = save_path + "/" + uuid_name + ".txt"
         merge_movie_path = save_path + "/" + uuid_name + ".mp4"
-
         self.merge_files_in_folder(upload_folder, text_file_path, merge_movie_path)
 
     def merge_files_in_folder(self, upload_folder, merge_file_path, save_file_path):

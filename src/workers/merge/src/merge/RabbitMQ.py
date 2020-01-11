@@ -2,6 +2,7 @@ import pika
 import time
 
 
+# lazy queues for saving directly to disc??? (skipping cache)
 class RabbitMQ(object):
 
     def __init__(self, host):
