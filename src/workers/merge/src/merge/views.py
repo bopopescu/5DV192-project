@@ -10,6 +10,7 @@ class GoogleBucket:
 
     def __init__(self, bucket_name):
         dirname = os.path.dirname(__file__)
+        print(dirname)
         resource_path = os.path.join(dirname, 'credentials.json')
         self.storage_client = storage.Client.from_service_account_json(resource_path)
         self.bucket_name = bucket_name

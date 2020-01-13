@@ -56,12 +56,16 @@ def form_example():
 
 
 
+
+        #Upload all the splitted file to split bucket
         destination_folder = "split/" + uuid_filename
         bucket.upload_folder(bucket_name, movie_folder, destination_folder)
         ###
+        # Upload the textfile to the merge bucket
+        path_to_textfile = movie_folder + "/" + uuid_filename + ".txt"
+        destination_folder_textfile = "transcoded/" + uuid_filename + "/" + uuid_filename + ".txt"
 
-
-
+        bucket.upload_blob(bucket_name, path_to_textfile,destination_folder_textfile)
 
         mylist = os.listdir(movie_folder)
         for a in mylist:
