@@ -70,12 +70,11 @@ if __name__ == '__main__':
 
     # config
     master_ip = "127.0.0.1"
-    worker_type = 1
-    worker_ip = socket.gethostbyname("localhost")
+    worker_ip = socket.gethostname()
 
     # connect to master
     request_url = "http://" + master_ip + ":5000/worker/connect"
-    request_data = {"type": worker_type, "ip": worker_ip}
+    request_data = {"ip": worker_ip}
 
     res = 0
     while res != 200:
@@ -91,4 +90,4 @@ if __name__ == '__main__':
 
     print("Connected to master!")
 
-    app.run(debug=True, host='0.0.0.0', port=5002)
+    app.run(debug=True, host='0.0.0.0', port=5003)
