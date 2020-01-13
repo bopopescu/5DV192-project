@@ -9,8 +9,8 @@ import os
 from convert.RabbitMQ import RabbitMQ
 from convert.views import GoogleBucket
 
-#RABBITMQ_IP = "35.228.95.170"  #Real DEAL
-RABBITMQ_IP = "35.222.244.93"  #Eriks
+RABBITMQ_IP = "35.228.95.170"  #Real DEAL
+#RABBITMQ_IP = "35.222.244.93"  #Eriks
 
 
 class Converter:
@@ -19,8 +19,8 @@ class Converter:
         print("hej")
 
         rabbitMQ = RabbitMQ(RABBITMQ_IP)
-        rabbitMQ.create_channel('task_queue')
-        rabbitMQ.set_callback('task_queue', self.convert_movie)
+        rabbitMQ.create_channel('convert_queue')
+        rabbitMQ.set_callback('convert_queue', self.convert_movie)
         rabbitMQ.start_queueing()
 
     def convert_movie(self, ch, method, properties, body):
@@ -64,7 +64,8 @@ class Converter:
         # #     if a.endswith(".txt"):
         # #        mylist.remove(a)
         # #
-        # # upload_rabbitMQ("34.68.43.153", uuid_filename, mylist)
+        # #
+        self.upload_rabbitMQ(RABBITMQ_IP, str(uuid_foldername))
         #
         ###
         ###Remove all the movies locally
@@ -81,15 +82,15 @@ class Converter:
         destination = "/".join([target, filename])
         file.save(destination)
 
-    def upload_rabbitMQ(host, dir_name, work_list):
+    def upload_rabbitMQ(self, host, dir_name):
         rabbit_mq = RabbitMQ(host)
-        rabbit_mq.create_channel("convert_queue")
-        for temp in work_list:
-            message = "/".join([dir_name, temp])
-            print(message)
-            rabbit_mq.public_message("convert_queue", message)
+        if rabbit_mq is None:
+            return 1
+        rabbit_mq.create_channel("merge_queue")
+        message = dir_name
+        rabbit_mq.public_message("merge_queue", message)
         rabbit_mq.close_connection()
-
+        return 0
     def sub_rabbitMQ(host, queue):
         rabbit_mq = RabbitMQ(host)
         rabbit_mq.create_channel(queue)

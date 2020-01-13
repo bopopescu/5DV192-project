@@ -28,15 +28,17 @@ class Merge:
         save_folder = os.path.join(APP_PATH, "download_dir")
         uuid_name = str(body, 'utf-8')
         print("Message: " + uuid_name)
-        gcloud_folder_path = "merged/" + uuid_name
+        gcloud_folder_path = "transcoded/" + uuid_name
+
         file_name = uuid_name + ".txt"
-        if self.check_merge(bucket_name, gcloud_folder_path, file_name):
+        if self.check_merge(bucket_name,gcloud_folder_path, file_name):
             save_file_path = self.merge_movie_from_uuid(bucket_name, save_folder, uuid_name)
             self.upload_finished_file(bucket_name, save_file_path, uuid_name)
             #Remove all the movies locally
             path_script = os.path.join(APP_PATH, "download_dir", "removeMovies.sh")
             movie_folder = os.path.join(APP_PATH, "download_dir", uuid_name)
             text_file = os.path.join(APP_PATH, "download_dir", uuid_name + ".txt")
+
             subprocess.check_call([path_script, text_file, movie_folder])
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
@@ -85,8 +87,8 @@ class Merge:
 
         bucket = GoogleBucket(bucket_name)
         save_path = os.path.join(APP_PATH, "download_dir", uuid_name)
-        bucket.download_files_in_folder(bucket_name, "split/" + uuid_name + "/", save_path)
-        text_file_path = save_path + "/" + uuid_name + ".txt"
+        bucket.download_files_in_folder(bucket_name, "transcoded/" + uuid_name + "/", save_path)
+        text_file_path = save_path +"/" + uuid_name + ".txt"
         save_file_path = save_path + "/" + uuid_name + ".mp4"
         self.merge_files_in_folder(save_folder, text_file_path, save_file_path)
         return save_file_path
