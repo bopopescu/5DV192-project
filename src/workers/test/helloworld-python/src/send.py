@@ -8,16 +8,16 @@ import sys
 ##
 
 connection = pika.BlockingConnection(
-    pika.ConnectionParameters(host='34.68.43.153'))
+    pika.ConnectionParameters(host='35.222.244.93'))
 channel = connection.channel()
 
-channel.queue_declare(queue='task_queue', durable=True) # durable=True -> never lose the queue
+channel.queue_declare(queue='merge_queue', durable=True) # durable=True -> never lose the queue
  
 message = ' '.join(sys.argv[1:]) or "Hello World!"
 
 channel.basic_publish(exchange='',
-                      routing_key='task_queue',
-                      body=message,
+                      routing_key='merge_queue',
+                      body='0232c6fc-32f8-11ea-a64d-54bf646b5835',
 		      properties=pika.BasicProperties(
                          delivery_mode = 2, # make message persistent (message durable)
                       ))

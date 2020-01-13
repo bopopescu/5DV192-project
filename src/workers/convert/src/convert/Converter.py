@@ -9,7 +9,8 @@ import os
 from convert.RabbitMQ import RabbitMQ
 from convert.views import GoogleBucket
 
-RABBITMQ_IP = "35.228.95.170"
+#RABBITMQ_IP = "35.228.95.170"  #Real DEAL
+RABBITMQ_IP = "35.222.244.93"  #Eriks
 
 
 class Converter:
