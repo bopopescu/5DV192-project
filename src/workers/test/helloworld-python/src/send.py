@@ -8,7 +8,7 @@ import sys
 ##
 
 connection = pika.BlockingConnection(
-    pika.ConnectionParameters(host='35.222.244.93'))
+    pika.ConnectionParameters(host='35.228.95.170'))
 channel = connection.channel()
 
 channel.queue_declare(queue='merge_queue', durable=True) # durable=True -> never lose the queue
