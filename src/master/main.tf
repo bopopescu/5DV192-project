@@ -10,7 +10,7 @@ access_config {
 */
 
 provider "google" {
-  credentials = "${file("../../config/credentials.json")}"
+  credentials = "${file("credentials.json")}"
   project     = "testproject-261510"
   region      = "europe-north1"
   zone        = "europe-north1-a"
