@@ -1,7 +1,8 @@
 import os
 
-from flask import json
-from app import app
+from flask import json, Flask
+
+app = Flask(__name__)
 
 
 def json_response(message, status):
