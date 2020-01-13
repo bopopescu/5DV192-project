@@ -31,7 +31,7 @@ class Merge:
         gcloud_folder_path = "transcoded/" + uuid_name
 
         file_name = uuid_name + ".txt"
-        if self.check_merge(bucket_name,gcloud_folder_path, file_name):
+        if self.check_merge(bucket_name, gcloud_folder_path, file_name):
             save_file_path = self.merge_movie_from_uuid(bucket_name, save_folder, uuid_name)
             self.upload_finished_file(bucket_name, save_file_path, uuid_name)
             #Remove all the movies locally

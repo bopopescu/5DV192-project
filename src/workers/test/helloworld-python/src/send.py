@@ -12,14 +12,17 @@ connection = pika.BlockingConnection(
 channel = connection.channel()
 
 channel.queue_declare(queue='merge_queue', durable=True) # durable=True -> never lose the queue
- 
-message = ' '.join(sys.argv[1:]) or "Hello World!"
 
-channel.basic_publish(exchange='',
-                      routing_key='merge_queue',
-                      body='0232c6fc-32f8-11ea-a64d-54bf646b5835',
-		      properties=pika.BasicProperties(
-                         delivery_mode = 2, # make message persistent (message durable)
-                      ))
-print(" [x] Sent %r" % message)
+count = 0
+for x in range(0,10):
+	
+	count += 1
+	message = str(count)
+	channel.basic_publish(exchange='',
+		              routing_key='merge_queue',
+		              body=message,
+			      properties=pika.BasicProperties(
+		                 delivery_mode = 2, # make message persistent (message durable)
+		              ))
+	print(" [x] Sent %r" % message)
 connection.close()

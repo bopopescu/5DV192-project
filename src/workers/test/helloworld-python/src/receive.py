@@ -15,7 +15,8 @@ def callback(ch, method, properties, body):
     print(" [x] Received %r" % body)
     time.sleep(body.count(b'.'))
     print(" [x] Done")
-    ch.basic_ack(delivery_tag = method.delivery_tag) #delivery ack
+    #ch.basic_ack(delivery_tag = method.delivery_tag) #delivery ack
+    ch.basic_reject(delivery_tag = method.delivery_tag)
 
 channel.basic_qos(prefetch_count=1) # don't dispatch a new message to a worker until it has processed and acknowledged the previous one.
 channel.basic_consume(
