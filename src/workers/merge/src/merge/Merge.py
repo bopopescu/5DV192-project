@@ -21,7 +21,8 @@ class Merge:
     def start_rabbitMQ(self):
         bucket_name = "umu-5dv192-project-eka"
         self.check_merge(bucket_name, "0232c6fc-32f8-11ea-a64d-54bf646b5835")
-
+        # convert_queue -> merge_queue -> finished_queue
+        #
         # upload_folder = os.path.join(APP_PATH, "download_dir")
         # self.merge_movie_from_uuid(bucket_name, upload_folder, "0232c6fc-32f8-11ea-a64d-54bf646b5835")
 

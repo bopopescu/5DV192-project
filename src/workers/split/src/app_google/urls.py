@@ -35,12 +35,6 @@ def form_example():
 
         file = request.files['file']
 
-        #bucket_name = "umu-5dv192-project-eka"
-        #bucket = GoogleBucket(bucket_name)
-        #save_path = os.path.join(app.root_path, "download_dir", "0fd667e8-32d8-11ea-aa26-54bf646b5610")
-        #bucket.download_files_in_folder(bucket_name, "split/0fd667e8-32d8-11ea-aa26-54bf646b5610/", save_path)
-        #merge_files_in_folder(upload_folder, save_path + "/0fd667e8-32d8-11ea-aa26-54bf646b5610.txt", save_path + "/0fd667e8-32d8-11ea-aa26-54bf646b5610.mp4")
-
         if file.filename == '':
             return json_response({"error": "invalid file name"}, 201)
 
@@ -112,11 +106,11 @@ def upload_rabbitMQ(host, dir_name, work_list):
     rabbit_mq = RabbitMQ(host)
     if rabbit_mq is None:
         return 1
-    rabbit_mq.create_channel("task_queue")
+    rabbit_mq.create_channel("convert_queue")
     for temp in work_list:
         message = "/".join([dir_name, temp])
         print(message)
-        rabbit_mq.public_message("task_queue", message)
+        rabbit_mq.public_message("convert_queue", message)
     rabbit_mq.close_connection()
     return 0
 
