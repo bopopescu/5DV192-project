@@ -36,9 +36,12 @@ class Merge:
         if self.check_merge(bucket_name, gcloud_folder_path, file_name):
             save_file_path = self.merge_movie_from_uuid(bucket_name, save_folder, uuid_name)
             self.upload_finished_file(bucket_name, save_file_path, uuid_name)
-            # Remove all the movies locally
-            #path_script = os.path.join(app.root_path, "removeMovies.sh")
-            #subprocess.check_call([path_script, path_file, movie_folder])
+            #Remove all the movies locally
+            print("\n kalle")
+            path_script = os.path.join(APP_PATH, "download_dir", "removeMovies.sh")
+            movie_folder = os.path.join(APP_PATH, "download_dir", uuid_name)
+            text_file = os.path.join(APP_PATH, "download_dir", uuid_name + ".txt")
+            subprocess.check_call([path_script, text_file, movie_folder])
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
 
