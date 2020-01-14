@@ -11,15 +11,15 @@ connection = pika.BlockingConnection(
     pika.ConnectionParameters(host='35.228.95.170'))
 channel = connection.channel()
 
-channel.queue_declare(queue='merge_queue', durable=True) # durable=True -> never lose the queue
+channel.queue_declare(queue='test_queue', durable=True) # durable=True -> never lose the queue
 
 count = 0
-for x in range(0,10):
+for x in range(0,1):
 	
 	count += 1
 	message = str(count)
 	channel.basic_publish(exchange='',
-		              routing_key='merge_queue',
+		              routing_key='test_queue',
 		              body=message,
 			      properties=pika.BasicProperties(
 		                 delivery_mode = 2, # make message persistent (message durable)
