@@ -8,20 +8,42 @@ import os
 
 from convert.RabbitMQ import RabbitMQ
 from convert.views import GoogleBucket
-
-RABBITMQ_IP = "35.228.95.170"  #Real DEAL
-#RABBITMQ_IP = "35.222.244.93"  #Eriks
+#35.228.95.171
+RABBITMQ_IP = "35.192.161.45"  #Real DEAL
+#RABBITMQ_IP = "35.192.161.45"  #Eriks
 
 
 class Converter:
 
     def start_rabbitMQ(self):
-        print("hej")
 
         rabbitMQ = RabbitMQ(RABBITMQ_IP)
-        rabbitMQ.create_channel('convert_queue')
-        rabbitMQ.set_callback('convert_queue', self.convert_movie)
-        rabbitMQ.start_queueing()
+
+        while(True):
+            try:
+                print("Trying to connect to RabbitMQ...")
+                rabbitMQ.create_channel('convert_queue')
+                rabbitMQ.set_callback('convert_queue', self.convert_movie)
+                try:
+                    print("Connected to RabbitMQ")
+                    rabbitMQ.start_queueing()
+                except KeyboardInterrupt:
+                    rabbitMQ.close_connection()
+                    break
+
+            except pika.exceptions.ConnectionClosedByBroker:
+
+                print("Connection to RabbitMQ channel was closed, retrying...")
+                time.sleep(10)
+                continue
+                # Do not recover on channel errors
+            except pika.exceptions.AMQPConnectionError:
+                print("Connection to RabbitMQ server was closed, retrying...")
+                time.sleep(10)
+                continue
+
+
+
 
     def convert_movie(self, ch, method, properties, body):
         # Dowload the movie from the bucket.

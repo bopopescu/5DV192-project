@@ -68,14 +68,15 @@ def log_request_time(_exception):
 
 if __name__ == '__main__':
 
-    # # config
-    # master_ip = "127.0.0.1"
-    # worker_ip = socket.gethostname()
-    #
-    # # connect to master
-    # request_url = "http://" + master_ip + ":5000/worker/connect"
-    # request_data = {"ip": worker_ip}
-    #
+    # config
+    #master_ip = "127.0.0.1"
+    #worker_type = 1
+    #worker_ip = socket.gethostbyname("localhost")
+
+    # connect to master
+    #request_url = "http://" + master_ip + ":5000/worker/connect"
+    #request_data = {"type": worker_type, "ip": worker_ip}
+
     # res = 0
     # while res != 200:
     #     time.sleep(2)

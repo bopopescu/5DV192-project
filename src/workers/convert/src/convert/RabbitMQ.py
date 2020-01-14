@@ -11,7 +11,7 @@ class RabbitMQ(object):
 
     def create_channel(self, queue):
         self.connection = pika.BlockingConnection(
-            pika.ConnectionParameters(self.host))
+            pika.ConnectionParameters(self.host, heartbeat=60))
         self.channel = self.connection.channel()
         self.channel.queue_declare(queue=queue, durable=True)  # durable=True -> queue is now marked durable
 
@@ -22,6 +22,7 @@ class RabbitMQ(object):
 
     def start_queueing(self):
         self.channel.start_consuming()
+
 
     def public_message(self, queue, message):
         self.channel.basic_publish(exchange="",
@@ -35,6 +36,8 @@ class RabbitMQ(object):
     def close_connection(self):
         print("Connection closed")
         self.connection.close()
+
+
 
 
 

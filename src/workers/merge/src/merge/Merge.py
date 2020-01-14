@@ -17,11 +17,34 @@ APP_PATH = os.path.dirname(__file__) + "/../"
 class Merge:
 
     def start_rabbitMQ(self):
-        rabbitMQ = RabbitMQ(RABBITMQ_IP)
-        rabbitMQ.create_channel('merge_queue')
-        rabbitMQ.set_callback('merge_queue', self.merge_movie)
-        rabbitMQ.start_queueing()
 
+        rabbitMQ = RabbitMQ(RABBITMQ_IP)
+
+        while (True):
+            try:
+                print("Trying to connect to RabbitMQ...")
+                rabbitMQ.create_channel('merge_queue')
+                rabbitMQ.set_callback('merge_queue', self.merge_movie)
+                try:
+                    print("Connected to RabbitMQ")
+                    rabbitMQ.start_queueing()
+                except KeyboardInterrupt:
+                    rabbitMQ.close_connection()
+                    break
+
+            except pika.exceptions.ConnectionClosedByBroker:
+                # Uncomment this to make the example not attempt recovery
+                # from server-initiated connection closure, including
+                # when the node is stopped cleanly
+                #
+                # break
+                time.sleep(10)
+                continue
+                # Do not recover on channel errors
+            except pika.exceptions.AMQPConnectionError:
+                print("Connection was closed, retrying...")
+                time.sleep(10)
+                continue
 
     def merge_movie(self, ch, method, properties, body):
         bucket_name = "umu-5dv192-project-eka"
