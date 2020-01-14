@@ -68,7 +68,7 @@ class Converter:
         path_script = os.path.join(save_folder, "converter.sh")
         print("\n" + path_script + "\n")
         path_file = os.path.join(save_folder, movie_filename)
-        subprocess.check_output([path_script, path_file, uuid_name, movie_filename])
+        subprocess.check_output([path_script, path_file, APP_PATH + "/" + uuid_name, movie_filename])
         ###
 
         ###
