@@ -8,14 +8,15 @@ import os
 
 from convert.RabbitMQ import RabbitMQ
 from convert.views import GoogleBucket
-#35.228.95.171
-RABBITMQ_IP = "35.192.161.45"  #Real DEAL
-#RABBITMQ_IP = "35.192.161.45"  #Eriks
 
+RABBITMQ_IP = "35.228.95.170"  #Real DEAL
+#RABBITMQ_IP = "35.222.244.93"  #Eriks
+APP_PATH = os.path.dirname(__file__) + "/../"
 
 class Converter:
 
     def start_rabbitMQ(self):
+        print("hej")
 
         rabbitMQ = RabbitMQ(RABBITMQ_IP)
 
@@ -53,28 +54,35 @@ class Converter:
 
         splitted_data = unsplitted_data.split("/")
 
-        uuid_foldername = splitted_data[0]
+        uuid_name = splitted_data[0]
         movie_filename = splitted_data[1]
         dirname = os.path.dirname(__file__)
 
-        upload_folder = os.path.join(dirname, "../", "download_dir")
+        save_folder = os.path.join(APP_PATH, "download_dir")
         bucket_name = "umu-5dv192-project-eka"
         bucket = GoogleBucket(bucket_name)
 
-        bucket.download_blob(bucket_name, "split/" + uuid_foldername, movie_filename, upload_folder)
+        bucket.download_blob(bucket_name, "split/" + uuid_name, movie_filename, save_folder)
 
 
-        path_script = os.path.join(upload_folder, "converter.sh")
-        path_file = os.path.join(upload_folder, movie_filename)
-        subprocess.check_output([path_script, path_file, uuid_foldername, movie_filename])
+        path_script = os.path.join(save_folder, "converter.sh")
+        print("\n" + path_script + "\n")
+        path_file = os.path.join(save_folder, movie_filename)
+        subprocess.check_output([path_script, path_file, uuid_name, movie_filename])
         ###
 
         ###
         # Upload the converted file to google bucket
 
-        movie_folder = os.path.join(dirname, "../", uuid_foldername)
-        destination_folder = "transcoded/" + uuid_foldername
-        bucket.upload_folder(bucket_name, movie_folder, destination_folder)
+        movie_folder = os.path.join(dirname, "../", uuid_name)
+        destination_folder = "transcoded/" + uuid_name + "/" + movie_filename
+
+        file_path = APP_PATH + uuid_name + "/" + movie_filename
+        print("\n" + file_path + "\n")
+        bucket.upload_blob(bucket_name, file_path, destination_folder)
+
+
+        #bucket.upload_folder(bucket_name, movie_folder, destination_folder)
         ###
         #
         #
@@ -87,12 +95,12 @@ class Converter:
         # #        mylist.remove(a)
         # #
         # #
-        self.upload_rabbitMQ(RABBITMQ_IP, str(uuid_foldername))
+        self.upload_rabbitMQ(RABBITMQ_IP, str(uuid_name))
         #
         ###
         ###Remove all the movies locally
-        path_script = os.path.join(dirname, "../", "removeMovies.sh")
-        subprocess.check_call([path_script, path_file, uuid_foldername])
+        #path_script = os.path.join(dirname, "../", "removeMovies.sh")
+        #subprocess.check_call([path_script, path_file, uuid_name])
         ###
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
