@@ -12,7 +12,7 @@ import subprocess
 RABBITMQ_IP = "35.228.95.170"
 
 
-@app_google.route('/split', methods=['POST', 'GET'])
+@app_google.route('/split', methods=['POST'])
 def form_example():
     #Dowload the movie from the bucket.
     upload_folder = os.path.join(app.root_path, "download_dir")
