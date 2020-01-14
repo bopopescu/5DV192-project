@@ -17,7 +17,6 @@ class Converter:
 
     def start_rabbitMQ(self):
         print("hej")
-
         rabbitMQ = RabbitMQ(RABBITMQ_IP)
 
         while(True):
