@@ -99,8 +99,8 @@ class Converter:
         #
         ###
         ###Remove all the movies locally
-        #path_script = os.path.join(dirname, "../", "removeMovies.sh")
-        #subprocess.check_call([path_script, path_file, uuid_name])
+        path_script = os.path.join(dirname, "../", "removeMovies.sh")
+        subprocess.check_call([path_script, path_file, uuid_name])
         ###
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
