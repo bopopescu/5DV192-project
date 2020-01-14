@@ -68,26 +68,26 @@ def log_request_time(_exception):
 
 if __name__ == '__main__':
 
-    # config
-    master_ip = "127.0.0.1"
-    worker_ip = socket.gethostname()
+    # # config
+    # master_ip = "127.0.0.1"
+    # worker_ip = socket.gethostname()
+    #
+    # # connect to master
+    # request_url = "http://" + master_ip + ":5000/worker/connect"
+    # request_data = {"ip": worker_ip}
+    #
+    # res = 0
+    # while res != 200:
+    #     time.sleep(2)
+    #     try:
+    #         print("Connecting to master...")
+    #         print("Sending request to master: " + request_url + " " + json.dumps(request_data))
+    #         res = requests.post(request_url, json=request_data)
+    #         res = res.status_code
+    #         print("Got response from master: " + str(res))
+    #     except Exception as e:
+    #         print("Connection error. Retrying...")
+    #
+    # print("Connected to master!")
 
-    # connect to master
-    request_url = "http://" + master_ip + ":5000/worker/connect"
-    request_data = {"ip": worker_ip}
-
-    res = 0
-    while res != 200:
-        time.sleep(2)
-        try:
-            print("Connecting to master...")
-            print("Sending request to master: " + request_url + " " + json.dumps(request_data))
-            res = requests.post(request_url, json=request_data)
-            res = res.status_code
-            print("Got response from master: " + str(res))
-        except Exception as e:
-            print("Connection error. Retrying...")
-
-    print("Connected to master!")
-
-    app.run(debug=True, host='0.0.0.0', port=5003)
+    app.run(debug=True, host='0.0.0.0', port=5000)
