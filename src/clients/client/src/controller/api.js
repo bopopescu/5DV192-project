@@ -7,7 +7,7 @@ const API_EXTERNAL_URL= "http://" + "35.228.95.170" + ":5000";
 let create_api = () => {
 
     /* choose api url */
-    const URL = API_EXTERNAL_URL;
+    const URL = API_LOCAL_URL;
 
     console.log(URL);
 
@@ -40,7 +40,7 @@ let create_api = () => {
     const transcodeUpload = data => {
         api_dynamic.setBaseURL(data.url);
         console.log("New API URL set: " + api_dynamic.getBaseURL());
-        return api_dynamic.post("/split", data, headers());
+        return api_dynamic.post("/split_workload", data, headers());
     };
     const transcodeRetrieve = data => api.post("/client/retrieve", data, headers());
 
