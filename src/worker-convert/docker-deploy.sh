@@ -4,7 +4,7 @@
 
 GCLOUD_USERNAME="superadmin"
 GCLOUD_PROJECT="testproject-261510"
-GCLOUD_BUILD_NAME="merge"
+GCLOUD_BUILD_NAME="convert"
 
 GCLOUD_FILE_CREDENTIALS="../../config/credentials.json"
 

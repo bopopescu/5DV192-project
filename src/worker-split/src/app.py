@@ -55,7 +55,7 @@ class KeepConnectionThread(threading.Thread):
             time.sleep(5)
 
 
-IS_DEBUG = True
+IS_DEBUG = False
 
 if __name__ == '__main__':
 

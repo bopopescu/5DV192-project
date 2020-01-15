@@ -1,14 +1,3 @@
-/*
-https://collabnix.com/5-minutes-to-run-your-first-docker-container-on-google-cloud-platform-using-terraform/
-*/
-
-/*
-https://stackoverflow.com/questions/45359189/how-to-map-static-ip-to-terraform-google-compute-engine-instance
-access_config {
-      nat_ip = "130.251.4.123" // this adds regional static ip to VM
-    }
-*/
-
 provider "google" {
   credentials = "${file("../../config/credentials.json")}"
   project     = "testproject-261510"
@@ -29,8 +18,8 @@ resource "google_compute_instance" "vm_instance" {
   }
 
   network_interface {
-    # A default network is created for all GCP projects
     network       = google_compute_network.vpc_network.self_link
+    subnetwork    = google_compute_subnetwork.vpc_subnetwork.self_link
     access_config {
     }
   }
@@ -61,8 +50,14 @@ resource "google_compute_firewall" "default" {
 
 }
 
+resource "google_compute_subnetwork" "vpc_subnetwork" {
+  name          = "subnetwork-worker-split"
+  ip_cidr_range = "10.0.0.0/22"
+  region        = "europe-north1"
+  network       = google_compute_network.vpc_network.self_link
+}
 
 resource "google_compute_network" "vpc_network" {
   name                    = "network-split"
-  auto_create_subnetworks = "true"
+  auto_create_subnetworks = "false"
 }

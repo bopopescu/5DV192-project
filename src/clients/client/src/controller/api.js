@@ -1,20 +1,20 @@
 import { create } from "apisauce";
 import Cookie from "universal-cookie";
 
-const API_URL= "http://" + window.location.hostname + ":5000";
-const API_EXTERNAL_URL= "http://" + "130.239.183.121" + ":5000";
+const API_LOCAL_URL= "http://" + window.location.hostname + ":5000";
+const API_EXTERNAL_URL= "http://" + "35.228.95.170" + ":5000";
 
 let create_api = () => {
 
     /* choose api url */
-    const URL = API_URL;
+    const URL = API_EXTERNAL_URL;
 
     console.log(URL);
 
     new Cookie();
 
     const api = create({
-        baseURL: API_URL,
+        baseURL: URL,
         headers: {
             Accept: "application/json",
             "Accept-Language": "sv",
@@ -24,7 +24,7 @@ let create_api = () => {
 
 
     const api_dynamic = create({
-        baseURL: API_URL,
+        baseURL: URL,
         headers: {
             Accept: "application/json",
             "Accept-Language": "sv",

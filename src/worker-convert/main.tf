@@ -1,9 +1,5 @@
-/*
-https://collabnix.com/5-minutes-to-run-your-first-docker-container-on-google-cloud-platform-using-terraform/
-*/
-
 provider "google" {
-  credentials = "${file("../../../config/credentials.json")}"
+  credentials = "${file("../../config/credentials.json")}"
   project     = "testproject-261510"
   region      = "europe-north1"
   zone        = "europe-north1-a"
@@ -11,7 +7,8 @@ provider "google" {
 
 resource "google_compute_instance" "vm_instance" {
 
-  name         = "split"
+  count		   = 3
+  name         = "worker-convert-${count.index}"
   machine_type = "n1-standard-1"
 
   boot_disk {
@@ -21,14 +18,14 @@ resource "google_compute_instance" "vm_instance" {
   }
 
   network_interface {
-    # A default network is created for all GCP projects
     network       = google_compute_network.vpc_network.self_link
+    subnetwork    = google_compute_subnetwork.vpc_subnetwork.self_link
     access_config {
     }
   }
 
   metadata = {
-   ssh-keys = "c15edg:${file("../../../config/id_rsa.pub")}"
+   ssh-keys = "c15knn:${file("../../config/id_rsa.pub")}"
   }
 
   metadata_startup_script = "${file("init.sh")}"
@@ -36,7 +33,7 @@ resource "google_compute_instance" "vm_instance" {
 }
 
 resource "google_compute_firewall" "default" {
-  name    = "firewall-split"
+  name    = "firewall-convert"
   network = google_compute_network.vpc_network.name
 
   allow {
@@ -53,8 +50,14 @@ resource "google_compute_firewall" "default" {
 
 }
 
+resource "google_compute_subnetwork" "vpc_subnetwork" {
+  name          = "subnetwork-worker-convert"
+  ip_cidr_range = "10.0.0.0/22"
+  region        = "europe-north1"
+  network       = google_compute_network.vpc_network.self_link
+}
 
 resource "google_compute_network" "vpc_network" {
-  name                    = "network-split"
-  auto_create_subnetworks = "true"
+  name                    = "network-convert"
+  auto_create_subnetworks = "false"
 }

@@ -1,4 +1,4 @@
 #!/bin/bash
 
-./../../../apps/terraform init
-./../../../apps/terraform apply
+./../../apps/terraform init
+./../../apps/terraform apply

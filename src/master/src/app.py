@@ -7,7 +7,7 @@ app.config['UPLOAD_FOLDER'] = 'upload'
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
 app.register_blueprint(app_main)
 
-IS_DEBUG = True
+IS_DEBUG = False
 
 if __name__ == '__main__':
     if IS_DEBUG:
