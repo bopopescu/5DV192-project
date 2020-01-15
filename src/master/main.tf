@@ -10,7 +10,7 @@ access_config {
 */
 
 provider "google" {
-  credentials = "${file("credentials.json")}"
+  credentials = "${file("../../config/credentials.json")}"
   project     = "testproject-261510"
   region      = "europe-north1"
   zone        = "europe-north1-a"
@@ -55,7 +55,7 @@ resource "google_compute_firewall" "default" {
 
   allow {
     protocol = "tcp"
-    ports    = ["80", "8080", "800", "1000-2000", "5000", "22", "5672", "15672"]
+    ports    = ["80", "8080", "800", "1000-2000", "5000", "22", "5672", "15672", "9419"]
   }
 
   source_tags = ["web"]
