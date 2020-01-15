@@ -1,35 +1,23 @@
-#
-# By Kaj Nygren, Alexander Ekström, Erik Dahlberg
-# December 2019
-#
-import socket
 import threading
 import time
-
-from flask import Flask, request, json, g
+from flask import Flask, json
 from flask_cors import CORS
 import requests
-import logging
-from logging import config
-from flask_google_cloud_logger import FlaskGoogleCloudLogger
-
 from app_google.urls import app_google
-from app_main.urls import app_main
-
+from app_main import app_main
+import urllib.request
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'upload'
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
-
-# blueprints
 app.register_blueprint(app_main)
 app.register_blueprint(app_google)
 
+
 def get_ip():
     try:
-        host_name = socket.gethostname()
-        return socket.gethostbyname(host_name)
-    except Exception as e:
+        return urllib.request.urlopen('https://ident.me').read().decode('utf8')
+    except Exception:
         print("Unable to get Hostname and IP")
         exit(-1)
 
@@ -40,8 +28,10 @@ class KeepConnectionThread(threading.Thread):
 
         # config
 
-        #master_ip = "35.228.95.170"
-        master_ip = "127.0.0.1"
+        if IS_DEBUG:
+            master_ip = "127.0.0.1"
+        else:
+            master_ip = "35.228.95.170"
 
         # runtime
 
@@ -60,10 +50,12 @@ class KeepConnectionThread(threading.Thread):
                     print("Successfully connected!")
                 else:
                     print("Received: " + str(res))
-            except Exception as e:
+            except Exception:
                 pass
             time.sleep(5)
 
+
+IS_DEBUG = True
 
 if __name__ == '__main__':
 
@@ -71,4 +63,17 @@ if __name__ == '__main__':
     keep_connection_thread = KeepConnectionThread(name="KeepConnectionThread")
     keep_connection_thread.start()
 
-    app.run(debug=True, host='0.0.0.0', port=5003)
+    if IS_DEBUG:
+        app.run(debug=True, host='0.0.0.0', port=5001)
+    else:
+        app.run(debug=False, host='0.0.0.0', port=5000)
+
+
+@app_main.route('/')
+def main_route():
+    return "Split node " + get_ip()
+
+
+@app_main.route('/isActive', methods=['POST'])
+def main_is_active():
+    return "Split node " + get_ip()
