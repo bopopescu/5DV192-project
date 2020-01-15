@@ -1,11 +1,11 @@
-from .RabbitMQ import RabbitMQ
+from .rabbit_mq import RabbitMQ
 from . import app_google
 from app import app
 import os
 import uuid
 from flask import request
 from werkzeug.utils import secure_filename
-from .views import GoogleBucket
+from .google_bucket import GoogleBucket
 from app_main.utils import json_response
 import subprocess
 
@@ -71,7 +71,7 @@ def form_example():
         for a in mylist:
             if a.endswith(".txt"):
                mylist.remove(a)
-        answer = upload_rabbitMQ(RABBITMQ_IP, uuid_filename, mylist)
+        answer = upload_rabbit_mq(RABBITMQ_IP, uuid_filename, mylist)
         if answer == 1:
             print("Failed: to upload split to rabbit queue")
         else:
@@ -83,17 +83,12 @@ def form_example():
         subprocess.check_call([path_script, path_file, movie_folder])
 
         ###
-        return json_response({"status": "success"}, 200)
-
-
+        return json_response({"id": uuid_filename}, 200)
 
 
 def merge_files_in_folder(upload_folder, merge_file_path, save_file_path):
     path_script = os.path.join(upload_folder, "merge.sh")
     subprocess.check_output([path_script, merge_file_path, save_file_path])
-
-
-
 
 
 def save_file_locally(file, folder, filename):
@@ -106,17 +101,25 @@ def save_file_locally(file, folder, filename):
     file.save(destination)
 
 
-def upload_rabbitMQ(host, dir_name, work_list):
-    rabbit_mq = RabbitMQ(host)
-    if rabbit_mq is None:
-        return 1
-    rabbit_mq.create_channel("convert_queue")
-    for temp in work_list:
-        message = "/".join([dir_name, temp])
-        print(message)
-        rabbit_mq.public_message("convert_queue", message)
-    rabbit_mq.close_connection()
+def upload_rabbit_mq(host, dir_name, work_list):
+
+    try:
+
+        rabbit_mq = RabbitMQ(host)
+        if rabbit_mq is None:
+            return 1
+        rabbit_mq.create_channel("convert_queue")
+        for temp in work_list:
+            message = "/".join([dir_name, temp])
+            print(message)
+            rabbit_mq.public_message("convert_queue", message)
+        rabbit_mq.close_connection()
+
+    except Exception:
+        print("Error connecting to RabbitMQ")
+
     return 0
+
 
 def sub_rabbitMQ(host, queue):
     rabbit_mq = RabbitMQ(host)

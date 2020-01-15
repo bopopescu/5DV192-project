@@ -1,16 +1,17 @@
 import os
-from datetime import datetime
 from os import listdir
 from os.path import isfile, join
 from twisted.protocols.ftp import FileExistsError
+
 from google.cloud import storage
+
+from app import app
 
 
 class GoogleBucket:
 
     def __init__(self, bucket_name):
-        dirname = os.path.dirname(__file__)
-        resource_path = os.path.join(dirname, 'credentials.json')
+        resource_path = os.path.join(app.root_path, 'credentials.json')
         self.storage_client = storage.Client.from_service_account_json(resource_path)
         self.bucket_name = bucket_name
 
@@ -38,6 +39,26 @@ class GoogleBucket:
         bucket = self.storage_client.get_bucket(self.bucket_name)
         return bucket.list_blobs()
 
+    def upload_file(self, file_stream, filename, content_type):
+
+        client = self.storage_client
+        bucket = client.bucket(self.bucket_name)
+        blob = bucket.blob(filename)
+
+        blob.upload_from_string(
+            file_stream,
+            content_type=content_type)
+
+        blob.make_public()
+
+        url = blob.public_url
+
+        import six
+        if isinstance(url, six.binary_type):
+            url = url.decode('utf-8')
+
+        return url
+
     def delete_blob(self, blob_name):
         bucket = self.storage_client.get_bucket(self.bucket_name)
         blob = bucket.blob(blob_name)
@@ -51,6 +72,7 @@ class GoogleBucket:
 
         bucket = self.storage_client.bucket(bucket_name)
         blob = bucket.blob(destination_blob_name)
+
         blob.upload_from_filename(source_file_name)
 
         print(
@@ -83,19 +105,6 @@ class GoogleBucket:
                 source_object_path, save_path
             )
         )
-
-
-
-    def file_exist(self, bucket_name, source_object_path, file_name):
-        bucket = self.storage_client.bucket(bucket_name)
-        blob = bucket.blob(source_object_path + "/" + file_name)
-        return blob.exists()
-
-    def get_blob_time_created(self, bucket_name, folder_path):
-        #returns datetime object
-        bucket = self.storage_client.get_bucket(bucket_name)
-        blob = bucket.get_blob(folder_path)
-        return blob.time_created
 
     def list_files_in_folder(self, bucket_name, folder_path):
         bucket = self.storage_client.get_bucket(bucket_name)

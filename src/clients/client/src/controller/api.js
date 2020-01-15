@@ -1,10 +1,10 @@
-import apisauce from "apisauce";
+import { create } from "apisauce";
 import Cookie from "universal-cookie";
 
 const API_URL= "http://" + window.location.hostname + ":5000";
 const API_EXTERNAL_URL= "http://" + "130.239.183.121" + ":5000";
 
-let create = () => {
+let create_api = () => {
 
     /* choose api url */
     const URL = API_URL;
@@ -13,17 +13,7 @@ let create = () => {
 
     new Cookie();
 
-    /*const apiJSON = apisauce.create({
-        baseURL: API_URL,
-        headers: {
-            "Content-type": "application/json",
-            Accept: "application/json",
-            "Accept-Language": "sv",
-            "Access-Control-Allow-Origin": "*",
-        }
-    });*/
-
-    const api = apisauce.create({
+    const api = create({
         baseURL: API_URL,
         headers: {
             Accept: "application/json",
@@ -33,16 +23,33 @@ let create = () => {
     });
 
 
+    const api_dynamic = create({
+        baseURL: API_URL,
+        headers: {
+            Accept: "application/json",
+            "Accept-Language": "sv",
+            "Access-Control-Allow-Origin": "*",
+        }
+    });
+
     const headers = () => {
         return { headers: {} }
     };
 
-    const transcodeSend = data => api.post("/split", data, headers());
+    const transcodeRequest = data => api.get("/client/connect", data, headers());
+    const transcodeUpload = data => {
+        api_dynamic.setBaseURL(data.url);
+        console.log("New API URL set: " + api_dynamic.getBaseURL());
+        return api_dynamic.post("/split", data, headers());
+    };
+    const transcodeRetrieve = data => api.post("/client/retrieve", data, headers());
 
     return {
-        transcodeSend,
+        transcodeRequest,
+        transcodeUpload,
+        transcodeRetrieve
     };
 
 };
 
-export default create();
+export default create_api();

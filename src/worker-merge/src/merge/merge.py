@@ -4,9 +4,9 @@ from datetime import timedelta
 import pika
 import time
 import os
-from merge.views import GoogleBucket
+from merge.google_bucket import GoogleBucket
 
-from merge.RabbitMQ import RabbitMQ
+from merge.rabbit_mq import RabbitMQ
 from google.cloud._helpers import UTC
 
 RABBITMQ_IP = "35.228.95.170" #REAL DEAL

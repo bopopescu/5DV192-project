@@ -5,17 +5,17 @@ import time
 import os
 
 
-
-from convert.RabbitMQ import RabbitMQ
-from convert.views import GoogleBucket
+from convert.rabbit_mq import RabbitMQ
+from convert.google_bucket import GoogleBucket
 
 RABBITMQ_IP = "35.228.95.170"  #Real DEAL
 #RABBITMQ_IP = "35.222.244.93"  #Eriks
 APP_PATH = os.path.dirname(__file__) + "/../"
 
+
 class Converter:
 
-    def start_rabbitMQ(self):
+    def start_rabbitmq(self):
         print("hej")
         rabbitMQ = RabbitMQ(RABBITMQ_IP)
 
@@ -41,9 +41,6 @@ class Converter:
                 print("Connection to RabbitMQ server was closed, retrying...")
                 time.sleep(10)
                 continue
-
-
-
 
     def convert_movie(self, ch, method, properties, body):
         # Dowload the movie from the bucket.
@@ -94,7 +91,7 @@ class Converter:
         # #        mylist.remove(a)
         # #
         # #
-        self.upload_rabbitMQ(RABBITMQ_IP, str(uuid_name))
+        self.upload_rabbit_mq(RABBITMQ_IP, str(uuid_name))
         #
         ###
         ###Remove all the movies locally
@@ -103,15 +100,7 @@ class Converter:
         ###
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
-    def save_file_locally(file, folder, filename):
-        target = os.path.join(app.root_path, folder)
-        if not os.path.isdir(target):
-            os.mkdir(target)
-
-        destination = "/".join([target, filename])
-        file.save(destination)
-
-    def upload_rabbitMQ(self, host, dir_name):
+    def upload_rabbit_mq(self, host, dir_name):
         rabbit_mq = RabbitMQ(host)
         if rabbit_mq is None:
             return 1
@@ -120,8 +109,3 @@ class Converter:
         rabbit_mq.public_message("merge_queue", message)
         rabbit_mq.close_connection()
         return 0
-    def sub_rabbitMQ(host, queue):
-        rabbit_mq = RabbitMQ(host)
-        rabbit_mq.create_channel(queue)
-        rabbit_mq.set_callback(queue, callback)
-        rabbit_mq.start_queueing()

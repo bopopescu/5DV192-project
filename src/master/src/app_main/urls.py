@@ -1,3 +1,7 @@
+from . import app_main
+
+from app_google.google_bucket import GoogleBucket
+
 import time
 import uuid as uuid
 
@@ -7,7 +11,6 @@ import uuid
 
 import app
 from app_main.utils import json_response
-from . import app_main
 
 
 workers_upload = []
@@ -77,8 +80,6 @@ def route_client_connect():
             print(workers_upload)
             worker_ip = "null"
 
-
-
     return json_response({"ip": worker_ip}, 200)
 
 
@@ -100,5 +101,35 @@ def round_robin():
     return ip
 
 
+@app_main.route('/client/retrieve', methods=['POST'])
+def route_client_retrieve():
 
+    data = request.json
+
+    print("data")
+    print(data)
+
+    if data:
+
+        id = data['id']
+        gcloud_folder_path = "finished/" + id
+        file_name = id + ".mp4"
+        bucket_name = "umu-5dv192-project-eka"
+        bucket = GoogleBucket(bucket_name)
+
+        timeout = time.time() + 60
+
+        while True:
+            if time.time() > timeout:
+                return json_response({"response": "error: connection timed out"}, 201)
+            if bucket.file_exist(bucket_name, gcloud_folder_path, file_name):
+                break
+            time.sleep(1)
+
+        url = "https://storage.cloud.google.com/umu-5dv192-project-eka/finished/" + id + "/" + id + ".mp4"
+        return json_response({"downloadUrl": url}, 200)
+
+    else:
+
+        return json_response({"response": "invalid request"}, 201)
 

@@ -4,14 +4,13 @@ from os.path import isfile, join
 
 from google.cloud import storage
 
-
+from app import app
 
 
 class GoogleBucket:
 
     def __init__(self, bucket_name):
-        dirname = os.path.dirname(__file__)
-        resource_path = os.path.join(dirname, 'credentials.json')
+        resource_path = os.path.join(app.root_path, 'app_google/credentials.json')
         self.storage_client = storage.Client.from_service_account_json(resource_path)
         self.bucket_name = bucket_name
 
@@ -67,22 +66,6 @@ class GoogleBucket:
 
         bucket = self.storage_client.bucket(bucket_name)
         blob = bucket.blob(destination_blob_name)
-        blob.upload_from_filename(source_file_name)
-
-        print(
-            "File {} uploaded to {}.".format(
-                source_file_name, destination_blob_name
-            )
-        )
-
-    def upload_blob(self, bucket_name, source_file_name, destination_blob_name):
-        """Uploads a file to the bucket."""
-        # bucket_name = "your-bucket-name"
-        # source_file_name = "local/path/to/file"
-        # destination_blob_name = "storage-object-name"
-
-        bucket = self.storage_client.bucket(bucket_name)
-        blob = bucket.blob(destination_blob_name)
 
         blob.upload_from_filename(source_file_name)
 
@@ -116,3 +99,8 @@ class GoogleBucket:
                 source_object_path, save_path
             )
         )
+
+    def file_exist(self, bucket_name, source_object_path, file_name):
+        bucket = self.storage_client.bucket(bucket_name)
+        blob = bucket.blob(source_object_path + "/" + file_name)
+        return blob.exists()

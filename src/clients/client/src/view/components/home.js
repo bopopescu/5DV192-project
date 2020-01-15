@@ -79,14 +79,13 @@ class Home extends Component {
                 data.append("input-" + k, this.state.input[k]);
             }
 
-            keys = Object.keys(this.state.output);
+            /*keys = Object.keys(this.state.output);
             for(let k of keys){
                 data.append("output-" + k, this.state.output[k]);
-            }
+            }*/
 
             this.props.actionTranscoderSend(data);
 
-            console.log(this.props.transcoder);
 
         }
 
@@ -95,7 +94,7 @@ class Home extends Component {
     }
 
     handleFileLoad(event) {
-        console.log(event.target.result);
+
     }
 
     render() {
@@ -117,14 +116,14 @@ class Home extends Component {
         if(this.props.transcoder && this.props.transcoder.isFetched) {
             if(this.props.transcoder.success) {
                 response.push(
-                    <div className="alert alert-green">
-                        <p>Success!</p>
+                    <div className="file-save">
+                        <a type="submit" className="button-download button-green" href={this.props.transcoder.payload.downloadUrl}>Download</a>
                     </div>
                 )
             } else {
                 response.push(
                     <div className="alert alert-red">
-                        <p>Failure</p>
+                        <p>{JSON.stringify(this.props.transcoder.errors)}</p>
                     </div>
                 )
             }
@@ -163,7 +162,7 @@ class Home extends Component {
                                 <button type="button" className="button button-blue">Choose</button>
                             </div>
                         </div>
-                        <h1>Output</h1>
+                        {/*<h1>Output</h1>
                         <div className="file-setting-container">
                             <h2>Resolution</h2>
                             <div className="file-setting">
@@ -193,9 +192,9 @@ class Home extends Component {
                             <div className="file-setting">
                                 <input type="text" name="filename" id="filename" value={this.state.output.filename} onChange={(e) => this.handleChangeOutput(e, "filename")} />
                             </div>
-                        </div>
+                        </div>*/}
                         <div className="file-save">
-                            <button type="submit" className="button button-blue">Transcode</button>
+                            <button className="button button-blue">Transcode</button>
                         </div>
                         {this.state.isSubmitted && (
                             response

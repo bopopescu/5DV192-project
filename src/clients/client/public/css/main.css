@@ -67,6 +67,15 @@ select {
 
 /* General */
 
+
+.button-download {
+    padding: 30px 80px;
+    border-radius: 200px;
+    font-weight: 400;
+    text-align: center;
+    font-size: 16px;
+}
+
 .button {
     padding: 7px 25px;
     border-radius: 2px;
@@ -145,19 +154,27 @@ select {
 
 
 .button-green {
-    color: #b9e2ae;
-    border: 1px solid #b9e2ae;
+    background: #28a745 !important;
+    border: 1px solid #28a745 !important;
+    color: #fff !important;
+    text-decoration: none;
+}
+
+.button-green:hover {
+    color: #28a745 !important;
+    background: #fff !important;
+    border: 1px solid #28a745 !important;
 }
 
 .button-green:enabled {
-    color: #4aad4a;
-    border: 1px solid #4aad4a;
+    color: #28a745 !important;
+    border: 1px solid #28a745 !important;
 }
 
 .button-green:hover:enabled {
-    color: #fff;
-    background: #4aad4a;
-    border: 1px solid #fff;
+    color: #fff !important;
+    background: #28a745 !important;
+    border: 1px solid #fff !important;
 }
 
 /* globals*/

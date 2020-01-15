@@ -1,9 +1,20 @@
 import * as constants from "../constants/transcoder";
 import api from "../../api";
-import history from '../../utils/history'
-import Cookies from "universal-cookie";
+
+const debug = true;
 
 export function actionTranscoderSend(data) {
+
+    for (let pair of data.entries()) {
+        console.log(pair[0] + ', ' + pair[1]);
+    }
+
+    let port;
+    if(debug) {
+        port = "5001";
+    } else {
+        port = "5000";
+    }
 
     return dispatch => {
 
@@ -11,13 +22,54 @@ export function actionTranscoderSend(data) {
             type: constants.TRANSCODE_SEND_REQUEST
         });
 
-        return api.transcodeSend(data).then(response => {
+        // transcode request
+
+        return api.transcodeRequest(null).then(response => {
 
             if (response.ok) {
 
-                dispatch({
-                    type: constants.TRANSCODE_SEND_SUCCESS,
-                    payload: response.data
+                console.log(response.data.ip);
+                data.url = "http://" + response.data.ip  + ":" + port;
+
+                // transcode upload
+
+                return api.transcodeUpload(data).then(response2 => {
+
+                    if (response2.ok) {
+
+                        console.log(response2.data);
+
+                        return api.transcodeRetrieve(response2.data).then(response3 => {
+
+                            if (response3.ok) {
+
+                                console.log(response3.data)
+
+                                dispatch({
+                                    type: constants.TRANSCODE_SEND_SUCCESS,
+                                    payload: response3.data
+                                });
+
+                            } else {
+
+                                dispatch({
+                                    type: constants.TRANSCODE_SEND_FAILURE,
+                                    payload: response.data
+                                });
+
+                            }
+
+                        });
+
+                    } else {
+
+                        dispatch({
+                            type: constants.TRANSCODE_SEND_FAILURE,
+                            payload: response.data
+                        });
+
+                    }
+
                 });
 
 
