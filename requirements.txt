@@ -9,5 +9,6 @@ pytest==5.3.1
 google-cloud-logger==0.2.1
 flask-google-cloud-logger==0.2.1
 pika==1.1.0
+amqp==2.5.2
 Twisted==19.10.0
 google-cloud-pubsub==1.1.0
