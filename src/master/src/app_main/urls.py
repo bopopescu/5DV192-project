@@ -14,6 +14,7 @@ from app_main.utils import json_response
 
 
 workers_upload = []
+metrics = []
 index = 0
 
 @app_main.route('/')
@@ -23,21 +24,33 @@ def worker_root():
 
 @app_main.route('/worker/connect', methods=['POST'])
 def route_worker_connect():
-
     global workers_upload
     data = request.json
-
-    #print("data connect: ")
-    #print(data)
-
-    if data and data['ip'] not in set(workers_upload):
-        if data['ip'] != 'null':
+    if data['ip'] != 'null':
+        if data and data['ip'] not in set(workers_upload):
             workers_upload.append(data['ip'])
+        if data and data['ip'] not in set(metrics):
+            metrics.append(data['ip'])
+    return json_response({"status": "success"}, 200)
 
-    #print("Registered workers:")
-    #print(workers_upload)
+
+@app_main.route('/worker/metrics/connect', methods=['POST'])
+def route_worker_connect():
+
+    global metrics
+    data = request.json
+
+    if data['ip'] != 'null':
+        if data and data['ip'] not in set(metrics):
+            metrics.append(data['ip'])
+
+    # kolla igenom alla metrics
+
+    # skapa filen
 
     return json_response({"status": "success"}, 200)
+
+
 
 
 @app_main.route('/client/connect', methods=['GET'])
