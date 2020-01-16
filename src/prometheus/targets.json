@@ -1,0 +1,24 @@
+[
+  {
+    "targets": [ "myslave1:9104", "myslave2:9104" ],
+    "labels": {
+      "env": "prod",
+      "job": "convert"
+    }
+  },
+  {
+    "targets": [ "myslave1:9104", "myslave2:9104" ],
+    "labels": {
+      "env": "prod",
+      "job": "merge"
+    }
+  },
+  {
+    "targets": [ "myslave1:9104", "myslave2:9104" ],
+    "labels": {
+      "env": "prod",
+      "job": "split"
+    }
+  }
+]
+
