@@ -27,15 +27,15 @@ def route_worker_connect():
     global workers_upload
     data = request.json
 
-    print("data")
-    print(data)
+    #print("data connect: ")
+    #print(data)
 
     if data and data['ip'] not in set(workers_upload):
         if data['ip'] != 'null':
             workers_upload.append(data['ip'])
 
-    print("Registered workers:")
-    print(workers_upload)
+    #print("Registered workers:")
+    #print(workers_upload)
 
     return json_response({"status": "success"}, 200)
 
@@ -56,7 +56,7 @@ def route_client_connect():
         if worker_ip == "null":
             time.sleep(1)
         else:
-            print("Check ip...")
+            #print("Check ip...")
             # check if ip is active, if not active remove it from pool
             try:
                 if app.IS_DEBUG:
@@ -65,7 +65,7 @@ def route_client_connect():
                     request_url = "http://" + worker_ip + ":5000/isActive"
                 res = requests.post(request_url, json={"test": "test"})
                 res = res.status_code
-                print(res)
+                #print(res)
                 if res != 200:
                     flagForDeletion = True
                 else:
@@ -103,10 +103,9 @@ def round_robin():
 
 @app_main.route('/client/retrieve', methods=['POST'])
 def route_client_retrieve():
-
     data = request.json
 
-    print("data")
+    print("data retrieve: ")
     print(data)
 
     if data:
