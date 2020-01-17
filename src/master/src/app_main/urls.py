@@ -34,25 +34,6 @@ def route_worker_connect():
     return json_response({"status": "success"}, 200)
 
 
-@app_main.route('/worker/metrics/connect', methods=['POST'])
-def route_worker_connect():
-
-    global metrics
-    data = request.json
-
-    if data['ip'] != 'null':
-        if data and data['ip'] not in set(metrics):
-            metrics.append(data['ip'])
-
-    # kolla igenom alla metrics
-
-    # skapa filen
-
-    return json_response({"status": "success"}, 200)
-
-
-
-
 @app_main.route('/client/connect', methods=['GET'])
 def route_client_connect():
 

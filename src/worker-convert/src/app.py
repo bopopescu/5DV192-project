@@ -1,20 +1,19 @@
-from convert.converter import Converter
-
 import threading
 import time
-from flask import Flask, json
+from flask import Flask, json, request
 from flask_cors import CORS
 import requests
+from app_google.urls import app_google
+from app_main import app_main
 import urllib.request
 
-from flask import Blueprint
-
-app_main = Blueprint('app_main', __name__)
+from convert.converter import Converter
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'upload'
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
 app.register_blueprint(app_main)
+app.register_blueprint(app_google)
 
 
 def get_ip():
@@ -33,8 +32,10 @@ class KeepConnectionThread(threading.Thread):
 
         if IS_DEBUG:
             master_ip = "127.0.0.1"
+            service_port = "5005"
         else:
             master_ip = "35.228.95.170"
+            service_port = "5001"
 
         # runtime
 
@@ -45,20 +46,33 @@ class KeepConnectionThread(threading.Thread):
         while 1:
             try:
                 print("Connecting to master...")
-                print("Sent: " + json.dumps(request_data) + " to " + request_url)
+                #print("Sent: " + json.dumps(request_data) + " to " + request_url)
                 res = requests.post(request_url, json=request_data)
                 res = res.status_code
-                print("Received: " + str(res))
                 if res == 200:
-                    print("Successfully connected!")
+                    print("Successfully connected to master!")
+                else:
+                    print("Received: " + str(res))
+                url = "http://" + master_ip + ":" + service_port + "/worker/connect/converter"
+                res = requests.post(url, json=request_data)
+                res = res.status_code
+                if res == 200:
+                    print("Successfully connected service_port!")
                 else:
                     print("Received: " + str(res))
             except Exception:
                 pass
             time.sleep(5)
 
+class KeepConvertThread(threading.Thread):
 
-IS_DEBUG = False
+    def run(self):
+        print("STARTING")
+        converter = Converter()
+        converter.start_rabbitmq()
+
+
+IS_DEBUG = True
 
 if __name__ == '__main__':
 
@@ -66,20 +80,22 @@ if __name__ == '__main__':
     keep_connection_thread = KeepConnectionThread(name="KeepConnectionThread")
     keep_connection_thread.start()
 
-    converter = Converter()
-    converter.start_rabbitmq()
+    converter_thread = KeepConvertThread(name="KeepConvertThread")
+    converter_thread.start()
+
 
     if IS_DEBUG:
-        app.run(debug=True, host='0.0.0.0', port=5002)
+        app.run(debug=False, host='0.0.0.0', port=5002)
     else:
         app.run(debug=False, host='0.0.0.0', port=5000)
 
-
 @app_main.route('/')
 def main_route():
-    return "Split node " + get_ip()
+    return "Converter node " + get_ip()
 
 
 @app_main.route('/isActive', methods=['POST'])
 def main_is_active():
+    print("okokok")
     return "convert node " + get_ip()
+

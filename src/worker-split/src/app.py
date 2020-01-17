@@ -30,8 +30,10 @@ class KeepConnectionThread(threading.Thread):
 
         if IS_DEBUG:
             master_ip = "127.0.0.1"
+            service_port = "5005"
         else:
             master_ip = "35.228.95.170"
+            service_port = "5001"
 
         # runtime
 
@@ -42,12 +44,19 @@ class KeepConnectionThread(threading.Thread):
         while 1:
             try:
                 print("Connecting to master...")
-                print("Sent: " + json.dumps(request_data) + " to " + request_url)
+                #print("Sent: " + json.dumps(request_data) + " to " + request_url)
                 res = requests.post(request_url, json=request_data)
                 res = res.status_code
-                print("Received: " + str(res))
                 if res == 200:
-                    print("Successfully connected!")
+                    print("Successfully connected to master!")
+                else:
+                    print("Received: " + str(res))
+
+                url = "http://" + master_ip + ":" + service_port + "/worker/connect/split"
+                res = requests.post(url, json=request_data)
+                res = res.status_code
+                if res == 200:
+                    print("Successfully connected service_port!")
                 else:
                     print("Received: " + str(res))
             except Exception:
@@ -64,7 +73,7 @@ if __name__ == '__main__':
     keep_connection_thread.start()
 
     if IS_DEBUG:
-        app.run(debug=True, host='0.0.0.0', port=5001)
+        app.run(debug=False, host='0.0.0.0', port=5001)
     else:
         app.run(debug=False, host='0.0.0.0', port=5000)
 
