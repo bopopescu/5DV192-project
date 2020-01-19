@@ -110,7 +110,7 @@ def route_client_retrieve():
         bucket_name = "umu-5dv192-project-eka"
         bucket = GoogleBucket(bucket_name)
 
-        timeout = time.time() + 60
+        timeout = time.time() + 60*10
 
         while True:
             if time.time() > timeout:

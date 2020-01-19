@@ -78,27 +78,16 @@ class Converter:
         bucket.upload_blob(bucket_name, file_path, destination_folder)
 
 
-        #bucket.upload_folder(bucket_name, movie_folder, destination_folder)
-        ###
-        #
-        #
-        #
-        # # listpath = os.path.join(app.root_path, uuid_filename)
-        # # print("\nPATH: " + str(listpath))
-        # # mylist = os.listdir(listpath)
-        # # for a in mylist:
-        # #     if a.endswith(".txt"):
-        # #        mylist.remove(a)
-        # #
-        # #
-        self.upload_rabbit_mq(RABBITMQ_IP, str(uuid_name))
-        #
-        ###
-        ###Remove all the movies locally
-        path_script = os.path.join(dirname, "../", "removeMovies.sh")
-        subprocess.check_call([path_script, path_file, uuid_name])
-        ###
-        ch.basic_ack(delivery_tag=method.delivery_tag)
+        try:
+            self.upload_rabbit_mq(RABBITMQ_IP, str(uuid_name))
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+        except:
+            print("Failed uploading to rabbitMQ")
+
+        finally:
+            path_script = os.path.join(dirname, "../", "removeMovies.sh")
+            subprocess.check_call([path_script, path_file, uuid_name])
+
 
     def upload_rabbit_mq(self, host, dir_name):
         rabbit_mq = RabbitMQ(host)
