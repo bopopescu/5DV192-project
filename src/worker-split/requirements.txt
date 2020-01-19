@@ -1,4 +1,5 @@
 Flask==1.1.1
+google-cloud-core==1.2.0
 Werkzeug==0.16.0
 Flask-cors==3.0.8
 GoogleAppEngineCloudStorageClient==1.9.22.1

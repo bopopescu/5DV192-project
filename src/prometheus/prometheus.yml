@@ -26,9 +26,8 @@ scrape_configs:
 
     static_configs:
       - targets: ['35.228.95.170:9419']
-  
 
-- job_name: 'workernodes'  # This is a default value, it is mandatory.
+  - job_name: 'workernodes'  # This is a default value, it is mandatory.
     file_sd_configs:
       - files:
         - targets.json

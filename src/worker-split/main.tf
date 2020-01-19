@@ -7,7 +7,7 @@ provider "google" {
 
 resource "google_compute_instance" "vm_instance" {
 
-  count		   = 3
+  count		   = 2
   name         = "worker-split-${count.index}"
   machine_type = "n1-standard-1"
 

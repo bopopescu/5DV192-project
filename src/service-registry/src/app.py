@@ -1,3 +1,4 @@
+import io
 import threading
 import time
 from flask import Flask, json, request
@@ -144,10 +145,41 @@ def check_service_registry():
         time.sleep(1)
 
 
+def create_target_json(workers_split, workers_convert, workers_merge):
+    workers_split = ["35.228.66.169"]
+    workers_convert = ["35.228.66.169"]
+    workers_merge = ["35.228.66.169"]
+
+    json_list = []
+    for ip in workers_split:
+        split_json = {}
+        split_json['labels'] = {"env": "prod", "job": "split"}
+        split_json['targets'] = [ip + ":8080", ip + "8080"]
+        json_list.append(split_json)
+
+
+    for ip in workers_convert:
+        convert_json = {}
+        convert_json['labels'] = {"env": "prod", "job": "convert"}
+        convert_json['targets'] = [ip + ":8080", ip + "8080"]
+        json_list.append(convert_json)
+
+    for ip in workers_merge:
+        merge_json = {}
+        merge_json['labels'] = {"env": "prod", "job": "merge"}
+        merge_json['targets'] = [ip + ":8080", ip + "8080"]
+        json_list.append(merge_json)
+
+
+    print(json_list)
+    with io.open('target.json', 'w', encoding='utf-8') as f:
+        f.write(json.dumps(json_list, ensure_ascii=False))
+
 
 
 
 if __name__ == '__main__':
+    create_target_json()
 
     thread = threading.Thread(target=check_service_registry, args=())
     thread.start()
