@@ -209,7 +209,7 @@ if __name__ == '__main__':
     if IS_DEBUG:
         app.run(debug=False, host='0.0.0.0', port=5005)
     else:
-        app.run(debug=False, host='0.0.0.0', port=5001)
+        app.run(debug=False, host='0.0.0.0', port=5005)
     thread.join()
 
 
