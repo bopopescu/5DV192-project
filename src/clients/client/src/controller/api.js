@@ -1,8 +1,8 @@
 import { create } from "apisauce";
 import Cookie from "universal-cookie";
 
-const API_LOCAL_URL= "http://" + window.location.hostname + ":5000";
-const API_EXTERNAL_URL= "http://" + "35.228.95.170" + ":5000";
+const API_LOCAL_URL = "http://" + window.location.hostname + ":5000";
+const API_EXTERNAL_URL = "http://" + "35.228.95.170" + ":5000";
 
 let create_api = () => {
 

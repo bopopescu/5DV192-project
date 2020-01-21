@@ -2,15 +2,15 @@ import os
 from os import listdir
 from os.path import isfile, join
 
+from flask import Flask
 from google.cloud import storage
 
-from app import app
-
+app = Flask(__name__)
 
 class GoogleBucket:
 
     def __init__(self, bucket_name):
-        resource_path = os.path.join(app.root_path, 'app_google/credentials.json')
+        resource_path = os.path.join(app.root_path, 'credentials.json')
         self.storage_client = storage.Client.from_service_account_json(resource_path)
         self.bucket_name = bucket_name
 
