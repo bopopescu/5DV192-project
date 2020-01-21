@@ -7,7 +7,7 @@ import os
 
 
 
-DEBUG = True
+DEBUG = False
 
 class WorkLoadGenerator:
 

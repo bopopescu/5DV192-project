@@ -10,7 +10,7 @@ app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'upload'
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
-IS_DEBUG = True
+IS_DEBUG = False
 
 workers_upload = []
 metrics = []

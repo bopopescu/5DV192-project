@@ -33,29 +33,17 @@ class KeepConnectionThread(threading.Thread):
 
         if IS_DEBUG:
             master_ip = "127.0.0.1"
-            master_port = "5000"
             service_registry_port = "5005"
         else:
             master_ip = "35.228.95.170"
-            master_port = "5000"
-            service_registry_port = "5001"
+            service_registry_port = "5005"
 
         # runtime
-
-        url_master = "http://" + master_ip + ":" + master_port + "/worker/connect"
         url_service_registry = "http://" + master_ip + ":" + service_registry_port + "/worker/connect/merge"
         request_data = {"ip": get_ip()}
 
         while 1:
             try:
-
-                res = requests.post(url_master, json=request_data)
-                res = res.status_code
-
-                if res == 200:
-                    print("Successfully connected to master!")
-                else:
-                    print("Received: " + str(res))
 
                 res = requests.post(url_service_registry, json=request_data)
                 res = res.status_code
@@ -77,7 +65,7 @@ class KeepMergeThread(threading.Thread):
         merge = Merge()
         merge.start_rabbitMQ()
 
-IS_DEBUG = True
+IS_DEBUG = False
 
 if __name__ == '__main__':
 

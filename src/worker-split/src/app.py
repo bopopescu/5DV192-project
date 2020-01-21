@@ -35,7 +35,7 @@ class KeepConnectionThread(threading.Thread):
         else:
             master_ip = "35.228.95.170"
             master_port = "5000"
-            service_registry_port = "5001"
+            service_registry_port = "5005"
 
         # runtime
 
@@ -68,7 +68,7 @@ class KeepConnectionThread(threading.Thread):
             time.sleep(5)
 
 
-IS_DEBUG = True
+IS_DEBUG = False
 
 if __name__ == '__main__':
 

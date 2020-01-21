@@ -14,8 +14,9 @@ cors = CORS(app, resources={r"/*": {"origins": "*"}})
 workers_split = []
 workers_convert = []
 workers_merge = []
+thread_lock = threading.RLock()
 
-IS_DEBUG = True
+IS_DEBUG = False
 
 
 def json_response(message, status):
@@ -38,33 +39,44 @@ def main_route():
 @app.route('/worker/connect/split', methods=['POST'])
 def route_workers_split():
     global workers_split
+    global thread_lock
     data = request.json
+    thread_lock.acquire()
     if data['ip'] != 'null':
         if data and data['ip'] not in set(workers_split):
             workers_split.append(data['ip'])
             create_target_json()
+    thread_lock.release()
     return json_response({"status": "success"}, 200)
 
 
 @app.route('/worker/connect/converter', methods=['POST'])
 def route_workers_convert():
     global workers_convert
+    global thread_lock
     data = request.json
+    thread_lock.acquire()
     if data['ip'] != 'null':
         if data and data['ip'] not in set(workers_convert):
             workers_convert.append(data['ip'])
             create_target_json()
+    thread_lock.release()
     return json_response({"status": "success"}, 200)
 
 
 @app.route('/worker/connect/merge', methods=['POST'])
 def route_workers_merge():
     global workers_merge
+    global thread_lock
     data = request.json
+    thread_lock.acquire()
     if data['ip'] != 'null':
         if data and data['ip'] not in set(workers_merge):
+
             workers_merge.append(data['ip'])
+
             create_target_json()
+    thread_lock.release()
     return json_response({"status": "success"}, 200)
 
 
@@ -75,15 +87,16 @@ def route_service_registry():
     global workers_convert
     global workers_merge
     global IS_DEBUG
+    global thread_lock
 
-
+    thread_lock.acquire()
     for ip in workers_split:
         if IS_DEBUG:
             request_url_split = "http://" + "localhost" + ":5001/isActive"
         else:
             request_url_split = "http://" + ip + ":5000/isActive"
         try:
-            res = requests.post(request_url_split)
+            res = requests.post(request_url_split, timeout=2)
             if not res.status_code == 200:
                 print("Error connecting to master")
                 workers_split.remove(ip)
@@ -92,14 +105,15 @@ def route_service_registry():
             print("Error connecting to master")
             workers_split.remove(ip)
             create_target_json()
-
+    thread_lock.release()
+    thread_lock.acquire()
     for ip in workers_convert:
         if IS_DEBUG:
             request_url_convert = "http://" + "localhost" + ":5002/isActive"
         else:
             request_url_convert = "http://" + ip + ":5000/isActive"
         try:
-            res = requests.post(request_url_convert)
+            res = requests.post(request_url_convert, timeout=2)
             if not res.status_code == 200:
                 print("Error connecting to master")
                 workers_convert.remove(ip)
@@ -108,7 +122,8 @@ def route_service_registry():
             print("Error connecting to master")
             workers_convert.remove(ip)
             create_target_json()
-
+    thread_lock.release()
+    thread_lock.acquire()
     for ip in workers_merge:
         if IS_DEBUG:
             request_url_merge = "http://" + "localhost" + ":5003/isActive"
@@ -116,7 +131,7 @@ def route_service_registry():
             request_url_merge = "http://" + ip + ":5000/isActive"
 
         try:
-            res = requests.post(request_url_merge)
+            res = requests.post(request_url_merge, timeout=2)
             if not res.status_code == 200:
                 print("Error connecting to master")
                 workers_merge.remove(ip)
@@ -125,7 +140,7 @@ def route_service_registry():
             print("Error connecting to master")
             workers_merge.remove(ip)
             create_target_json()
-
+    thread_lock.release()
     return json_response({"status": "success"}, 200)
 
 
@@ -137,7 +152,7 @@ def check_service_registry():
         if IS_DEBUG:
             request_url = "http://" + "localhost" + ":5005/service_registry"
         else:
-            request_url = "http://" + my_ip + ":5001/service_registry"
+            request_url = "http://" + my_ip + ":5005/service_registry"
         try:
             res = requests.post(request_url)
             if not res.status_code == 200:
@@ -183,11 +198,14 @@ def create_target_json():
     try:
         with io.open(target_path, 'w', encoding='utf-8') as f:
             f.write(json.dumps(json_list, ensure_ascii=False))
+            f.close()
     except:
         print("Unable to write to targets.json file")
         
 
 if __name__ == '__main__':
+
+
     thread = threading.Thread(target=check_service_registry, args=())
     thread.start()
 

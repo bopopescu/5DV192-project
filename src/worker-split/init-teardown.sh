@@ -1,3 +1,3 @@
 #!/bin/bash
 
-./../../apps/terraform destroy
+./../../apps/terraform destroy -auto-approve

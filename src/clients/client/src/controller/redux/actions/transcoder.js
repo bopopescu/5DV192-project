@@ -1,7 +1,7 @@
 import * as constants from "../constants/transcoder";
 import api from "../../api";
 
-const debug = true;
+const debug = false;
 
 export function actionTranscoderSend(data) {
 

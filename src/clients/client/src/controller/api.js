@@ -7,7 +7,7 @@ const API_EXTERNAL_URL = "http://" + "35.228.95.170" + ":5000";
 let create_api = () => {
 
     /* choose api url */
-    const URL = API_LOCAL_URL;
+    const URL = API_EXTERNAL_URL;
 
     console.log(URL);
 
