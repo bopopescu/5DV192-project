@@ -32,42 +32,47 @@ class KeepConnectionThread(threading.Thread):
 
         if IS_DEBUG:
             master_ip = "127.0.0.1"
-            service_port = "5005"
+            master_port = "5000"
+            service_registry_port = "5005"
         else:
             master_ip = "35.228.95.170"
-            service_port = "5001"
+            master_port = "5000"
+            service_registry_port = "5001"
 
         # runtime
 
-        print("Thread KeepConnectionThread started!")
-        request_url = "http://" + master_ip + ":5000/worker/connect"
+        url_master = "http://" + master_ip + ":" + master_port + "/worker/connect"
+        url_service_registry = "http://" + master_ip + ":" + service_registry_port + "/worker/connect/converter"
         request_data = {"ip": get_ip()}
 
         while 1:
             try:
-                print("Connecting to master...")
-                #print("Sent: " + json.dumps(request_data) + " to " + request_url)
-                res = requests.post(request_url, json=request_data)
+
+                res = requests.post(url_master, json=request_data)
                 res = res.status_code
+
                 if res == 200:
                     print("Successfully connected to master!")
                 else:
                     print("Received: " + str(res))
-                url = "http://" + master_ip + ":" + service_port + "/worker/connect/converter"
-                res = requests.post(url, json=request_data)
+
+                res = requests.post(url_service_registry, json=request_data)
                 res = res.status_code
+
                 if res == 200:
-                    print("Successfully connected service_port!")
+                    print("Successfully connected service registry!")
                 else:
                     print("Received: " + str(res))
+
             except Exception:
+                print("Error connecting to master and/or service registry")
                 pass
             time.sleep(5)
+
 
 class KeepConvertThread(threading.Thread):
 
     def run(self):
-        print("STARTING")
         converter = Converter()
         converter.start_rabbitmq()
 
@@ -76,7 +81,6 @@ IS_DEBUG = True
 
 if __name__ == '__main__':
 
-    print("Thread KeepConnectionThread starting...")
     keep_connection_thread = KeepConnectionThread(name="KeepConnectionThread")
     keep_connection_thread.start()
 
@@ -89,6 +93,7 @@ if __name__ == '__main__':
     else:
         app.run(debug=False, host='0.0.0.0', port=5000)
 
+
 @app_main.route('/')
 def main_route():
     return "Converter node " + get_ip()
@@ -96,6 +101,5 @@ def main_route():
 
 @app_main.route('/isActive', methods=['POST'])
 def main_is_active():
-    print("okokok")
     return "convert node " + get_ip()
 

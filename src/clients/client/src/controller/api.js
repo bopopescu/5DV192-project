@@ -40,7 +40,7 @@ let create_api = () => {
     const transcodeUpload = data => {
         api_dynamic.setBaseURL(data.url);
         console.log("New API URL set: " + api_dynamic.getBaseURL());
-        return api_dynamic.post("/split_workload", data, headers());
+        return api_dynamic.post("/split", data, headers());
     };
     const transcodeRetrieve = data => api.post("/client/retrieve", data, headers());
 

@@ -5,24 +5,21 @@ import time
 from flask import Flask, json, request
 from flask_cors import CORS
 import requests
-from app_google.urls import app_google
-from app_main import app_main
 import urllib.request
-
-from app_main.utils import json_response
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'upload'
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
-app.register_blueprint(app_main)
-app.register_blueprint(app_google)
-
 
 workers_split = []
 workers_convert = []
 workers_merge = []
 
 IS_DEBUG = True
+
+
+def json_response(message, status):
+    return app.response_class(response=json.dumps(message), status=status, mimetype='application/json')
 
 
 def get_ip():
@@ -32,24 +29,24 @@ def get_ip():
         print("Unable to get Hostname and IP")
         exit(-1)
 
-@app_main.route('/')
+
+@app.route('/')
 def main_route():
     return "service registry"
 
 
-@app_main.route('/worker/connect/split', methods=['POST'])
+@app.route('/worker/connect/split', methods=['POST'])
 def route_workers_split():
     global workers_split
     data = request.json
     if data['ip'] != 'null':
         if data and data['ip'] not in set(workers_split):
             workers_split.append(data['ip'])
-            print("change file")
             create_target_json()
     return json_response({"status": "success"}, 200)
 
 
-@app_main.route('/worker/connect/converter', methods=['POST'])
+@app.route('/worker/connect/converter', methods=['POST'])
 def route_workers_convert():
     global workers_convert
     data = request.json
@@ -60,7 +57,7 @@ def route_workers_convert():
     return json_response({"status": "success"}, 200)
 
 
-@app_main.route('/worker/connect/merge', methods=['POST'])
+@app.route('/worker/connect/merge', methods=['POST'])
 def route_workers_merge():
     global workers_merge
     data = request.json
@@ -71,19 +68,13 @@ def route_workers_merge():
     return json_response({"status": "success"}, 200)
 
 
-@app_main.route('/service_registry', methods=['POST'])
+@app.route('/service_registry', methods=['POST'])
 def route_service_registry():
 
     global workers_split
     global workers_convert
     global workers_merge
     global IS_DEBUG
-
-    print("-- start queue -- ")
-    print(workers_split)
-    print(workers_convert)
-    print(workers_merge)
-    print("-- end queue -- ")
 
 
     for ip in workers_split:
@@ -94,29 +85,27 @@ def route_service_registry():
         try:
             res = requests.post(request_url_split)
             if not res.status_code == 200:
-                print("Status Code error")
+                print("Error connecting to master")
                 workers_split.remove(ip)
                 create_target_json()
         except:
-            print("Not able to connect")
+            print("Error connecting to master")
             workers_split.remove(ip)
             create_target_json()
-            
 
     for ip in workers_convert:
         if IS_DEBUG:
             request_url_convert = "http://" + "localhost" + ":5002/isActive"
         else:
             request_url_convert = "http://" + ip + ":5000/isActive"
-        print(request_url_convert)
         try:
             res = requests.post(request_url_convert)
             if not res.status_code == 200:
-                print("Status Code error")
+                print("Error connecting to master")
                 workers_convert.remove(ip)
                 create_target_json()
         except:
-            print("Not able to connect")
+            print("Error connecting to master")
             workers_convert.remove(ip)
             create_target_json()
 
@@ -125,16 +114,15 @@ def route_service_registry():
             request_url_merge = "http://" + "localhost" + ":5003/isActive"
         else:
             request_url_merge = "http://" + ip + ":5000/isActive"
-        print(request_url_merge)
 
         try:
             res = requests.post(request_url_merge)
             if not res.status_code == 200:
-                print("Status Code error")
+                print("Error connecting to master")
                 workers_merge.remove(ip)
                 create_target_json()
         except:
-            print("Not able to connect")
+            print("Error connecting to master")
             workers_merge.remove(ip)
             create_target_json()
 
@@ -153,15 +141,15 @@ def check_service_registry():
         try:
             res = requests.post(request_url)
             if not res.status_code == 200:
-                print("ERROR: CAN't ping myself")
+                print("Error can't ping service registry")
                 return
         except:
-            print("service_registry not answering")
+            print("Error can't ping service registry")
         time.sleep(1)
 
 
 def create_target_json():
-    print("create_target")
+
     #workers_split = ["192.168.1.78"]
     #workers_convert = ["192.168.1.78"]
     #workers_merge = ["192.168.1.78"]
@@ -198,9 +186,6 @@ def create_target_json():
     except:
         print("Unable to write to targets.json file")
         
-
-
-
 
 if __name__ == '__main__':
     thread = threading.Thread(target=check_service_registry, args=())
