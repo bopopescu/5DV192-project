@@ -47,6 +47,10 @@ def get_threshold(minutes):
 def worker_root():
     return "Master node"
 
+@app.route('/isActive', methods=['GET'])
+def main_is_active():
+    return "master node"
+
 
 @app.route('/worker/connect', methods=['POST'])
 def route_worker_connect():
