@@ -81,7 +81,7 @@ def route_client_connect():
                     request_url = "http://" + worker_ip + ":5001/isActive"
                 else:
                     request_url = "http://" + worker_ip + ":5000/isActive"
-                res = requests.post(request_url, json={"test": "test"})
+                res = requests.post(request_url, json={"test": "test"}, timeout=3)
                 res = res.status_code
                 if res != 200:
                     flag_for_deletion = True

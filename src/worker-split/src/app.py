@@ -46,7 +46,7 @@ class KeepConnectionThread(threading.Thread):
         while 1:
             try:
 
-                res = requests.post(url_master, json=request_data)
+                res = requests.post(url_master, json=request_data, timeout=5)
                 res = res.status_code
 
                 if res == 200:
@@ -54,7 +54,7 @@ class KeepConnectionThread(threading.Thread):
                 else:
                     print("Received: " + str(res))
 
-                res = requests.post(url_service_registry, json=request_data)
+                res = requests.post(url_service_registry, json=request_data, timeout=5)
                 res = res.status_code
 
                 if res == 200:

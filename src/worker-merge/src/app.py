@@ -3,19 +3,16 @@ import time
 from flask import Flask, json, request
 from flask_cors import CORS
 import requests
-from app_google.urls import app_google
-from app_main import app_main
 import urllib.request
 
-from app_main.utils import json_response
 from merge.merge import Merge
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'upload'
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
-app.register_blueprint(app_main)
-app.register_blueprint(app_google)
 
+def json_response(message, status):
+    return app.response_class(response=json.dumps(message), status=status, mimetype='application/json')
 
 def get_ip():
     try:
@@ -24,6 +21,14 @@ def get_ip():
         print("Unable to get Hostname and IP")
         exit(-1)
 
+@app.route('/')
+def main_route():
+    return "Merge node " + get_ip()
+
+
+@app.route('/isActive', methods=['POST'])
+def main_is_active():
+    return "merge node " + get_ip()
 
 class KeepConnectionThread(threading.Thread):
 
@@ -45,7 +50,7 @@ class KeepConnectionThread(threading.Thread):
         while 1:
             try:
 
-                res = requests.post(url_service_registry, json=request_data)
+                res = requests.post(url_service_registry, json=request_data, timeout=5)
                 res = res.status_code
 
                 if res == 200:
@@ -81,11 +86,4 @@ if __name__ == '__main__':
         app.run(debug=False, host='0.0.0.0', port=5000)
 
 
-@app_main.route('/')
-def main_route():
-    return "Merge node " + get_ip()
 
-
-@app_main.route('/isActive', methods=['POST'])
-def main_is_active():
-    return "merge node " + get_ip()
