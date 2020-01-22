@@ -3,6 +3,7 @@ sudo apt-get update
 sudo curl -sSL https://get.docker.com/ | sh
 sudo systemctl start docker
 #sudo docker run -d -p 80:80 nginx
+sudo docker rm $(docker ps -a -q) # stop and delete all old containers
 sudo docker run -d -p 5000:5000 gcr.io/testproject-261510/master:latest
 #sudo docker run --rm --name rabbitmq -p 5672:5672 -p 15672:15672 -p 15692:15692 rabbitmq:3-management
 sudo docker run -d -e RABBITMQ_NODENAME=my-rabbit --hostname rabbitmq-01 --name rabbitmq-01 -p 5672:5672 -p 15672:15672 -p 15692:15692 -p 9419:9419 -v rabbitmq-01-data:/var/lib/rabbitmq rabbitmq:3-management
