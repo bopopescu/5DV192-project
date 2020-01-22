@@ -1,5 +1,4 @@
 import pika
-import time
 
 
 class RabbitMQ(object):
@@ -11,17 +10,14 @@ class RabbitMQ(object):
         self.res = None
 
     def create_channel(self):
-        self.connection = pika.BlockingConnection(
-            pika.ConnectionParameters(self.host))
+        self.connection = pika.BlockingConnection(pika.ConnectionParameters(self.host))
         self.channel = self.connection.channel()
-
 
     def get_queue_length(self, queue):
         self.res = self.channel.queue_declare(queue=queue, durable=True, auto_delete=False, passive=True)
         return self.res.method.message_count
 
     def close_connection(self):
-        print("Connection to RabbitMQ queue closed")
         self.connection.close()
 
 

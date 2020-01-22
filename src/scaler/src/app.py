@@ -1,13 +1,15 @@
 import json
 import os
+import subprocess
 import threading
 import time
-from flask import Flask
+from flask import Flask, request, g
 from flask_cors import CORS
 import requests
-
 from rabbit_mq import RabbitMQ
-
+import logging
+from logging import config
+from flask_google_cloud_logger import FlaskGoogleCloudLogger
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'upload'
@@ -42,95 +44,186 @@ class KeepMasterAlive(threading.Thread):
 
         # runtime
 
-        url_master = "http://" + master_ip + ":" + master_port + "/isActive"
+        url_master = "http://" + master_ip + ":" + master_port
+        time_wait = 120
 
         while 1:
 
+            print("Keeping alive...")
+
             try:
+                res = requests.get(url_master, json={}, timeout=5)
+                print(res.status_code)
+                if res.status_code != 200:
+                    self.terraform_restart()
+                    time.sleep(time_wait)
+            except Exception as e:
+                print(e)
+                self.terraform_restart()
+                time.sleep(time_wait)
 
-                res = requests.post(url_master, json={})
-                res = res.status_code
+            time.sleep(1)
 
-                if res == 200:
-                    print("Successfully connected to master!")
-                else:
-                    print("Received: " + str(res))
+    def terraform_restart(self):
 
-            except Exception:
-                print("Error connecting to master and/or service registry")
-                pass
+        print("Restarting master...")
 
-            time.sleep(5)
+        path_script = os.path.join(app.root_path, "../terraform/master")
+
+        if IS_DEBUG:
+            terraform = "../../../../apps/terraform"
+        else:
+            terraform = "terraform"
+
+        try:
+            out = subprocess.check_output([terraform, "init"], cwd=path_script)
+            print(out.decode('UTF-8').rstrip())
+            out = subprocess.check_output([terraform, "apply", "-auto-approve"], cwd=path_script)
+            print(out.decode('UTF-8').rstrip())
+        except subprocess.CalledProcessError as e:
+            print("Error in subprocess: \n", e.output)
+
 
 
 class AutomaticScaling(threading.Thread):
 
     def run(self):
 
-        rabbit_mq = RabbitMQ(RABBITMQ_IP)
+        # config
+        time_wait = 120
+        worker_convert_folder = "worker-convert"
+        worker_merge_folder = "worker-merge"
+        rabbitmq_convert_queue = "convert_queue"
+        rabbitmq_merge_queue = "merge_queue"
 
-        previous_length = 0
+        rabbit_mq = RabbitMQ(RABBITMQ_IP)
+        size_convert_previous = 0
+        size_merge_previous = 0
 
         while 1:
 
-            current_length = 0
+            size_convert = 0
+            size_merge = 0
 
-            # wait for 1 minute
+            # gather metrics for 1 minute
             for i in range(0, 60):
 
                 rabbit_mq.create_channel()
-                current_length += rabbit_mq.get_queue_length('convert_queue')
+
+                try:
+                    size_convert_i = rabbit_mq.get_queue_length(rabbitmq_convert_queue)
+                    size_merge_i = rabbit_mq.get_queue_length(rabbitmq_merge_queue)
+                except Exception:
+                    break
+
+                print("Size convert: " + str(size_convert_i))
+                print("Size merge: " + str(size_merge_i))
+
+                size_convert += size_convert_i
+                size_merge += size_merge_i
+
                 time.sleep(1)
 
-            num_machines = current_length / previous_length
+            self.scale_init(size_convert, size_convert_previous, worker_convert_folder)
+            self.scale_init(size_merge, size_merge_previous, worker_merge_folder)
 
-            if current_length > previous_length:
-                self.scale_up(num_machines)
-            else:
-                self.scale_down(num_machines)
+            size_convert_previous = size_convert
+            size_merge_previous = size_merge
+            time.sleep(time_wait)
 
-            previous_length = current_length
-            time.sleep(180)
+    def scale_init(self, size, size_previous, worker_type):
 
-        rabbit_mq.close_connection()
+        if size == size_previous:
+            # do not scale
+            num_workers = 2
+        elif size > size_previous:
+            # scale up
+            num_workers = 3
+        else:
+            # scale down
+            num_workers = 1
 
-    def scale_up(self):
-        print("scale_up")
+        self.scale(num_workers, worker_type)
 
-    def scale_down(self):
-        print("scale down")
+    def scale(self, num_workers, worker_type):
 
+        print("Scaling to {" + str(num_workers) + "} workers")
 
-if __name__ == '__main__':
+        path_script = os.path.join(app.root_path, "../terraform/" + worker_type)
 
-    '''keep_master_alive = KeepMasterAlive(name="KeepMasterAlive")
-    keep_master_alive.start()'''
+        if IS_DEBUG:
+            terraform = "../../../../apps/terraform"
+        else:
+            terraform = "terraform"
 
-    automatic_scaling = AutomaticScaling(name="AutomaticScaling")
-    automatic_scaling.start()
-
-    if IS_DEBUG:
-        app.run(debug=False, host='0.0.0.0', port=5002)
-    else:
-        app.run(debug=False, host='0.0.0.0', port=5000)
+        try:
+            out = subprocess.check_output([terraform, "init"], cwd=path_script)
+            print(out.decode('UTF-8').rstrip())
+            out = subprocess.check_output([terraform, "apply", "-auto-approve"], cwd=path_script)
+            print(out.decode('UTF-8').rstrip())
+        except subprocess.CalledProcessError as e:
+            print("Error in subprocess: \n", e.output)
 
 
 @app.route('/')
 def main_route():
-    return "Converter node"
-
-
-@app.route('/isActive', methods=['POST'])
-def main_is_active():
     return "Scaler"
 
 
+LOG_CONFIG = {
+    "version": 1,
+    "formatters": {
+        "json": {
+            "()": "flask_google_cloud_logger.FlaskGoogleCloudFormatter",
+            "application_info": {
+                "type": "python-application",
+                "application_name": "Example Application"
+            },
+            "format": "[%(asctime)s] %(levelname)s in %(module)s: %(message)s"
+        }
+    },
+    "handlers": {
+        "json": {
+            "class": "logging.StreamHandler",
+            "formatter": "json"
+        }
+    },
+    "loggers": {
+        "root": {
+            "level": "INFO",
+            "handlers": ["json"]
+        },
+        "werkzeug": {
+            "level": "WARN",  # Disable werkzeug hardcoded logger
+            "handlers": ["json"]
+        }
+    }
+}
+
+config.dictConfig(LOG_CONFIG)  # load log config from dict
+logger = logging.getLogger("root")  # get root logger instance
+FlaskGoogleCloudLogger(app)
+
+@app.teardown_request  # log request and response info after extension's callbacks
+def log_request_time(_exception):
+    logger.info(
+        f"{request.method} {request.path} - Sent {g.response.status_code}" +
+        " in {g.request_time:.5f}ms")
 
 
-'''
- 1. Hämta lista med convert noder from service-regeistry   (service-registry håller kolla på aktiva noder JUST NU)
- 2. Kolla länge på list ger dig antalet aktiva convert noder som finns just nu
- 3. Fråga rabbitMQ om convert queue length
- 4. Är queue length längre än 10 starta ny nod
- 5. Är queue length kortare än 5 och vi har mer än 3 noder ta bort en nod.  
-'''
+if __name__ == '__main__':
+
+    keep_master_alive = KeepMasterAlive(name="KeepMasterAlive")
+    keep_master_alive.start()
+
+    '''automatic_scaling = AutomaticScaling(name="AutomaticScaling")
+    automatic_scaling.start()'''
+
+    if IS_DEBUG:
+        app.run(debug=False, host='0.0.0.0', port=5011)
+    else:
+        app.run(debug=False, host='0.0.0.0', port=5000)
+
+
+
+
