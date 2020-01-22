@@ -176,20 +176,20 @@ def create_target_json():
     for ip in workers_split:
         split_json = {}
         split_json['labels'] = {"env": "prod", "job": "split"}
-        split_json['targets'] = [ip + ":8080"]
+        split_json['targets'] = [ip + ":9100"]
         json_list.append(split_json)
 
 
     for ip in workers_convert:
         convert_json = {}
         convert_json['labels'] = {"env": "prod", "job": "convert"}
-        convert_json['targets'] = [ip + ":8080"]
+        convert_json['targets'] = [ip + ":9100"]
         json_list.append(convert_json)
 
     for ip in workers_merge:
         merge_json = {}
         merge_json['labels'] = {"env": "prod", "job": "merge"}
-        merge_json['targets'] = [ip + ":8080"]
+        merge_json['targets'] = [ip + ":9100"]
         json_list.append(merge_json)
 
 
