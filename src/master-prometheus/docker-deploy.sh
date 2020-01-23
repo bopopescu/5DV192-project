@@ -6,7 +6,7 @@ GCLOUD_USERNAME="superadmin"
 GCLOUD_PROJECT="testproject-261510"
 GCLOUD_BUILD_NAME="prometheus"
 
-GCLOUD_FILE_CREDENTIALS="../../config/credentials.json"
+GCLOUD_FILE_CREDENTIALS="credentials.json"
 
 # env
 

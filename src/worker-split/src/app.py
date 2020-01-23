@@ -29,30 +29,19 @@ class KeepConnectionThread(threading.Thread):
         # config
 
         if IS_DEBUG:
-            master_ip = "127.0.0.1"
-            master_port = "5000"
+            service_registry_url = "127.0.0.1"
             service_registry_port = "5005"
         else:
-            master_ip = "35.228.95.170"
-            master_port = "5000"
+            service_registry_url = "35.228.95.170"
             service_registry_port = "5005"
 
         # runtime
 
-        url_master = "http://" + master_ip + ":" + master_port + "/worker/connect"
-        url_service_registry = "http://" + master_ip + ":" + service_registry_port + "/worker/connect/split"
+        url_service_registry = "http://" + service_registry_url + ":" + service_registry_port + "/worker/connect/split"
         request_data = {"ip": get_ip()}
 
         while 1:
             try:
-
-                res = requests.post(url_master, json=request_data, timeout=5)
-                res = res.status_code
-
-                if res == 200:
-                    print("Successfully connected to master!")
-                else:
-                    print("Received: " + str(res))
 
                 res = requests.post(url_service_registry, json=request_data, timeout=5)
                 res = res.status_code
@@ -63,7 +52,7 @@ class KeepConnectionThread(threading.Thread):
                     print("Received: " + str(res))
 
             except Exception:
-                print("Error connecting to master and/or service registry")
+                print("Error connecting to the service registry")
                 pass
             time.sleep(5)
 

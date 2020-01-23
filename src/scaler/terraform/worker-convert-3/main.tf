@@ -1,14 +1,14 @@
 provider "google" {
   credentials = file("credentials.json")
   project     = "testproject-261510"
-  region      = "europe-west1"
-  zone        = "europe-west1-b"
+  region      = "europe-north1"
+  zone        = "europe-north1-a"
 }
 
 resource "google_compute_instance" "vm_instance" {
 
   count		   = 3
-  name         = "worker-merge-${count.index}"
+  name         = "worker-convert-${count.index}"
   machine_type = "n1-standard-1"
 
   boot_disk {
@@ -26,5 +26,4 @@ resource "google_compute_instance" "vm_instance" {
   metadata_startup_script = file("init.sh")
 
 }
-
 

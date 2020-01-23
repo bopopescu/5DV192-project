@@ -1,3 +1,6 @@
+import os
+import subprocess
+import threading
 import time
 import requests
 from flask import Flask, g
@@ -14,7 +17,6 @@ cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
 IS_DEBUG = False
 
-workers_upload = []
 metrics = []
 index = 0
 
@@ -23,20 +25,54 @@ def json_response(message, status):
     return app.response_class(response=json.dumps(message), status=status, mimetype='application/json')
 
 
-def round_robin():
+def get_split_workers():
 
-    global workers_upload
+    url_service_registry = "http://35.228.95.170:5005/worker/get/"
+
+    code = 0
+    workers_split = []
+
+    while code != 200:
+
+        print("Retrieving workers...")
+
+        try:
+
+            res = requests.get(url_service_registry, timeout=5)
+            code = res.status_code
+
+            print(res)
+
+            if code == 200:
+                workers = res.json()
+                print(workers)
+                workers_split = workers['split']
+                print(workers_split)
+
+        except Exception as e:
+            print(e)
+
+        time.sleep(1)
+
+    return workers_split
+
+
+def get_worker():
+
     global index
 
-    try:
-        ip = workers_upload[index]
-        index += 1
-    except Exception:
-        index = 0
-        return "null"
+    ip = "null"
 
-    print("Registered workers:")
-    print(workers_upload)
+    while ip == "null":
+
+        workers_split = get_split_workers()
+
+        try:
+            ip = workers_split[index]
+            index += 1
+        except Exception:
+            index = 0
+            ip = "null"
 
     return ip
 
@@ -45,65 +81,70 @@ def get_threshold(minutes):
     return time.time() + 60*minutes
 
 
+class KeepScalerAlive(threading.Thread):
+
+    def run(self):
+
+        # config
+
+        ip = "34.89.115.86"
+        port = "5000"
+
+        # runtime
+
+        url_master = "http://" + ip + ":" + port
+        time_wait = 120
+
+        while 1:
+
+            print("Keeping alive...")
+
+            try:
+                res = requests.get(url_master, json={}, timeout=5)
+                print(res.status_code)
+                if res.status_code != 200:
+                    self.terraform_restart()
+                    time.sleep(time_wait)
+            except Exception as e:
+                print(e)
+                self.terraform_restart()
+                time.sleep(time_wait)
+
+            time.sleep(1)
+
+    def terraform_restart(self):
+
+        print("Restarting scaler...")
+
+        path_script = os.path.join(app.root_path, "../terraform/scaler")
+
+        if IS_DEBUG:
+            terraform = "../../../../apps/terraform"
+        else:
+            terraform = "terraform"
+
+        try:
+            out = subprocess.check_output([terraform, "init"], cwd=path_script)
+            print(out.decode('UTF-8').rstrip())
+            out = subprocess.check_output([terraform, "apply", "-auto-approve"], cwd=path_script)
+            print(out.decode('UTF-8').rstrip())
+        except subprocess.CalledProcessError as e:
+            print("Error in subprocess: \n", e.output)
+
+
 @app.route('/')
 def worker_root():
     return "Master node"
+
 
 @app.route('/isActive', methods=['GET'])
 def main_is_active():
     return "master node"
 
 
-@app.route('/worker/connect', methods=['POST'])
-def route_worker_connect():
-    global workers_upload
-    data = request.json
-    if data['ip'] != 'null':
-        if data and data['ip'] not in set(workers_upload):
-            workers_upload.append(data['ip'])
-        if data and data['ip'] not in set(metrics):
-            metrics.append(data['ip'])
-    return json_response({"status": "success"}, 200)
-
-
 @app.route('/client/connect', methods=['GET'])
 def route_client_connect():
-
-    global index
-    global workers_upload
-
-    worker_ip = "null"
-
-    while worker_ip == "null":
-
-        worker_ip = round_robin()
-        flag_for_deletion = False
-
-        if worker_ip == "null":
-            time.sleep(1)
-        else:
-            try:
-                if IS_DEBUG:
-                    request_url = "http://" + worker_ip + ":5001/isActive"
-                else:
-                    request_url = "http://" + worker_ip + ":5000/isActive"
-                res = requests.post(request_url, json={"test": "test"}, timeout=3)
-                res = res.status_code
-                if res != 200:
-                    flag_for_deletion = True
-                else:
-                    print(worker_ip)
-            except Exception:
-                flag_for_deletion = True
-
-        if flag_for_deletion:
-            print("Removing ip...")
-            if worker_ip in workers_upload:
-                workers_upload.remove(worker_ip)
-            print(workers_upload)
-            worker_ip = "null"
-
-    return json_response({"ip": worker_ip}, 200)
+    return json_response({"ip": get_worker()}, 200)
 
 
 @app.route('/client/retrieve', methods=['POST'])
@@ -178,6 +219,9 @@ def log_request_time(_exception):
 
 
 if __name__ == '__main__':
+
+    keep_scaler_alive = KeepScalerAlive(name="KeepScalerAlive")
+    keep_scaler_alive.start()
 
     if IS_DEBUG:
         app.run(debug=True, host='0.0.0.0', port=5000)

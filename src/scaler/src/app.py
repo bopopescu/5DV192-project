@@ -7,16 +7,15 @@ from flask import Flask, request, g
 from flask_cors import CORS
 import requests
 from rabbit_mq import RabbitMQ
-import logging
-from logging import config
-from flask_google_cloud_logger import FlaskGoogleCloudLogger
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'upload'
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
-IS_DEBUG = True
-RABBITMQ_IP = "35.228.95.170"
+IS_DEBUG = False
+URL_RABBIT_MQ = "35.228.95.170"
+URL_SERVICE_REGISTRY = "http://35.228.95.170:5005/worker/get/"
+URL_MASTER = "http://35.228.95.170:5000"
 
 
 def json_response(message, status):
@@ -33,136 +32,152 @@ def save_file_locally(file, folder, filename):
     file.save(destination)
 
 
-class KeepMasterAlive(threading.Thread):
+# gather metrics for 1 minute
+def get_queue_metrics(queue_name):
+
+    rabbit_mq = RabbitMQ(URL_RABBIT_MQ)
+    queue_size = 0
+
+    for i in range(0, 5):
+        rabbit_mq.create_channel()
+        try:
+            queue_size += rabbit_mq.get_queue_length(queue_name + "_queue")
+            print(queue_name + ": " + queue_size)
+        except Exception:
+            break
+        time.sleep(1)
+    rabbit_mq.close_connection()
+    return queue_size
+
+
+def scale(worker_type):
+
+    queue_length_previous = 0
+
+    while 1:
+
+        queue_length = get_queue_metrics(worker_type)
+        num_workers = get_workers(worker_type)
+        new_num_workers = scale_algorithm(queue_length, queue_length_previous)
+        terraform_dir = "worker-" + worker_type + "-" + str(new_num_workers)
+
+        if num_workers != new_num_workers:
+            print("Scaling to " + str(new_num_workers) + " " + worker_type + " workers (" + terraform_dir + ")")
+            terraform_provision(terraform_dir)
+            time.sleep(180)
+        else:
+            print("No scaling needed for " + worker_type)
+
+        queue_length_previous = queue_length
+
+
+def scale_algorithm(size, size_previous):
+    num_workers = 2
+    if size > size_previous:
+        # scale up
+        num_workers = 3
+    elif size < size_previous:
+        # scale down
+        num_workers = 1
+    return num_workers
+
+
+def terraform_provision(path):
+
+    path_script = os.path.join(app.root_path, "../terraform/" + path)
+
+    if IS_DEBUG:
+        terraform = "../../../../apps/terraform"
+    else:
+        terraform = "terraform"
+
+    try:
+        out = subprocess.check_output([terraform, "init"], cwd=path_script)
+        print(out.decode('UTF-8').rstrip())
+        out = subprocess.check_output([terraform, "apply", "-auto-approve"], cwd=path_script)
+        print(out.decode('UTF-8').rstrip())
+    except subprocess.CalledProcessError as e:
+        print("Error in subprocess: \n", e.output)
+
+
+def get_workers(worker_type):
+
+    code = 0
+    num_convert_workers = 0
+
+    while code != 200:
+        try:
+            res = requests.get(URL_SERVICE_REGISTRY, timeout=5)
+            code = res.status_code
+            if code == 200:
+                data = res.json()
+                num_convert_workers = len(data[worker_type])
+        except Exception as e:
+            print(e)
+        time.sleep(1)
+    return num_convert_workers
+
+
+class ScaleMaster(threading.Thread):
 
     def run(self):
 
-        # config
-
-        master_ip = "35.228.95.170"
-        master_port = "5000"
-
-        # runtime
-
-        url_master = "http://" + master_ip + ":" + master_port
-        time_wait = 120
+        print("Starting ScaleMaster...")
 
         while 1:
 
-            print("Keeping alive...")
-
             try:
-                res = requests.get(url_master, json={}, timeout=5)
-                print(res.status_code)
+                res = requests.get(URL_MASTER, json={}, timeout=5)
                 if res.status_code != 200:
-                    self.terraform_restart()
-                    time.sleep(time_wait)
+                    print("Starting new master...")
+                    terraform_provision("master")
+                    time.sleep(120)
             except Exception as e:
                 print(e)
-                self.terraform_restart()
-                time.sleep(time_wait)
+                terraform_provision("master")
+                time.sleep(120)
 
             time.sleep(1)
 
-    def terraform_restart(self):
 
-        print("Restarting master...")
-
-        path_script = os.path.join(app.root_path, "../terraform/master")
-
-        if IS_DEBUG:
-            terraform = "../../../../apps/terraform"
-        else:
-            terraform = "terraform"
-
-        try:
-            out = subprocess.check_output([terraform, "init"], cwd=path_script)
-            print(out.decode('UTF-8').rstrip())
-            out = subprocess.check_output([terraform, "apply", "-auto-approve"], cwd=path_script)
-            print(out.decode('UTF-8').rstrip())
-        except subprocess.CalledProcessError as e:
-            print("Error in subprocess: \n", e.output)
-
-
-
-class AutomaticScaling(threading.Thread):
+class ScaleSplit(threading.Thread):
 
     def run(self):
 
-        # config
-        time_wait = 120
-        worker_convert_folder = "worker-convert"
-        worker_merge_folder = "worker-merge"
-        rabbitmq_convert_queue = "convert_queue"
-        rabbitmq_merge_queue = "merge_queue"
+        print("Starting ScaleSplit...")
 
-        rabbit_mq = RabbitMQ(RABBITMQ_IP)
-        size_convert_previous = 0
-        size_merge_previous = 0
+        # config
+
+        min_workers = 3
+        terraform_dir = "worker-split"
+
+        # runtime
 
         while 1:
 
-            size_convert = 0
-            size_merge = 0
+            num_upload_workers = get_workers('convert')
+            print("Split workers: " + str(num_upload_workers))
 
-            # gather metrics for 1 minute
-            for i in range(0, 60):
+            if num_upload_workers != min_workers:
+                print("Provisioning new split workers...")
+                terraform_provision(terraform_dir)
+                time.sleep(120)
 
-                rabbit_mq.create_channel()
+            time.sleep(1)
 
-                try:
-                    size_convert_i = rabbit_mq.get_queue_length(rabbitmq_convert_queue)
-                    size_merge_i = rabbit_mq.get_queue_length(rabbitmq_merge_queue)
-                except Exception:
-                    break
 
-                print("Size convert: " + str(size_convert_i))
-                print("Size merge: " + str(size_merge_i))
+class ScaleMerge(threading.Thread):
 
-                size_convert += size_convert_i
-                size_merge += size_merge_i
+    def run(self):
+        print("Starting ScaleMerge...")
+        scale("merge")
 
-                time.sleep(1)
 
-            self.scale_init(size_convert, size_convert_previous, worker_convert_folder)
-            self.scale_init(size_merge, size_merge_previous, worker_merge_folder)
+class ScaleConvert(threading.Thread):
 
-            size_convert_previous = size_convert
-            size_merge_previous = size_merge
-            time.sleep(time_wait)
-
-    def scale_init(self, size, size_previous, worker_type):
-
-        if size == size_previous:
-            # do not scale
-            num_workers = 2
-        elif size > size_previous:
-            # scale up
-            num_workers = 3
-        else:
-            # scale down
-            num_workers = 1
-
-        self.scale(num_workers, worker_type)
-
-    def scale(self, num_workers, worker_type):
-
-        print("Scaling to {" + str(num_workers) + "} workers")
-
-        path_script = os.path.join(app.root_path, "../terraform/" + worker_type)
-
-        if IS_DEBUG:
-            terraform = "../../../../apps/terraform"
-        else:
-            terraform = "terraform"
-
-        try:
-            out = subprocess.check_output([terraform, "init"], cwd=path_script)
-            print(out.decode('UTF-8').rstrip())
-            out = subprocess.check_output([terraform, "apply", "-auto-approve"], cwd=path_script)
-            print(out.decode('UTF-8').rstrip())
-        except subprocess.CalledProcessError as e:
-            print("Error in subprocess: \n", e.output)
+    def run(self):
+        print("Starting ScaleConvert...")
+        scale("convert")
 
 
 @app.route('/')
@@ -170,54 +185,19 @@ def main_route():
     return "Scaler"
 
 
-LOG_CONFIG = {
-    "version": 1,
-    "formatters": {
-        "json": {
-            "()": "flask_google_cloud_logger.FlaskGoogleCloudFormatter",
-            "application_info": {
-                "type": "python-application",
-                "application_name": "Example Application"
-            },
-            "format": "[%(asctime)s] %(levelname)s in %(module)s: %(message)s"
-        }
-    },
-    "handlers": {
-        "json": {
-            "class": "logging.StreamHandler",
-            "formatter": "json"
-        }
-    },
-    "loggers": {
-        "root": {
-            "level": "INFO",
-            "handlers": ["json"]
-        },
-        "werkzeug": {
-            "level": "WARN",  # Disable werkzeug hardcoded logger
-            "handlers": ["json"]
-        }
-    }
-}
-
-config.dictConfig(LOG_CONFIG)  # load log config from dict
-logger = logging.getLogger("root")  # get root logger instance
-FlaskGoogleCloudLogger(app)
-
-@app.teardown_request  # log request and response info after extension's callbacks
-def log_request_time(_exception):
-    logger.info(
-        f"{request.method} {request.path} - Sent {g.response.status_code}" +
-        " in {g.request_time:.5f}ms")
-
-
 if __name__ == '__main__':
 
-    keep_master_alive = KeepMasterAlive(name="KeepMasterAlive")
-    keep_master_alive.start()
+    t1 = ScaleMaster(name="ScaleMaster")
+    t1.start()
 
-    '''automatic_scaling = AutomaticScaling(name="AutomaticScaling")
-    automatic_scaling.start()'''
+    t2 = ScaleSplit(name="ScaleSplit")
+    t2.start()
+
+    t3 = ScaleConvert(name="ScaleConvert")
+    t3.start()
+
+    t4 = ScaleMerge(name="ScaleMerge")
+    t4.start()
 
     if IS_DEBUG:
         app.run(debug=False, host='0.0.0.0', port=5011)

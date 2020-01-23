@@ -80,6 +80,18 @@ def route_workers_merge():
     return json_response({"status": "success"}, 200)
 
 
+@app.route('/worker/get/', methods=['GET'])
+def route_get_workers():
+
+    json_data = {
+        "split": workers_split,
+        "convert": workers_convert,
+        "merge": workers_merge
+    }
+
+    return json_response(json_data, 200)
+
+
 @app.route('/service_registry', methods=['POST'])
 def route_service_registry():
 
@@ -144,7 +156,6 @@ def route_service_registry():
     return json_response({"status": "success"}, 200)
 
 
-
 def check_service_registry():
     my_ip = get_ip()
 
@@ -204,7 +215,6 @@ def create_target_json():
         
 
 if __name__ == '__main__':
-
 
     thread = threading.Thread(target=check_service_registry, args=())
     thread.start()

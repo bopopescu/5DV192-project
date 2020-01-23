@@ -1,14 +1,14 @@
 provider "google" {
   credentials = file("credentials.json")
   project     = "testproject-261510"
-  region      = "europe-north1"
-  zone        = "europe-north1-a"
+  region      = "europe-west2"
+  zone        = "europe-west2-a"
 }
 
 resource "google_compute_instance" "vm_instance" {
 
   count		   = 1
-  name         = "worker-convert-${count.index}"
+  name         = "scaler-${count.index}"
   machine_type = "n1-standard-1"
 
   boot_disk {
@@ -19,7 +19,9 @@ resource "google_compute_instance" "vm_instance" {
 
   network_interface {
     network       = "default"
-    access_config {}
+    access_config {
+      nat_ip = "34.89.115.86"
+    }
   }
 
   metadata = {}
