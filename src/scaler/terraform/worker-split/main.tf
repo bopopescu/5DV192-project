@@ -1,8 +1,8 @@
 provider "google" {
   credentials = "${file("credentials.json")}"
   project     = "testproject-261510"
-  region      = "europe-north1"
-  zone        = "europe-north1-a"
+  region      = "europe-west3"
+  zone        = "europe-west3-a"
 }
 
 resource "google_compute_instance" "vm_instance" {

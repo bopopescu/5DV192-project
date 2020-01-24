@@ -58,11 +58,12 @@ def scale(worker_type):
 
         queue_length = get_queue_metrics(worker_type)
         num_workers = get_workers(worker_type)
-        new_num_workers = scale_algorithm(queue_length, queue_length_previous)
-        terraform_dir = "worker-" + worker_type + "-" + str(new_num_workers)
+        new_num_workers = scale_algorithm(num_workers, queue_length, queue_length_previous)
+        terraform_dir = "worker-" + worker_type
 
         if num_workers != new_num_workers:
             print("Scaling to " + str(new_num_workers) + " " + worker_type + " workers (" + terraform_dir + ")")
+            terraform_write_variables(terraform_dir, new_num_workers)
             terraform_provision(terraform_dir)
             time.sleep(180)
         else:
@@ -71,16 +72,40 @@ def scale(worker_type):
         queue_length_previous = queue_length
 
 
-def scale_algorithm(size, size_previous):
-    num_workers = 2
-    if size > size_previous:
-        # scale up
-        num_workers = 3
-    elif size < size_previous:
-        # scale down
-        num_workers = 1
-    return num_workers
+def scale_algorithm(num_workers, queue_length, queue_length_previous):
 
+    min_workers = 1
+    max_workers = 3
+
+    if num_workers == 0:
+
+        return min_workers
+
+    else:
+
+        if queue_length > queue_length_previous:
+            # scale up
+            num_workers = max_workers
+        elif queue_length == 0 or queue_length < queue_length_previous:
+            # scale down
+            num_workers -= 1
+
+        if num_workers < min_workers:
+            num_workers = min_workers
+
+        if num_workers > max_workers:
+            num_workers = max_workers
+
+        return num_workers
+
+
+def terraform_write_variables(path, num_workers):
+    print("Writing new variables.tf file...")
+    file = os.path.join(app.root_path, "../terraform/" + path + "/variables.tf")
+    text = "variable \"num_workers\" { default = " + str(num_workers) + " }"
+    f = open(file, "w")
+    f.write(text)
+    f.close()
 
 def terraform_provision(path):
 
@@ -155,7 +180,7 @@ class ScaleSplit(threading.Thread):
 
         while 1:
 
-            num_upload_workers = get_workers('convert')
+            num_upload_workers = get_workers('split')
             print("Split workers: " + str(num_upload_workers))
 
             if num_upload_workers != min_workers:
