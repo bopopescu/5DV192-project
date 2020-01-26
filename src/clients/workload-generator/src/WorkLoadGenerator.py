@@ -3,8 +3,9 @@ import time
 import requests
 from flask import Flask, json
 import os
-
-
+import datetime
+from datetime import timedelta
+from google.cloud._helpers import UTC
 
 
 DEBUG = False
@@ -17,6 +18,7 @@ class WorkLoadGenerator:
         self.atomic_workers_running = self.AtomicInteger()
         self.nr_work_success = self.AtomicInteger()
         self.nr_work_fail = self.AtomicInteger()
+        self.run_time = []
         if not DEBUG:
             self.master_ip = "35.228.95.170"  # REAL DEAL
             self.split_port = "5000"
@@ -41,6 +43,12 @@ class WorkLoadGenerator:
         print("workers_running: " + self.atomic_workers_running.get_str())
         print("work_success: " + self.nr_work_success.get_str())
         print("work_fail: " + self.nr_work_fail.get_str())
+
+        avg_time = 0
+        for temp in self.run_time:
+            avg_time += temp
+        print("Avg time: %.2f" % (avg_time / self.nr_work_success.get_value()))
+
         print("Thread has finished")
 
 
@@ -51,45 +59,69 @@ class WorkLoadGenerator:
         request_connect = "http://" + self.master_ip + ":5000/client/connect"
         request_retrieve = "http://" + self.master_ip + ":5000/client/retrieve"
 
+        start_time = time.time()
+        expired_time_small = start_time + 5*60
+        expired_time_big = start_time + 10*60
 
-        print("Connecting to master...")
-        print(request_connect)
-        res = requests.get(request_connect)
-        print(res.status_code)
-        if res.status_code == 200:
-            print("Successfully connected to master!")
-            data = res.json()
-        else:
-            print("Error on master response")
-            nr_work_fail.increase_value()
-            return
+        while True:
+            slip_ip = None
+            uuid_name = None
+            print("Stage 1")
+            while True:
+                try:
+                    res = requests.get(request_connect)
+                    if res.status_code == 200:
+                        data = res.json()
+                        slip_ip = data["ip"]
+                        print("Success: Got split ip from master: " + slip_ip)
+                        break
+                    else:
+                        print("Error: Retrying getting split ip")
+                except:
+                    print("Error: Retrying ip from master")
+                if time.time() > expired_time_small:
+                    break
+                time.sleep(1)
 
-        slip_ip = data["ip"]
-        print("ip: " + slip_ip)
-        request_workload = "http://" + slip_ip + ":" + self.split_port + "/split_workload"
-        print(request_workload)
-        res = requests.post(request_workload)
+            request_workload = "http://" + slip_ip + ":" + self.split_port + "/split_workload"
 
-        if res.status_code == 200:
-            print("Successfully connected split_workload!")
-            data = res.json()
-            print("uuid: " + data["id"])
-            uuid_name = data["id"]
-        else:
-            print("Error on split_workload response")
-            nr_work_fail.increase_value()
-            return
-        res = requests.post(request_retrieve, json=({'id': uuid_name}))
+            print("Stage 2")
+            try:
+                res = requests.post(request_workload)
+                if res.status_code == 200:
+                    data = res.json()
+                    uuid_name = data["id"]
+                    print("Success: movie uploaded on split worker, uuid:" + uuid_name)
+                else:
+                    print("Error: Uploading movie to split worker ip: " + slip_ip)
+            except:
+                print("Error: Uploading movie to split worker ip: " + slip_ip)
 
-        if res.status_code == 200:
-            print("Successfully connected retrieve!")
-            data = res.json()
-            print("downloadUrl: " + data["downloadUrl"])
-        else:
-            print("Error on retrieve response")
-            nr_work_fail.increase_value()
-            return
+            print("Stage 3")
+            try:
+                res = requests.post(request_retrieve, json=({'id': uuid_name}))
+                if res.status_code == 200:
+                    data = res.json()
+                    print("Success: retrieved downloadUrl: " + data["downloadUrl"])
+                    break
+                else:
+                    print("Error: on retrieved downloadUrl with uuid: " + uuid_name)
+            except:
+                print("Error: on retrieved downloadUrl with uuid: " + uuid_name)
 
+            if time.time() > expired_time_small:
+                nr_work_fail.increase_value()
+                atomic_workers_running.decrease_value()
+                break
+            time.sleep(1)
+
+
+            if time.time() > expired_time_big:
+                nr_work_fail.increase_value()
+                atomic_workers_running.decrease_value()
+                return
+
+        self.run_time.append(time.time() - start_time)
         nr_work_success.increase_value()
         atomic_workers_running.decrease_value()
 
