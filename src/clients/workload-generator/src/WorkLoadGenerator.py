@@ -20,6 +20,8 @@ class WorkLoadGenerator:
         self.atomic_workers_running = self.AtomicInteger()
         self.nr_work_success = self.AtomicInteger()
         self.nr_work_fail = self.AtomicInteger()
+        self.logger_stop = self.AtomicInteger()
+        self.logger_stop.set_value(0)
         self.run_time = []
         if not DEBUG:
             self.master_ip = "35.228.95.170"  # REAL DEAL
@@ -35,10 +37,8 @@ class WorkLoadGenerator:
 
     def create_workload(self, nr_workers, post_intervall):
 
-        thread_logger = threading.Thread(target=self.logger_thread, args=(self.atomic_workers_running,))
+        thread_logger = threading.Thread(target=self.logger_thread, args=(self.atomic_workers_running, self.logger_stop))
         thread_logger.start()
-        thread_logger.join()
-        return
 
 
 
@@ -55,15 +55,17 @@ class WorkLoadGenerator:
         print("workers_running: " + self.atomic_workers_running.get_str())
         print("work_success: " + self.nr_work_success.get_str())
         print("work_fail: " + self.nr_work_fail.get_str())
+        self.logger_stop.set_value(1)
         thread_logger.join()
         avg_time = 0
-        for temp in self.run_time:
-            avg_time += temp
-        print("Avg time: %.2f" % (avg_time / self.nr_work_success.get_value()))
+        if len(self.run_time) != 0:
+            for temp in self.run_time:
+                avg_time += temp
+            print("Avg time: %.2f" % (avg_time / self.nr_work_success.get_value()))
 
         print("Thread has finished")
 
-    def logger_thread(self, atomic_workers_running):
+    def logger_thread(self, atomic_workers_running, logger_stop):
 
         # Workbook is created
         wb = Workbook()
@@ -72,7 +74,7 @@ class WorkLoadGenerator:
 
         row_count = 0
         start_time = time.time()
-        expired_time = start_time + 0.1 * 60
+        expired_time = start_time + 5 * 60
         while time.time() < expired_time:
             named_tuple = time.localtime(time.time())  # get struct_time
             time_string = time.strftime("%H:%M:%S", named_tuple)
@@ -82,11 +84,14 @@ class WorkLoadGenerator:
             sheet1.write(row_count, 1, workers_running)
             row_count += 1
 
-
+            temp_stop = logger_stop.get_value()
+            if temp_stop == 1:
+                break
             time.sleep(2)
         wb.save('worker_at_time.xls')
 
     def worker_load(self, atomic_workers_running, nr_work_success, nr_work_fail):
+        return
         atomic_workers_running.increase_value()
 
         request_connect = "http://" + self.master_ip + ":5000/client/connect"
