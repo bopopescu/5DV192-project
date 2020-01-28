@@ -1,6 +1,8 @@
 import threading
 import time
 import requests
+import xlwt
+from xlwt import Workbook
 from flask import Flask, json
 import os
 import datetime
@@ -28,7 +30,17 @@ class WorkLoadGenerator:
 
 
 
+
+
+
     def create_workload(self, nr_workers, post_intervall):
+
+        thread_logger = threading.Thread(target=self.logger_thread, args=(self.atomic_workers_running,))
+        thread_logger.start()
+        thread_logger.join()
+        return
+
+
 
         thread_list = []
         for i in range(nr_workers):
@@ -43,7 +55,7 @@ class WorkLoadGenerator:
         print("workers_running: " + self.atomic_workers_running.get_str())
         print("work_success: " + self.nr_work_success.get_str())
         print("work_fail: " + self.nr_work_fail.get_str())
-
+        thread_logger.join()
         avg_time = 0
         for temp in self.run_time:
             avg_time += temp
@@ -51,7 +63,28 @@ class WorkLoadGenerator:
 
         print("Thread has finished")
 
+    def logger_thread(self, atomic_workers_running):
 
+        # Workbook is created
+        wb = Workbook()
+        # add_sheet is used to create sheet.
+        sheet1 = wb.add_sheet('Sheet 1')
+
+        row_count = 0
+        start_time = time.time()
+        expired_time = start_time + 0.1 * 60
+        while time.time() < expired_time:
+            named_tuple = time.localtime(time.time())  # get struct_time
+            time_string = time.strftime("%H:%M:%S", named_tuple)
+            workers_running = atomic_workers_running.get_value()
+            print(str(time_string) + " " + str(workers_running))
+            sheet1.write(row_count, 0, time_string)
+            sheet1.write(row_count, 1, workers_running)
+            row_count += 1
+
+
+            time.sleep(2)
+        wb.save('worker_at_time.xls')
 
     def worker_load(self, atomic_workers_running, nr_work_success, nr_work_fail):
         atomic_workers_running.increase_value()
