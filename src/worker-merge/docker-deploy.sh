@@ -6,7 +6,7 @@ GCLOUD_USERNAME="superadmin"
 GCLOUD_PROJECT="testproject-261510"
 GCLOUD_BUILD_NAME="merge"
 
-GCLOUD_FILE_CREDENTIALS="../../config/credentials.json"
+GCLOUD_FILE_CREDENTIALS="src/config/credentials.json"
 
 # env
 

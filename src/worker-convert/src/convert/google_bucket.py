@@ -32,26 +32,6 @@ class GoogleBucket:
         bucket = self.storage_client.get_bucket(self.bucket_name)
         return bucket.list_blobs()
 
-    def upload_file(self, file_stream, filename, content_type):
-
-        client = self.storage_client
-        bucket = client.bucket(self.bucket_name)
-        blob = bucket.blob(filename)
-
-        blob.upload_from_string(
-            file_stream,
-            content_type=content_type)
-
-        blob.make_public()
-
-        url = blob.public_url
-
-        import six
-        if isinstance(url, six.binary_type):
-            url = url.decode('utf-8')
-
-        return url
-
     def delete_blob(self, blob_name):
         bucket = self.storage_client.get_bucket(self.bucket_name)
         blob = bucket.blob(blob_name)

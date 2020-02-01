@@ -11,24 +11,33 @@ from convert.google_bucket import GoogleBucket
 RABBITMQ_IP = "35.228.95.170"  #Real DEAL
 #RABBITMQ_IP = "35.222.244.93"  #Eriks
 APP_PATH = os.path.dirname(__file__) + "/../"
+BUCKET_NAME = "umu-5dv192-project-eka"
 
 
 class Converter:
 
+    def __init__(self):
+        self.rabbitMQ_convert = None
+        self.rabbitMQ_merge = None
+        self.bucket = None
     def start_rabbitmq(self):
         print("hej")
-        rabbitMQ = RabbitMQ(RABBITMQ_IP)
+        self.rabbitMQ_convert = RabbitMQ(RABBITMQ_IP)
+        self.rabbitMQ_merge = RabbitMQ(RABBITMQ_IP)
+        self.bucket = GoogleBucket(BUCKET_NAME)
 
         while(True):
             try:
                 print("Trying to connect to RabbitMQ...")
-                rabbitMQ.create_channel('convert_queue')
-                rabbitMQ.set_callback('convert_queue', self.convert_movie)
+                self.rabbitMQ_convert.create_channel('convert_queue')
+                self.rabbitMQ_merge.create_channel('merge_queue')
+                self.rabbitMQ_convert.set_callback('convert_queue', self.convert_movie)
                 try:
                     print("Connected to RabbitMQ")
-                    rabbitMQ.start_queueing()
+                    self.rabbitMQ_convert.start_queueing()
                 except KeyboardInterrupt:
-                    rabbitMQ.close_connection()
+                    self.rabbitMQ_convert.close_connection()
+                    self.rabbitMQ_merge.close_connection()
                     break
 
             except pika.exceptions.ConnectionClosedByBroker:
@@ -55,10 +64,9 @@ class Converter:
         dirname = os.path.dirname(__file__)
 
         save_folder = os.path.join(APP_PATH, "download_dir")
-        bucket_name = "umu-5dv192-project-eka"
-        bucket = GoogleBucket(bucket_name)
 
-        bucket.download_blob(bucket_name, "split/" + uuid_name, movie_filename, save_folder)
+
+        self.bucket.download_blob(BUCKET_NAME, "split/" + uuid_name, movie_filename, save_folder)
 
 
         path_script = os.path.join(save_folder, "converter.sh")
@@ -75,11 +83,11 @@ class Converter:
 
         file_path = APP_PATH + uuid_name + "/" + movie_filename
         print("\n" + file_path + "\n")
-        bucket.upload_blob(bucket_name, file_path, destination_folder)
+        self.bucket.upload_blob(BUCKET_NAME, file_path, destination_folder)
 
 
         try:
-            self.upload_rabbit_mq(RABBITMQ_IP, str(uuid_name))
+            self.rabbitMQ_merge.public_message("merge_queue", str(uuid_name))
             ch.basic_ack(delivery_tag=method.delivery_tag)
         except:
             print("Failed uploading to rabbitMQ")
@@ -87,14 +95,3 @@ class Converter:
         finally:
             path_script = os.path.join(dirname, "../", "removeMovies.sh")
             subprocess.check_call([path_script, path_file, uuid_name])
-
-
-    def upload_rabbit_mq(self, host, dir_name):
-        rabbit_mq = RabbitMQ(host)
-        if rabbit_mq is None:
-            return 1
-        rabbit_mq.create_channel("merge_queue")
-        message = dir_name
-        rabbit_mq.public_message("merge_queue", message)
-        rabbit_mq.close_connection()
-        return 0

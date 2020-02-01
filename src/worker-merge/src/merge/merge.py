@@ -12,12 +12,16 @@ from google.cloud._helpers import UTC
 RABBITMQ_IP = "35.228.95.170" #REAL DEAL
 #RABBITMQ_IP = "35.222.244.93" #Eriks rabbitmq
 APP_PATH = os.path.dirname(__file__) + "/../"
-
+BUCKET_NAME = "umu-5dv192-project-eka"
 
 class Merge:
 
-    def start_rabbitMQ(self):
+    def __init__(self, host):
+        self.bucket = None
 
+
+    def start_rabbitMQ(self):
+        self.bucket = GoogleBucket(BUCKET_NAME)
         rabbitMQ = RabbitMQ(RABBITMQ_IP)
 
         while (True):
@@ -47,16 +51,16 @@ class Merge:
                 continue
 
     def merge_movie(self, ch, method, properties, body):
-        bucket_name = "umu-5dv192-project-eka"
+
         save_folder = os.path.join(APP_PATH, "download_dir")
         uuid_name = str(body, 'utf-8')
         print("Message: " + uuid_name)
         gcloud_folder_path = "transcoded/" + uuid_name
 
         file_name = uuid_name + ".txt"
-        if self.check_merge(bucket_name, gcloud_folder_path, file_name):
-            save_file_path = self.merge_movie_from_uuid(bucket_name, save_folder, uuid_name)
-            self.upload_finished_file(bucket_name, save_file_path, uuid_name)
+        if self.check_merge(gcloud_folder_path, file_name):
+            save_file_path = self.merge_movie_from_uuid(save_folder, uuid_name)
+            self.upload_finished_file(save_file_path, uuid_name)
             #Remove all the movies locally
             path_script = os.path.join(APP_PATH, "download_dir", "removeMovies.sh")
             movie_folder = os.path.join(APP_PATH, "download_dir", uuid_name)
@@ -67,13 +71,12 @@ class Merge:
 
 
 
-    def check_merge(self, bucket_name, gcloud_folder_path, file_name):
-        bucket = GoogleBucket(bucket_name)
+    def check_merge(self, gcloud_folder_path, file_name):
         save_path = APP_PATH + "download_dir"
-        bucket.download_blob(bucket_name, gcloud_folder_path, file_name, save_path)
+        self.bucket.download_blob(BUCKET_NAME, gcloud_folder_path, file_name, save_path)
         qbfile = open(save_path + "/" + file_name, "r")
 
-        if self.file_has_expired(bucket_name, gcloud_folder_path + "/" + file_name, 60*100):
+        if self.file_has_expired(BUCKET_NAME, gcloud_folder_path + "/" + file_name, 60*100):
             print("Merge: File has expired")
             #remove movie????
             return False
@@ -83,7 +86,7 @@ class Merge:
         end = "'"
         for aline in qbfile:
             movie_name = aline[aline.find(start) + len(start):aline.rfind(end)]
-            if not bucket.file_exist(bucket_name, gcloud_folder_path, movie_name):
+            if not self.bucket.file_exist(BUCKET_NAME, gcloud_folder_path, movie_name):
                 print("Merge: Missing file in bucket for merge")
                 qbfile.close()
                 return False
@@ -93,24 +96,21 @@ class Merge:
 
 
 
-    def file_has_expired(self,bucket_name, gcloud_folder_path, time_to_live_min):
+    def file_has_expired(self, gcloud_folder_path, time_to_live_min):
         import datetime
-        bucket = GoogleBucket(bucket_name)
         now = datetime.datetime.utcnow().replace(tzinfo=UTC)
-        g_time = bucket.get_blob_time_created(bucket_name, gcloud_folder_path)
+        g_time = self.bucket.get_blob_time_created(BUCKET_NAME, gcloud_folder_path)
         expired_time = g_time + timedelta(minutes=time_to_live_min)
         return expired_time < now
 
-    def upload_finished_file(self, bucket_name, source_file_name, uuid):
-        bucket = GoogleBucket(bucket_name)
+    def upload_finished_file(self, source_file_name, uuid):
+
         destination_blob_name = "finished/" + uuid + "/" + uuid + ".mp4"
-        bucket.upload_blob(bucket_name, source_file_name, destination_blob_name)
+        self.bucket.upload_blob(BUCKET_NAME, source_file_name, destination_blob_name)
 
-    def merge_movie_from_uuid(self, bucket_name, save_folder, uuid_name):
-
-        bucket = GoogleBucket(bucket_name)
+    def merge_movie_from_uuid(self, save_folder, uuid_name):
         save_path = os.path.join(APP_PATH, "download_dir", uuid_name)
-        bucket.download_files_in_folder(bucket_name, "transcoded/" + uuid_name + "/", save_path)
+        self.bucket.download_files_in_folder(BUCKET_NAME, "transcoded/" + uuid_name + "/", save_path)
         text_file_path = save_path +"/" + uuid_name + ".txt"
         save_file_path = save_path + "/" + uuid_name + ".mp4"
         self.merge_files_in_folder(save_folder, text_file_path, save_file_path)
@@ -127,26 +127,3 @@ class Merge:
             os.mkdir(target)
         destination = "/".join([target, filename])
         file.save(destination)
-
-    def upload_rabbitMQ(self, host, dir_name, work_list):
-        rabbit_mq = RabbitMQ(host)
-        if rabbit_mq is None:
-            return 1
-        rabbit_mq.create_channel("task_queue")
-        for temp in work_list:
-            message = "/".join([dir_name, temp])
-        print(message)
-        rabbit_mq.public_message("task_queue", message)
-        rabbit_mq.close_connection()
-        return 0
-
-    def sub_rabbitMQ(self, host, queue):
-        rabbit_mq = RabbitMQ(host)
-        rabbit_mq.create_channel(queue)
-        rabbit_mq.set_callback(queue, self.callback)
-        rabbit_mq.start_queueing()
-
-
-    def callback(self, ch, method, properties, body):
-        print(" [x] Received %r" % body)
-        ch.basic_ack(delivery_tag=method.delivery_tag)  # delivery ack
