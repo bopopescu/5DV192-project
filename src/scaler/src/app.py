@@ -143,23 +143,23 @@ def get_workers(worker_type):
     return num_convert_workers
 
 
-class ScaleMaster(threading.Thread):
+class ScaleMain(threading.Thread):
 
     def run(self):
 
-        print("Starting ScaleMaster...")
+        print("Starting ScaleMain...")
 
         while 1:
 
             try:
                 res = requests.get(URL_MASTER, json={}, timeout=5)
                 if res.status_code != 200:
-                    print("Starting new master...")
-                    terraform_provision("master")
+                    print("Starting new main...")
+                    terraform_provision("main")
                     time.sleep(120)
             except Exception as e:
                 print(e)
-                terraform_provision("master")
+                terraform_provision("main")
                 time.sleep(120)
 
             time.sleep(1)
@@ -212,7 +212,7 @@ def main_route():
 
 if __name__ == '__main__':
 
-    t1 = ScaleMaster(name="ScaleMaster")
+    t1 = ScaleMain(name="ScaleMain")
     t1.start()
 
     t2 = ScaleSplit(name="ScaleSplit")

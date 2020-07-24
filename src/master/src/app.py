@@ -92,7 +92,7 @@ class KeepScalerAlive(threading.Thread):
 
         # runtime
 
-        url_master = "http://" + ip + ":" + port
+        url_main = "http://" + ip + ":" + port
         time_wait = 120
 
         while 1:
@@ -100,7 +100,7 @@ class KeepScalerAlive(threading.Thread):
             print("Keeping alive...")
 
             try:
-                res = requests.get(url_master, json={}, timeout=5)
+                res = requests.get(url_main, json={}, timeout=5)
                 print(res.status_code)
                 if res.status_code != 200:
                     self.terraform_restart()
@@ -134,12 +134,12 @@ class KeepScalerAlive(threading.Thread):
 
 @app.route('/')
 def worker_root():
-    return "Master node"
+    return "Main node"
 
 
 @app.route('/isActive', methods=['GET'])
 def main_is_active():
-    return "master node"
+    return "main node"
 
 
 @app.route('/client/connect', methods=['GET'])

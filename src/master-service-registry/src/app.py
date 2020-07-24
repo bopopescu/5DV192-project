@@ -110,11 +110,11 @@ def route_service_registry():
         try:
             res = requests.post(request_url_split, timeout=2)
             if not res.status_code == 200:
-                print("Error connecting to master")
+                print("Error connecting to main")
                 workers_split.remove(ip)
                 create_target_json()
         except:
-            print("Error connecting to master")
+            print("Error connecting to main")
             workers_split.remove(ip)
             create_target_json()
     thread_lock.release()
@@ -127,11 +127,11 @@ def route_service_registry():
         try:
             res = requests.post(request_url_convert, timeout=2)
             if not res.status_code == 200:
-                print("Error connecting to master")
+                print("Error connecting to main")
                 workers_convert.remove(ip)
                 create_target_json()
         except:
-            print("Error connecting to master")
+            print("Error connecting to main")
             workers_convert.remove(ip)
             create_target_json()
     thread_lock.release()
@@ -145,11 +145,11 @@ def route_service_registry():
         try:
             res = requests.post(request_url_merge, timeout=2)
             if not res.status_code == 200:
-                print("Error connecting to master")
+                print("Error connecting to main")
                 workers_merge.remove(ip)
                 create_target_json()
         except:
-            print("Error connecting to master")
+            print("Error connecting to main")
             workers_merge.remove(ip)
             create_target_json()
     thread_lock.release()

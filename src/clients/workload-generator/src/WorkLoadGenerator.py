@@ -24,10 +24,10 @@ class WorkLoadGenerator:
         self.logger_stop.set_value(0)
         self.run_time = []
         if not DEBUG:
-            self.master_ip = "35.228.95.170"  # REAL DEAL
+            self.main_ip = "35.228.95.170"  # REAL DEAL
             self.split_port = "5000"
         else:
-            self.master_ip = "localhost"
+            self.main_ip = "localhost"
             self.split_port = "5001"
 
 
@@ -105,8 +105,8 @@ class WorkLoadGenerator:
     def worker_load(self, atomic_workers_running, nr_work_success, nr_work_fail):
         atomic_workers_running.increase_value()
 
-        request_connect = "http://" + self.master_ip + ":5000/client/connect"
-        request_retrieve = "http://" + self.master_ip + ":5000/client/retrieve"
+        request_connect = "http://" + self.main_ip + ":5000/client/connect"
+        request_retrieve = "http://" + self.main_ip + ":5000/client/retrieve"
 
         start_time = time.time()
         expired_time_small = start_time + 5*60
@@ -122,12 +122,12 @@ class WorkLoadGenerator:
                     if res.status_code == 200:
                         data = res.json()
                         slip_ip = data["ip"]
-                        print("Success: Got split ip from master: " + slip_ip)
+                        print("Success: Got split ip from main: " + slip_ip)
                         break
                     else:
                         print("Error: Retrying getting split ip")
                 except:
-                    print("Error: Retrying ip from master")
+                    print("Error: Retrying ip from main")
                 if time.time() > expired_time_small:
                     break
                 time.sleep(1)

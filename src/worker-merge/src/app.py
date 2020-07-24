@@ -37,14 +37,14 @@ class KeepConnectionThread(threading.Thread):
         # config
 
         if IS_DEBUG:
-            master_ip = "127.0.0.1"
+            main_ip = "127.0.0.1"
             service_registry_port = "5005"
         else:
-            master_ip = "35.228.95.170"
+            main_ip = "35.228.95.170"
             service_registry_port = "5005"
 
         # runtime
-        url_service_registry = "http://" + master_ip + ":" + service_registry_port + "/worker/connect/merge"
+        url_service_registry = "http://" + main_ip + ":" + service_registry_port + "/worker/connect/merge"
         request_data = {"ip": get_ip()}
 
         while 1:
@@ -59,7 +59,7 @@ class KeepConnectionThread(threading.Thread):
                     print("Received: " + str(res))
 
             except Exception:
-                print("Error connecting to master and/or service registry")
+                print("Error connecting to main and/or service registry")
                 pass
             time.sleep(5)
 
